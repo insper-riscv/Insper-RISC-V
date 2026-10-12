@@ -59,7 +59,7 @@ Recursos: 521 ALMs de 18 480 (3 %), 923 registradores, 65 pinos de 224 e nenhum 
 
 ## 5. Plataforma completa na placa (core e SDRAM)
 
-A plataforma `sdram` do TopLevel (branch `feat/sdram-platform`, commit `4f2601f`) liga o core a 50 MHz à SDRAM, que é a única RAM, com o controlador a 142,857 MHz. A suíte rodou na placa com o `riscv-tools` dentro da imagem `ghcr.io/insper-riscv/infra-toolchain:latest` (Ubuntu 26.04.1, GHDL 6.0.0, GCC RISC-V 16.1.0 com picolibc). O Quartus 25.1std do host foi montado em modo leitura nessa imagem, com o servidor JTAG do host acessado pela rede do host. A imagem recebeu uma única camada local com a biblioteca `libglib2.0-0t64`, que as ferramentas do Quartus exigem e a imagem não trazia.
+A plataforma `sdram` do TopLevel (branch `feat/sdram-platform`, commit `4f2601f`) liga o core a 50 MHz à SDRAM, que é a única RAM, com o controlador a 142,857 MHz. A suíte rodou na placa com o `riscv-tools` dentro da imagem publicada `ghcr.io/insper-riscv/infra-toolchain:latest` (Ubuntu 26.04.1, GHDL 6.0.0, GCC RISC-V 16.1.0 com picolibc, uv 0.13.0, Python 3.14.8), sem nenhuma camada adicional. O Quartus 25.1std do host foi montado em modo leitura nessa imagem, com o servidor JTAG do host acessado pela rede do host; a biblioteca `libglib2.0-0t64`, que as ferramentas do Quartus exigem, já faz parte da imagem. O resultado da seção 5.1 vale para essa execução, e uma execução anterior, com uma camada local que só acrescentava essa biblioteca, deu o mesmo resultado.
 
 Passos, cada um dentro do container:
 
