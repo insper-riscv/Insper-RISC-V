@@ -84,10 +84,9 @@ Cada programa leva de 2,4 s a 3,0 s na placa. Esse tempo é dominado pelo carreg
 | :--- | ---: | ---: |
 | Leitura de dado, setup (domínio do controlador) | -0,204 ns | +0,053 ns |
 | Comandos e dado de escrita, setup (`DRAM_CLK`) | -0,047 ns | -0,025 ns |
-| Domínio do core a 50 MHz, setup | +4,690 ns | +5,152 ns |
-| Hold no pino `DRAM_CLK` | +2,971 ns | |
+| Domínio do core a 50 MHz, setup | +2,029 ns | +2,026 ns |
 
-Recursos: 3 216 ALMs de 18 480 (17 %), 4 058 registradores, 51 pinos de 224 e 508 416 bits de memória em bloco (16 %). A compilação completa levou cerca de 2 minutos no total de passos do Quartus.
+Recursos: 3 216 ALMs de 18 480 (17 %), 4 058 registradores, 51 pinos de 224 e 508 416 bits de memória em bloco (16 %).
 
 ## 6. Limites desta medição
 
