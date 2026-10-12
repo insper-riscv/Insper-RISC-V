@@ -57,9 +57,41 @@ Margens (slack) do Quartus com as restrições de entrada e saída do chip. Valo
 
 Recursos: 521 ALMs de 18 480 (3 %), 923 registradores, 65 pinos de 224 e nenhum bit de memória em bloco.
 
-## 5. Limites desta medição
+## 5. Plataforma completa na placa (core e SDRAM)
+
+A plataforma `sdram` do TopLevel (branch `feat/sdram-platform`, commit `4f2601f`) liga o core a 50 MHz à SDRAM, que é a única RAM, com o controlador a 142,857 MHz. A suíte rodou na placa com o `riscv-tools` dentro da imagem `ghcr.io/insper-riscv/infra-toolchain:latest` (Ubuntu 26.04.1, GHDL 6.0.0, GCC RISC-V 16.1.0 com picolibc). O Quartus 25.1std do host foi montado em modo leitura nessa imagem, com o servidor JTAG do host acessado pela rede do host. A imagem recebeu uma única camada local com a biblioteca `libglib2.0-0t64`, que as ferramentas do Quartus exigem e a imagem não trazia.
+
+Passos, cada um dentro do container:
+
+1. `generate-header` e `compile --emit mif` para as duas configurações (os 89 programas existentes e os 6 da SDRAM); o golden de cada programa C sai do Spike da imagem.
+2. `run` da configuração `config.sdram-regression.yaml`: compila o projeto `core_fpga_sdram`, grava a placa e executa cada programa carregando-o pela porta de debug JTAG e lendo o resultado de volta.
+3. `run --skip-reconfigure` da configuração `config.sdram.yaml`: os 6 programas que usam a SDRAM, sem regravar a placa.
+
+### 5.1. Resultado
+
+| Verificação | Resultado |
+| :--- | :--- |
+| Programas existentes | 89 passam, 0 falham |
+| Goldens conferidos contra a memória da placa | 82 |
+| Programas específicos da SDRAM | 6 passam, 0 falham |
+| Compilação do Quartus (dentro do container) | concluída, 0 erros |
+
+Cada programa leva de 2,4 s a 3,0 s na placa. Esse tempo é dominado pelo carregamento e pela leitura pelo JTAG, e não pelo número de ciclos do programa, então ele não serve para calcular a razão contra a RAM interna; essa razão está medida em simulação em `BENCHMARK_SDRAM.md`.
+
+### 5.2. Timing e recursos do projeto gravado
+
+| Verificação | Modelo lento 85 C | Modelo lento 0 C |
+| :--- | ---: | ---: |
+| Leitura de dado, setup (domínio do controlador) | -0,204 ns | +0,053 ns |
+| Comandos e dado de escrita, setup (`DRAM_CLK`) | -0,047 ns | -0,025 ns |
+| Domínio do core a 50 MHz, setup | +4,690 ns | +5,152 ns |
+| Hold no pino `DRAM_CLK` | +2,971 ns | |
+
+Recursos: 3 216 ALMs de 18 480 (17 %), 4 058 registradores, 51 pinos de 224 e 508 416 bits de memória em bloco (16 %). A compilação completa levou cerca de 2 minutos no total de passos do Quartus.
+
+## 6. Limites desta medição
 
 1. Os tempos do chip nas restrições (setup de entrada 1,5 ns, hold de entrada 0,8 ns, acesso 5,4 ns, hold de saída 2,5 ns) são valores usuais de uma SDR de 143 MHz, ainda não conferidos com o datasheet da peça. As margens negativas dos modelos lentos dependem deles.
-2. O autoteste passou na placa mesmo com margem negativa no modelo lento, o que indica que o modelo é conservador; ele não prova folga em outra temperatura, outra placa ou outro lote.
-3. Foi uma execução de cada modo. Não houve repetição para medir variação nem varredura da fase do clock.
-4. Este benchmark não inclui o core. O custo em ciclos de rodar programas com a SDRAM como RAM, na placa, depende da plataforma `sdram` completa e não foi medido aqui.
+2. O autoteste e a suíte passaram na placa mesmo com margem negativa no modelo lento, o que indica que o modelo é conservador; isso não prova folga em outra temperatura, outra placa ou outro lote.
+3. Foi uma execução de cada modo e uma da suíte. Não houve repetição para medir variação nem varredura da fase do clock.
+4. A suíte na placa mede correção, não ciclos. O custo em ciclos vem da simulação.
