@@ -12,6 +12,10 @@
 
 **Advisor:** [Rafael Corsi](https://github.com/rafaelcorsi)
 
+For the reproducible VS Code workflow used to edit and run one C program in
+simulation or on the FPGA, see
+[`docs/VSCODE_LIVE_C.md`](docs/VSCODE_LIVE_C.md).
+
 ---
 
 ## What this repository is

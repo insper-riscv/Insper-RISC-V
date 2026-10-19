@@ -1,0 +1,70 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "RV32: Check environment",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh doctor",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "RV32: Prepare workspace",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh setup",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "RV32: Simulate C program",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh simulate",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Run C on FPGA (first/full configuration)",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh fpga --mode full",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Run C on FPGA (fast JTAG update)",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh fpga --mode fast",
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Run C on FPGA (reuse existing SOF)",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh fpga --mode reprogram",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Run C with Spike",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh spike",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Generate assembly",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh assembly",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "RV32: Read FPGA stdout",
+      "type": "shell",
+      "command": "bash scripts/rv32.sh stdout",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
+}

@@ -2,6 +2,13 @@
 __pycache__/
 *.pyc
 .venv/
+.env
+.devcontainer/.env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 
 # Simulation and Quartus outputs
 build/
@@ -17,3 +24,8 @@ output_files/
 *.pof
 *.rpt
 *.summary
+*.qws
+*.jdi
+*.done
+*.smsg
+c5_pin_model_dump.txt

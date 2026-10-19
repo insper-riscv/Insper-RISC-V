@@ -1,0 +1,22 @@
+services:
+  rv32:
+    image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/dev_tools:latest}"
+    command: sleep infinity
+    network_mode: host
+    security_opt:
+      - label=disable
+    environment:
+      RV32_ROOT: /work
+      RV32_TESTS_ROOT: /work/Tests
+      RV32_LIVE_ROOT: /work/Live
+      RV32_CONFIG: /work/Live/config.yaml
+      RV32_PLATFORM: /work/TopLevel/platforms/internal-mem/platform.yaml
+      RV32_TOOLCHAIN_ROOT: /opt/riscv-foundation/riscv32-elf
+      RV32_GCC: /opt/riscv-foundation/riscv32-elf/bin/riscv32-unknown-elf-gcc
+      QUARTUS_ROOTDIR: /opt/altera_lite/25.1std/quartus
+    volumes:
+      - ..:/work:cached
+      # Set RV32_QUARTUS_HOST_ROOT in .devcontainer/.env to use the FPGA.
+      # The empty directory keeps the simulation-only setup valid by default.
+      - "${RV32_QUARTUS_HOST_ROOT:-./empty-quartus}:/opt/altera_lite/25.1std:ro"
+

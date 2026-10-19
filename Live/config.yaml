@@ -1,0 +1,13 @@
+# A one-program project layered over the current internal-memory platform.
+# Paths are interpreted from Tests/, because live_c.py invokes riscv-tools
+# with Tests as the consuming-project root.
+extends: ../TopLevel/platforms/internal-mem/config.yaml
+
+paths:
+  include_dir: ../Live/include
+  build_dir: ../Live/build
+  c_dir: ../Live/c
+  asm_dir: ../Live/asm
+
+run_log:
+  logs_dir: ../Live/logs

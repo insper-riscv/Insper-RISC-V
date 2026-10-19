@@ -1,0 +1,23 @@
+{
+    "name": "RV32 Development",
+    "dockerComposeFile": "compose.yaml",
+    "service": "rv32",
+    "workspaceFolder": "/work",
+    "remoteUser": "ubuntu",
+    "updateRemoteUserUID": true,
+    "remoteEnv": {
+        "PATH": "${containerEnv:QUARTUS_ROOTDIR}/bin:${containerEnv:RV32_TOOLCHAIN_ROOT}/bin:${containerEnv:PATH}"
+    },
+    "postCreateCommand": "bash scripts/bootstrap.sh",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-vscode.cpptools",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-vscode.makefile-tools",
+                "teros-technology.teroshdl"
+            ]
+        }
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "C_Cpp.default.compilerPath": "${env:RV32_GCC}",
+  "C_Cpp.default.intelliSenseMode": "linux-gcc-x86",
+  "C_Cpp.default.cStandard": "c17",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/Live/include"
+  ],
+  "files.associations": {
+    "*.S": "asm"
+  },
+  "task.allowAutomaticTasks": "on"
+}
