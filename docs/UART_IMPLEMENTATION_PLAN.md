@@ -8,9 +8,9 @@
 - Validação standalone na DE0-CV: **concluída em hardware**.
 - `UART.vhd` e seus testes unitários isolados: **concluídos (9/9 testes)**.
 - Novo mapa com endereços separados de TX e RX: **simulação integrada e
-  validação física básica concluídas**.
-- Próxima etapa: ampliar a validação física para rajadas, overrun e flags de
-  erro.
+  validação física concluídas**.
+- Rajadas, `RX_OVERRUN`, `TX_DROPPED` e limpeza W1C: **validados em simulação
+  e na placa**.
 
 ## Decisão de arquitetura
 
@@ -267,7 +267,7 @@ medir 115200 baud. A análise VHDL conjunta de todos os periféricos também pas
 Resultado em 2026-10-26: `uart-tx` e `uart-echo` passaram no top de FPGA
 simulado usando, respectivamente, `TX_DATA` e `RX_DATA` em endereços separados.
 
-### Fase 4 - validar no hardware integrado (mapa separado validado)
+### Fase 4 - validar no hardware integrado (concluída)
 
 1. Compilar e programar o novo `.sof`.
 2. Manter a mesma ligação de três fios já validada no standalone.
@@ -287,8 +287,19 @@ firmwares finalizaram com `MAILBOX=1`, produzindo o resultado final
 o caminho CPU -> registradores separados `TX_DATA`/`RX_DATA` -> pinos seriais,
 incluindo o polling de `STATUS`.
 
-Ainda permanecem pendentes os casos de estresse desta fase: rajadas, recuperação
-após overrun e observação das flags de erro no teste físico automatizado.
+Atualização em 2026-10-26: o firmware `uart-errors` e o harness coordenado
+passaram tanto no top FPGA simulado quanto na placa. O teste provocou uma
+escrita durante TX ocupado e recebeu `ATR`, confirmando `TX_DROPPED`, o descarte
+do segundo byte e sua limpeza W1C. Em seguida, enviou `0x12 0x34` sem consumir o
+primeiro byte e recebeu `OB`, confirmando `RX_OVERRUN`, retenção do byte mais
+recente e sua limpeza W1C. Por fim, o firmware devolveu exatamente a rajada crua
+de 32 bytes `0x00` a `0x1f`, seguida por `P`, sem novas flags de erro. O teste
+terminou com `MAILBOX=1` e
+`INTEGRATED UART HARDWARE TEST: PASS (uart-echo, uart-errors)`.
+
+Com esse resultado, os critérios da primeira versão da UART foram atendidos em
+simulação e em hardware, incluindo TX, RX, polling, endereços separados,
+comportamento de sobrecarga e flags sticky com limpeza W1C.
 
 ## Critérios de aceite
 

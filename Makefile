@@ -58,7 +58,7 @@ sim: sync
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml generate-header \
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex \
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim \
-	    --exclude uart-echo,uart-tx
+	    --exclude uart-echo,uart-tx,uart-errors
 
 # Every file path the configuration lists exists (paths.yaml).
 paths: sync

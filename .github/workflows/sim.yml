@@ -45,10 +45,10 @@ jobs:
         run: uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex
       - name: Run sim tests
         # The generic simulation top has no UART pins; Tests' sim-fpga and
-        # physical harness own uart-echo/uart-tx.
+        # physical harness own uart-echo/uart-tx/uart-errors.
         run: |
           uv run riscv-tools --config tools/riscv_build/config.yaml sim \
-            --exclude uart-echo,uart-tx
+            --exclude uart-echo,uart-tx,uart-errors
       - name: Run per-entity VHDL unit tests
         run: uv run python tests/python/runner.py
       - name: Each repository's own checks and tests, at the pinned versions
