@@ -28,7 +28,7 @@ submodule, holds the KPI reports and the integration CI, and nothing else.
 | [Tools](https://github.com/insper-riscv/Tools) | `riscv-tools`: compile, simulate, run on the board, certify, verify | Infra (when running) |
 | [Core](https://github.com/insper-riscv/Core) | the processor in VHDL, by ISA extension (`common/`, `I/`, `M/`), profiles `rv32i` and `rv32im`, entity tests | nothing |
 | [Memory](https://github.com/insper-riscv/Memory) | simulation models and the board's Quartus IPs | Core (the memory interface) |
-| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO and TIMER (UART later), entity tests | Core |
+| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER and UART, with entity tests | Core |
 | [TopLevel](https://github.com/insper-riscv/TopLevel) | the platforms: Quartus project, PLL, simulation top, runtime, memory map, testbench | Core, Memory, Peripherals, Tools |
 | [Tests](https://github.com/insper-riscv/Tests) | the test programs (`asm/`, `c/`), goldens, and the flows that run them | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | the official ACT4 (riscv-arch-test) suite | Core, Memory, TopLevel, Tools |
@@ -41,7 +41,7 @@ brings `Tools` along); `Infra` and `Certification` are used on their own.
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/RV32.git
 cd RV32
-make all        # paths, VHDL check, every repository's own checks, the 89-program suite
+make all        # paths, VHDL check, repository checks, generic program suite
 ```
 
 The tools come from the `infra-toolchain` image of Infra (`ghcr.io/insper-riscv/infra-toolchain`);
@@ -52,17 +52,18 @@ the CI runs in it.
 | `make paths` | every file path the configuration lists exists (`paths.yaml`, `riscv-tools check-paths`) |
 | `make check` | GHDL analyzes every VHDL source of the tree in one library |
 | `make subrepos` | `Core`, `Memory`, `Peripherals` and `TopLevel`: their own paths, syntax checks, profiles, entity tests and memory-map check |
-| `make sim` | the simulation suite of `Tests`: 89 programs on the pipeline |
+| `make sim` | the generic simulation suite of `Tests` plus UART-harness host tests; UART programs use the hardware-top/physical flows |
 
 The submodules sit side by side because they find each other as siblings (`../Core`,
-`../Memory`, `../TopLevel`): the same layout when each is cloned on its own next to the
-others, as their CI does.
+`../Memory`, `../Peripherals`, `../TopLevel`): the same layout when each is cloned on
+its own next to the others, as their CI does.
 
 ## Board
 
 The Quartus project is `TopLevel/platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V
 5CEBA4F23: BOOT_ROM, FLASH and RAM inside the FPGA). Programming it and running tests on it
-is `riscv-tools run` from `Tests`; see
+uses the mailbox-only `riscv-tools run` suite plus the dedicated physical UART
+harness from `Tests`; see
 [TopLevel's docs/HARDWARE_PROGRAMMING.md](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
 
 ## KPIs

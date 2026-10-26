@@ -2,12 +2,15 @@
 
 ## Estado
 
-- Atualizado em: 2026-10-15.
+- Atualizado em: 2026-10-26.
 - Branch de trabalho no repositório-pai: `UART`.
 - IP OpenCores baixado em `../uartCheck/uart2bus/trunk`.
 - Validação standalone na DE0-CV: **concluída em hardware**.
-- `UART.vhd` e seus testes unitários isolados: **concluídos (8/8 testes)**.
-- Próxima etapa: integrar o periférico ao top-level do SoC em simulação.
+- `UART.vhd` e seus testes unitários isolados: **concluídos (9/9 testes)**.
+- Novo mapa com endereços separados de TX e RX: **simulação integrada e
+  validação física básica concluídas**.
+- Próxima etapa: ampliar a validação física para rajadas, overrun e flags de
+  erro.
 
 ## Decisão de arquitetura
 
@@ -126,6 +129,9 @@ O endereço local é um índice de palavra (`ram_addr(3 downto 2)`). A primeira
 versão de software usará somente acessos alinhados de 32 bits, embora o dado
 UART ocupe apenas os oito bits menos significativos.
 
+Não há FIFO nesta versão. RX mantém somente o byte pendente mais recente e TX
+aceita um novo byte apenas quando `TX_READY = 1`.
+
 ## Mapa de registradores
 
 Base da UART: `0xC0000000` (id de periférico `4`, conforme o contrato do
@@ -133,10 +139,10 @@ barramento).
 
 | Endereço | Nome | Acesso | Semântica |
 | :--- | :--- | :--- | :--- |
-| `0xC0000000` | `DATA` | R/W | Escrita em bits `[7:0]` inicia TX se livre. Leitura devolve o byte RX em `[7:0]` e consome `RX_VALID`. |
-| `0xC0000004` | `STATUS` | R/W1C | Estado e erros sticky descritos abaixo. |
-| `0xC0000008` | `CONTROL` | R/W | Bit 0 habilita a solicitação de interrupção de RX. |
-| `0xC000000C` | reservado | - | Leitura zero; escrita sem efeito. |
+| `0xC0000000` | `TX_DATA` | W | Escrita em bits `[7:0]` inicia TX se livre. Leitura devolve zero. |
+| `0xC0000004` | `RX_DATA` | R | Leitura devolve o byte RX em `[7:0]` e consome `RX_VALID`. Escrita não tem efeito. |
+| `0xC0000008` | `STATUS` | R/W1C | Estado e erros sticky descritos abaixo. |
+| `0xC000000C` | `CONTROL` | R/W | Bit 0 habilita a solicitação de interrupção de RX. |
 
 Bits de `STATUS`:
 
@@ -145,16 +151,16 @@ Bits de `STATUS`:
 | 0 | `RX_VALID` | Existe um byte recebido ainda não consumido. |
 | 1 | `TX_READY` | O transmissor aceita um novo byte (`not txBusy`). |
 | 2 | `RX_OVERRUN` | Chegou outro byte antes do anterior ser consumido. Sticky, limpo escrevendo 1 neste bit. |
-| 3 | `TX_DROPPED` | Houve escrita em `DATA` enquanto TX estava ocupado. Sticky, limpo escrevendo 1 neste bit. |
+| 3 | `TX_DROPPED` | Houve escrita em `TX_DATA` enquanto TX estava ocupado. Sticky, limpo escrevendo 1 neste bit. |
 
 Comportamento definido para os casos de borda:
 
 - se outro byte chegar enquanto `RX_VALID = 1`, o byte mais recente substitui
   o anterior e `RX_OVERRUN` é ativado;
-- se a leitura de `DATA` e a chegada de um byte acontecerem no mesmo ciclo, a
+- se a leitura de `RX_DATA` e a chegada de um byte acontecerem no mesmo ciclo, a
   leitura consome o byte anterior e o novo permanece armazenado com
   `RX_VALID = 1`;
-- escrever em `DATA` com `TX_READY = 0` não interrompe o quadro em andamento;
+- escrever em `TX_DATA` com `TX_READY = 0` não interrompe o quadro em andamento;
   o novo byte é descartado e `TX_DROPPED` é ativado;
 - `irq = RX_VALID and RX_IRQ_ENABLE`, mas a saída ficará desconectada na
   primeira integração, pois o caminho de interrupção/CSR ainda não existe.
@@ -189,8 +195,9 @@ O suporte mínimo pode começar com acesso direto por ponteiros `volatile`:
 
 ```c
 #define UART_BASE    0xC0000000u
-#define UART_DATA    (*(volatile unsigned int *)(UART_BASE + 0x00u))
-#define UART_STATUS  (*(volatile unsigned int *)(UART_BASE + 0x04u))
+#define UART_TX_DATA (*(volatile unsigned int *)(UART_BASE + 0x00u))
+#define UART_RX_DATA (*(volatile unsigned int *)(UART_BASE + 0x04u))
+#define UART_STATUS  (*(volatile unsigned int *)(UART_BASE + 0x08u))
 
 #define UART_RX_VALID (1u << 0)
 #define UART_TX_READY (1u << 1)
@@ -199,14 +206,14 @@ static void uart_putc(unsigned char value)
 {
     while ((UART_STATUS & UART_TX_READY) == 0u) {
     }
-    UART_DATA = value;
+    UART_TX_DATA = value;
 }
 
 static unsigned char uart_getc(void)
 {
     while ((UART_STATUS & UART_RX_VALID) == 0u) {
     }
-    return (unsigned char)UART_DATA;
+    return (unsigned char)UART_RX_DATA;
 }
 ```
 
@@ -232,20 +239,22 @@ teste.
 1. Implementar o banco de registradores e instanciar `uartTop`, sem parser.
 2. Criar teste unitário cobrindo:
    - estado depois do reset (`TX_READY = 1`, demais bits em zero);
-   - recepção, leitura de `DATA` e limpeza de `RX_VALID`;
+   - recepção, leitura de `RX_DATA` e limpeza de `RX_VALID`;
    - transmissão e formato serial 8N1;
    - overrun de RX e descarte durante TX ocupado;
    - limpeza W1C dos erros;
    - leitura e chegada simultâneas;
+   - separação e ausência de efeitos colaterais entre `TX_DATA` e `RX_DATA`;
    - `CONTROL` e geração de `irq`.
 
-Resultado em 2026-10-15: os oito testes Cocotb de `UART` passaram com GHDL.
-Sete testes usam `BAUD_FREQ = 1` e `BAUD_LIMIT = 0`, preservando os 16 pulsos
-por bit do datapath real, mas acelerando a simulação. Um teste adicional usa os
-valores padrão e um clock de 50 MHz para medir 115200 baud. Também foi executada
-a análise VHDL conjunta de todos os periféricos sem erros.
+Atualização em 2026-10-26: os nove testes Cocotb de `UART` passaram com GHDL.
+Oito testes usam `BAUD_FREQ = 1` e `BAUD_LIMIT = 0`, preservando os 16 pulsos
+por bit do datapath real, mas acelerando a simulação. Eles incluem a verificação
+de que uma leitura de `TX_DATA` e uma escrita em `RX_DATA` não produzem efeitos
+colaterais. Um teste adicional usa os valores padrão e um clock de 50 MHz para
+medir 115200 baud. A análise VHDL conjunta de todos os periféricos também passou.
 
-### Fase 3 - integrar ao SoC em simulação
+### Fase 3 - integrar ao SoC em simulação (concluída)
 
 1. Instanciar o periférico e a decodificação no top-level.
 2. Atualizar a lista e a ordem de fontes de simulação e do Quartus.
@@ -255,7 +264,10 @@ a análise VHDL conjunta de todos os periféricos sem erros.
 5. Executar um programa RV32 que transmita uma mensagem e outro que receba e
    devolva caracteres, verificando a linha serial no testbench.
 
-### Fase 4 - validar no hardware integrado
+Resultado em 2026-10-26: `uart-tx` e `uart-echo` passaram no top de FPGA
+simulado usando, respectivamente, `TX_DATA` e `RX_DATA` em endereços separados.
+
+### Fase 4 - validar no hardware integrado (mapa separado validado)
 
 1. Compilar e programar o novo `.sof`.
 2. Manter a mesma ligação de três fios já validada no standalone.
@@ -265,6 +277,18 @@ a análise VHDL conjunta de todos os periféricos sem erros.
    recuperação após overrun.
 6. Automatizar o teste de hardware com Python, agora enviando dados crus ao
    firmware em vez dos comandos do parser `uart2bus`.
+
+Resultado em 2026-10-26: com o `.sof` do novo mapa previamente carregado, o
+harness `uart_hardware_test.py --skip-program` passou nos dois firmwares. O
+`uart-echo` devolveu exatamente `RX test\r\n`; em seguida, o harness carregou
+`uart-tx` pela memória JTAG e recebeu exatamente `UART OK\r\n`. Ambos os
+firmwares finalizaram com `MAILBOX=1`, produzindo o resultado final
+`INTEGRATED UART HARDWARE TEST: PASS (uart-echo, uart-tx)`. Isso valida na placa
+o caminho CPU -> registradores separados `TX_DATA`/`RX_DATA` -> pinos seriais,
+incluindo o polling de `STATUS`.
+
+Ainda permanecem pendentes os casos de estresse desta fase: rajadas, recuperação
+após overrun e observação das flags de erro no teste físico automatizado.
 
 ## Critérios de aceite
 

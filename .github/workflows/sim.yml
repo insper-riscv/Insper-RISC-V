@@ -28,6 +28,8 @@ jobs:
           path: .
       - name: Install Python dependencies
         run: uv sync
+      - name: Run host-side UART harness tests
+        run: uv run python -m unittest discover -s tests/host -v
       - name: Generate rv32_test.h
         run: uv run riscv-tools --config tools/riscv_build/config.yaml generate-header
       - name: Check the memory map against every copy
@@ -42,7 +44,11 @@ jobs:
       - name: Build sim test ROM images
         run: uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex
       - name: Run sim tests
-        run: uv run riscv-tools --config tools/riscv_build/config.yaml sim
+        # The generic simulation top has no UART pins; Tests' sim-fpga and
+        # physical harness own uart-echo/uart-tx.
+        run: |
+          uv run riscv-tools --config tools/riscv_build/config.yaml sim \
+            --exclude uart-echo,uart-tx
       - name: Run per-entity VHDL unit tests
         run: uv run python tests/python/runner.py
       - name: Each repository's own checks and tests, at the pinned versions
