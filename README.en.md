@@ -38,7 +38,7 @@ cd RV32
 make all        # paths, VHDL check, every repository's own checks, and the 89-program suite
 ```
 
-The tools come from the `infra-toolchain` image (`ghcr.io/insper-riscv/infra-toolchain`), in which continuous integration runs.
+The tools come from the `ci-asm` image (`ghcr.io/insper-riscv/ci-asm`), in which continuous integration runs.
 
 | Target | What it runs |
 | :--- | :--- |

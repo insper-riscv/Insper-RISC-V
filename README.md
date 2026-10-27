@@ -38,7 +38,7 @@ cd RV32
 make all        # paths, verificação VHDL, verificações de cada repositório e a suíte de 89 programas
 ```
 
-As ferramentas vêm da imagem `infra-toolchain` (`ghcr.io/insper-riscv/infra-toolchain`), em que a integração contínua executa.
+As ferramentas vêm da imagem `ci-asm` (`ghcr.io/insper-riscv/ci-asm`), em que a integração contínua executa.
 
 | Alvo | O que executa |
 | :--- | :--- |
