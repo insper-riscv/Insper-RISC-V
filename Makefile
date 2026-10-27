@@ -1,4 +1,4 @@
-# The parent repository: it pins Core, Memory, Peripherals, TopLevel and Tests, and
+# The parent repository: it pins Core, Memory, Peripherals, TopLevel, Tests, Infra and Certification, and
 # this Makefile runs them together. Each of them has its own Makefile and uv project;
 # `git submodule update --init --recursive` first.
 SHELL := /bin/bash
@@ -22,7 +22,7 @@ sync:
 # ---------------------------------------------------------------
 # 1) All .vhd/.vhdl of the repositories that hold VHDL. The Quartus IPs (Memory/ips)
 #    and the PLL need Intel libraries and are left out.
-CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Peripherals/common Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/cores -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
+CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Common-Components Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/Zicsr Core/Zifencei Core/core -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
 
 # 2) Dependency order (topological sort, riscv-tools vhdl-sort)
 ORDERED_SRCS := $(shell uv run --project Tests riscv-tools vhdl-sort $(CHECK_SRCS))
@@ -44,6 +44,7 @@ check:
 # other as siblings (../Core, ../Memory, ...), which is how the submodules sit.
 # ---------------------------------------------------------------
 subrepos: sync
+	$(MAKE) -C Common-Components check
 	$(MAKE) -C Core paths check profiles test
 	$(MAKE) -C Memory paths check test
 	$(MAKE) -C Peripherals paths check test

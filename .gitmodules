@@ -19,3 +19,6 @@
 [submodule "Certification"]
 	path = Certification
 	url = git@github.com:insper-riscv/Certification.git
+[submodule "Common-Components"]
+	path = Common-Components
+	url = git@github.com:insper-riscv/Common-Components.git

@@ -20,14 +20,15 @@ SoC RISC-V de 32 bits (RV32I + M) em VHDL, com pipeline em ordem de 5 estágios,
 | :--- | :--- | :--- |
 | [Infra](https://github.com/insper-riscv/Infra) | A máquina: a imagem de toolchain (GCC com picolibc, Spike, GHDL, uv) em que a integração contínua executa | Nada |
 | [Tools](https://github.com/insper-riscv/Tools) | `riscv-tools`: compilar, simular, executar na placa, certificar e verificar | Infra (na execução) |
-| [Core](https://github.com/insper-riscv/Core) | O processador em VHDL, por extensão da ISA, perfis e testes por entidade | Nada |
+| [Common-Components](https://github.com/insper-riscv/Common-Components) | Os blocos genéricos de VHDL (somador, flip-flop, registradores, multiplexadores, decodificador one-hot e buffer de três estados) que Core, Memory e Peripherals importam | Nada |
+| [Core](https://github.com/insper-riscv/Core) | O processador em VHDL, por extensão da ISA, perfis e testes por entidade | Common-Components |
 | [Memory](https://github.com/insper-riscv/Memory) | Modelos de simulação e IPs Quartus da placa | Core (interface de memória) |
-| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER e UART, com testes por entidade | Core |
+| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER e UART, com testes por entidade | Common-Components |
 | [TopLevel](https://github.com/insper-riscv/TopLevel) | As plataformas: projeto Quartus, PLL, topo de simulação, runtime, mapa de memória e testbench | Core, Memory, Peripherals, Tools |
 | [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Core`, `Memory`, `Peripherals`, `TopLevel`, `Tests`, `Infra` e `Certification` são submódulos deste repositório (`Tests` e `Certification` trazem o `Tools` junto).
+`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel`, `Tests`, `Infra` e `Certification` são submódulos deste repositório (`Tests` e `Certification` trazem o `Tools` junto).
 
 ## 3. Clonagem e Execução
 

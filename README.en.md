@@ -20,14 +20,15 @@
 | :--- | :--- | :--- |
 | [Infra](https://github.com/insper-riscv/Infra) | The machine: the toolchain image (GCC with picolibc, Spike, GHDL, uv) in which continuous integration runs | Nothing |
 | [Tools](https://github.com/insper-riscv/Tools) | `riscv-tools`: compile, simulate, run on the board, certify, and verify | Infra (at run time) |
-| [Core](https://github.com/insper-riscv/Core) | The processor in VHDL, by ISA extension, profiles, and per-entity tests | Nothing |
+| [Common-Components](https://github.com/insper-riscv/Common-Components) | The generic VHDL blocks (adder, flip-flop, registers, multiplexers, one-hot decoder, and tri-state buffer) that Core, Memory, and Peripherals import | Nothing |
+| [Core](https://github.com/insper-riscv/Core) | The processor in VHDL, by ISA extension, profiles, and per-entity tests | Common-Components |
 | [Memory](https://github.com/insper-riscv/Memory) | Simulation models and the board Quartus IPs | Core (memory interface) |
-| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER, and UART, with per-entity tests | Core |
+| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER, and UART, with per-entity tests | Common-Components |
 | [TopLevel](https://github.com/insper-riscv/TopLevel) | The platforms: Quartus project, PLL, simulation top, runtime, memory map, and testbench | Core, Memory, Peripherals, Tools |
 | [Tests](https://github.com/insper-riscv/Tests) | The test programs (`asm/`, `c/`), goldens, and the flows that run them | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | The official ACT4 suite (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Core`, `Memory`, `Peripherals`, `TopLevel`, `Tests`, `Infra`, and `Certification` are submodules of this repository (`Tests` and `Certification` bring `Tools` along).
+`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel`, `Tests`, `Infra`, and `Certification` are submodules of this repository (`Tests` and `Certification` bring `Tools` along).
 
 ## 3. Cloning and Running
 
