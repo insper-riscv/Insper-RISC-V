@@ -16,3 +16,6 @@
 [submodule "Infra"]
 	path = Infra
 	url = git@github.com:insper-riscv/Infra.git
+[submodule "Certification"]
+	path = Certification
+	url = git@github.com:insper-riscv/Certification.git
