@@ -22,7 +22,7 @@ sync:
 # ---------------------------------------------------------------
 # 1) All .vhd/.vhdl of the repositories that hold VHDL. The Quartus IPs (Memory/ips)
 #    and the PLL need Intel libraries and are left out.
-CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Common-Components Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/Zicsr Core/Zifencei Core/core -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
+CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Common-Components/src Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/Zicsr Core/Zifencei Core/core -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
 
 # 2) Dependency order (topological sort, riscv-tools vhdl-sort)
 ORDERED_SRCS := $(shell uv run --project Tests riscv-tools vhdl-sort $(CHECK_SRCS))
