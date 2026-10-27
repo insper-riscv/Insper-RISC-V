@@ -21,7 +21,7 @@ O modelo de chip da simulação aborta o teste em qualquer violação de timing,
 
 ## 2. Ambiente
 
-A compilação e a simulação rodaram dentro da imagem `ghcr.io/insper-riscv/ci-asm:latest`, com o GHDL 6.0.0, o GCC RISC-V 16.1.0 com picolibc e o Spike da própria imagem. Nada do host foi usado.
+A compilação e a simulação rodaram dentro da imagem `ghcr.io/insper-riscv/ci-elf:latest`, com o GHDL 6.0.0, o GCC RISC-V 16.1.0 com picolibc e o Spike da própria imagem. Nada do host foi usado.
 
 Os repositórios foram testados nos commits abaixo, que são as pontas dos pull requests de SDRAM abertos:
 
