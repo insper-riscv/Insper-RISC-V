@@ -44,11 +44,9 @@ jobs:
       - name: Build sim test ROM images
         run: uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex
       - name: Run sim tests
-        # The generic simulation top has no UART pins; Tests' sim-fpga and
-        # physical harness own uart-echo/uart-tx/uart-errors.
-        run: |
-          uv run riscv-tools --config tools/riscv_build/config.yaml sim \
-            --exclude uart-echo,uart-tx,uart-errors
+        # The generic top exposes UART_RX/UART_TX, so the same invocation runs
+        # uart-tx, uart-echo and uart-errors beside every other program.
+        run: uv run riscv-tools --config tools/riscv_build/config.yaml sim
       - name: Run per-entity VHDL unit tests
         run: uv run python tests/python/runner.py
       - name: Each repository's own checks and tests, at the pinned versions
