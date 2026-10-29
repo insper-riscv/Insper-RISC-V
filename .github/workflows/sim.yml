@@ -13,10 +13,10 @@ concurrency:
 jobs:
   cocotb-ghdl:
     runs-on: ubuntu-26.04
-    # insper-riscv/Infra's toolchain image: GHDL, the RISC-V GCC with picolibc,
+    # insper-riscv/Infra's ELF image: GHDL, the RISC-V GCC with picolibc,
     # Spike and uv already on PATH.
     container:
-      image: ghcr.io/insper-riscv/infra-toolchain:latest
+      image: ghcr.io/insper-riscv/ci-elf:latest
     defaults:
       run:
         working-directory: Tests
