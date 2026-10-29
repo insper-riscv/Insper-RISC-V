@@ -267,6 +267,12 @@ medir 115200 baud. A análise VHDL conjunta de todos os periféricos também pas
 Resultado em 2026-10-26: `uart-tx` e `uart-echo` passaram no top de FPGA
 simulado usando, respectivamente, `TX_DATA` e `RX_DATA` em endereços separados.
 
+Atualização em 2026-10-29: o topo genérico de GHDL passou a instanciar a mesma
+UART memory-mapped e a expor `UART_RX`/`UART_TX`. A regressão padrão do CI agora
+executa, sem filtros, os 92 programas, incluindo `uart-tx` (saída exata
+`Hello, world!\r\n`), `uart-echo` e `uart-errors`. A execução completa passou
+com 92/92 testes.
+
 ### Fase 4 - validar no hardware integrado (concluída)
 
 1. Compilar e programar o novo `.sof`.

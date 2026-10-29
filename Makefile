@@ -50,15 +50,14 @@ subrepos: sync
 	$(MAKE) -C TopLevel all
 
 # ---------------------------------------------------------------
-# The Tests project's generic simulation suite. The UART programs require the
-# physical/hardware top and run in Tests' dedicated UART and sim-fpga flows.
+# The Tests project's generic simulation suite, including uart-tx, uart-echo
+# and uart-errors through the generic top's serial pins.
 # ---------------------------------------------------------------
 sim: sync
 	cd Tests && uv run python -m unittest discover -s tests/host -v \
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml generate-header \
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex \
-	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim \
-	    --exclude uart-echo,uart-tx,uart-errors
+	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim
 
 # Every file path the configuration lists exists (paths.yaml).
 paths: sync
