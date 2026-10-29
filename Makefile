@@ -22,7 +22,7 @@ sync:
 # ---------------------------------------------------------------
 # 1) All .vhd/.vhdl of the repositories that hold VHDL. The Quartus IPs (Memory/ips)
 #    and the PLL need Intel libraries and are left out.
-CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Peripherals/common Peripherals/GPIO Peripherals/TIMER Core/common Core/I Core/M Core/cores -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
+CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Peripherals/common Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/cores -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
 
 # 2) Dependency order (topological sort, riscv-tools vhdl-sort)
 ORDERED_SRCS := $(shell uv run --project Tests riscv-tools vhdl-sort $(CHECK_SRCS))
@@ -50,12 +50,15 @@ subrepos: sync
 	$(MAKE) -C TopLevel all
 
 # ---------------------------------------------------------------
-# The Tests project's simulation suite (the 89 programs on the core)
+# The Tests project's generic simulation suite. The UART programs require the
+# physical/hardware top and run in Tests' dedicated UART and sim-fpga flows.
 # ---------------------------------------------------------------
 sim: sync
-	cd Tests && uv run riscv-tools --config tools/riscv_build/config.yaml generate-header \
+	cd Tests && uv run python -m unittest discover -s tests/host -v \
+	  && uv run riscv-tools --config tools/riscv_build/config.yaml generate-header \
 	  && uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex \
-	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim
+	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim \
+	    --exclude uart-echo,uart-tx,uart-errors
 
 # Every file path the configuration lists exists (paths.yaml).
 paths: sync
