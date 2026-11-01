@@ -27,31 +27,28 @@ SoC RISC-V de 32 bits (RV32I + M) em VHDL, com pipeline em ordem de 5 estágios,
 | [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel` e `Tests` são submódulos deste repositório, lado a lado porque o `TopLevel` lê os blocos genéricos em `../Common-Components`; `Infra`, `Tools` e `Certification` são usados por conta própria.
+`Common-Components`, `Core`, `Memory` e `Peripherals` são os submódulos deste repositório. `TopLevel`, `Tests`, `Infra`, `Tools` e `Certification` são repositórios próprios; o `TopLevel` passa a viver aqui com a fusão dos históricos.
 
 ## 3. Clonagem e Execução
 
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/Insper-RISC-V.git
 cd Insper-RISC-V
-make all        # paths, verificação VHDL, testes por entidade, provas formais e a suíte de programas
+make all        # paths, verificação VHDL, testes por entidade e provas formais
 ```
 
-As ferramentas vêm das imagens `ci-vhdl` e `ci-elf` (`ghcr.io/insper-riscv/ci-vhdl` e `ghcr.io/insper-riscv/ci-elf`) do Infra, em que a integração contínua executa; a segunda acrescenta à primeira o GCC RISC-V, a picolibc e o Spike que a suíte de programas usa.
+As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infra, em que a integração contínua executa.
 
 | Alvo | O que executa |
 | :--- | :--- |
 | `make paths` | Existência de todos os caminhos listados na configuração (`paths.yaml`, `riscv-tools check-paths`) |
-| `make check` | Verificação de sintaxe VHDL de cada repositório em ordem de dependência, com a elaboração de cada perfil do `Core` |
-| `make unit-tests` | Testes por entidade (cocotb e GHDL) de `Core`, `Memory`, `Peripherals` e `TopLevel`, e a verificação do mapa de memória |
+| `make check` | Verificação de sintaxe VHDL de cada repositório, com a elaboração de cada perfil do `Core`, e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
+| `make unit-tests` | Testes por entidade (cocotb e GHDL) de `Common-Components`, `Core`, `Memory` e `Peripherals` |
 | `make formal` | Provas formais (SymbiYosys e z3) de cada repositório que as tem |
-| `make sim` | Suíte de simulação do `Tests` e os testes de host da UART |
-
-Os submódulos ficam lado a lado porque se encontram como irmãos (`../Core`, `../Memory`, `../Peripherals`, `../TopLevel`), o mesmo arranjo de quando cada um é clonado ao lado dos demais pela integração contínua.
 
 ## 4. Placa
 
-O projeto Quartus é `TopLevel/platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V 5CEBA4F23, com BOOT_ROM, FLASH e RAM dentro da FPGA). A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [docs/HARDWARE_PROGRAMMING.md do TopLevel](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
+O projeto Quartus está no repositório `TopLevel`, em `platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V 5CEBA4F23, com BOOT_ROM, FLASH e RAM dentro da FPGA). A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [docs/HARDWARE_PROGRAMMING.md do TopLevel](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
 
 ## 5. KPIs
 
