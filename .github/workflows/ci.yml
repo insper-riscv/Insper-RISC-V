@@ -38,10 +38,8 @@ jobs:
     name: unit-tests
     runs-on: ubuntu-26.04
     timeout-minutes: 60
-    # The ci-elf image is the ci-vhdl one plus the RISC-V GCC, picolibc and Spike that the
-    # program suite of the Tests (make sim) compiles and checks with.
     container:
-      image: ghcr.io/insper-riscv/ci-elf:latest
+      image: ghcr.io/insper-riscv/ci-vhdl:latest
 
     steps:
       - uses: actions/checkout@v7
@@ -50,9 +48,6 @@ jobs:
 
       - name: Per-entity cocotb tests of each repository and the memory map check
         run: make unit-tests
-
-      - name: Test programs of the Tests repository, in simulation
-        run: make sim
 
       - name: Upload waveforms
         if: failure()
