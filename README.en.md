@@ -27,7 +27,7 @@
 | [Tests](https://github.com/insper-riscv/Tests) | The test programs (`asm/`, `c/`), goldens, and the flows that run them | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | The official ACT4 suite (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Core`, `Memory`, `Peripherals`, `TopLevel`, and `Tests` are submodules of this repository. `Common-Components` comes in as a submodule of `Core`, `Memory`, and `Peripherals`; `Infra`, `Tools`, and `Certification` are used on their own.
+`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel`, and `Tests` are submodules of this repository, side by side because the `TopLevel` reads the generic blocks from `../Common-Components`; `Infra`, `Tools`, and `Certification` are used on their own.
 
 ## 3. Cloning and Running
 

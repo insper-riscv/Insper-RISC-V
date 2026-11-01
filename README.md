@@ -27,7 +27,7 @@ SoC RISC-V de 32 bits (RV32I + M) em VHDL, com pipeline em ordem de 5 estágios,
 | [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Core`, `Memory`, `Peripherals`, `TopLevel` e `Tests` são submódulos deste repositório. `Common-Components` entra como submódulo do `Core`, do `Memory` e do `Peripherals`; `Infra`, `Tools` e `Certification` são usados por conta própria.
+`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel` e `Tests` são submódulos deste repositório, lado a lado porque o `TopLevel` lê os blocos genéricos em `../Common-Components`; `Infra`, `Tools` e `Certification` são usados por conta própria.
 
 ## 3. Clonagem e Execução
 
