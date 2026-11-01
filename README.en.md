@@ -37,7 +37,7 @@ cd Insper-RISC-V
 make all        # paths, VHDL check, entity tests, formal proofs, and the program suite
 ```
 
-The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infra, in which continuous integration runs.
+The tools come from the `ci-vhdl` and `ci-elf` images (`ghcr.io/insper-riscv/ci-vhdl` and `ghcr.io/insper-riscv/ci-elf`) of Infra, in which continuous integration runs; the second adds to the first the RISC-V GCC, picolibc and Spike that the program suite uses.
 
 | Target | What it runs |
 | :--- | :--- |

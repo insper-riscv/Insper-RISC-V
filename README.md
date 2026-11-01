@@ -37,7 +37,7 @@ cd Insper-RISC-V
 make all        # paths, verificação VHDL, testes por entidade, provas formais e a suíte de programas
 ```
 
-As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infra, em que a integração contínua executa.
+As ferramentas vêm das imagens `ci-vhdl` e `ci-elf` (`ghcr.io/insper-riscv/ci-vhdl` e `ghcr.io/insper-riscv/ci-elf`) do Infra, em que a integração contínua executa; a segunda acrescenta à primeira o GCC RISC-V, a picolibc e o Spike que a suíte de programas usa.
 
 | Alvo | O que executa |
 | :--- | :--- |
