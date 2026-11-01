@@ -13,3 +13,6 @@
 [submodule "TopLevel"]
 	path = TopLevel
 	url = https://github.com/insper-riscv/TopLevel.git
+[submodule "Common-Components"]
+	path = Common-Components
+	url = https://github.com/insper-riscv/Common-Components.git
