@@ -11,6 +11,10 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
+
+# Os relatórios são JSON: um objeto cujos valores têm tipos variados.
+type Json = dict[str, Any]
 
 # Quantidade de níveis de pasta percorridos acima do projeto Quartus ao
 # procurar o arquivo do PLL.
@@ -55,12 +59,12 @@ def _find_pll_file(quartus_dir: Path) -> Path | None:
     return None
 
 
-def parse_pll_clock(quartus_dir: Path) -> dict:
+def parse_pll_clock(quartus_dir: Path) -> Json:
     """Lê a frequência configurada no PLL da CPU no pll_0002.v."""
     pll_file = _find_pll_file(quartus_dir)
     if pll_file is None:
         return {"error": "pll_0002.v nao encontrado", "fmax_mhz": None}
-    text = pll_file.read_text(errors="replace")
+    text = pll_file.read_text(encoding="utf-8", errors="replace")
     match = re.search(r'output_clock_frequency0\("([\d.]+)\s*MHz"\)', text)
     if match:
         return {
@@ -75,13 +79,17 @@ def parse_pll_clock(quartus_dir: Path) -> dict:
     }
 
 
-def parse_fmax(report_path: Path) -> dict:
+def parse_fmax(report_path: Path) -> Json:
     """Lê o pior Fmax dos relógios do relatório de tempo do Quartus."""
-    result = {"fmax_mhz": None, "clock_name": None, "source": str(report_path)}
+    result: Json = {
+        "fmax_mhz": None,
+        "clock_name": None,
+        "source": str(report_path),
+    }
     if not report_path.exists():
         result["error"] = f"Arquivo não encontrado: {report_path}"
         return result
-    text = report_path.read_text(errors="replace")
+    text = report_path.read_text(encoding="utf-8", errors="replace")
     pattern = re.compile(
         r";\s*([\d.]+)\s*MHz\s*;[^;]*;\s*([\w\[\].]+)\s*;", re.IGNORECASE
     )
@@ -99,7 +107,7 @@ def parse_fmax(report_path: Path) -> dict:
     return result
 
 
-def _resource_entry(match: re.Match) -> dict:
+def _resource_entry(match: re.Match[str]) -> Json:
     """Monta o par usado e total de um recurso do relatório fitter."""
     used = int(match.group(1).replace(",", ""))
     if match.lastindex is None or match.lastindex < GROUPS_USED_AND_TOTAL:
@@ -112,13 +120,13 @@ def _resource_entry(match: re.Match) -> dict:
     }
 
 
-def parse_resource_utilization(fit_report_path: Path) -> dict:
+def parse_resource_utilization(fit_report_path: Path) -> Json:
     """Lê a ocupação de ALMs, registradores, memória, DSPs e PLLs."""
-    result = {"source": str(fit_report_path)}
+    result: Json = {"source": str(fit_report_path)}
     if not fit_report_path.exists():
         result["error"] = f"Arquivo não encontrado: {fit_report_path}"
         return result
-    text = fit_report_path.read_text(errors="replace")
+    text = fit_report_path.read_text(encoding="utf-8", errors="replace")
     for key, pattern in RESOURCE_PATTERNS.items():
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
@@ -132,7 +140,7 @@ def _count_attr(text: str, attr: str, fallback: int) -> int:
     return int(match.group(1)) if match else fallback
 
 
-def _parse_results_xml(text: str) -> dict:
+def _parse_results_xml(text: str) -> Json:
     """Conta os casos de um results.xml do cocotb."""
     cases = re.findall(r"<testcase\b[^>]*/>", text, re.DOTALL)
     cases += re.findall(r"<testcase\b[^>]*>.*?</testcase>", text, re.DOTALL)
@@ -151,7 +159,7 @@ def _parse_results_xml(text: str) -> dict:
     }
 
 
-def _parse_cocotb_log(text: str) -> dict:
+def _parse_cocotb_log(text: str) -> Json:
     """Conta os casos de um log de texto do cocotb."""
     passed = len(re.findall(r"\bPASSED\b", text))
     failed = len(re.findall(r"\bFAILED\b", text))
@@ -169,9 +177,9 @@ def _parse_cocotb_log(text: str) -> dict:
     }
 
 
-def parse_cocotb_coverage(log_path: Path) -> dict:
+def parse_cocotb_coverage(log_path: Path) -> Json:
     """Lê os totais de testes de um results.xml ou log do cocotb."""
-    result = {
+    result: Json = {
         "source": str(log_path),
         "passed": 0,
         "failed": 0,
@@ -182,7 +190,7 @@ def parse_cocotb_coverage(log_path: Path) -> dict:
     if not log_path.exists():
         result["error"] = f"Arquivo não encontrado: {log_path}"
         return result
-    text = log_path.read_text(errors="replace")
+    text = log_path.read_text(encoding="utf-8", errors="replace")
     counts = (
         _parse_results_xml(text)
         if log_path.suffix == ".xml"
@@ -196,9 +204,9 @@ def parse_cocotb_coverage(log_path: Path) -> dict:
     return result
 
 
-def parse_tests_json(tests_json_path: Path) -> dict:
+def parse_tests_json(tests_json_path: Path) -> Json:
     """Lê o tests.json do runner cocotb e agrega os results.xml."""
-    result = {
+    result: Json = {
         "source": str(tests_json_path),
         "passed": 0,
         "failed": 0,
@@ -210,12 +218,14 @@ def parse_tests_json(tests_json_path: Path) -> dict:
         result["error"] = f"tests.json nao encontrado: {tests_json_path}"
         return result
     try:
-        tests = json.loads(tests_json_path.read_text())
+        tests = json.loads(tests_json_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         result["error"] = f"Erro ao ler tests.json: {exc}"
         return result
     sim_build = tests_json_path.parent / "sim_build"
-    found = list(sim_build.rglob("results.xml")) if sim_build.exists() else []
+    found: list[Path] = (
+        list(sim_build.rglob("results.xml")) if sim_build.exists() else []
+    )
     if not found:
         total = len(tests)
         result.update(
@@ -245,7 +255,7 @@ def _instructions_in(text: str, instructions: set[str]) -> set[str]:
     return {i for i in instructions if re.search(rf"\b{i}\b", text)}
 
 
-def count_instructions(testbench_dirs: list[str]) -> dict:
+def count_instructions(testbench_dirs: list[str]) -> Json:
     """Conta as instruções RV32I e RV32M citadas nos testes."""
     found_i: set[str] = set()
     found_m: set[str] = set()
@@ -254,7 +264,7 @@ def count_instructions(testbench_dirs: list[str]) -> dict:
         if not path.exists():
             continue
         for source in list(path.rglob("*.py")) + list(path.rglob("*.S")):
-            text = source.read_text(errors="replace").upper()
+            text = source.read_text(encoding="utf-8", errors="replace").upper()
             found_i |= _instructions_in(text, RV32I_INSTRUCTIONS)
             found_m |= _instructions_in(text, RV32M_INSTRUCTIONS)
     total_i = len(RV32I_INSTRUCTIONS)
@@ -281,7 +291,7 @@ def _find_tests_json(testbench_dirs: list[str]) -> Path | None:
     return None
 
 
-def _coverage(args: argparse.Namespace) -> dict:
+def _coverage(args: argparse.Namespace) -> Json:
     """Escolhe a fonte da cobertura: log do cocotb ou tests.json."""
     cocotb_log = Path(args.cocotb_log)
     if cocotb_log.exists() and str(cocotb_log) != "/dev/null":
@@ -292,7 +302,7 @@ def _coverage(args: argparse.Namespace) -> dict:
     return parse_cocotb_coverage(cocotb_log)
 
 
-def build_report(args: argparse.Namespace) -> dict:
+def build_report(args: argparse.Namespace) -> Json:
     """Monta o relatório com os três KPIs."""
     quartus_dir = Path(args.quartus_dir)
     pll = parse_pll_clock(quartus_dir)
@@ -313,7 +323,7 @@ def build_report(args: argparse.Namespace) -> dict:
     }
 
 
-def _print_clock(clock: dict) -> None:
+def _print_clock(clock: Json) -> None:
     """Imprime o KPI 1."""
     print("\n[KPI 1] Clock do Sistema")
     if not clock.get("fmax_mhz"):
@@ -323,7 +333,7 @@ def _print_clock(clock: dict) -> None:
     print(f"  Fmax : {clock['fmax_mhz']:.2f} MHz  ({label})")
 
 
-def _print_coverage(cov: dict) -> None:
+def _print_coverage(cov: Json) -> None:
     """Imprime o KPI 2."""
     print("\n[KPI 2] Cobertura de Testes (cocotb)")
     if cov.get("coverage_pct") is None:
@@ -340,7 +350,7 @@ def _print_coverage(cov: dict) -> None:
         print(f"  ({cov['note']})")
 
 
-def _print_instructions(ins: dict) -> None:
+def _print_instructions(ins: Json) -> None:
     """Imprime o KPI 3."""
     print("\n[KPI 3] Instruções Suportadas")
     if "ratio" not in ins:
@@ -354,7 +364,7 @@ def _print_instructions(ins: dict) -> None:
         )
 
 
-def print_summary(report: dict) -> None:
+def print_summary(report: Json) -> None:
     """Imprime o resumo legível do relatório."""
     sep = "=" * 62
     print(f"\n{sep}")
@@ -404,13 +414,13 @@ def main() -> None:
         print_summary(report)
     if args.output:
         out = Path(args.output)
-        out.write_text(json.dumps(report, indent=2, ensure_ascii=False))
+        out.write_text(
+            json.dumps(report, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
         print(f"Relatório JSON salvo em: {out}")
-    errors = [
-        v.get("error")
-        for v in report["kpis"].values()
-        if isinstance(v, dict) and v.get("error")
-    ]
+    kpis: dict[str, Json] = report["kpis"]
+    errors = [kpi for kpi in kpis.values() if kpi.get("error")]
     sys.exit(1 if errors else 0)
 
 
