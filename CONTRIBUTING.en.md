@@ -166,6 +166,8 @@ git submodule update --init --recursive  # Initializes every submodule at its pi
 make all                                 # Runs paths, the VHDL check, every repository's own checks, and the simulation suite
 ```
 
+The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files, and the job name is the check the default-branch ruleset requires, so do not rename it.
+
 When adding, renaming, or removing any versioned file, immediately update:
 - `paths.yaml`
 - the submodule pointers
