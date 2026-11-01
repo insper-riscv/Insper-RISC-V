@@ -1,67 +1,54 @@
 # The parent repository: it pins Core, Memory, Peripherals, TopLevel and Tests, and
 # this Makefile runs them together. Each of them has its own Makefile and uv project;
-# `git submodule update --init --recursive` first.
+# `git submodule update --init --recursive` first. The repositories sit side by side
+# here, which is how their own Makefiles and configurations name each other (../Core).
+# The riscv-tools command comes from the toolchain image of insper-riscv/Infra.
 SHELL := /bin/bash
 
 SUBREPOS := Core Memory Peripherals TopLevel
-GHDL     := ghdl
-STD      := --std=08
-WDIR     := build/ghdl
+# The Python of the image where riscv_tools is installed (the host tests of Tests import it).
+PYTOOLS  ?= /opt/riscv-tools/riscv-tools/bin/python
 
-.PHONY: all sync check subrepos sim paths clean
+.PHONY: all sync paths check unit-tests formal sim clean
 
-all: paths check subrepos sim
+all: paths check unit-tests formal sim
 
 sync:
 	@set -e; for s in $(SUBREPOS) Tests; do (cd $$s && uv sync -q); done
 
-# ---------------------------------------------------------------
-# VHDL syntax check (GHDL), every source of the tree in ONE library: it also catches
-# two repositories defining the same entity (as a stale ROM_simulation once did).
-# Run with:  make check
-# ---------------------------------------------------------------
-# 1) All .vhd/.vhdl of the repositories that hold VHDL. The Quartus IPs (Memory/ips)
-#    and the PLL need Intel libraries and are left out.
-CHECK_SRCS := $(shell find TopLevel/platforms/internal-mem/rtl Memory/sim Peripherals/common Peripherals/GPIO Peripherals/TIMER Peripherals/UART Core/common Core/I Core/M Core/cores -type f \( -name '*.vhd' -o -name '*.vhdl' \) | sort)
+# Every file path that the configuration of each repository lists exists (the paths.yaml of each one).
+paths:
+	@set -e; for s in $(SUBREPOS); do $(MAKE) -C $$s paths; done
 
-# 2) Dependency order (topological sort, riscv-tools vhdl-sort)
-ORDERED_SRCS := $(shell uv run --project Tests riscv-tools vhdl-sort $(CHECK_SRCS))
-
-.PHONY: print-check
-print-check:
-	@echo "Files the check analyzes:"; echo
-	@printf '  %s\n' $(ORDERED_SRCS)
-
+# VHDL syntax check (GHDL) of every repository, in dependency order. The TopLevel analyzes the sources of
+# Common-Components, Core, Memory and Peripherals together in one library, so it also catches two
+# repositories defining the same entity; the Core also elaborates each of its profiles.
 check:
-	@echo "Checking VHDL syntax with GHDL..."
-	@mkdir -p $(WDIR)
-	@rm -rf $(WDIR)/*
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $(ORDERED_SRCS)
-	@echo "VHDL syntax check passed"
+	$(MAKE) -C Core profiles
+	$(MAKE) -C Memory check
+	$(MAKE) -C Peripherals check
+	$(MAKE) -C TopLevel check
 
-# ---------------------------------------------------------------
-# Each repository's own checks and tests, at the pinned versions. They find each
-# other as siblings (../Core, ../Memory, ...), which is how the submodules sit.
-# ---------------------------------------------------------------
-subrepos: sync
-	$(MAKE) -C Core paths check profiles test
-	$(MAKE) -C Memory paths check test
-	$(MAKE) -C Peripherals paths check test
-	$(MAKE) -C TopLevel all
+# The per-entity cocotb tests of each repository, and the memory map check of the TopLevel.
+unit-tests: sync
+	$(MAKE) -C Core test
+	$(MAKE) -C Memory test
+	$(MAKE) -C Peripherals test
+	$(MAKE) -C TopLevel memory-map test
 
-# ---------------------------------------------------------------
+# Every make target named formal* of each repository (SymbiYosys and z3); a repository without proofs is skipped.
+formal:
+	@set -e; for s in $(SUBREPOS); do \
+	  for t in $$(sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $$s/Makefile); do $(MAKE) -C $$s $$t; done; \
+	done
+
 # The Tests project's generic simulation suite, including uart-tx, uart-echo
 # and uart-errors through the generic top's serial pins.
-# ---------------------------------------------------------------
 sim: sync
-	cd Tests && uv run python -m unittest discover -s tests/host -v \
-	  && uv run riscv-tools --config tools/riscv_build/config.yaml generate-header \
-	  && uv run riscv-tools --config tools/riscv_build/config.yaml compile --emit hex \
-	  && uv run riscv-tools --config tools/riscv_build/config.yaml sim
-
-# Every file path the configuration lists exists (paths.yaml).
-paths: sync
-	cd Tests && uv run riscv-tools --root .. check-paths --manifest paths.yaml
+	cd Tests && $(PYTOOLS) -m unittest discover -s tests/host -v \
+	  && riscv-tools --config tools/riscv_build/config.yaml generate-header \
+	  && riscv-tools --config tools/riscv_build/config.yaml compile --emit hex \
+	  && riscv-tools --config tools/riscv_build/config.yaml sim
 
 clean:
 	rm -rf build
