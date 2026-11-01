@@ -38,8 +38,10 @@ jobs:
     name: unit-tests
     runs-on: ubuntu-26.04
     timeout-minutes: 60
+    # The ci-elf image is the ci-vhdl one plus the RISC-V GCC, picolibc and Spike that the
+    # program suite of the Tests (make sim) compiles and checks with.
     container:
-      image: ghcr.io/insper-riscv/ci-vhdl:latest
+      image: ghcr.io/insper-riscv/ci-elf:latest
 
     steps:
       - uses: actions/checkout@v7
