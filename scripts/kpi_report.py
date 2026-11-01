@@ -1,314 +1,416 @@
 #!/usr/bin/env python3
-"""
-kpi_report.py — Coleta automática dos KPIs do Capstone RV32IM
-Insper / CTI Renato Archer — 2026.1
+"""Coleta os KPIs do SoC RV32IM de uma execução do Quartus e dos testes.
 
-Uso (da raiz do repo ~/RV32I):
+Uso, da raiz do repositório:
   python3 scripts/kpi_report.py --output kpi_report.json
 """
 
-import argparse, json, re, sys
+import argparse
+import json
+import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
+# Quantidade de níveis de pasta percorridos acima do projeto Quartus ao
+# procurar o arquivo do PLL.
+PLL_SEARCH_DEPTH = 6
+# Número de grupos de uma expressão que captura "usado / total".
+GROUPS_USED_AND_TOTAL = 2
 
-# ===========================================================================
-# KPI 1 — Clock do sistema (Quartus .sta.rpt + .fit.rpt)
-# ===========================================================================
+RESOURCE_PATTERNS = {
+    "alms_used": (
+        r"Logic utilization \(in ALMs\)\s*;\s*([\d,]+)\s*/\s*([\d,]+)"
+    ),
+    "registers": r"Total registers\s*;\s*([\d,]+)",
+    "m9k_blocks": r"Total block memory bits\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
+    "dsp_blocks": r"DSP block 18-bit elements\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
+    "plls": r"PLLs\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
+}
 
-def parse_pll_clock(quartus_dir) -> dict:
-    """Lê a frequência real da CPU direto do pll_0002.v — fonte de verdade."""
-    search = Path(quartus_dir).resolve()
-    pll_file = None
-    for _ in range(6):
-        # the platform keeps the PLL next to the Quartus project (platforms/<p>/pll)
-        candidates = (search / "pll" / "pll_0002.v", search / "src" / "PLL" / "pll_0002.v")
-        pll_file = next((c for c in candidates if c.exists()), None)
-        if pll_file is not None:
-            break
+RV32I_INSTRUCTIONS = {
+    "LUI", "AUIPC", "JAL", "JALR",
+    "BEQ", "BNE", "BLT", "BGE", "BLTU", "BGEU",
+    "LB", "LH", "LW", "LBU", "LHU", "SB", "SH", "SW",
+    "ADDI", "SLTI", "SLTIU", "XORI", "ORI", "ANDI", "SLLI", "SRLI", "SRAI",
+    "ADD", "SUB", "SLL", "SLT", "SLTU", "XOR", "SRL", "SRA", "OR", "AND",
+}  # fmt: skip
+RV32M_INSTRUCTIONS = {
+    "MUL", "MULH", "MULHSU", "MULHU", "DIV", "DIVU", "REM", "REMU",
+}  # fmt: skip
+
+
+def _find_pll_file(quartus_dir: Path) -> Path | None:
+    """Procura o pll_0002.v na pasta do projeto Quartus e acima dela."""
+    search = quartus_dir.resolve()
+    for _ in range(PLL_SEARCH_DEPTH):
+        candidates = (
+            search / "pll" / "pll_0002.v",
+            search / "src" / "PLL" / "pll_0002.v",
+        )
+        found = next((c for c in candidates if c.exists()), None)
+        if found is not None:
+            return found
         search = search.parent
+    return None
+
+
+def parse_pll_clock(quartus_dir: Path) -> dict:
+    """Lê a frequência configurada no PLL da CPU no pll_0002.v."""
+    pll_file = _find_pll_file(quartus_dir)
     if pll_file is None:
         return {"error": "pll_0002.v nao encontrado", "fmax_mhz": None}
     text = pll_file.read_text(errors="replace")
-    import re as _re
-    m = _re.search(r'output_clock_frequency0\("([\d.]+)\s*MHz"\)', text)
-    if m:
+    match = re.search(r'output_clock_frequency0\("([\d.]+)\s*MHz"\)', text)
+    if match:
         return {
             "source": str(pll_file),
             "clock_name": "PLL output0 (CPU clock)",
-            "fmax_mhz": float(m.group(1)),
+            "fmax_mhz": float(match.group(1)),
             "note": "Frequencia configurada no PLL (pll_0002.v)",
         }
-    return {"error": "Padrao de frequencia nao encontrado em pll_0002.v", "fmax_mhz": None}
+    return {
+        "error": "Padrao de frequencia nao encontrado em pll_0002.v",
+        "fmax_mhz": None,
+    }
 
 
 def parse_fmax(report_path: Path) -> dict:
+    """Lê o pior Fmax dos relógios do relatório de tempo do Quartus."""
     result = {"fmax_mhz": None, "clock_name": None, "source": str(report_path)}
     if not report_path.exists():
         result["error"] = f"Arquivo não encontrado: {report_path}"
         return result
     text = report_path.read_text(errors="replace")
-    # Formato Quartus 23.x: ; 62.5 MHz ; 62.5 MHz ; clk ;
-    pattern = re.compile(r";\s*([\d.]+)\s*MHz\s*;[^;]*;\s*([\w\[\].]+)\s*;", re.IGNORECASE)
+    pattern = re.compile(
+        r";\s*([\d.]+)\s*MHz\s*;[^;]*;\s*([\w\[\].]+)\s*;", re.IGNORECASE
+    )
     matches = pattern.findall(text)
-    if matches:
-        parsed = [(name.strip(), float(freq)) for freq, name in matches]
-        # Filtra clock JTAG (não é o clock da CPU)
-        cpu = [(n, f) for n, f in parsed if "tck" not in n.lower()]
-        worst = min(cpu if cpu else parsed, key=lambda x: x[1])
-        result["clock_name"] = worst[0]
-        result["fmax_mhz"]   = worst[1]
-        result["all_clocks"] = {n: f for n, f in parsed}
-    else:
+    if not matches:
         result["error"] = "Padrão Fmax não encontrado no relatório"
+        return result
+    parsed = [(name.strip(), float(freq)) for freq, name in matches]
+    # O relógio do JTAG não é o relógio da CPU.
+    cpu = [(n, f) for n, f in parsed if "tck" not in n.lower()]
+    worst = min(cpu or parsed, key=lambda x: x[1])
+    result["clock_name"] = worst[0]
+    result["fmax_mhz"] = worst[1]
+    result["all_clocks"] = dict(parsed)
     return result
 
 
+def _resource_entry(match: re.Match) -> dict:
+    """Monta o par usado e total de um recurso do relatório fitter."""
+    used = int(match.group(1).replace(",", ""))
+    if match.lastindex is None or match.lastindex < GROUPS_USED_AND_TOTAL:
+        return {"used": used}
+    total = int(match.group(2).replace(",", ""))
+    return {
+        "used": used,
+        "total": total,
+        "pct": round(100 * used / total, 1) if total else 0,
+    }
+
+
 def parse_resource_utilization(fit_report_path: Path) -> dict:
+    """Lê a ocupação de ALMs, registradores, memória, DSPs e PLLs."""
     result = {"source": str(fit_report_path)}
     if not fit_report_path.exists():
         result["error"] = f"Arquivo não encontrado: {fit_report_path}"
         return result
     text = fit_report_path.read_text(errors="replace")
-    for key, pat in {
-        "alms_used":  r"Logic utilization \(in ALMs\)\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
-        "registers":  r"Total registers\s*;\s*([\d,]+)",
-        "m9k_blocks": r"Total block memory bits\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
-        "dsp_blocks": r"DSP block 18-bit elements\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
-        "plls":       r"PLLs\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
-    }.items():
-        m = re.search(pat, text, re.IGNORECASE)
-        if m:
-            val = int(m.group(1).replace(",", ""))
-            if m.lastindex >= 2:
-                total = int(m.group(2).replace(",", ""))
-                result[key] = {"used": val, "total": total,
-                               "pct": round(100 * val / total, 1) if total else 0}
-            else:
-                result[key] = {"used": val}
+    for key, pattern in RESOURCE_PATTERNS.items():
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            result[key] = _resource_entry(match)
     return result
 
 
-# ===========================================================================
-# KPI 2 — Cobertura de testes (cocotb results.xml)
-# ===========================================================================
+def _count_attr(text: str, attr: str, fallback: int) -> int:
+    """Lê um atributo numérico do cabeçalho do results.xml."""
+    match = re.search(rf'\b{attr}="(\d+)"', text)
+    return int(match.group(1)) if match else fallback
+
+
+def _parse_results_xml(text: str) -> dict:
+    """Conta os casos de um results.xml do cocotb."""
+    cases = re.findall(r"<testcase\b[^>]*/>", text, re.DOTALL)
+    cases += re.findall(r"<testcase\b[^>]*>.*?</testcase>", text, re.DOTALL)
+    total = _count_attr(text, "tests", len(cases))
+    failures = len(re.findall(r"<failure\b", text))
+    errors = len(re.findall(r"<error\b", text))
+    skips = len(re.findall(r"<skipped\b", text))
+    failed = _count_attr(text, "failures", failures)
+    errored = _count_attr(text, "errors", errors)
+    skipped = _count_attr(text, "skipped", skips)
+    return {
+        "total": total,
+        "passed": total - failed - errored - skipped,
+        "failed": failed + errored,
+        "skipped": skipped,
+    }
+
+
+def _parse_cocotb_log(text: str) -> dict:
+    """Conta os casos de um log de texto do cocotb."""
+    passed = len(re.findall(r"\bPASSED\b", text))
+    failed = len(re.findall(r"\bFAILED\b", text))
+    skipped = len(re.findall(r"\bSKIPPED\b", text))
+    match = re.search(
+        r"(\d+) tests passed.*?(\d+) failed", text, re.IGNORECASE
+    )
+    if match:
+        passed, failed = int(match.group(1)), int(match.group(2))
+    return {
+        "total": passed + failed + skipped,
+        "passed": passed,
+        "failed": failed,
+        "skipped": skipped,
+    }
+
 
 def parse_cocotb_coverage(log_path: Path) -> dict:
-    result = {"source": str(log_path), "passed": 0, "failed": 0,
-              "skipped": 0, "total": 0, "coverage_pct": None}
+    """Lê os totais de testes de um results.xml ou log do cocotb."""
+    result = {
+        "source": str(log_path),
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "total": 0,
+        "coverage_pct": None,
+    }
     if not log_path.exists():
         result["error"] = f"Arquivo não encontrado: {log_path}"
         return result
     text = log_path.read_text(errors="replace")
-    if log_path.suffix == ".xml":
-        all_cases  = re.findall(r'<testcase\b[^>]*/>', text, re.DOTALL)
-        all_cases += re.findall(r'<testcase\b[^>]*>.*?</testcase>', text, re.DOTALL)
-        total   = len(all_cases)
-        failed  = len(re.findall(r'<failure\b', text))
-        errored = len(re.findall(r'<error\b',   text))
-        skipped = len(re.findall(r'<skipped\b', text))
-        for attr, dest in [('tests','total'),('failures','failed'),
-                           ('errors','errored'),('skipped','skipped')]:
-            m = re.search(rf'\b{attr}="(\d+)"', text)
-            if m:
-                v = int(m.group(1))
-                if attr == 'tests':    total   = v
-                elif attr == 'failures': failed  = v
-                elif attr == 'errors':   errored = v
-                elif attr == 'skipped':  skipped = v
-        passed = total - failed - errored - skipped
-        result.update({"total": total, "passed": passed,
-                       "failed": failed + errored, "skipped": skipped})
-    else:
-        passed  = len(re.findall(r"\bPASSED\b", text))
-        failed  = len(re.findall(r"\bFAILED\b", text))
-        skipped = len(re.findall(r"\bSKIPPED\b", text))
-        total   = passed + failed + skipped
-        m = re.search(r"(\d+) tests passed.*?(\d+) failed", text, re.IGNORECASE)
-        if m:
-            passed, failed, total = int(m.group(1)), int(m.group(2)), int(m.group(1))+int(m.group(2))
-        result.update({"total": total, "passed": passed, "failed": failed, "skipped": skipped})
+    counts = (
+        _parse_results_xml(text)
+        if log_path.suffix == ".xml"
+        else _parse_cocotb_log(text)
+    )
+    result.update(counts)
     if result["total"] > 0:
-        result["coverage_pct"] = round(100 * result["passed"] / result["total"], 1)
+        result["coverage_pct"] = round(
+            100 * result["passed"] / result["total"], 1
+        )
     return result
 
 
-
 def parse_tests_json(tests_json_path: Path) -> dict:
-    """Lê tests.json do runner cocotb (formato 2025.2 com GHDL)."""
-    result = {"source": str(tests_json_path), "passed": 0, "failed": 0,
-              "skipped": 0, "total": 0, "coverage_pct": None}
+    """Lê o tests.json do runner cocotb e agrega os results.xml."""
+    result = {
+        "source": str(tests_json_path),
+        "passed": 0,
+        "failed": 0,
+        "skipped": 0,
+        "total": 0,
+        "coverage_pct": None,
+    }
     if not tests_json_path.exists():
         result["error"] = f"tests.json nao encontrado: {tests_json_path}"
         return result
     try:
-        import json as _json
-        tests = _json.loads(tests_json_path.read_text())
-    except Exception as e:
-        result["error"] = f"Erro ao ler tests.json: {e}"
+        tests = json.loads(tests_json_path.read_text())
+    except (OSError, json.JSONDecodeError) as exc:
+        result["error"] = f"Erro ao ler tests.json: {exc}"
         return result
-    # Procura results.xml em sim_build/
     sim_build = tests_json_path.parent / "sim_build"
-    found_results = list(sim_build.rglob("results.xml")) if sim_build.exists() else []
-    if found_results:
-        passed = failed = skipped = 0
-        for xml_path in found_results:
-            r = parse_cocotb_coverage(xml_path)
-            passed  += r.get("passed", 0)
-            failed  += r.get("failed", 0)
-            skipped += r.get("skipped", 0)
-        total = passed + failed + skipped
-        result.update({"passed": passed, "failed": failed, "skipped": skipped, "total": total,
-                       "note": f"Agregado de {len(found_results)} results.xml em sim_build/"})
-        if total > 0:
-            result["coverage_pct"] = round(100 * passed / total, 1)
-    else:
+    found = list(sim_build.rglob("results.xml")) if sim_build.exists() else []
+    if not found:
         total = len(tests)
-        result.update({"passed": total, "total": total,
-                       "coverage_pct": 100.0,
-                       "note": f"{total} suites em tests.json (GHDL, sem results.xml)"})
+        result.update(
+            {
+                "passed": total,
+                "total": total,
+                "coverage_pct": 100.0,
+                "note": f"{total} suites em tests.json (sem results.xml)",
+            }
+        )
+        return result
+    for xml_path in found:
+        counts = parse_cocotb_coverage(xml_path)
+        for key in ("passed", "failed", "skipped"):
+            result[key] += counts.get(key, 0)
+    result["total"] = result["passed"] + result["failed"] + result["skipped"]
+    result["note"] = f"Agregado de {len(found)} results.xml em sim_build/"
+    if result["total"] > 0:
+        result["coverage_pct"] = round(
+            100 * result["passed"] / result["total"], 1
+        )
     return result
 
 
-# ===========================================================================
-# KPI 3 — Quantidade de instruções suportadas
-# ===========================================================================
+def _instructions_in(text: str, instructions: set[str]) -> set[str]:
+    """Devolve as instruções do conjunto citadas no texto."""
+    return {i for i in instructions if re.search(rf"\b{i}\b", text)}
 
-RV32I_INSTRUCTIONS = {
-    "LUI","AUIPC","JAL","JALR","BEQ","BNE","BLT","BGE","BLTU","BGEU",
-    "LB","LH","LW","LBU","LHU","SB","SH","SW",
-    "ADDI","SLTI","SLTIU","XORI","ORI","ANDI","SLLI","SRLI","SRAI",
-    "ADD","SUB","SLL","SLT","SLTU","XOR","SRL","SRA","OR","AND",
-}
-RV32M_INSTRUCTIONS = {"MUL","MULH","MULHSU","MULHU","DIV","DIVU","REM","REMU"}
 
-def count_instructions(testbench_dirs: list) -> dict:
-    found_i, found_m = set(), set()
-    for d in testbench_dirs:
-        p = Path(d)
-        if not p.exists():
+def count_instructions(testbench_dirs: list[str]) -> dict:
+    """Conta as instruções RV32I e RV32M citadas nos testes."""
+    found_i: set[str] = set()
+    found_m: set[str] = set()
+    for directory in testbench_dirs:
+        path = Path(directory)
+        if not path.exists():
             continue
-        for f in list(p.rglob("*.py")) + list(p.rglob("*.S")):
-            text = f.read_text(errors="replace").upper()
-            for instr in RV32I_INSTRUCTIONS:
-                if re.search(rf"\b{instr}\b", text): found_i.add(instr)
-            for instr in RV32M_INSTRUCTIONS:
-                if re.search(rf"\b{instr}\b", text): found_m.add(instr)
+        for source in list(path.rglob("*.py")) + list(path.rglob("*.S")):
+            text = source.read_text(errors="replace").upper()
+            found_i |= _instructions_in(text, RV32I_INSTRUCTIONS)
+            found_m |= _instructions_in(text, RV32M_INSTRUCTIONS)
+    total_i = len(RV32I_INSTRUCTIONS)
+    total_m = len(RV32M_INSTRUCTIONS)
     return {
-        "rv32i_covered": sorted(found_i), "rv32i_total": len(RV32I_INSTRUCTIONS),
-        "rv32i_pct": round(100*len(found_i)/len(RV32I_INSTRUCTIONS), 1),
-        "rv32m_covered": sorted(found_m), "rv32m_total": len(RV32M_INSTRUCTIONS),
-        "rv32m_pct": round(100*len(found_m)/len(RV32M_INSTRUCTIONS), 1),
-        "total_covered": len(found_i)+len(found_m),
-        "total_supported": len(RV32I_INSTRUCTIONS)+len(RV32M_INSTRUCTIONS),
-        "ratio": f"{len(found_i)+len(found_m)} / {len(RV32I_INSTRUCTIONS)+len(RV32M_INSTRUCTIONS)}",
+        "rv32i_covered": sorted(found_i),
+        "rv32i_total": total_i,
+        "rv32i_pct": round(100 * len(found_i) / total_i, 1),
+        "rv32m_covered": sorted(found_m),
+        "rv32m_total": total_m,
+        "rv32m_pct": round(100 * len(found_m) / total_m, 1),
+        "total_covered": len(found_i) + len(found_m),
+        "total_supported": total_i + total_m,
+        "ratio": f"{len(found_i) + len(found_m)} / {total_i + total_m}",
     }
 
 
-# ===========================================================================
-# Relatório e CLI
-# ===========================================================================
+def _find_tests_json(testbench_dirs: list[str]) -> Path | None:
+    """Devolve o primeiro tests.json encontrado nas pastas de teste."""
+    for directory in testbench_dirs:
+        candidate = Path(directory) / "python" / "tests.json"
+        if candidate.exists():
+            return candidate
+    return None
 
-def build_report(args) -> dict:
-    report = {
-        "generated_at": datetime.now().isoformat(timespec="seconds"),
-        "project": "RV32IM — Capstone Insper/CTI 2026.1",
-        "kpis": {}
-    }
-    sta = Path(args.quartus_dir) / args.sta_rpt
-    fit = Path(args.quartus_dir) / args.fit_rpt
-    pll = parse_pll_clock(Path(args.quartus_dir))
-    report["kpis"]["kpi1_clock_mhz"] = pll if pll.get("fmax_mhz") else parse_fmax(sta)
-    report["kpis"]["kpi1_resources"]  = parse_resource_utilization(fit)
+
+def _coverage(args: argparse.Namespace) -> dict:
+    """Escolhe a fonte da cobertura: log do cocotb ou tests.json."""
     cocotb_log = Path(args.cocotb_log)
     if cocotb_log.exists() and str(cocotb_log) != "/dev/null":
-        report["kpis"]["kpi2_test_coverage"] = parse_cocotb_coverage(cocotb_log)
-    else:
-        tests_json = None
-        for d in args.testbench_dirs:
-            c = Path(d) / "python" / "tests.json"
-            if c.exists():
-                tests_json = c
-                break
-        report["kpis"]["kpi2_test_coverage"] = (
-            parse_tests_json(tests_json) if tests_json
-            else parse_cocotb_coverage(cocotb_log)
+        return parse_cocotb_coverage(cocotb_log)
+    tests_json = _find_tests_json(args.testbench_dirs)
+    if tests_json is not None:
+        return parse_tests_json(tests_json)
+    return parse_cocotb_coverage(cocotb_log)
+
+
+def build_report(args: argparse.Namespace) -> dict:
+    """Monta o relatório com os três KPIs."""
+    quartus_dir = Path(args.quartus_dir)
+    pll = parse_pll_clock(quartus_dir)
+    clock = (
+        pll if pll.get("fmax_mhz") else parse_fmax(quartus_dir / args.sta_rpt)
+    )
+    return {
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "project": "RV32IM, Capstone Insper/CTI 2026.1",
+        "kpis": {
+            "kpi1_clock_mhz": clock,
+            "kpi1_resources": parse_resource_utilization(
+                quartus_dir / args.fit_rpt
+            ),
+            "kpi2_test_coverage": _coverage(args),
+            "kpi3_instructions": count_instructions(args.testbench_dirs),
+        },
+    }
+
+
+def _print_clock(clock: dict) -> None:
+    """Imprime o KPI 1."""
+    print("\n[KPI 1] Clock do Sistema")
+    if not clock.get("fmax_mhz"):
+        print(f"  Fmax : N/A  ({clock.get('error', 'sem dados')})")
+        return
+    label = clock.get("note") or f"clock: {clock.get('clock_name', '?')}"
+    print(f"  Fmax : {clock['fmax_mhz']:.2f} MHz  ({label})")
+
+
+def _print_coverage(cov: dict) -> None:
+    """Imprime o KPI 2."""
+    print("\n[KPI 2] Cobertura de Testes (cocotb)")
+    if cov.get("coverage_pct") is None:
+        print(f"  N/A  ({cov.get('error', 'sem dados')})")
+        return
+    flag = "✓" if cov["failed"] == 0 else "✗"
+    print(
+        f"  {cov['passed']}/{cov['total']} testes passaram "
+        f"({cov['coverage_pct']}%) {flag}"
+    )
+    if cov["failed"]:
+        print(f"  FALHOU: {cov['failed']} teste(s)")
+    if cov.get("note"):
+        print(f"  ({cov['note']})")
+
+
+def _print_instructions(ins: dict) -> None:
+    """Imprime o KPI 3."""
+    print("\n[KPI 3] Instruções Suportadas")
+    if "ratio" not in ins:
+        return
+    print(f"  Total : {ins['ratio']}")
+    for name, key in (("RV32I", "rv32i"), ("RV32M", "rv32m")):
+        covered = len(ins[f"{key}_covered"])
+        print(
+            f"  {name} : {covered}/{ins[f'{key}_total']} "
+            f"({ins[f'{key}_pct']}%)"
         )
-    report["kpis"]["kpi3_instructions"]   = count_instructions(args.testbench_dirs)
-    return report
 
 
-def print_summary(report: dict):
-    kpis = report["kpis"]
+def print_summary(report: dict) -> None:
+    """Imprime o resumo legível do relatório."""
     sep = "=" * 62
-    div = "─" * 62
     print(f"\n{sep}")
-    print(f"  KPI REPORT — {report['project']}")
+    print(f"  KPI REPORT, {report['project']}")
     print(f"  {report['generated_at']}")
     print(sep)
-
-    # KPI 1
-    clk = kpis.get("kpi1_clock_mhz", {})
-    print(f"\n[KPI 1] Clock do Sistema")
-    if clk.get("fmax_mhz"):
-        note = f"  ({clk.get('note',clk.get('clock_name','?'))})" if clk.get("note") else f"  (clock: {clk.get('clock_name','?')})"
-        print(f"  Fmax : {clk['fmax_mhz']:.2f} MHz{note}")
-    else:
-        print(f"  Fmax : N/A  ({clk.get('error','sem dados')})")
-
-
-    # KPI 2
-    cov = kpis.get("kpi2_test_coverage", {})
-    print(f"\n[KPI 2] Cobertura de Testes (cocotb)")
-    if cov.get("coverage_pct") is not None:
-        flag = "✓" if cov["failed"] == 0 else "✗"
-        print(f"  {cov['passed']}/{cov['total']} testes passaram ({cov['coverage_pct']}%) {flag}")
-        if cov["failed"]:
-            print(f"  FALHOU: {cov['failed']} teste(s)")
-        if cov.get("note"):
-            print(f"  ({cov['note']})")
-    else:
-        print(f"  N/A  ({cov.get('error','sem dados')})")
-
-    # KPI 3
-    ins = kpis.get("kpi3_instructions", {})
-    print(f"\n[KPI 3] Instruções Suportadas")
-    if "ratio" in ins:
-        print(f"  Total : {ins['ratio']}")
-        print(f"  RV32I : {len(ins['rv32i_covered'])}/{ins['rv32i_total']} ({ins['rv32i_pct']}%)")
-        print(f"  RV32M : {len(ins['rv32m_covered'])}/{ins['rv32m_total']} ({ins['rv32m_pct']}%)")
-
+    kpis = report["kpis"]
+    _print_clock(kpis.get("kpi1_clock_mhz", {}))
+    _print_coverage(kpis.get("kpi2_test_coverage", {}))
+    _print_instructions(kpis.get("kpi3_instructions", {}))
     print(f"\n{sep}\n")
 
 
-def main():
-    p = argparse.ArgumentParser(
-        description="KPI Report — Capstone RV32IM",
+def _parse_args() -> argparse.Namespace:
+    """Lê os argumentos da linha de comando."""
+    parser = argparse.ArgumentParser(
+        description="KPI Report, Capstone RV32IM",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
-    p.add_argument("--quartus-dir",  default="TopLevel/platforms/internal-mem/quartus")
-    p.add_argument("--sta-rpt",      default="output_files/core_fpga_test.sta.rpt")
-    p.add_argument("--fit-rpt",      default="output_files/core_fpga_test.fit.rpt")
-    p.add_argument("--cocotb-log",   default="tests/component/multdiv/results.xml")
-    p.add_argument("--testbench-dirs", nargs="+", default=["tests"])
-    p.add_argument("--output",       default=None,             help="Salva JSON neste arquivo")
-    p.add_argument("--json-only",    action="store_true")
-    args = p.parse_args()
+    parser.add_argument(
+        "--quartus-dir", default="TopLevel/platforms/internal-mem/quartus"
+    )
+    parser.add_argument(
+        "--sta-rpt", default="output_files/core_fpga_test.sta.rpt"
+    )
+    parser.add_argument(
+        "--fit-rpt", default="output_files/core_fpga_test.fit.rpt"
+    )
+    parser.add_argument(
+        "--cocotb-log", default="tests/component/multdiv/results.xml"
+    )
+    parser.add_argument("--testbench-dirs", nargs="+", default=["tests"])
+    parser.add_argument(
+        "--output", default=None, help="Salva JSON neste arquivo"
+    )
+    parser.add_argument("--json-only", action="store_true")
+    return parser.parse_args()
 
+
+def main() -> None:
+    """Gera o relatório, imprime-o e sai com 1 se algum KPI falhou."""
+    args = _parse_args()
     report = build_report(args)
-
     if args.json_only:
         print(json.dumps(report, indent=2, ensure_ascii=False))
     else:
         print_summary(report)
-
     if args.output:
         out = Path(args.output)
         out.write_text(json.dumps(report, indent=2, ensure_ascii=False))
         print(f"Relatório JSON salvo em: {out}")
-
-    errors = [v.get("error") for v in report["kpis"].values()
-              if isinstance(v, dict) and v.get("error")]
+    errors = [
+        v.get("error")
+        for v in report["kpis"].values()
+        if isinstance(v, dict) and v.get("error")
+    ]
     sys.exit(1 if errors else 0)
 
 
