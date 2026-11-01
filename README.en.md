@@ -27,31 +27,29 @@
 | [Tests](https://github.com/insper-riscv/Tests) | The test programs (`asm/`, `c/`), goldens, and the flows that run them | TopLevel, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | The official ACT4 suite (riscv-arch-test) | Core, Memory, TopLevel, Tools |
 
-`Common-Components`, `Core`, `Memory`, `Peripherals`, `TopLevel`, and `Tests` are submodules of this repository, side by side because the `TopLevel` reads the generic blocks from `../Common-Components`; `Infra`, `Tools`, and `Certification` are used on their own.
+`Common-Components`, `Core`, `Memory`, and `Peripherals` are the submodules of this repository. `TopLevel`, `Tests`, `Infra`, `Tools`, and `Certification` are repositories of their own; the `TopLevel` comes to live here with the fold of the histories.
 
 ## 3. Cloning and Running
 
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/Insper-RISC-V.git
 cd Insper-RISC-V
-make all        # paths, VHDL check, entity tests, formal proofs, and the program suite
+make all        # paths, VHDL check, entity tests, and formal proofs
 ```
 
-The tools come from the `ci-vhdl` and `ci-elf` images (`ghcr.io/insper-riscv/ci-vhdl` and `ghcr.io/insper-riscv/ci-elf`) of Infra, in which continuous integration runs; the second adds to the first the RISC-V GCC, picolibc and Spike that the program suite uses.
+The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infra, in which continuous integration runs.
 
 | Target | What it runs |
 | :--- | :--- |
 | `make paths` | Existence of every path listed in the configuration (`paths.yaml`, `riscv-tools check-paths`) |
-| `make check` | VHDL syntax check of every repository in dependency order, elaborating each profile of the `Core` |
-| `make unit-tests` | Per-entity tests (cocotb and GHDL) of `Core`, `Memory`, `Peripherals`, and `TopLevel`, and the memory map check |
+| `make check` | VHDL syntax check of every repository, elaborating each profile of the `Core`, and a check that no entity or package is defined in two repositories |
+| `make unit-tests` | Per-entity tests (cocotb and GHDL) of `Common-Components`, `Core`, `Memory`, and `Peripherals` |
 | `make formal` | Formal proofs (SymbiYosys and z3) of every repository that has them |
-| `make sim` | Simulation suite of `Tests` and the UART host tests |
-
-The submodules sit side by side because they find each other as siblings (`../Core`, `../Memory`, `../Peripherals`, `../TopLevel`), the same layout as when each is cloned next to the others by continuous integration.
+| `make sim` | No effect until the `TopLevel` is folded in; the program suite runs in the `Tests` repository |
 
 ## 4. Board
 
-The Quartus project is `TopLevel/platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V 5CEBA4F23, with BOOT_ROM, FLASH, and RAM inside the FPGA). Programming it and running tests on it is done with `riscv-tools run` from `Tests`, as described in [TopLevel's docs/HARDWARE_PROGRAMMING.md](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
+The Quartus project is in the `TopLevel` repository, at `platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V 5CEBA4F23, with BOOT_ROM, FLASH, and RAM inside the FPGA). Programming it and running tests on it is done with `riscv-tools run` from `Tests`, as described in [TopLevel's docs/HARDWARE_PROGRAMMING.md](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
 
 ## 5. KPIs
 
