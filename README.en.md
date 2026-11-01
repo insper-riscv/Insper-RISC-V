@@ -45,7 +45,6 @@ The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infr
 | `make check` | VHDL syntax check of every repository, elaborating each profile of the `Core`, and a check that no entity or package is defined in two repositories |
 | `make unit-tests` | Per-entity tests (cocotb and GHDL) of `Common-Components`, `Core`, `Memory`, and `Peripherals` |
 | `make formal` | Formal proofs (SymbiYosys and z3) of every repository that has them |
-| `make sim` | No effect until the `TopLevel` is folded in; the program suite runs in the `Tests` repository |
 
 ## 4. Board
 

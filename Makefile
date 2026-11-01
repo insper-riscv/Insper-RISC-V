@@ -10,9 +10,9 @@ NESTED   := ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-unique unit-tests formal sim clean
+.PHONY: all sync paths check check-unique unit-tests formal clean
 
-all: paths check unit-tests formal sim
+all: paths check unit-tests formal
 
 sync:
 	@set -e; for s in $(SUBREPOS); do (cd $$s && uv sync -q); done
@@ -53,11 +53,6 @@ formal:
 	@set -e; for s in $(SUBREPOS); do \
 	  for t in $$(sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $$s/Makefile); do $(MAKE) -C $$s $$t; done; \
 	done
-
-# The programs run on a platform, and the platform joins this repository with the fold of the TopLevel.
-# Until then the suite of programs runs in the Tests repository, which builds against this one.
-sim:
-	@echo "sim: this repository has no platform yet; the programs run in the Tests repository"
 
 clean:
 	rm -rf build

@@ -45,7 +45,6 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 | `make check` | Verificação de sintaxe VHDL de cada repositório, com a elaboração de cada perfil do `Core`, e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
 | `make unit-tests` | Testes por entidade (cocotb e GHDL) de `Common-Components`, `Core`, `Memory` e `Peripherals` |
 | `make formal` | Provas formais (SymbiYosys e z3) de cada repositório que as tem |
-| `make sim` | Sem efeito até a fusão do `TopLevel`; a suíte de programas roda no repositório `Tests` |
 
 ## 4. Placa
 
