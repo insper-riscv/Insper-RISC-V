@@ -1,30 +1,6 @@
-# Every file path the tree's configuration references, checked by
-#   (cd Tests && uv run riscv-tools --root .. check-paths --manifest paths.yaml)
-# and by the sim workflow.
-#
-# Run it before and after moving any file: a moved VHDL file breaks each list
-# below that names it, and each list only breaks when something runs it.
-# Paths are relative to this repository's root. The platform's configs (in
-# TopLevel) are written relative to the project that runs the tests, Tests/, so
-# their references use `base: Tests`.
+# Every file path this repository references, checked by
+#   riscv-tools --root . check-paths --manifest paths.yaml
+# and by `make paths`. Run it before and after moving any file.
 references:
-  # --- Tests: the entity tests still listed there (all skipped) --------------
-  - {name: Tests per-entity tests.json, file: Tests/tests/python/tests.json, yaml: "*.sources", base: Tests}
-
-  # --- the platform's configuration (TopLevel), as Tests uses it -------------
-  - {name: platform sim.vhdl_sources, file: TopLevel/platforms/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: Tests}
-  - {name: platform hardware-top sim.vhdl_sources, file: TopLevel/platforms/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: Tests}
-  - {name: platform sim.python_path, file: TopLevel/platforms/internal-mem/config.yaml, yaml: sim.python_path, base: Tests}
-  - {name: platform runtime sources, file: TopLevel/platforms/internal-mem/config.yaml, yaml: paths.sources, base: Tests}
-  - {name: platform boot ROM, file: TopLevel/platforms/internal-mem/config.yaml, yaml: paths.boot_rom, base: Tests}
-  - {name: platform boot ROM linker script, file: TopLevel/platforms/internal-mem/config.yaml, yaml: paths.boot_rom_linker_script, base: Tests}
-  - {name: platform toolchain specs, file: TopLevel/platforms/internal-mem/config.yaml, yaml: toolchain.specs, base: Tests}
-  - {name: platform Spike stand-in, file: TopLevel/platforms/internal-mem/config.yaml, yaml: emulator.sources, base: Tests}
-  - {name: platform PLL for freq-sweep, file: TopLevel/platforms/internal-mem/config.yaml, yaml: freq_sweep.pll_file, base: Tests}
-  - {name: platform Quartus project dir, file: TopLevel/platforms/internal-mem/config.yaml, yaml: quartus.project_dir, base: Tests}
-
-  # --- Quartus project -------------------------------------------------------
-  - {name: board project (core_fpga_test.qsf), file: TopLevel/platforms/internal-mem/quartus/core_fpga_test.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
-
-  # --- Makefile and scripts --------------------------------------------------
-  - {name: Makefile and CI entry points, paths: [Core, Memory, Peripherals, TopLevel, Tests/tests/python/runner.py, Tests/tools/riscv_build/config.yaml, scripts/kpi_report.py, scripts/compare_kpis.py]}
+  - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py]}
+  - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
