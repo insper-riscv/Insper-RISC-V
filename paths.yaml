@@ -27,4 +27,4 @@ references:
   - {name: de0-cv toolchain specs, file: src/cyclone-v/de0-cv/config.yaml, yaml: toolchain.specs, base: .}
   - {name: de0-cv Spike stand-in, file: src/cyclone-v/de0-cv/config.yaml, yaml: emulator.sources, base: .}
   - {name: de0-cv Quartus project dir, file: src/cyclone-v/de0-cv/config.yaml, yaml: quartus.project_dir, base: .}
-  - {name: de0-cv board project (core_fpga_sdram_flash.qsf), file: src/cyclone-v/de0-cv/quartus/core_fpga_sdram_flash.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
+  - {name: de0-cv board project (de0-cv.qsf), file: src/cyclone-v/de0-cv/de0-cv.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}

@@ -27,4 +27,4 @@ DATE = "15:37:02  December 04, 2025"
 
 # Revisions
 
-PROJECT_REVISION = "core_fpga_sdram_flash"
+PROJECT_REVISION = "de0-cv"

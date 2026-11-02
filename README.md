@@ -34,7 +34,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 | Caminho | Plataforma |
 | :--- | :--- |
 | `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_ROM, FLASH e RAM dentro da FPGA e o topo de simulação `rv32i3stage_core_sim_test`. É a base dos testes de entidade do pipeline |
-| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `core_fpga_sdram_flash.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
+| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
 
 Cada plataforma tem a mesma estrutura.
 
@@ -70,7 +70,7 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 
 ## 5. Placa
 
-O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/quartus/core_fpga_sdram_flash.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md).
+O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/de0-cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md).
 
 ## 6. KPIs
 

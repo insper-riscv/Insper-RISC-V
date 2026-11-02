@@ -25,7 +25,7 @@
 # Notes:
 #
 # 1) The default values for assignments are stored in the file:
-#		core_fpga_sdram_assignment_defaults.qdf
+#		de0-cv_assignment_defaults.qdf
 #    If this file doesn't exist, see file:
 #		assignment_defaults.qdf
 #
@@ -43,7 +43,7 @@ set_global_assignment -name ORIGINAL_QUARTUS_VERSION 18.1.0
 set_global_assignment -name PROJECT_CREATION_TIME_DATE "15:37:02  DECEMBER 04, 2025"
 set_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"
 set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
-set_global_assignment -name SDC_FILE core_fpga_sdram_flash.sdc
+set_global_assignment -name SDC_FILE de0-cv.sdc
 set_global_assignment -name MIN_CORE_JUNCTION_TEMP 0
 set_global_assignment -name MAX_CORE_JUNCTION_TEMP 85
 set_global_assignment -name ERROR_CHECK_FREQUENCY_DIVISOR 256
@@ -58,70 +58,70 @@ set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_FILE ../pll/sdram_platform_pll.v
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pipeline_types.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/byte_mask_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/opcode_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/funct3_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/funct7_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/alu_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/ext_imm_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/ext_ram_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/wb_sel_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pc_src_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/mem_map_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/fwd_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/word_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/muldiv_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_value_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/trap_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/generic_register.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/adder.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_2x1.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_4x1.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/flip_flop.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/utils_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/I/alu.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/onehot_decoder.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_tree.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_file.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/I/extender_imm.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/I/extender_ram.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/I/store_manager.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicclsm/misaligned_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/control_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/bubble_mux.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/forwarding_match.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/forwarding_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/hazard_detection_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/m_decode.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/booth_multiplier_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/non_restoring_divider_rv32.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/muldiv_fusion.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/M/multdiv.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_decode.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_addr_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_event_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicntr/counter64.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicntr/tick_divider.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_file.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/trap_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zifencei/fencei_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pc_fetch.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_if_id.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_id_ex.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_ex_mem.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_mem_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_if.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_id.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_ex.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_mem.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_wb.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/core/core.vhd
-set_global_assignment -name VHDL_FILE ../../../simulation/internal-mem/rtl/Blinky.vhd
-set_global_assignment -name QIP_FILE ../../../../Memory/ips/BOOT_ROM1PORT/boot_rom1port.qip
-set_global_assignment -name QIP_FILE ../../../../Memory/ips/FLASH_STORE1PORT/flash_store1port.qip
-set_global_assignment -name VHDL_FILE core_fpga_sdram_flash.vhd
+set_global_assignment -name VERILOG_FILE pll/sdram_platform_pll.v
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pipeline_types.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/byte_mask_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/opcode_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/funct3_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/funct7_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/alu_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/ext_imm_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/ext_ram_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/wb_sel_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pc_src_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/mem_map_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/fwd_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/word_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/muldiv_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_value_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/trap_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/generic_register.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/adder.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/mux_2x1.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/mux_4x1.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/flip_flop.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/utils_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/I/alu.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/onehot_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/mux_tree.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/reg_file.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/I/extender_imm.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/I/extender_ram.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/I/store_manager.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicclsm/misaligned_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/control_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/bubble_mux.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/forwarding_match.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/forwarding_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/hazard_detection_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/m_decode.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/booth_multiplier_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/non_restoring_divider_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/muldiv_fusion.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/multdiv.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_decode.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_addr_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_event_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicntr/counter64.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicntr/tick_divider.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_file.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/trap_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/Zifencei/fencei_unit.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pc_fetch.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/reg_if_id.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/reg_id_ex.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/reg_ex_mem.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/shared/reg_mem_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_if.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_id.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_ex.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_mem.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_wb.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/core/core.vhd
+set_global_assignment -name VHDL_FILE ../../simulation/internal-mem/rtl/Blinky.vhd
+set_global_assignment -name QIP_FILE ../../../Memory/ips/BOOT_ROM1PORT/boot_rom1port.qip
+set_global_assignment -name QIP_FILE ../../../Memory/ips/FLASH_STORE1PORT/flash_store1port.qip
+set_global_assignment -name VHDL_FILE de0-cv_top.vhd
 
 #============================================================
 # FAMILY "Cyclone V"
@@ -366,7 +366,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[9]
 # de boot ROM + flash. Comentado até o periférico SPI existir
 # em VHDL e expor esses sinais no top-level (mesmo padrão da
 # seção VGA acima) — descomentar quando SPI_FLASH_CS/SCK/MOSI/
-# MISO forem portas reais de core_fpga_sdram.vhd.
+# MISO forem portas reais de de0-cv_top.vhd.
 #
 # GPIO_0_D2 (pino físico 3)  = PIN_M16 -> SPI_FLASH_CS
 # GPIO_0_D3 (pino físico 4)  = PIN_C16 -> SPI_FLASH_SCK
@@ -398,25 +398,25 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # --- the SDRAM platform ----------------------------------------------------
 # the core is written in VHDL-2008
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/cache/icache.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/cache/dcache.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/cache/flash_chip.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/cache/flash_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/cache/mem_region_router.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_pkg.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/synchronizer.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_cpu_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_dbg_master.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/sdram_jtag_core.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/sdram/hw/sdram_jtag_shell.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/jtag_uart.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/ext_interconnect.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/hw/jtag_uart_shell.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/hex_to_seg7.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/seg_display.vhd
-set_global_assignment -name VHDL_FILE ../../../../Memory/external/bus/hw/seg_display_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/cache/icache.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/cache/dcache.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/cache/flash_chip.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/cache/flash_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/cache/mem_region_router.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/synchronizer.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_cpu_bridge.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_dbg_master.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/sdram_jtag_core.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/sdram/hw/sdram_jtag_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/jtag_uart.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/ext_interconnect.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/hw/jtag_uart_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/hex_to_seg7.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/seg_display.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/external/bus/hw/seg_display_shell.vhd
 
 set_instance_assignment -name PLL_COMPENSATION_MODE DIRECT -to "*sdram_platform_pll*|altera_pll:altera_pll_i*|*"
 set_instance_assignment -name PLL_AUTO_RESET OFF -to "*sdram_platform_pll*|altera_pll:altera_pll_i*|*"
