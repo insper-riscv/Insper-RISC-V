@@ -5,8 +5,9 @@
 SHELL := /bin/bash
 
 SUBREPOS := Common-Components Core Memory Peripherals
-# Core, Memory and Peripherals carry their own copy of Common-Components as a submodule.
-NESTED   := ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
+# Core, Memory and Peripherals carry their own copy of Common-Components as a submodule
+# (Core in src/common since its R.1 layout).
+NESTED   := ! -path 'Core/src/common/*' ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
 # The platforms of this repository: the simulation-only one and the board one.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
@@ -27,7 +28,9 @@ SIM_VHDL := $(shell find Common-Components/src Core/src Memory/sim -name '*.vhd'
             $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/rv32i3stage_core_sim_test.vhd
 
 # The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory.
-BOARD_VHDL := $(shell find Memory/external/sdram Memory/external/bus Memory/external/cache -name '*.vhd' -not -path '*/hw/*' | sort) $(PF)/rtl/rv32im_sdram_flash_sim_test.vhd
+BOARD_VHDL := $(shell find Memory/external/sdram Memory/external/bus -name '*.vhd' -not -path '*/hw/*' | sort) \
+               $(addprefix Memory/external/cache/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
+               $(PF)/rtl/rv32im_sdram_flash_sim_test.vhd
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'

@@ -19,3 +19,12 @@ references:
   - {name: board project (core_fpga_test.qsf), file: src/simulation/internal-mem/quartus/core_fpga_test.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
   - {name: Quartus IPs of the PLL, paths: [src/simulation/internal-mem/pll/pll.qip, src/simulation/internal-mem/pll/pll_0002.qip]}
   - {name: per-entity tests.json, file: tests/python/tests.json, yaml: "*.sources", base: .}
+  - {name: de0-cv sim sources, file: src/cyclone-v/de0-cv/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: de0-cv sim python_path, file: src/cyclone-v/de0-cv/config.yaml, yaml: sim.python_path, base: .}
+  - {name: de0-cv runtime sources, file: src/cyclone-v/de0-cv/config.yaml, yaml: paths.sources, base: .}
+  - {name: de0-cv boot ROM, file: src/cyclone-v/de0-cv/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: de0-cv boot ROM linker script, file: src/cyclone-v/de0-cv/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: de0-cv toolchain specs, file: src/cyclone-v/de0-cv/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: de0-cv Spike stand-in, file: src/cyclone-v/de0-cv/config.yaml, yaml: emulator.sources, base: .}
+  - {name: de0-cv Quartus project dir, file: src/cyclone-v/de0-cv/config.yaml, yaml: quartus.project_dir, base: .}
+  - {name: de0-cv board project (core_fpga_sdram_flash.qsf), file: src/cyclone-v/de0-cv/quartus/core_fpga_sdram_flash.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}

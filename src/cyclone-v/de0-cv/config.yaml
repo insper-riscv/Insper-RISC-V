@@ -1,22 +1,36 @@
-# The SDRAM platform with the FLASH as a chip behind the caches (the design of a real SoC): the
-# core holds only the BOOT_ROM; the FLASH (1 MB at 0x20000000) and the SDRAM (64 MB at 0x40000000)
-# are reached through an instruction cache and a write-through data cache, whose line requests a
-# region router sends to the FLASH chip model (through its arbiter) or to the SDRAM controller.
-# Only what differs from sdram is written here.
-extends: ../sdram/config.yaml
+# The de0-cv platform: the DE0-CV board (Cyclone V) with the FLASH as a chip behind the caches (the
+# design of a real SoC). The core holds only the BOOT_ROM; the FLASH (1 MB at 0x20000000) and the SDRAM
+# (64 MB at 0x40000000, 143 MHz) are reached through an instruction cache and a write-through data
+# cache, whose line requests a region router sends to the FLASH chip model (through its arbiter) or to
+# the SDRAM controller. The SDRAM is THE RAM: it holds .data, .bss, the heap, the stack and the words
+# the host shares with the program (tohost, fromhost, stdout); there is no RAM inside the FPGA. The host
+# reads and writes the SDRAM through the debug port (JTAG). Only what differs from internal-mem is
+# written here.
+extends: ../../simulation/internal-mem/config.yaml
 
 toolchain:
   specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs
 
 memory:
+  ram_base: 0x40000000
+  ram_words: 16777216          # 64 MB
+  tohost_addr: 0x43FFFFE8
+  fromhost_addr: 0x43FFFFF0
   rom_base: 0x20000000
   rom_words: 262144            # 1 MB
   # the first word of the program image sits at the base of the FLASH: no leading padding
   rom_origin: 0x20000000
 
 paths:
+  sources:
+    - src/cyclone-v/de0-cv/runtime/_exit.c
+    - src/cyclone-v/de0-cv/runtime/stdio.c
   boot_rom: src/cyclone-v/de0-cv/runtime/boot_rom.S
   boot_rom_linker_script: src/cyclone-v/de0-cv/runtime/boot_rom.ld
+
+emulator:
+  sources:
+    - src/cyclone-v/de0-cv/runtime/spike_exit.S
 
 sim:
   toplevel: rv32im_sdram_flash_sim_test
@@ -102,12 +116,23 @@ sim:
     - Memory/external/bus/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - src/cyclone-v/de0-cv/rtl/rv32im_sdram_flash_sim_test.vhd
+  # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
   parameters:
     HAS_ZIFENCEI: true
     HAS_ZIHPM: true
     # the storage model of the FLASH is 256 KB (65536 words, 16 bits): the chip window is 1 MB, the model
     # array is smaller because a larger one does not run in GHDL; the programs are far smaller
     rom_addr_width: "16"
+  test_module: testbench.test_c_program
+  python_path:
+    - src/cyclone-v/de0-cv
+  # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
+  # power-up wait (200 us) comes before the first access: ticks of CLK are counted for the timeout,
+  # so it is longer than internal-mem's.
+  env:
+    SIM_EXTRA_CLOCKS: "CLK_MEM:7"
+    SIM_SAMPLE_CLOCK: pll_clk_idexmem
+    SIM_TIMEOUT_CYCLES: "2000000"
 
 quartus:
   project_dir: src/cyclone-v/de0-cv/quartus
@@ -115,5 +140,7 @@ quartus:
   sof_file: output_files/core_fpga_sdram_flash.sof
   rom_mif_target: flash_init.mif
   boot_rom_mif_target: boot_rom_init.mif
+  # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
+  ram_backend: sdram_debug
   # The memory editor sees BOOT_ROM (0) and the FLASH storage (1); the SDRAM is reached through the debug port.
   rom_mem_instances: [1]

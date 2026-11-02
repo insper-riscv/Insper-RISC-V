@@ -58,7 +58,7 @@ set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_FILE ../../sdram/pll/sdram_platform_pll.v
+set_global_assignment -name VERILOG_FILE ../pll/sdram_platform_pll.v
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/byte_mask_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/opcode_consts.vhd
@@ -118,7 +118,7 @@ set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_ex.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_mem.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/core/core.vhd
-set_global_assignment -name VHDL_FILE ../../internal-mem/rtl/Blinky.vhd
+set_global_assignment -name VHDL_FILE ../../../simulation/internal-mem/rtl/Blinky.vhd
 set_global_assignment -name QIP_FILE ../../../../Memory/ips/BOOT_ROM1PORT/boot_rom1port.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/ips/FLASH_STORE1PORT/flash_store1port.qip
 set_global_assignment -name VHDL_FILE core_fpga_sdram_flash.vhd
