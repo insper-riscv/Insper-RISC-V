@@ -115,7 +115,8 @@ extraPaths = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
 [tool.pyrefly]
 preset = "strict"
 project-includes = ["scripts", "src", "tests"]
-search-path = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
+# The repository root resolves `tests.python...`; the second path is where the ci-vhdl image installs riscv-tools.
+search-path = [".", "/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
 python-version = "3.14"
 
 [tool.pylint.main]
