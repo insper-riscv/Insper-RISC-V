@@ -1,5 +1,7 @@
 # Arquitetura de memória: BOOT_ROM + FLASH + RAM (Harvard modificado)
 
+Este documento descreve a memória da plataforma `internal-mem`. A da `de0-cv`, com a FLASH e a SDRAM atrás das caches, está em [de0-cv.md](de0-cv.md).
+
 ## Resumo
 
 O core (`rv32im_pipeline_core`) modela a hierarquia de memória de uma SoC de
@@ -19,17 +21,12 @@ estágio MEM (load/store) só toca RAM, **exceto** por uma abertura
 deliberada: o estágio MEM também consegue ler `FLASH_MEM` (a segunda cópia
 física da FLASH), só para o bootloader copiar `.data` de FLASH pra RAM no
 boot. Essa é a única exceção à separação instrução/dado: ver
-[FLASH precisa de uma segunda porta de leitura](#flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)
+[FLASH precisa de uma segunda porta de leitura](#2-flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)
 abaixo.
 
-Antes desse redesign, o core era Harvard **estrito** (uma ROM, uma RAM, MEM
-nunca tocava ROM), o que quebrava `.data` com valor inicial não-zero de
-forma irrecuperável (ver [DATA_HARVARD_BUG.md](bugs/DATA_HARVARD_BUG.md), cujo
-link "Correção definitiva" aponta pra este documento).
+## 1. Os três papéis, em detalhe
 
-## Os três papéis, em detalhe
-
-### BOOT_ROM: bootloader fixo
+### 1.1. BOOT_ROM: bootloader fixo
 
 Programado **uma única vez**, como parte do compile completo inicial do
 Quartus (`quartus_sh --flow compile` + `quartus_pgm`); nunca reescrito via
@@ -38,17 +35,17 @@ JTAG depois disso, diferente de FLASH. Contém `boot_rom.S`
 tohost/fromhost e o cabeçalho do `stdout` e salta pra
 FLASH, e o loop de espera/restart (`rv32_wait_restart`) que deixa
 `riscv-tools run` trocar de teste sem reprogramar a FPGA inteira; ver
-[PROGRAM_UPDATE_HANDOFF.md](PROGRAM_UPDATE_HANDOFF.md) pro fluxo
+[atualizacao-de-programa.md](atualizacao-de-programa.md) pro fluxo
 completo dessa troca.
 
 É genérico de propósito e não sabe nada de um teste: o `crt0` da picolibc,
 dentro da imagem de cada teste (começando em `0x800`), copia o `.data`,
 zera o `.bss` e chama `main`; o que a BOOT_ROM e o programa combinam é só
 o ponto de entrada, o endereço do `rv32_wait_restart` e as palavras do topo
-da RAM. Ver [RUNTIME.md](RUNTIME.md) e
-[PROGRAM_UPDATE_HANDOFF.md](PROGRAM_UPDATE_HANDOFF.md).
+da RAM. Ver [runtime.md](runtime.md) e
+[atualizacao-de-programa.md](atualizacao-de-programa.md).
 
-### FLASH: o "firmware" de cada teste
+### 1.2. FLASH: o "firmware" de cada teste
 
 O programa de verdade de cada teste (`.init` + `.text` + `.rodata`, mais a imagem inicial de `.data`), reescrito
 via JTAG (In-System Memory Content Editor) toda vez que um teste troca;
@@ -57,7 +54,7 @@ mesmo papel que a antiga `ROM` tinha antes do redesign. Fisicamente é uma
 representa o armazenamento não-volátil: só é regravada explicitamente entre
 execuções, nunca pela CPU em tempo de execução.
 
-### RAM: dado de verdade
+### 1.3. RAM: dado de verdade
 
 `.data`/`.sdata`/`.sbss`/`.bss`/pilha/heap. A única memória que o estágio
 MEM (load/store) sempre alcança para escrita; `.rodata` (constantes
@@ -66,9 +63,9 @@ de uma segunda porta de leitura" abaixo. Os últimos 1056 bytes do espaço
 físico da IP são reservados (fora do `__ram_size` que `rv32im-fpga.specs`
 dá ao teste) para: tohost/fromhost (4
 palavras, convenção HTIF, com 2 palavras livres) e o buffer do `stdout`
-(1032 bytes, ver [RUNTIME.md](RUNTIME.md)).
+(1032 bytes, ver [runtime.md](runtime.md)).
 
-## FLASH precisa de uma segunda porta de leitura: o limite do Quartus Lite
+## 2. FLASH precisa de uma segunda porta de leitura: o limite do Quartus Lite
 
 O estágio MEM precisa ler FLASH como dado especificamente para o loop de
 cópia de `.data` em `boot_rom.S` (`lw a0, 0(t1)`, onde `t1` aponta pra
@@ -106,7 +103,7 @@ só que agora escopado apenas à FLASH (BOOT_ROM nunca precisa de segunda
 porta, já que não tem `.data` próprio: `boot_rom.S` só usa imediatos
 fixos).
 
-## Mapa de memória (endereços atuais)
+## 3. Mapa de memória
 
 | Região                | Base         | Tamanho          | Words  | widthad |
 |------------------------|--------------|------------------|--------|---------|
@@ -127,19 +124,11 @@ esses 12 bits já forem zero no valor real. `0x800 (FLASH_BASE) + FLASH_SIZE`
 só cai num múltiplo de 4096 se `FLASH_SIZE` for um múltiplo ímpar de 2048
 (30K = 30720 = 15×2048 serve; 32K = 32768 = 16×2048 não).
 
-### Por que esse mapa mudou (histórico)
+### 3.1. O limite de blocos de RAM
 
-A primeira versão deste redesign usava FLASH=66K/RAM=224K. Isso **compilava
-e passava na simulação GHDL**, mas a compilação real (`quartus_sh --flow
-compile`) falhava: `Error (170048): Selected device has 308 RAM location(s)
-of type M10K block. However, the current design needs more than 308 to
-successfully fit.` A Cyclone V 5CEBA4F23 tem exatamente 308 blocos M10K
-(10Kbit cada); um limite de **quantidade de blocos**, não só de bits totais,
-e duplicar FLASH pra dar à FLASH_MEM sua própria cópia empurrou o design
-pra além desse teto. O mapa atual (30K/160K) usa cerca de 178 blocos (~58%
-do teto), com folga real.
+A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de blocos além do de bits totais. A FLASH duplicada (`FLASH` e `FLASH_MEM`) conta duas vezes, e o mapa atual usa cerca de 178 blocos (58 % do teto).
 
-## Índices JTAG (`config.yaml: quartus:`)
+## 4. Índices JTAG (`config.yaml: quartus:`)
 
 Ordem de instanciação em `core_fpga_test.vhd` (que é a ordem que o In-System
 Memory Content Editor usa pra numerar as instâncias):
@@ -152,12 +141,12 @@ Memory Content Editor usa pra numerar as instâncias):
 3. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
    RAM de propósito, pra não deslocar o índice 2 que RAM já tem.
 
-## LEDs (`core_fpga_test.vhd`)
+## 5. LEDs (`core_fpga_test.vhd`)
 
 | LED     | Sinal              | Significado                                                        |
 |---------|--------------------|----------------------------------------------------------------------|
 | LEDR(0) | `Blinky`           | Pisca direto do `CLOCK_50`, sem relação com o core, "placa viva".  |
-| LEDR(1) | `pll_locked`       | Deveria ficar **sempre aceso** depois de configurar a FPGA. Apagado = PLL nunca travou (ver [PLL_LOCK_LOSS_BUG.md](bugs/PLL_LOCK_LOSS_BUG.md)). |
+| LEDR(1) | `pll_locked`       | Deveria ficar **sempre aceso** depois de configurar a FPGA. Apagado = PLL nunca travou. |
 | LEDR(2) | `FPGA_RESET_N`     | Aceso = botão físico de reset **solto**. Apagado = botão pressionado. |
 | LEDR(3) | `not core_reset`   | Aceso = core fora de reset, rodando. Apagado = core em reset (PLL sem lock, ou botão pressionado). |
 | LEDR(4-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
@@ -168,25 +157,6 @@ nenhum teste vai rodar. Se ambos estão acesos e mesmo assim um teste não
 passa, o problema está no software/lógica do core, não na configuração da
 placa.
 
-## Bugs reais encontrados neste redesign (resumo)
-
-Dois bugs só apareceram em hardware real, nunca na simulação GHDL; ambos
-documentados com o diagnóstico completo no histórico do projeto:
-
-1. **Endereçamento de RAM via JTAG**: o In-System Memory Content Editor
-   endereça a RAM como índice relativo (`(addr - ram_base) / 4`), não o
-   endereço bruto da CPU; `core_fpga_test.vhd` mandava o endereço bruto
-   direto pra RAM, sem subtrair `ram_base`. Funcionava por coincidência
-   enquanto `ram_base` era sempre potência de 2 alinhada à própria RAM;
-   quebrou na primeira vez que isso deixou de ser verdade. Fix:
-   `RAM_BASE_WORD`, subtração explícita antes de indexar a RAM.
-2. **Cópia de `.data` de FLASH pra RAM**: descrito acima em
-   [FLASH precisa de uma segunda porta de leitura](#flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite).
-
-Ambos só afetavam leitura/verificação (JTAG ou `.data`), nunca a lógica
-pura do pipeline; por isso a simulação GHDL (que ou lê os sinais crus do
-barramento, ou nunca tinha `.data` não-vazio pra exercitar) nunca os pegou.
-
 ---
 
-Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../LICENSE).
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

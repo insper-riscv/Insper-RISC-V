@@ -51,3 +51,7 @@ o único parâmetro que se ajusta na placa.
 Um valor de latência que depende de fase de clock não se valida só em simulação. Na primeira
 execução na placa de um controlador de memória externa, o autoteste deve ser o primeiro
 passo, e a captura deve ser um parâmetro com o valor medido, não uma suposição.
+
+---
+
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).
