@@ -1,4 +1,4 @@
-# Plataforma `sdram-flash`: a FLASH como chip atrás das caches
+# Plataforma `de0-cv`: a FLASH como chip atrás das caches
 
 ## 1. O que ela é
 
@@ -57,7 +57,8 @@ O armazenamento da placa tem 132 KB porque o maior teste do ACT4 (`I-jal-00`) oc
 | Simulação dos programas existentes | `riscv-tools --config tools/riscv_build/config.sdram-flash-regression.yaml compile --emit hex`, depois `sim --exclude uart-echo,uart-tx,uart-errors` (no repositório Tests) |
 | Simulação dos programas da SDRAM e da FLASH | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex`, depois `sim --exclude cpi-kernels,hex-id` |
 | Latência do chip | As configurações `config.sdram-flash-lat2.yaml`, `-lat20.yaml` e `-lat60.yaml`, e as `-regression-lat*` |
-| Compilar a placa | `quartus_sh --flow compile de0-cv` em `src/cyclone-v/de0-cv` |
+| Compilar a placa | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl` (só a síntese, com o argumento `map`) |
+| Programar a placa | `src/cyclone-v/de0-cv/de0-cv_program.sh`, no mesmo shell da compilação (`&&`) |
 | Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 na placa | `certify-board --skip-build` com a configuração `config.flash-board-<perfil>.yaml` do repositório Certification |
 

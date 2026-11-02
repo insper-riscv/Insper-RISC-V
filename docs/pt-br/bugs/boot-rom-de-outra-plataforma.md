@@ -48,3 +48,7 @@ placa. O arquivo versionado agora é o da plataforma.
 Toda plataforma tem a sua própria imagem de boot ROM, e ela deve ser regenerada sempre que
 o `boot_rom.S` ou o mapa de memória mudar. O comando `run` não faz isso. Um lote de
 testes deve começar de um arquivo de progresso limpo depois de qualquer interrupção.
+
+---
+
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

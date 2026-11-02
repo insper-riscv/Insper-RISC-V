@@ -11,8 +11,8 @@
 - [AUTHORS.en.md](AUTHORS.en.md): authors with commits in the repository, with name and GitHub account.
 - [CONTRIBUTING.en.md](CONTRIBUTING.en.md): mandatory contribution rules, the VHDL-2008, C23 and Python standards, documentation rules and the checks before opening a Pull Request.
 - [CITATION.cff](CITATION.cff): metadata to cite the software.
-- [docs/pt-br/platform/](docs/pt-br/platform): memory architecture, boot, runtime, board programming and simulation of the hardware top (in Portuguese).
-- [docs/README_kpis.md](docs/README_kpis.md): KPI scripts (frequency, resources, CPI and tests) from a Quartus run (in Portuguese).
+- [docs/pt-br/](docs/pt-br): guides (board, simulation and KPIs), platforms (memory, boot and runtime) and diagnosed defects (in Portuguese).
+- [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): KPI scripts (frequency, resources, CPI and tests) from a Quartus run (in Portuguese).
 
 ## 2. Repositories
 
@@ -70,11 +70,11 @@ The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infr
 
 ## 5. Board
 
-The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is `src/cyclone-v/de0-cv/de0-cv.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md) (in Portuguese).
+The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is `src/cyclone-v/de0-cv/de0-cv.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [placa.md](docs/pt-br/guide/placa.md) (in Portuguese).
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/README_kpis.md](docs/README_kpis.md).
+`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
 
 ---
 

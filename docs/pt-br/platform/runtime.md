@@ -71,7 +71,7 @@ Em `src/simulation/internal-mem/runtime/`:
 
 | Arquivo | Papel |
 | :--- | :--- |
-| `boot_rom.S`, `boot_rom.ld` | A BOOT_ROM, gravada uma vez: limpa as palavras compartilhadas, pula para `0x800` e guarda o `rv32_wait_restart` em `0x100` (ver [CRT0_BOOT_REFERENCE.md](CRT0_BOOT_REFERENCE.md)) |
+| `boot_rom.S`, `boot_rom.ld` | A BOOT_ROM, gravada uma vez: limpa as palavras compartilhadas, pula para `0x800` e guarda o `rv32_wait_restart` em `0x100` (ver [boot.md](boot.md)) |
 | `_exit.c` | O `_exit` em que o `crt0` termina: código 0 é PASS (`tohost` `1`), qualquer outro é FAIL (`tohost` `(código << 1) | 1`); depois salta para o `rv32_wait_restart` |
 | `stdio.c` | A função de escrita do `stdout` (seção 5) |
 | `spike_exit.S` | O substituto do `rv32_wait_restart` para o ELF do Spike (seção 6) |
@@ -88,7 +88,7 @@ O core não tem nenhuma saída externa. O `stdout` (e `stderr`) é um buffer de 
 | `0x0002FBE4` | `truncated`: 1 quando algum byte não coube |
 | `0x0002FBE8` | `data`: 1024 bytes |
 
-O buffer é linear: quando enche, a escrita para e `truncated` fica em 1. A BOOT_ROM zera o cabeçalho a cada início. Não há entrada: a leitura devolve fim de arquivo. `printf`, `puts` e `putchar` funcionam sem alteração no código C; o teste `c/stdout-printf` confere o conteúdo e o `c/stdout-truncate` confere o estouro. Ainda não existe um comando do `riscv-tools` para o host ler essa região (hoje se lê com o `dump-ram`, no endereço `0x27BE0` relativo ao início da RAM).
+O buffer é linear: quando enche, a escrita para e `truncated` fica em 1. A BOOT_ROM zera o cabeçalho a cada início. Não há entrada: a leitura devolve fim de arquivo. `printf`, `puts` e `putchar` funcionam sem alteração no código C; o teste `c/stdout-printf` confere o conteúdo e o `c/stdout-truncate` confere o estouro. O host lê essa região com o `dump-ram`, no endereço `0x27BE0` relativo ao início da RAM.
 
 O `printf` completo (com suporte a `double`) custa cerca de 12 KB dos 30 KB da FLASH.
 
@@ -99,9 +99,8 @@ O programa de um teste termina no `rv32_wait_restart`, que no hardware é códig
 ## 7. Limites conhecidos
 
 - O ISA é `rv32im`: sem ponto flutuante em hardware (`float` e `double` rodam por software, pela libgcc). Decidir isso com calma antes de portar código que use.
-- O core não tem CSR nem trap: nada de `signal`, `ecall` nem semihosting. O `crt0` e a `libc.a` não têm instruções de CSR.
-- **Multiplicação ou divisão seguidas:** até a correção do PR #33 do `RV32IM`, duas instruções da extensão M em sequência (`div` e `rem`, `rem` e `div`, `divu` e `remu`, dois `mul`) faziam a segunda devolver o resultado da primeira, e as conversões de inteiro do `printf` (`%d`, `%x`) saíam erradas. A correção (um pulso de `start` por instrução, em `rv32im_pipeline_core.vhd`) foi verificada **só em simulação**, nos dois perfis; não foi compilada no Quartus nem testada na placa. Os testes `asm/div-rem-back-to-back` e `c/stdout-printf-int` cobrem o caso.
+- O `crt0` e a `libc.a` não usam CSR, e a picolibc não faz semihosting. O núcleo implementa Zicsr e traps (ver o Core), mas o runtime não configura `mtvec`.
 
 ---
 
-Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../LICENSE).
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

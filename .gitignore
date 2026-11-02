@@ -19,7 +19,16 @@ output_files/
 *.rpt
 *.summary
 
-# Quartus-generated state of the platforms (source project files and tracked MIFs stay visible)
+# Quartus-generated state of the platforms (the project files and the MIF images stay tracked)
+src/*/*/db/
+src/*/*/incremental_db/
+src/*/*/output_files/
+src/*/*/simulation/
+src/*/*/c5_pin_model_dump.txt
+src/*/*/*.qws
+src/*/*/*.jdi
+src/*/*/*.done
+src/*/*/*.smsg
 src/*/*/quartus/db/
 src/*/*/quartus/incremental_db/
 src/*/*/quartus/output_files/

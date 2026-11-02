@@ -1,6 +1,6 @@
 # O estado de boot de referência deste RISC-V bare-metal
 
-O boot neste core passa por dois lados: a BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [RUNTIME.md](RUNTIME.md) pra de onde vêm e como usar. Ver [PROGRAM_UPDATE_HANDOFF.md](PROGRAM_UPDATE_HANDOFF.md) pro como o controle passa de um lado pro outro a cada troca de teste.
+O boot neste core passa por dois lados: a BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [runtime.md](runtime.md) pra de onde vêm e como usar. Ver [atualizacao-de-programa.md](atualizacao-de-programa.md) pro como o controle passa de um lado pro outro a cada troca de teste.
 
 Este documento descreve, registrador por registrador e seção por seção, exatamente que estado existe no instante em que `main()` é chamado, e, tão importante quanto, o que **não** é feito. O estado segue a ABI oficial do RISC-V
 ([riscv-elf-psabi-doc](https://github.com/riscv-non-isa/riscv-elf-psabi-doc)).
@@ -26,7 +26,7 @@ Este documento descreve, registrador por registrador e seção por seção, exat
 
 ## CSRs (registradores de controle e status)
 
-**Nenhum CSR é tocado** pelo `crt0-hosted` nem pela `libc.a`: nem `mstatus`, nem `mtvec`, nem `mepc`, nem `mie`/`mip`. Isso foi conferido no código objeto (nenhuma instrução `csr*`, `ecall`, `ebreak` ou `mret`), e reflete o hardware: `rv32im_pipeline_core` **não implementa Zicsr nem modo de exceção/trap**; não existe unidade de CSR em `RV32IM/src/`. Rodar uma instrução `csrw`/`csrr`/`ecall` neste core não tem definição conhecida de comportamento.
+**Nenhum CSR é tocado** pelo `crt0-hosted` nem pela `libc.a`: nem `mstatus`, nem `mtvec`, nem `mepc`, nem `mie`/`mip`. Isso foi conferido no código objeto (nenhuma instrução `csr*`, `ecall`, `ebreak` ou `mret`). O núcleo implementa Zicsr e a unidade de traps, então um programa que precise de `mtvec` ou de interrupções os configura por conta própria antes de usá-los.
 
 ## Seções de memória
 
@@ -35,23 +35,22 @@ Os endereços vêm do `picolibc.ld` e de `rv32im-fpga.specs` (FLASH de `0x800`, 
 | Seção | Região | Estado antes de `main()` |
 |---|---|---|
 | `.init` | FLASH, `0x800` | O `_start` e o que a picolibc põe no começo |
-| `.text`, `.rodata` (inclui o `.srodata`) | FLASH | Já estão lá, carregados via JTAG; `.rodata` nunca é copiado pra RAM: um `lw` o alcança pela segunda porta de leitura da FLASH (ver [MEMORY_ARCHITECTURE.md](MEMORY_ARCHITECTURE.md)) |
+| `.text`, `.rodata` (inclui o `.srodata`) | FLASH | Já estão lá, carregados via JTAG; `.rodata` nunca é copiado pra RAM: um `lw` o alcança pela segunda porta de leitura da FLASH (ver [memoria.md](memoria.md)) |
 | `.data` (inclui o `.sdata`), `.tdata` | RAM, a partir de `0x8000`; LMA na FLASH | Copiados da FLASH pelo `_cstart` |
 | `.bss` (inclui o `.sbss`), `.tbss` | RAM, depois do `.data` | Zerados pelo `_cstart` |
 | heap | RAM, de `_end` até `__heap_end` | Gerenciado pelo `malloc` da picolibc, via `sbrk` |
 | Pilha | RAM, topo em `0x0002FBE0` | Só o ponteiro (`sp`) é definido; 4 KB reservados |
-| `stdout` | RAM, `0x0002FBE0` a `0x0002FFE7` | Cabeçalho zerado pela BOOT_ROM (ver [RUNTIME.md](RUNTIME.md)) |
-| `tohost` (`0x0002FFE8`) / `fromhost` (`0x0002FFF0`) | RAM | Zerados a cada entrada em `_reset`, cold boot ou restart, pra nunca vazar o resultado do teste anterior |
-| `fromhost` (`0x0002FFF0`) / `tohost` (`0x0002FFE8`) | RAM | Zerados a cada entrada em `_reset`; convenção HTIF, só o Spike a usa |
+| `stdout` | RAM, `0x0002FBE0` a `0x0002FFE7` | Cabeçalho zerado pela BOOT_ROM (ver [runtime.md](runtime.md)) |
+| `tohost` (`0x0002FFE8`) e `fromhost` (`0x0002FFF0`) | RAM | Zerados a cada entrada em `_reset`, cold boot ou restart, pra nunca vazar o resultado do teste anterior. Convenção HTIF, e só o Spike a usa |
 
 ## O que essa sequência de boot deliberadamente NÃO faz
 
-- **Vetor de exceção/trap (`mtvec`) e tratamento de `ecall`/interrupções.** O core não tem CSR nem modo privilegiado.
+- **Vetor de exceção/trap (`mtvec`) e tratamento de `ecall`/interrupções.** O startup não configura `mtvec`; um trap antes de o programa configurá-lo usa o valor de reset do `mtvec`.
 - **Suporte multi-hart.** Assume um único hart, sem `mhartid`; o core é single-hart.
 - **Entrada de dados.** Não há dispositivo de entrada: `stdin` devolve fim de arquivo.
-- **PMP (Physical Memory Protection) / isolamento.** Sem CSR, não tem como configurar PMP.
+- **PMP (Physical Memory Protection) / isolamento.** O núcleo não implementa PMP.
 - **Limpeza de registradores antes de `main()`.** Só os listados acima têm valor definido.
 
 ---
 
-Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../LICENSE).
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

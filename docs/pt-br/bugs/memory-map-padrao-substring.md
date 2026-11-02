@@ -49,3 +49,7 @@ constante da RAM casa.
 
 Um padrão que procura um nome em código-fonte deve marcar o início e o fim da palavra. Todo
 nome novo que contém um nome antigo (ou é contido por ele) pode desviar uma busca por texto.
+
+---
+
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

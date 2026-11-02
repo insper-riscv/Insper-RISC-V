@@ -11,8 +11,8 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 - [AUTHORS.md](AUTHORS.md): autores com commits no repositório, com nome e conta do GitHub.
 - [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, normas VHDL-2008, C23 e Python, regras de documentação e verificação antes de abrir Pull Request.
 - [CITATION.cff](CITATION.cff): metadados para citação do software.
-- [docs/pt-br/platform/](docs/pt-br/platform): arquitetura de memória, boot, runtime, programação da placa e simulação do topo de hardware.
-- [docs/README_kpis.md](docs/README_kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
+- [docs/pt-br/](docs/pt-br): guias (placa, simulação e KPIs), plataformas (memória, boot e runtime) e defeitos já diagnosticados.
+- [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
 
 ## 2. Repositórios
 
@@ -70,11 +70,11 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 
 ## 5. Placa
 
-O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/de0-cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md).
+O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/de0-cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [placa.md](docs/pt-br/guide/placa.md).
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/README_kpis.md](docs/README_kpis.md).
+`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
 
 ---
 

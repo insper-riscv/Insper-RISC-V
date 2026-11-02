@@ -11,7 +11,7 @@ está rodando código compilado **antes** da atualização existir, então
 os dois lados (o que atualiza e o que é atualizado) precisam
 concordar de antemão sobre onde tudo mora.
 
-## A sequência completa
+## 1. A sequência completa
 
 1. **Programação inicial (uma única vez)**: `quartus_sh --flow compile`
    + `quartus_pgm` carrega o bitstream inteiro, incluindo o conteúdo
@@ -34,7 +34,7 @@ concordar de antemão sobre onde tudo mora.
 6. Em `0x800` está o `_start` do `crt0` da picolibc, dentro da imagem do
    teste: ajusta `sp` e `gp`, copia `.data` de FLASH pra RAM, zera
    `.bss`, prepara o TLS e chama `main`, ver
-   [CRT0_BOOT_REFERENCE.md](CRT0_BOOT_REFERENCE.md).
+   [boot.md](boot.md).
 7. Ao terminar, o teste escreve o `tohost` (`RV32_PASS()`/`RV32_FAIL(código)`
    em `rv32_test.h`, ou o retorno de `main` via `_exit`) e chama
    `rv32_wait_restart`, voltando ao passo 3.
@@ -43,7 +43,7 @@ O contato entre a BOOT_ROM e a FLASH é só o salto do passo 5 (BOOT_ROM
 para a FLASH) e o salto do passo 7 (programa para `0x100`): a BOOT_ROM
 não lê nada da FLASH.
 
-## Por que BOOT_ROM nunca é reescrita por teste
+## 2. Por que a BOOT_ROM nunca é reescrita por teste
 
 `_reset` e `rv32_wait_restart` são endereços fixos (`0x0`, `0x100`,
 ver `src/simulation/internal-mem/runtime/boot_rom.ld`), resolvidos no link **único e separado** de
@@ -62,7 +62,7 @@ espera enquanto o host reescreve a FLASH, então ele precisa estar numa
 memória que ninguém reescreve, senão o core executaria instruções de uma
 memória em reescrita.
 
-## O que a BOOT_ROM e o programa combinam
+## 3. O que a BOOT_ROM e o programa combinam
 
 `src/simulation/internal-mem/runtime/boot_rom.S` é compilado e linkado **antes** de qualquer teste
 existir: seu binário não pode conter nada de um teste específico. Esse é o
@@ -86,10 +86,10 @@ programa. Por isso a imagem de um teste carrega tudo o que varia nela.
 
 O estágio MEM deste core tem, de fato, um caminho de leitura até FLASH
 (a segunda porta física, `FLASH_MEM`, ver
-[MEMORY_ARCHITECTURE.md](MEMORY_ARCHITECTURE.md#flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)):
+[memoria.md](memoria.md#2-flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)):
 é assim que o `crt0` lê o `.data` inicial da FLASH pra copiá-lo pra RAM, e
 é assim que `.rodata` consegue ficar residente em FLASH (nunca copiado pra
-RAM, ver [MEMORY_ARCHITECTURE.md](MEMORY_ARCHITECTURE.md)).
+RAM, ver [memoria.md](memoria.md)).
 
 Uma diferença real em relação a uma atualização remota de verdade (por
 rádio, por exemplo): nada aqui verifica a integridade da imagem antes de
@@ -97,16 +97,15 @@ saltar pra ela (checksum, assinatura). JTAG é um link local, físico,
 confiável, então essa verificação nunca foi necessária aqui; um sistema que
 recebesse atualizações por um link não-confiável precisaria dela.
 
-## O caminho lento: recompilar e reprogramar
+## 4. O caminho lento: recompilar e reprogramar
 
 Se um teste não responder no timeout (`quartus.default_timeout_s`), o
 `riscv-tools`' `orchestrator` recorre a tiers progressivamente mais
-caros até um recompile+reprogram completo; ver
-[orchestrator](../tools/Tools/docs/modules/orchestrator.md) pros
-detalhes de quando cada tier dispara, e
-[HARDWARE_PROGRAMMING.md](HARDWARE_PROGRAMMING.md) pra regra
-permanente de como compilar+programar sem quebrar a sessão JTAG.
+caros até um recompile+reprogram completo; o módulo `orchestrator` do
+Tools tem os detalhes de quando cada tier dispara, e
+[placa.md](../guide/placa.md) traz a regra de como compilar e programar
+sem quebrar a sessão JTAG.
 
 ---
 
-Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../LICENSE).
+Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).
