@@ -1,0 +1,135 @@
+[project]
+name = "riscv-toplevel"
+version = "0.1.0"
+description = "Platforms of the RV32 SoC: top levels, Quartus project, runtime, memory map and the testbench of the top."
+license = "Apache-2.0"
+# Same Python as the ci-vhdl image of Infra, which also carries riscv-tools.
+requires-python = ">=3.14,<3.15"
+dependencies = [
+    # tests/python/runner.py runs the entity tests with cocotb (and its cocotb_tools),
+    # at the version of the ci-vhdl image. riscv-tools comes from the image, not from here.
+    "cocotb==2.1.0",
+]
+
+[tool.uv]
+package = false
+
+# Run with `uv run` by the python-static-analysis job of the CI, in the environment of this project.
+[dependency-groups]
+dev = [
+    "pyright[nodejs]>=1.1",
+    "deptry>=0.20",
+    "pylint>=4.1.3",
+]
+
+# Static analysis of the Python (runner and tests), as run by the python-static-analysis job of the CI.
+[tool.ruff]
+target-version = "py314"
+line-length = 79
+extend-exclude = ["Common-Components", "build", "sim_build"]
+
+[tool.ruff.lint]
+select = [
+    # Core
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+
+    # Security
+    "S",    # flake8-bandit (Security Scanning/SAST)
+    "BLE",  # flake8-blind-except
+
+    # Import orders and formatting
+    "I",    # isort
+    "Q",    # flake8-quotes
+    "D",    # pydocstyle
+
+    # Standards and Moderization
+    "UP",   # update-checker
+    "N",    # pep8-naming,
+    "PTH",  # flake8-pathlib
+    "TID",  # flake8-tidy-imports (absolute imports only)
+
+    # Quality and Simplification
+    "B",    # flake8-bugbear
+    "G",    # flake8-logging-format
+    "PERF", # perflint
+    "C4",   # flake8-comprehensions
+    "SIM",  # flake8-simplify
+    "RET",  # flake8-return
+    "PL",   # pylint
+    "RUF",  # ruff linting rules
+
+    # Cleanup and Unused Code
+    "ERA",  # flake8-eradicate
+    "ARG",  # flake8-arg-names (unused-arguments)
+]
+
+# PEP 257 rules the numpy convention turns off.
+extend-select = [
+    "D107",  # docstring in __init__
+    "D402",  # summary line must not repeat the signature
+]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pycodestyle]
+max-line-length = 79
+max-doc-length = 72
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-statements = 50
+max-returns = 6
+max-branches = 12
+max-locals = 15
+max-public-methods = 10
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-line-length = 72
+
+[tool.complexipy]
+paths = ["platforms", "tests"]
+max-complexity-allowed = 10
+
+[tool.deptry.per_rule_ignores]
+# riscv-tools comes from the ci-vhdl image, not from the dependencies above.
+DEP001 = ["riscv_tools"]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+reportMissingModuleSource = "none"
+include = ["platforms", "tests"]
+# Where the ci-vhdl image installs riscv-tools.
+extraPaths = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
+
+[tool.pyrefly]
+preset = "strict"
+project-includes = ["platforms", "tests"]
+search-path = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
+python-version = "3.14"
+
+[tool.pylint.main]
+ignore = [".venv", "build", "sim_build", "Common-Components"]
+fail-under = 10
+# riscv-tools is installed by the ci-vhdl image, outside the project environment.
+init-hook = "import sys; sys.path.append('/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages')"
+
+[tool.pylint.similarities]
+# The testbenches of two platforms read the same SIM_* variables. Each one is loaded alone, from its
+# own folder, so they cannot import the lines they share.
+min-similarity-lines = 7
+
+[tool.pylint.messages_control]
+disable = [
+    "too-few-public-methods", # small classes that hold the state of a test
+]
