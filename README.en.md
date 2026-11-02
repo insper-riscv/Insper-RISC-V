@@ -34,7 +34,7 @@
 | Path | Platform |
 | :--- | :--- |
 | `src/simulation/internal-mem/` | Simulation-only platform, with BOOT_ROM, FLASH and RAM inside the FPGA and the `rv32i3stage_core_sim_test` simulation top. It is the base of the pipeline entity tests |
-| `src/cyclone-v/de0-cv/` | The DE0-CV board platform, with the BOOT_ROM in the core and the FLASH and the SDRAM behind the caches, plus a JTAG UART and a display. The Quartus top is `core_fpga_sdram_flash.vhd` and the simulation top is `rv32im_sdram_flash_sim_test` |
+| `src/cyclone-v/de0-cv/` | The DE0-CV board platform, with the BOOT_ROM in the core and the FLASH and the SDRAM behind the caches, plus a JTAG UART and a display. The Quartus top is `de0-cv_top.vhd` and the simulation top is `rv32im_sdram_flash_sim_test` |
 
 Every platform has the same structure.
 
@@ -70,7 +70,7 @@ The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infr
 
 ## 5. Board
 
-The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is `src/cyclone-v/de0-cv/quartus/core_fpga_sdram_flash.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md) (in Portuguese).
+The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is `src/cyclone-v/de0-cv/de0-cv.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md) (in Portuguese).
 
 ## 6. KPIs
 

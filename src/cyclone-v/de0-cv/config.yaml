@@ -115,7 +115,7 @@ sim:
     - Memory/external/bus/seg_display.vhd
     - Memory/external/bus/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
-    - src/cyclone-v/de0-cv/rtl/rv32im_sdram_flash_sim_test.vhd
+    - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
   parameters:
     HAS_ZIFENCEI: true
@@ -135,9 +135,9 @@ sim:
     SIM_TIMEOUT_CYCLES: "2000000"
 
 quartus:
-  project_dir: src/cyclone-v/de0-cv/quartus
-  project_name: core_fpga_sdram_flash
-  sof_file: output_files/core_fpga_sdram_flash.sof
+  project_dir: src/cyclone-v/de0-cv
+  project_name: de0-cv
+  sof_file: output_files/de0-cv.sof
   rom_mif_target: flash_init.mif
   boot_rom_mif_target: boot_rom_init.mif
   # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
