@@ -44,10 +44,11 @@ sync:
 	@set -e; uv sync -q; for s in $(SUBREPOS); do (cd $$s && uv sync -q); done
 
 # Every file path that the configuration of each repository lists exists (the paths.yaml of each one),
-# and the ones of this repository (its platforms included).
+# and the ones of this repository (its platforms included), and the tree has the shape the Capstone defines.
 paths:
 	@set -e; for s in $(SUBREPOS); do $(MAKE) -C $$s paths; done
 	riscv-tools --root . check-paths --manifest paths.yaml
+	riscv-tools --root . check-tree --kind top
 
 # VHDL syntax check (GHDL) of every repository (the Core also elaborates each of its profiles), of the two
 # simulation tops of the platforms and the uniqueness of the names.
