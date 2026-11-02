@@ -19,7 +19,7 @@ Com uma só memória externa, a cache fala direto com o chip (`ram_chip` para a 
 
 ## 3. Mapa de memória
 
-O mapa vem de genéricos e vale para o núcleo e para o topo. Os valores padrão são os da simulação do ACT4.
+O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4.
 
 | Região | Início | Fim | Genéricos |
 | :--- | :--- | :--- | :--- |

@@ -11,6 +11,7 @@ NESTED   := ! -path 'Core/src/common/*' ! -path 'Core/Common-Components/*' ! -pa
 # The platforms of this repository: the simulation-only one and the board one.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
+PM := src/simulation/modular
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
@@ -35,7 +36,7 @@ BOARD_VHDL := $(shell find Memory/external/sdram Memory/external/bus -name '*.vh
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-unique memory-map test unit-tests formal clean
+.PHONY: all sync paths check check-tops check-unique memory-map generate generate-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -85,6 +86,20 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	$(MAKE) generate-check
+
+# The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
+# the VHDL package of the generics): `make generate` writes them and `make generate-check` fails when one
+# is out of date.
+generate:
+	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
+
+generate-check:
+	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 
 # Per-entity cocotb tests of the RTL of the platforms (`make test TEST=clk_gen_3way`).
 test:

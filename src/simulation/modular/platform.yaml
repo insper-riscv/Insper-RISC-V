@@ -1,0 +1,28 @@
+# The memory map of the modular simulation platform: the source of truth for the generics of
+# `modular_sim_top` and for the linker script of the programs that run on it.
+#
+#   riscv-tools --root . generate-memory-map --platform src/simulation/modular/platform.yaml
+#
+# The four models (integrated, external-data, external-instruction and external) share this map: they
+# only change where each memory sits, inside or outside the core. The ROM starts right after the
+# BOOT_ROM. rom_external and ram_external are per model, so the package does not fix them.
+platform: modular
+profile: rv32im
+
+regions:
+  - {name: BOOT_ROM, base: 0x00000000, size: 2K,       kind: rom, exec: true}
+  - {name: ROM,      base: 0x00000800, size: 1M-2K,    kind: rom, exec: true}
+  - {name: RAM,      base: 0x00100000, size: 1M,       kind: ram}
+
+boot:
+  entry: 0x00000800
+  wait_restart: 0x00000100
+
+generate:
+  vhdl:
+    path: src/simulation/modular/modular_map_pkg.vhd
+    package: modular_map_pkg
+    rom: ROM
+    ram: RAM
+    ext_base: 0x40000000
+    periph_base: 0x80000000

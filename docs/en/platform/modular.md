@@ -19,7 +19,7 @@ With a single external memory, the cache talks straight to the chip (`ram_chip` 
 
 ## 3. Memory map
 
-The map comes from generics and holds for the core and for the top. The default values are those of the ACT4 simulation.
+The map comes from generics and holds for the core and for the top. The default of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses (`make generate`, and `make generate-check` checks it in the CI). The values are those of the ACT4 simulation.
 
 | Region | Start | End | Generics |
 | :--- | :--- | :--- | :--- |
