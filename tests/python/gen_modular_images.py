@@ -5,8 +5,8 @@ Uso, da raiz do repositório:
     uv run python tests/python/gen_modular_images.py
 
 O programa guarda 0x5A na base da RAM, lê de volta, soma 1 e guarda o
-resultado na palavra seguinte. A BOOT_ROM salta para a ROM, que começa logo
-depois dela, e os quatro modelos usam as mesmas duas imagens, em
+resultado na palavra seguinte. A BOOT_ROM salta para a ROM, que começa
+logo depois dela, e os quatro modelos usam as mesmas duas imagens, em
 tests/python/unittests/rtl/data/modular/.
 """
 
@@ -78,7 +78,7 @@ def main() -> None:
     """Write every image.
 
     The four models run the same two images, because the ROM always
-    starts right after the BOOT_ROM and the RAM sits at the same address.
+    starts right after the BOOT_ROM and the RAM has the same address.
     """
     write("boot_to_rom.hex", [jal(X0, ROM_BASE_WORDS * 4)])
     write("rom_program.hex", [0] * ROM_BASE_WORDS + body(RAM_HI20, 0))
