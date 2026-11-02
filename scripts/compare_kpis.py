@@ -22,6 +22,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
+
+# Os relatórios são JSON: um objeto cujos valores têm tipos variados.
+type Json = dict[str, Any]
 
 # Largura de cada coluna de valor da tabela impressa.
 COL_W = 22
@@ -29,13 +33,13 @@ COL_W = 22
 LABEL_W = 28
 
 
-def load(path: str) -> dict:
+def load(path: str) -> Json:
     """Lê um relatório JSON ou encerra com erro se ele não existir."""
     report = Path(path)
     if not report.exists():
         print(f"ERRO: arquivo não encontrado: {report}", file=sys.stderr)
         sys.exit(1)
-    return json.loads(report.read_text())
+    return json.loads(report.read_text(encoding="utf-8"))
 
 
 def fmt(val: object, fmt_str: str = "{}", na: str = "N/A") -> str:
@@ -69,7 +73,7 @@ def row(label: str, base: object, current: object, change: str = "") -> None:
     )
 
 
-def _coverage_cell(kpi: dict) -> str:
+def _coverage_cell(kpi: Json) -> str:
     """Formata a célula de cobertura de um relatório."""
     total = kpi.get("total", 0)
     if not total:
@@ -78,7 +82,7 @@ def _coverage_cell(kpi: dict) -> str:
     return f"{kpi.get('passed', '?')}/{total} ({pct})"
 
 
-def _isa_cell(kpi: dict, key: str) -> str:
+def _isa_cell(kpi: Json, key: str) -> str:
     """Formata a célula de instruções cobertas de uma extensão."""
     covered = len(kpi.get(f"{key}_covered", []))
     return (
@@ -87,7 +91,7 @@ def _isa_cell(kpi: dict, key: str) -> str:
     )
 
 
-def _compare_clock(base: dict, current: dict) -> None:
+def _compare_clock(base: Json, current: Json) -> None:
     """Imprime a comparação do KPI 1."""
     print("\n  [KPI 1] Clock do Sistema")
     base_f = base.get("fmax_mhz")
@@ -100,7 +104,7 @@ def _compare_clock(base: dict, current: dict) -> None:
     )
 
 
-def _compare_coverage(base: dict, current: dict) -> None:
+def _compare_coverage(base: Json, current: Json) -> None:
     """Imprime a comparação do KPI 2."""
     print("\n  [KPI 2] Cobertura de Testes (cocotb)")
     base_pct = base.get("coverage_pct")
@@ -118,7 +122,7 @@ def _compare_coverage(base: dict, current: dict) -> None:
     )
 
 
-def _compare_instructions(base: dict, current: dict) -> None:
+def _compare_instructions(base: Json, current: Json) -> None:
     """Imprime a comparação do KPI 3."""
     print("\n  [KPI 3] Instruções Suportadas")
     row(

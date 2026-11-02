@@ -1,5 +1,32 @@
 # The static analysis of the Python of this repository (the scripts), as run by the
-# python-static-analysis job of the CI. The repository itself is not a Python project.
+# python-static-analysis job of the CI. The [project] table only gives deptry and
+# uv audit a project to read: the repository is not built or published as a package.
+[project]
+name = "insper-riscv-scripts"
+version = "0.0.0"
+description = "Scripts de KPI do Insper-RISC-V."
+license = "Apache-2.0"
+requires-python = ">=3.14,<3.15"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[tool.pyright]
+include = ["scripts"]
+pythonVersion = "3.14"
+typeCheckingMode = "strict"
+
+[tool.pyrefly]
+preset = "strict"
+project-includes = ["scripts"]
+python-version = "3.14"
+
+[tool.pylint.main]
+ignore = [".venv", "Core", "Memory", "Peripherals", "TopLevel", "Tests", "Common-Components", "build"]
+fail-under = 10
+py-version = "3.14"
+
 [tool.ruff]
 target-version = "py314"
 line-length = 79
