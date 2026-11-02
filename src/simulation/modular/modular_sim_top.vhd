@@ -11,7 +11,8 @@
 --   | external-instruction | externa | interna | cache de instruções     | true         | false        |
 --   | external             | externa | externa | de instruções e de dados | true         | true         |
 --
--- O mapa vem dos genéricos e é o mesmo do núcleo: a BOOT_ROM em [0, tamanho), a ROM logo depois
+-- O mapa vem dos genéricos, cujo valor padrão é o do pacote modular_map_pkg, gerado do platform.yaml da
+-- plataforma, e é o mesmo do núcleo: a BOOT_ROM em [0, tamanho), a ROM logo depois
 -- dela até rom_end_kib, a RAM em [ram_base_kib, ram_end_kib) e a janela externa a partir de
 -- ext_base_kib. O que o projeto escolhe fica no config.yml da plataforma.
 --
@@ -31,6 +32,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.modular_map_pkg.all;
 
 entity modular_sim_top is
   generic (
@@ -45,21 +47,21 @@ entity modular_sim_top is
     -- A RAM é externa, atrás da cache de dados.
     ram_external        : boolean := false;
     -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
-    boot_rom_size_bytes : positive := 2048;
+    boot_rom_size_bytes : positive := 2 ** BOOT_ROM_BITS;
     -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
     rom_size_bytes      : positive := 1048576;
     -- Tamanho da RAM em bytes, uma potência de dois.
     ram_size_bytes      : positive := 1048576;
     -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
-    rom_end_kib         : natural  := 1024;
+    rom_end_kib         : natural  := ROM_END_KIB;
     -- Base, em KiB, da RAM (0x100000 por padrão).
-    ram_base_kib        : natural  := 1024;
+    ram_base_kib        : natural  := RAM_BASE_KIB;
     -- Fim exclusivo, em KiB, da RAM (0x200000 por padrão).
-    ram_end_kib         : natural  := 2048;
+    ram_end_kib         : natural  := RAM_END_KIB;
     -- Base, em KiB, da janela externa de periféricos e outros dispositivos (0x40000000 por padrão).
-    ext_base_kib        : natural  := 1048576;
+    ext_base_kib        : natural  := EXT_BASE_KIB;
     -- Base, em KiB, da janela de periféricos (0x80000000 por padrão).
-    periph_base_kib     : natural  := 2097152;
+    periph_base_kib     : natural  := PERIPH_BASE_KIB;
     -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
     icache_size_bits    : positive := 4096;
     -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).

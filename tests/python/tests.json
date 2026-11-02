@@ -82,6 +82,7 @@
             "Memory/sim/ram_simulation.vhd",
             "Memory/sim/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
+            "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
         ],
         "test_module": "tests.python.unittests.rtl.modular_integrated",
@@ -175,6 +176,7 @@
             "Memory/sim/ram_simulation.vhd",
             "Memory/sim/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
+            "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_data",
@@ -269,6 +271,7 @@
             "Memory/sim/ram_simulation.vhd",
             "Memory/sim/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
+            "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_instruction",
@@ -363,6 +366,7 @@
             "Memory/sim/ram_simulation.vhd",
             "Memory/sim/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
+            "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
         ],
         "test_module": "tests.python.unittests.rtl.modular_external",
