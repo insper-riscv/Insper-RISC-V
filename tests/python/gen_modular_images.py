@@ -4,8 +4,9 @@ Uso, da raiz do repositório:
 
     uv run python tests/python/gen_modular_images.py
 
-Cada programa guarda 0x5A, lê de volta, soma 1 e guarda o resultado na
-palavra seguinte; as imagens ficam em
+O programa guarda 0x5A na base da RAM, lê de volta, soma 1 e guarda o
+resultado na palavra seguinte. A BOOT_ROM salta para a ROM, que começa logo
+depois dela, e os quatro modelos usam as mesmas duas imagens, em
 tests/python/unittests/rtl/data/modular/.
 """
 
@@ -19,14 +20,14 @@ from tests.python.utils.rv32_asm import (
     addi,
     hex_lines,
     jal,
-    jalr,
     lui,
     lw,
     sw,
 )
 
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/modular"
-FLASH_BASE_WORDS = 0x800 // 4  # a FLASH interna começa em 0x800
+ROM_BASE_WORDS = 0x800 // 4  # a ROM começa logo depois da BOOT_ROM de 2 KiB
+RAM_HI20 = 0x100  # a RAM começa em 0x100000
 FIRST = 0x5A
 
 
@@ -59,25 +60,6 @@ def body(base_hi20: int, base_low: int) -> list[int]:
     return words
 
 
-def boot_to(address_hi20: int | None) -> list[int]:
-    """Return the BOOT_ROM that jumps to the code.
-
-    Parameters
-    ----------
-    address_hi20 : int or None
-        Upper 20 bits of the entry address; None jumps to the internal
-        FLASH at 0x800.
-
-    Returns
-    -------
-    list of int
-        The instructions of the boot ROM.
-    """
-    if address_hi20 is None:
-        return [jal(X0, 0x800)]
-    return [lui(T0, address_hi20), jalr(X0, T0, 0)]
-
-
 def write(name: str, words: list[int]) -> None:
     """Write one image.
 
@@ -93,19 +75,13 @@ def write(name: str, words: list[int]) -> None:
 
 
 def main() -> None:
-    """Write every image."""
-    internal_flash = [0] * FLASH_BASE_WORDS
-    write("boot_to_flash.hex", boot_to(None))
-    write("boot_to_ext.hex", boot_to(0x40000))
-    write("boot_to_ext_flash.hex", boot_to(0x20000))
-    write("flash_internal_data_internal.hex", internal_flash + body(0x8, 0))
-    write(
-        "flash_internal_data_external.hex",
-        internal_flash + body(0x40000, 0x100),
-    )
-    write("ext_code_data_internal.hex", body(0x8, 0))
-    write("ext_code_data_external.hex", body(0x40000, 0x100))
-    write("flash_external_code.hex", body(0x40000, 0x100))
+    """Write every image.
+
+    The four models run the same two images, because the ROM always
+    starts right after the BOOT_ROM and the RAM sits at the same address.
+    """
+    write("boot_to_rom.hex", [jal(X0, ROM_BASE_WORDS * 4)])
+    write("rom_program.hex", [0] * ROM_BASE_WORDS + body(RAM_HI20, 0))
 
 
 if __name__ == "__main__":

@@ -16,8 +16,9 @@ FIRST = 0x5A
 SECOND = 0x5B
 POLL_CYCLES = 200
 TIMEOUT_CYCLES = 200_000
-INTERNAL_RAM_BASE = 0x8000
-EXTERNAL_DATA_INDEX = 0x100 // 4  # o programa externo grava em 0x40000100
+RAM_BASE = 0x100000
+# A RAM externa tem 1 MB, então a base do mapa cai no índice 0 do chip.
+EXTERNAL_DATA_INDEX = 0
 
 
 async def start(dut: Any) -> None:
@@ -127,8 +128,8 @@ async def wait_for_internal_result(
     while cycles < TIMEOUT_CYCLES:
         await ClockCycles(dut.i_clk, POLL_CYCLES)
         cycles += POLL_CYCLES
-        second = writes.get(INTERNAL_RAM_BASE + 4)
+        second = writes.get(RAM_BASE + 4)
         if second is not None:
-            return writes.get(INTERNAL_RAM_BASE, 0), second
+            return writes.get(RAM_BASE, 0), second
     message = "the program did not write its result to the internal RAM"
     raise AssertionError(message)
