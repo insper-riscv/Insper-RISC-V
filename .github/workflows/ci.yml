@@ -62,7 +62,7 @@ jobs:
     if: ${{ needs.reuse.outputs.skip != 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 15
-    # GHDL, Yosys, SymbiYosys, z3, uv and riscv-tools of insper-riscv/Infra.
+    # GHDL, Yosys, SymbiYosys, the SMT solvers, uv and riscv-tools of insper-riscv/Infra.
     container:
       image: ghcr.io/insper-riscv/ci-vhdl:latest
 
@@ -102,32 +102,88 @@ jobs:
           path: "**/*.ghw"
           if-no-files-found: ignore
 
-  formal:
-    name: formal
+  formal-engine:
+    # The proofs of every repository run once per engine. The jobs of the matrix are not required checks: the
+    # job `formal` below joins their results and is the one the ruleset requires.
+    name: formal - ${{ matrix.engine }}
     needs: reuse
     if: ${{ needs.reuse.outputs.skip != 'true' }}
     runs-on: ubuntu-26.04
     timeout-minutes: 45
     container:
       image: ghcr.io/insper-riscv/ci-vhdl:latest
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [yices, bitwuzla, boolector, abc-bmc3]
 
     steps:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - name: Prove every make target named formal* of each repository
-        # A repository without proofs passes with a message; the proofs join by adding a formal target to it.
-        run: make formal
+      - name: Prove every make target named formal* of each repository, with the engine
+        # A repository without proofs writes an empty result; the proofs join by adding a formal target to it.
+        run: make formal FORMAL_ENGINE=${{ matrix.engine }}
+
+      - name: Upload the results
+        # Each repository writes its results where its own formal/aggregate.sh reads them: a table of tab-separated
+        # lines (result-<engine>.tsv, the Core, Common-Components and Peripherals) or JSON lines
+        # (result-<engine>.jsonl, the Memory).
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: formal-result-${{ matrix.engine }}
+          path: |
+            */build/formal/result-*.tsv
+            */build/formal-results/result-*.jsonl
+          if-no-files-found: ignore
 
       - name: Upload the logs
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: formal-logs
+          name: formal-logs-${{ matrix.engine }}
           path: |
             */build/formal/**/*.log
           if-no-files-found: ignore
+
+  formal:
+    # Decides from the results of every engine, repository by repository, with the formal/aggregate.sh of each
+    # one: it passes when each proof was answered and the engines that answered agree with each other and with
+    # what is wanted. The condition is what makes it run when an engine job failed; without it the job would be
+    # skipped, and a skipped job counts as a success for a required check. `!cancelled()` and not `always()`, so
+    # that a run cancelled by a newer commit does not start it. When the push to main reuses a passed pull
+    # request run, the engines are skipped and so is this job, like the other required jobs.
+    name: formal
+    needs: [reuse, formal-engine]
+    if: ${{ !cancelled() && needs.reuse.outputs.skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Download the results of the engines
+        uses: actions/download-artifact@v8
+        with:
+          pattern: formal-result-*
+          path: formal-results
+
+      - name: Decide
+        run: |
+          status=0
+          for repo in Common-Components Core Memory Peripherals; do
+            results=$(mktemp -d)
+            find formal-results \( -path "*/$repo/build/formal/result-*.tsv" -o -path "*/$repo/build/formal-results/result-*.jsonl" \) -exec cp {} "$results"/ \;
+            echo "::group::$repo"
+            if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then echo "#### $repo" >> "$GITHUB_STEP_SUMMARY"; fi
+            bash "$repo/formal/aggregate.sh" "$results" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
 
   python-static-analysis:
     name: python-static-analysis

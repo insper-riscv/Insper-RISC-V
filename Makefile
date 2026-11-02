@@ -97,7 +97,8 @@ unit-tests: sync memory-map test
 	$(MAKE) -C Memory test
 	$(MAKE) -C Peripherals test
 
-# Every make target named formal* of each repository (SymbiYosys and z3), all at once: each proof works in
+# Every make target named formal* of each repository (SymbiYosys; FORMAL_ENGINE=yices, bitwuzla, boolector or
+# abc-bmc3 on the command line goes to each of them), all at once: each proof works in
 # its own folder, so none shares anything with another, and the time is the one of the longest proof instead
 # of the sum. A repository without proofs adds nothing. -k lets the others finish when one fails and -O keeps
 # the output of each target together.
