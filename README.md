@@ -1,35 +1,56 @@
-# RV32IM
+# Insper-RISC-V
 
 🌐 [Português](README.md) · [English](README.en.md)
 
 ![Diagrama do pipeline](Core/docs/img/multi-stage-rv32m_pipeline_final-Pipeline.jpg)
 
-SoC RISC-V de 32 bits (RV32I + M) em VHDL, com pipeline em ordem de 5 estágios, suas memórias, periféricos e plataforma de placa, e as ferramentas e testes ao redor. O trabalho é dividido em repositórios da organização [insper-riscv](https://github.com/insper-riscv), um por responsabilidade. Este repositório é o agregador: fixa uma versão de cada um como submódulo git, guarda os relatórios de KPI e a integração contínua conjunta.
+SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estágios que implementa RV32IM com as extensões Zicsr, Zicntr, Zihpm, Zifencei e Zicclsm, em 60 perfis gerados a partir de uma matriz. Este repositório é o topo do projeto. Ele liga o núcleo (`Core`), as memórias (`Memory`), os periféricos (`Peripherals`) e os blocos comuns (`Common-Components`) em duas plataformas, a de simulação `internal-mem` e a da placa DE0-CV (Cyclone V), e guarda o projeto do Quartus, o runtime, o mapa de memória, os testbenches das plataformas e a integração contínua conjunta. O trabalho é dividido em repositórios da organização [insper-riscv](https://github.com/insper-riscv), um por responsabilidade.
 
 ## 1. Documentação
 
 - [AUTHORS.md](AUTHORS.md): autores com commits no repositório, com nome e conta do GitHub.
-- [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, norma VHDL-2008, norma C23 (ISO/IEC 9899:2024), regras de documentação e verificação antes de abrir Pull Request.
+- [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, normas VHDL-2008, C23 e Python, regras de documentação e verificação antes de abrir Pull Request.
 - [CITATION.cff](CITATION.cff): metadados para citação do software.
+- [docs/pt-br/platform/](docs/pt-br/platform): arquitetura de memória, boot, runtime, programação da placa e simulação do topo de hardware.
 - [docs/README_kpis.md](docs/README_kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
 
 ## 2. Repositórios
 
 | Repositório | Responsabilidade | Depende de |
 | :--- | :--- | :--- |
-| [Infra](https://github.com/insper-riscv/Infra) | A máquina: a imagem de toolchain (GCC com picolibc, Spike, GHDL, uv) em que a integração contínua executa | Nada |
-| [Tools](https://github.com/insper-riscv/Tools) | `riscv-tools`: compilar, simular, executar na placa, certificar e verificar | Infra (na execução) |
-| [Common-Components](https://github.com/insper-riscv/Common-Components) | Os blocos genéricos de VHDL (somador, flip-flop, registradores, multiplexadores, decodificador one-hot e buffer de três estados) que Core, Memory e Peripherals importam | Nada |
+| [Infra](https://github.com/insper-riscv/Infra) | A imagem de toolchain (GCC com picolibc, Spike, GHDL, uv) em que a integração contínua executa | Nada |
+| [Tools](https://github.com/insper-riscv/Tools) | `riscv-tools`, para compilar, simular, executar na placa, certificar e verificar | Infra (na execução) |
+| [Common-Components](https://github.com/insper-riscv/Common-Components) | Os blocos genéricos de VHDL (somador, flip-flop, registradores, multiplexadores, decodificador one-hot e buffer de três estados) | Nada |
 | [Core](https://github.com/insper-riscv/Core) | O processador em VHDL, por extensão da ISA, perfis e testes por entidade | Common-Components |
-| [Memory](https://github.com/insper-riscv/Memory) | Modelos de simulação e IPs Quartus da placa | Core (interface de memória) |
+| [Memory](https://github.com/insper-riscv/Memory) | Memórias, caches, controladores e modelos de simulação | Core (interface de memória) |
 | [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER e UART, com testes por entidade | Common-Components |
-| [TopLevel](https://github.com/insper-riscv/TopLevel) | As plataformas: projeto Quartus, PLL, topo de simulação, runtime, mapa de memória e testbench | Core, Memory, Peripherals, Tools |
-| [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | TopLevel, Tools |
-| [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Core, Memory, TopLevel, Tools |
+| [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | Este repositório, Tools |
+| [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Este repositório, Tools |
 
-`Common-Components`, `Core`, `Memory` e `Peripherals` são os submódulos deste repositório. `TopLevel`, `Tests`, `Infra`, `Tools` e `Certification` são repositórios próprios; o `TopLevel` passa a viver aqui com a fusão dos históricos.
+`Common-Components`, `Core`, `Memory` e `Peripherals` são os submódulos deste repositório.
 
-## 3. Clonagem e Execução
+## 3. Plataformas
+
+| Caminho | Plataforma |
+| :--- | :--- |
+| `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_ROM, FLASH e RAM dentro da FPGA e o topo de simulação `rv32i3stage_core_sim_test`. É a base dos testes de entidade do pipeline |
+| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `core_fpga_sdram_flash.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
+
+Cada plataforma tem a mesma estrutura.
+
+| Pasta ou arquivo | Conteúdo |
+| :--- | :--- |
+| `platform.yaml` | Mapa de memória e a lista de cada cópia manuscrita dele, verificada por `riscv-tools check-memory-map` |
+| `config.yaml` | Configuração do `riscv-tools` para toolchain, memória, Quartus e simulação |
+| `quartus/` | Projeto do Quartus (`.qpf`, `.qsf`, `.sdc`, topo de hardware e imagens `.mif`) |
+| `pll/` | IP da PLL |
+| `rtl/` | Topo de simulação e os módulos próprios da plataforma |
+| `runtime/` | `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `_exit.c`, `stdio.c` e `spike_exit.S` |
+| `testbench/` | `test_c_program.py`, o testbench cocotb que decide PASS ou FAIL de um programa |
+
+Os testes por entidade do RTL das plataformas ficam em `tests/python/`, com o catálogo `tests.json` que os conduz.
+
+## 4. Clonagem e Execução
 
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/Insper-RISC-V.git
@@ -42,15 +63,16 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 | Alvo | O que executa |
 | :--- | :--- |
 | `make paths` | Existência de todos os caminhos listados na configuração (`paths.yaml`, `riscv-tools check-paths`) |
-| `make check` | Verificação de sintaxe VHDL de cada repositório, com a elaboração de cada perfil do `Core`, e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
-| `make unit-tests` | Testes por entidade (cocotb e GHDL) de `Common-Components`, `Core`, `Memory` e `Peripherals` |
+| `make check` | Verificação de sintaxe VHDL de cada repositório, a elaboração de cada perfil do `Core`, a construção do topo de simulação de cada plataforma e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
+| `make memory-map` | Concordância de cada cópia do mapa de memória com o `platform.yaml` da plataforma |
+| `make unit-tests` | Testes por entidade (cocotb e GHDL) de cada repositório e das plataformas, mais o `memory-map` |
 | `make formal` | Provas formais (SymbiYosys e z3) de cada repositório que as tem |
 
-## 4. Placa
+## 5. Placa
 
-O projeto Quartus está no repositório `TopLevel`, em `platforms/internal-mem/quartus/core_fpga_test.qpf` (Cyclone V 5CEBA4F23, com BOOT_ROM, FLASH e RAM dentro da FPGA). A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [docs/HARDWARE_PROGRAMMING.md do TopLevel](https://github.com/insper-riscv/TopLevel/blob/main/docs/HARDWARE_PROGRAMMING.md).
+O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/quartus/core_fpga_sdram_flash.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [HARDWARE_PROGRAMMING.md](docs/pt-br/platform/HARDWARE_PROGRAMMING.md).
 
-## 5. KPIs
+## 6. KPIs
 
 `scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/README_kpis.md](docs/README_kpis.md).
 
