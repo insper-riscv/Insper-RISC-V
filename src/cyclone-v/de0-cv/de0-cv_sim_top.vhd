@@ -193,7 +193,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, ext_flash => true, hpm_counters => hpm_count(HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => 11, rom_end_kib => 0, rom_external => true, ram_base_kib => 1048576, ram_end_kib => 1572864, ram_external => true, ext_base_kib => 524288, periph_base_kib => 1572864, hpm_counters => hpm_count(HAS_ZIHPM))
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

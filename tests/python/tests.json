@@ -86,8 +86,8 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_integrated",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_flash.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/flash_internal_data_internal.hex"
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex"
         },
         "build_args": [
             "--std=08"
@@ -179,9 +179,9 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_data",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_flash.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/flash_internal_data_external.hex",
-            "data_external": true
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "ram_external": true
         },
         "build_args": [
             "--std=08"
@@ -273,10 +273,9 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_instruction",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_ext.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/flash_internal_data_internal.hex",
-            "ext_ram_file": "tests/python/unittests/rtl/data/modular/ext_code_data_internal.hex",
-            "instr_external": true
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true
         },
         "build_args": [
             "--std=08"
@@ -368,107 +367,10 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_ext.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/flash_internal_data_internal.hex",
-            "ext_ram_file": "tests/python/unittests/rtl/data/modular/ext_code_data_external.hex",
-            "instr_external": true,
-            "data_external": true
-        },
-        "build_args": [
-            "--std=08"
-        ],
-        "test_args": [
-            "--std=08"
-        ],
-        "plusargs": [
-            "--max-stack-alloc=0"
-        ]
-    },
-    "ModularExternalFlash": {
-        "toplevel": "modular_sim_top",
-        "sources": [
-            "Common-Components/src/adder.vhd",
-            "Common-Components/src/generic_register.vhd",
-            "Common-Components/src/clearable_register.vhd",
-            "Common-Components/src/flip_flop.vhd",
-            "Common-Components/src/mux_2x1.vhd",
-            "Common-Components/src/mux_4x1.vhd",
-            "Common-Components/src/mux_8x1.vhd",
-            "Common-Components/src/utils_pkg.vhd",
-            "Common-Components/src/mux_tree.vhd",
-            "Common-Components/src/onehot_decoder.vhd",
-            "Common-Components/src/synchronizer.vhd",
-            "Common-Components/src/tristate_buffer_1bit.vhd",
-            "Core/src/shared/pipeline_types.vhd",
-            "Core/src/shared/funct3_consts.vhd",
-            "Core/src/shared/alu_consts.vhd",
-            "Core/src/I/alu.vhd",
-            "Core/src/shared/ext_imm_consts.vhd",
-            "Core/src/I/extender_imm.vhd",
-            "Core/src/shared/ext_ram_consts.vhd",
-            "Core/src/shared/byte_mask_consts.vhd",
-            "Core/src/I/extender_ram.vhd",
-            "Core/src/shared/opcode_consts.vhd",
-            "Core/src/I/store_manager.vhd",
-            "Core/src/M/booth_multiplier_rv32.vhd",
-            "Core/src/shared/funct7_consts.vhd",
-            "Core/src/M/m_decode.vhd",
-            "Core/src/M/muldiv_consts.vhd",
-            "Core/src/M/muldiv_fusion.vhd",
-            "Core/src/shared/word_consts.vhd",
-            "Core/src/M/non_restoring_divider_rv32.vhd",
-            "Core/src/M/multdiv.vhd",
-            "Core/src/shared/mem_map_consts.vhd",
-            "Core/src/Zicclsm/misaligned_unit.vhd",
-            "Core/src/Zicntr/counter64.vhd",
-            "Core/src/Zicntr/tick_divider.vhd",
-            "Core/src/Zicsr/csr_addr_consts.vhd",
-            "Core/src/Zicsr/csr_decode.vhd",
-            "Core/src/Zicsr/csr_event_consts.vhd",
-            "Core/src/Zicsr/csr_value_consts.vhd",
-            "Core/src/Zicsr/csr_file.vhd",
-            "Core/src/Zicsr/trap_consts.vhd",
-            "Core/src/Zicsr/trap_unit.vhd",
-            "Core/src/Zifencei/fencei_unit.vhd",
-            "Core/src/shared/pc_src_consts.vhd",
-            "Core/src/shared/pc_fetch.vhd",
-            "Core/src/core/stage_if.vhd",
-            "Core/src/shared/reg_mem_wb.vhd",
-            "Core/src/shared/reg_file.vhd",
-            "Core/src/shared/fwd_consts.vhd",
-            "Core/src/shared/forwarding_match.vhd",
-            "Core/src/shared/hazard_detection_unit.vhd",
-            "Core/src/shared/bubble_mux.vhd",
-            "Core/src/shared/wb_sel_consts.vhd",
-            "Core/src/shared/control_unit.vhd",
-            "Core/src/core/stage_id.vhd",
-            "Core/src/core/stage_mem.vhd",
-            "Core/src/core/stage_wb.vhd",
-            "Core/src/shared/reg_if_id.vhd",
-            "Core/src/shared/reg_ex_mem.vhd",
-            "Core/src/shared/forwarding_unit.vhd",
-            "Core/src/core/stage_ex.vhd",
-            "Core/src/shared/reg_id_ex.vhd",
-            "Core/src/core/core.vhd",
-            "Memory/external/bus/ext_interconnect.vhd",
-            "Memory/external/cache/dcache.vhd",
-            "Memory/external/cache/flash_arbiter.vhd",
-            "Memory/external/cache/flash_chip.vhd",
-            "Memory/external/cache/icache.vhd",
-            "Memory/external/cache/mem_region_router.vhd",
-            "Memory/external/cache/ram_chip.vhd",
-            "Memory/sim/ram_simulation.vhd",
-            "Memory/sim/rom_simulation.vhd",
-            "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
-            "src/simulation/modular/modular_sim_top.vhd"
-        ],
-        "test_module": "tests.python.unittests.rtl.modular_external_flash",
-        "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_ext_flash.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/flash_external_code.hex",
-            "instr_external": true,
-            "data_external": true,
-            "ext_flash": true
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "ram_external": true
         },
         "build_args": [
             "--std=08"

@@ -1,30 +1,28 @@
 -- =============================================================================
 -- Topo de simulação modular: os quatro modelos base do núcleo
 --
--- Um único topo, configurado por genéricos, monta o núcleo com a memória de instruções e a de
--- dados dentro ou fora do chip. O que está fora fica atrás de uma cache e de um modelo de chip
--- simulado (ram_chip, e flash_chip quando a FLASH também é externa), de tamanho configurável.
+-- Um único topo, configurado por genéricos, monta o núcleo com a ROM e a RAM cada uma dentro ou
+-- fora do chip. O que está fora fica atrás de uma cache e de um modelo de chip simulado (flash_chip
+-- para a ROM, ram_chip para a RAM), de tamanho configurável.
 --
---   | Modelo               | Instruções                          | Dados                              | instr_external | data_external |
---   | integrated           | internas                            | internos                           | false          | false         |
---   | external-data        | internas                            | externos, atrás da cache de dados  | false          | true          |
---   | external-instruction | externas, atrás da cache de instruções | internos                        | true           | false         |
---   | external             | externas, atrás da cache de instruções | externos, atrás da cache de dados | true         | true          |
+--   | Modelo               | ROM     | RAM     | Caches                  | rom_external | ram_external |
+--   | integrated           | interna | interna | nenhuma                 | false        | false        |
+--   | external-data        | interna | externa | cache de dados          | false        | true         |
+--   | external-instruction | externa | interna | cache de instruções     | true         | false        |
+--   | external             | externa | externa | de instruções e de dados | true         | true         |
 --
--- Mapa A (ext_flash falso, o padrão): BOOT_ROM em 0x00000000, FLASH interna em 0x00000800, RAM
--- interna em 0x00008000 e o chip externo em 0x40000000. As instruções externas são buscadas nesse
--- chip, pela cache de instruções, e os dados externos também, pela cache de dados.
+-- O mapa vem dos genéricos e é o mesmo do núcleo: a BOOT_ROM em [0, tamanho), a ROM logo depois
+-- dela até rom_end_kib, a RAM em [ram_base_kib, ram_end_kib) e a janela externa a partir de
+-- ext_base_kib. O que o projeto escolhe fica no config.yml da plataforma.
 --
--- Mapa B (ext_flash verdadeiro, exige os dois lados externos): só a BOOT_ROM é interna. A FLASH
--- externa fica em 0x20000000 e o chip de RAM em 0x40000000, os dois atrás das caches e de um
--- roteador por região, como na plataforma da placa, só que com o chip de RAM simulado no lugar do
--- controlador e do chip da SDRAM.
+-- Com as duas memórias externas, um roteador por cache separa a ROM da RAM, e a ROM tem um árbitro
+-- entre as duas caches. Com uma só externa, a cache fala direto com o chip.
 --
 -- Todos os tamanhos são genéricos em potência de dois (bytes para as memórias, bits para as
--- caches), verificados pelo log2_exact. Os valores padrão são os da simulação do ACT4: FLASH e RAM
+-- caches), verificados pelo log2_exact. Os valores padrão são os da simulação do ACT4: ROM e RAM
 -- de 1 MB e caches de 4 kbit.
 --
--- A porta de depuração lê uma palavra do chip externo, pelo índice a partir do seu início, sem
+-- A porta de depuração lê uma palavra do chip de RAM externo, pelo índice a partir do seu início, sem
 -- passar pelas caches: é como o testbench vê o HTIF tohost quando ele está no chip. Quando a RAM é
 -- interna, o testbench observa as saídas o_ram_*, que são o barramento de dados da RAM do núcleo.
 -- =============================================================================
@@ -38,26 +36,30 @@ entity modular_sim_top is
   generic (
     -- Imagem da BOOT_ROM, uma palavra de 32 bits por linha em hexadecimal.
     boot_rom_file       : string  := "default.hex";
-    -- Imagem da FLASH (interna no mapa A, o chip de FLASH externo no mapa B).
+    -- Imagem da ROM, a partir do seu início (interna, ou o armazenamento do chip de FLASH externo).
     rom_file            : string  := "default.hex";
-    -- Imagem inicial da RAM interna; vazio deixa tudo em zero.
+    -- Imagem inicial da RAM (interna, ou o chip de RAM externo); vazio deixa tudo em zero.
     ram_file            : string  := "";
-    -- Imagem inicial do chip de RAM externo, a partir de 0x40000000; vazio deixa tudo em zero.
-    ext_ram_file        : string  := "";
-    -- A memória de instruções é externa, atrás da cache de instruções.
-    instr_external      : boolean := false;
-    -- A memória de dados é externa, atrás da cache de dados.
-    data_external       : boolean := false;
-    -- Mapa B: a FLASH é um chip externo em 0x20000000 e não há RAM interna.
-    ext_flash           : boolean := false;
-    -- Tamanho da BOOT_ROM em bytes, uma potência de dois.
+    -- A ROM é externa, atrás da cache de instruções.
+    rom_external        : boolean := false;
+    -- A RAM é externa, atrás da cache de dados.
+    ram_external        : boolean := false;
+    -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
     boot_rom_size_bytes : positive := 2048;
-    -- Tamanho da FLASH em bytes, uma potência de dois (interna no mapa A, o chip no mapa B).
-    flash_size_bytes    : positive := 1048576;
-    -- Tamanho da RAM interna em bytes, uma potência de dois.
+    -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
+    rom_size_bytes      : positive := 1048576;
+    -- Tamanho da RAM em bytes, uma potência de dois.
     ram_size_bytes      : positive := 1048576;
-    -- Tamanho do chip de RAM externo em bytes, uma potência de dois.
-    ext_ram_size_bytes  : positive := 1048576;
+    -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
+    rom_end_kib         : natural  := 1024;
+    -- Base, em KiB, da RAM (0x100000 por padrão).
+    ram_base_kib        : natural  := 1024;
+    -- Fim exclusivo, em KiB, da RAM (0x200000 por padrão).
+    ram_end_kib         : natural  := 2048;
+    -- Base, em KiB, da janela externa de periféricos e outros dispositivos (0x40000000 por padrão).
+    ext_base_kib        : natural  := 1048576;
+    -- Base, em KiB, da janela de periféricos (0x80000000 por padrão).
+    periph_base_kib     : natural  := 2097152;
     -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
     icache_size_bits    : positive := 4096;
     -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
@@ -116,8 +118,8 @@ architecture behaviour of modular_sim_top is
     return 0;
   end function hpm_count;
 
-  -- Há algum lado externo, então há um chip de RAM externo.
-  constant HAS_EXTERNAL : boolean := instr_external or data_external;
+  -- Tamanho da BOOT_ROM em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
+  constant BOOT_KIB : natural := boot_rom_size_bytes / 1024;
 
   -- Clocks dos estágios do núcleo.
   signal pll_clk_if      : std_logic;
@@ -197,7 +199,7 @@ architecture behaviour of modular_sim_top is
   signal id_line       : std_logic;
   signal id_rdx        : std_logic_vector(95 downto 0);
 
-  -- Roteadores por região (mapa B): lado do chip de RAM de cada um.
+  -- Roteadores por região (as duas memórias externas): lado do chip de RAM de cada um.
   signal si_addr       : std_logic_vector(31 downto 0);
   signal si_wdata      : std_logic_vector(31 downto 0);
   signal si_be         : std_logic_vector(3 downto 0);
@@ -221,7 +223,7 @@ architecture behaviour of modular_sim_top is
   signal sd_wdx        : std_logic_vector(95 downto 0);
   signal sd_rdx        : std_logic_vector(95 downto 0);
 
-  -- Roteadores por região (mapa B): lado do chip de FLASH.
+  -- Roteadores por região (as duas memórias externas): lado do chip de FLASH.
   signal fa_addr, fa_rdata, fb_addr, fb_rdata, fc_addr, fc_rdata : std_logic_vector(31 downto 0);
   signal fa_rden, fa_line, fa_adv, fa_ready : std_logic;
   signal fb_rden, fb_line, fb_adv, fb_ready : std_logic;
@@ -251,8 +253,8 @@ architecture behaviour of modular_sim_top is
 
 begin
 
-  assert not ext_flash or (instr_external and data_external)
-    report "ext_flash (mapa B) exige instr_external e data_external"
+  assert boot_rom_size_bytes mod 1024 = 0
+    report "boot_rom_size_bytes deve ser múltiplo de 1 KiB"
     severity failure;
 
   o_ram_en      <= ram_en;
@@ -283,7 +285,14 @@ begin
       has_zicntr   => has_zicntr,
       has_zifencei => has_zifencei,
       has_zicclsm  => has_zicclsm,
-      ext_flash    => ext_flash,
+      boot_rom_bits => log2_exact(boot_rom_size_bytes),
+      rom_end_kib   => rom_end_kib,
+      rom_external  => rom_external,
+      ram_base_kib  => ram_base_kib,
+      ram_end_kib   => ram_end_kib,
+      ram_external  => ram_external,
+      ext_base_kib  => ext_base_kib,
+      periph_base_kib => periph_base_kib,
       hpm_counters => hpm_count(has_zihpm)
     )
     port map (
@@ -331,11 +340,11 @@ begin
       o_data => boot_rom_data
     );
 
-  -- Mapa A: a FLASH e a RAM internas do núcleo.
-  g_internal : if not ext_flash generate
+  -- ROM interna: a FLASH com duas portas, uma para instruções e outra para dados.
+  g_rom_internal : if not rom_external generate
   begin
     flash_inst : entity work.rom_simulation
-      generic map (rom_file => rom_file, size_bytes => flash_size_bytes)
+      generic map (rom_file => rom_file, size_bytes => rom_size_bytes)
       port map (
         i_addr  => if_addr(31 downto 2),
         i_clk   => pll_clk_if,
@@ -346,7 +355,11 @@ begin
         i_re2   => flash_rden2,
         o_data2 => flash_data2
       );
+  end generate g_rom_internal;
 
+  -- RAM interna do núcleo.
+  g_ram_internal : if not ram_external generate
+  begin
     ram_inst : entity work.ram_simulation
       generic map (size_bytes => ram_size_bytes, ram_file => ram_file)
       port map (
@@ -359,11 +372,11 @@ begin
         i_en_ram   => ram_en,
         o_data_out => ram_rdata
       );
-  end generate g_internal;
+  end generate g_ram_internal;
 
   -- Dados externos: a interconexão separa a janela de periféricos, a cache de dados fica entre o
   -- núcleo e a memória.
-  g_data_external : if data_external generate
+  g_data_external : if ram_external generate
   begin
     interconnect_inst : entity work.ext_interconnect
       port map (
@@ -393,7 +406,12 @@ begin
       );
 
     dcache_inst : entity work.dcache
-      generic map (size_bits => dcache_size_bits, write_through => true)
+      generic map (
+        size_bits     => dcache_size_bits,
+        write_through => true,
+        rom_base_kib  => BOOT_KIB,
+        rom_end_kib   => rom_end_kib
+      )
       port map (
         i_clk         => pll_clk_idexmem,
         i_rst         => i_rst,
@@ -426,10 +444,14 @@ begin
   end generate g_data_external;
 
   -- Instruções externas: a cache de instruções entre o núcleo e a memória.
-  g_instr_external : if instr_external generate
+  g_instr_external : if rom_external generate
   begin
     icache_inst : entity work.icache
-      generic map (size_bits => icache_size_bits)
+      generic map (
+        size_bits    => icache_size_bits,
+        rom_base_kib => BOOT_KIB,
+        rom_end_kib  => rom_end_kib
+      )
       port map (
         i_clk        => pll_clk_if,
         i_clk_cpu    => pll_clk_idexmem,
@@ -450,39 +472,37 @@ begin
       );
   end generate g_instr_external;
 
-  -- Mapa A: as caches falam direto com o chip de RAM externo.
-  g_direct : if not ext_flash generate
+  -- A RAM externa sozinha: a cache de dados fala direto com o chip de RAM.
+  g_direct_data : if ram_external and not rom_external generate
   begin
-    g_direct_data : if data_external generate
-    begin
-      rc_d_addr  <= dd_addr;
-      rc_d_wdata <= dd_wdata;
-      rc_d_be    <= dd_be;
-      rc_d_rden  <= dd_rden;
-      rc_d_wren  <= dd_wren;
-      rc_d_line  <= dd_line;
-      rc_d_adv   <= dd_adv;
-      rc_d_wdx   <= dd_wdx;
-      dd_ready   <= rc_d_ready;
-      dd_rdata   <= rc_d_rdata;
-      dd_rdx     <= rc_d_rdx;
-    end generate g_direct_data;
+    rc_d_addr  <= dd_addr;
+    rc_d_wdata <= dd_wdata;
+    rc_d_be    <= dd_be;
+    rc_d_rden  <= dd_rden;
+    rc_d_wren  <= dd_wren;
+    rc_d_line  <= dd_line;
+    rc_d_adv   <= dd_adv;
+    rc_d_wdx   <= dd_wdx;
+    dd_ready   <= rc_d_ready;
+    dd_rdata   <= rc_d_rdata;
+    dd_rdx     <= rc_d_rdx;
+  end generate g_direct_data;
 
-    g_direct_instr : if instr_external generate
-    begin
-      rc_i_addr <= id_addr;
-      rc_i_rden <= id_rden;
-      rc_i_line <= id_line;
-      rc_i_adv  <= id_adv;
-      id_ready  <= rc_i_ready;
-      id_rdata  <= rc_i_rdata;
-      id_rdx    <= rc_i_rdx;
-    end generate g_direct_instr;
-  end generate g_direct;
+  -- A ROM externa sozinha: a cache de instruções fala direto com o chip de FLASH.
+  g_direct_instr : if rom_external and not ram_external generate
+  begin
+    fc_addr  <= id_addr;
+    fc_rden  <= id_rden;
+    fc_line  <= id_line;
+    fc_adv   <= id_adv;
+    id_ready <= fc_ready;
+    id_rdata <= fc_rdata;
+    id_rdx   <= fc_rdx;
+  end generate g_direct_instr;
 
-  -- Mapa B: um roteador por cache separa a FLASH externa do chip de RAM, e a FLASH tem um árbitro
-  -- e o chip com o seu armazenamento.
-  g_routed : if ext_flash generate
+  -- As duas memórias externas: um roteador por cache separa a ROM do chip de RAM, e a ROM tem um
+  -- árbitro entre as duas.
+  g_routed : if rom_external and ram_external generate
   begin
     router_i_inst : entity work.mem_region_router
       port map (
@@ -521,28 +541,6 @@ begin
         i_ready => fc_ready, i_rdata => fc_rdata, i_rdata_x => fc_rdx
       );
 
-    flash_chip_inst : entity work.flash_chip
-      generic map (
-        first_latency => flash_first_latency,
-        next_latency  => flash_next_latency,
-        size_bytes    => flash_size_bytes
-      )
-      port map (
-        i_clk => pll_clk_idexmem, i_rst => i_rst,
-        i_addr => fc_addr, i_rden => fc_rden, i_line => fc_line, i_advance => fc_adv,
-        o_ready => fc_ready, o_busy => flash_busy, o_rdata => fc_rdata, o_rdata_x => fc_rdx,
-        o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
-      );
-
-    flash_storage_inst : entity work.rom_simulation
-      generic map (rom_file => rom_file, size_bytes => flash_size_bytes)
-      port map (
-        i_addr => flash_mem_addr(31 downto 2),
-        i_clk  => pll_clk_idexmem,
-        i_re   => '1',
-        o_data => flash_mem_data
-      );
-
     rc_d_addr  <= sd_addr;
     rc_d_wdata <= sd_wdata;
     rc_d_be    <= sd_be;
@@ -564,14 +562,41 @@ begin
     si_rdx    <= rc_i_rdx;
   end generate g_routed;
 
+  -- O chip de FLASH externo e o seu armazenamento, quando a ROM é externa.
+  g_rom_chip : if rom_external generate
+  begin
+    flash_chip_inst : entity work.flash_chip
+      generic map (
+        first_latency => flash_first_latency,
+        next_latency  => flash_next_latency,
+        size_bytes    => rom_size_bytes
+      )
+      port map (
+        i_clk => pll_clk_idexmem, i_rst => i_rst,
+        i_addr => fc_addr, i_rden => fc_rden, i_line => fc_line, i_advance => fc_adv,
+        o_ready => fc_ready, o_busy => flash_busy, o_rdata => fc_rdata, o_rdata_x => fc_rdx,
+        o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
+      );
+
+    flash_storage_inst : entity work.rom_simulation
+      generic map (rom_file => rom_file, size_bytes => rom_size_bytes)
+      port map (
+        i_addr => flash_mem_addr(31 downto 2),
+        i_clk  => pll_clk_idexmem,
+        i_re   => '1',
+        o_data => flash_mem_data
+      );
+  end generate g_rom_chip;
+
   -- O chip de RAM externo, quando algum lado é externo.
-  g_ext_ram : if HAS_EXTERNAL generate
+  g_ext_ram : if ram_external generate
   begin
     ext_ram_inst : entity work.ram_chip
       generic map (
-        init_file  => ext_ram_file,
+        init_file  => ram_file,
         latency    => ext_ram_latency,
-        size_bytes => ext_ram_size_bytes
+        size_bytes => ram_size_bytes,
+        base_kib   => ram_base_kib mod 65536
       )
       port map (
         i_clk           => pll_clk_idexmem,
@@ -601,7 +626,7 @@ begin
       );
   end generate g_ext_ram;
 
-  g_no_ext_ram : if not HAS_EXTERNAL generate
+  g_no_ext_ram : if not ram_external generate
   begin
     o_dbg_word_data <= (others => '0');
   end generate g_no_ext_ram;

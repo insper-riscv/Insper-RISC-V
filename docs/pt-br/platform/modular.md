@@ -2,30 +2,33 @@
 
 ## 1. O que ela é
 
-Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), monta o núcleo com a memória de instruções e a de dados dentro ou fora do chip. O que fica fora do chip passa por uma cache e por um modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões) e é a base da simulação do ACT4 dos 60 perfis.
+Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), monta o núcleo com a ROM e a RAM cada uma dentro ou fora do chip. O que fica fora do chip passa por uma cache e por um modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões) e é a base da simulação do ACT4 dos 60 perfis.
+
+Todos os modelos têm a BOOT_ROM, a memória de inicialização que deixa a CPU num estado conhecido, e a ROM sempre começa logo depois dela.
 
 ## 2. Os modelos
 
-| Modelo | Instruções | Dados | `instr_external` | `data_external` |
-| :--- | :--- | :--- | :--- | :--- |
-| `integrated` | internas | internos | falso | falso |
-| `external-data` | internas | externos, atrás da cache de dados | falso | verdadeiro |
-| `external-instruction` | externas, atrás da cache de instruções | internos | verdadeiro | falso |
-| `external` | externas, atrás da cache de instruções | externos, atrás da cache de dados | verdadeiro | verdadeiro |
-| `external-flash` | externas, FLASH atrás da cache de instruções | externos, atrás da cache de dados | verdadeiro | verdadeiro |
+| Modelo | ROM | RAM | Caches | `rom_external` | `ram_external` |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `integrated` | interna | interna | nenhuma | falso | falso |
+| `external-data` | interna | externa | cache de dados | falso | verdadeiro |
+| `external-instruction` | externa | interna | cache de instruções | verdadeiro | falso |
+| `external` | externa | externa | cache de instruções e cache de dados | verdadeiro | verdadeiro |
 
-O último modelo é o `external` com o genérico `ext_flash` verdadeiro, o desenho da plataforma [de0-cv](de0-cv.md) com o chip de RAM simulado no lugar do controlador e do chip da SDRAM.
+Com uma só memória externa, a cache fala direto com o chip (`ram_chip` para a RAM, `flash_chip` para a ROM). Com as duas externas, um roteador por cache separa a ROM da RAM e a ROM tem um árbitro entre as duas caches. No modelo `external-instruction` não há cache de dados, então a ROM externa só é lida como instrução, e o `.rodata` do programa fica na RAM.
 
-## 3. Mapas de memória
+## 3. Mapa de memória
 
-| Região | Mapa A (`ext_flash` falso) | Mapa B (`ext_flash` verdadeiro) |
-| :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000`, interna | `0x00000000`, interna |
-| FLASH | `0x00000800`, interna | `0x20000000`, chip externo |
-| RAM interna | `0x00008000` | não existe |
-| Chip de RAM externo | `0x40000000` | `0x40000000` |
+O mapa vem de genéricos e vale para o núcleo e para o topo. Os valores padrão são os da simulação do ACT4.
 
-No mapa A as instruções externas são buscadas no chip de RAM externo, e o mapa B exige os dois lados externos. A BOOT_ROM de cada modelo salta para onde o código está.
+| Região | Início | Fim | Genéricos |
+| :--- | :--- | :--- | :--- |
+| BOOT_ROM | `0x00000000` | `0x00000800` | `boot_rom_size_bytes` |
+| ROM | logo depois da BOOT_ROM, `0x00000800` | `0x00100000` | `rom_end_kib` |
+| RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
+| Janela externa e periféricos | `0x40000000` | | `ext_base_kib`, `periph_base_kib` |
+
+Os limites estão em KiB. A BOOT_ROM de cada modelo salta para o início da ROM. O `config.yml` da plataforma que usa o topo é quem escolhe esses valores.
 
 ## 4. Tamanhos
 
@@ -33,10 +36,9 @@ Todo tamanho é uma potência de dois, verificada em tempo de elaboração pelo 
 
 | Genérico | Unidade | Padrão |
 | :--- | :--- | :--- |
-| `boot_rom_size_bytes` | bytes | 2048 |
-| `flash_size_bytes` | bytes | 1048576 (1 MB) |
+| `boot_rom_size_bytes` | bytes | 2048, múltiplo de 1 KiB |
+| `rom_size_bytes` | bytes | 1048576 (1 MB) |
 | `ram_size_bytes` | bytes | 1048576 (1 MB) |
-| `ext_ram_size_bytes` | bytes | 1048576 (1 MB) |
 | `icache_size_bits` | bits | 4096 (4 kbit) |
 | `dcache_size_bits` | bits | 4096 (4 kbit) |
 
@@ -44,7 +46,7 @@ Os genéricos `flash_first_latency`, `flash_next_latency` e `ext_ram_latency` d�
 
 ## 5. Como usar
 
-As imagens entram pelos genéricos `boot_rom_file`, `rom_file`, `ram_file` e `ext_ram_file`, uma palavra de 32 bits por linha em hexadecimal.
+As imagens entram pelos genéricos `boot_rom_file`, `rom_file` e `ram_file`, uma palavra de 32 bits por linha em hexadecimal.
 
 | Porta | Uso |
 | :--- | :--- |
@@ -56,4 +58,4 @@ O GHDL aloca os arrays das memórias na pilha, então a simulação de memórias
 
 ## 6. Verificação
 
-`tests/python/runner.py` roda um programa mínimo em cada configuração (`ModularIntegrated`, `ModularExternalData`, `ModularExternalInstruction`, `ModularExternal` e `ModularExternalFlash`). O programa guarda `0x5A`, lê de volta, soma 1 e guarda o resultado na palavra seguinte, e o teste confere as duas palavras na RAM interna ou no chip externo, conforme o modelo. As imagens são geradas por `tests/python/gen_modular_images.py`.
+`tests/python/runner.py` roda um programa mínimo em cada modelo (`ModularIntegrated`, `ModularExternalData`, `ModularExternalInstruction` e `ModularExternal`). O programa guarda `0x5A` na base da RAM, lê de volta, soma 1 e guarda o resultado na palavra seguinte, e o teste confere as duas palavras na RAM interna ou no chip externo, conforme o modelo. Os quatro modelos usam as mesmas duas imagens, `boot_to_rom.hex` e `rom_program.hex`, geradas por `tests/python/gen_modular_images.py`.

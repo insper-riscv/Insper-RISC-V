@@ -70,8 +70,9 @@ checks:
   - {name: spike_exit.S fromhost, file: src/simulation/internal-mem/runtime/spike_exit.S, pattern: '\.equ fromhost, (\S+)', expect: fromhost.base}
 
   # --- VHDL of the core ----------------------------------------------------
-  - {name: core BOOT_ROM_SIZE_BYTES, file: Core/src/shared/mem_map_consts.vhd, pattern: 'BOOT_ROM_SIZE_BYTES\s*:\s*unsigned\(31 downto 0\)\s*:=\s*to_unsigned\((16#[0-9A-Fa-f]+#)', expect: BOOT_ROM.size}
-  - {name: core RAM_BASE_BIT, file: Core/src/shared/mem_map_consts.vhd, pattern: '\bRAM_BASE_BIT\s*:\s*natural\s*:=\s*(\d+)', expect: clog2(RAM.base)}
+  - {name: core boot_rom_bits, file: Core/src/core/core.vhd, pattern: 'boot_rom_bits\s*:\s*natural\s*:=\s*(\d+)', expect: clog2(BOOT_ROM.size)}
+  - {name: core rom_end_kib, file: Core/src/core/core.vhd, pattern: 'rom_end_kib\s*:\s*natural\s*:=\s*(\d+)', expect: FLASH.end / 1024}
+  - {name: core ram_base_kib, file: Core/src/core/core.vhd, pattern: 'ram_base_kib\s*:\s*natural\s*:=\s*(\d+)', expect: RAM.base / 1024}
 
   # --- Quartus IPs (only in RV32IM's tree) ---------------------------------
   # The Quartus wrappers hold a power of two (size_bytes); the BOOT_ROM region fills its IP, and the FLASH and RAM

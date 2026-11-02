@@ -235,7 +235,14 @@ begin
 			tick_cycles  => 50,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
-			ext_flash    => true,
+			boot_rom_bits  => 11,
+			rom_end_kib    => 0,
+			rom_external   => true,
+			ram_base_kib   => 1048576,
+			ram_end_kib    => 1572864,
+			ram_external   => true,
+			ext_base_kib   => 524288,
+			periph_base_kib => 1572864,
 			hpm_counters => HPM_COUNTERS
 		)
 		port map (
