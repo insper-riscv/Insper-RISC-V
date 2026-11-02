@@ -48,11 +48,22 @@ unit-tests: sync
 	$(MAKE) -C Memory test
 	$(MAKE) -C Peripherals test
 
-# Every make target named formal* of each repository (SymbiYosys and z3); a repository without proofs is skipped.
+# Every make target named formal* of each repository (SymbiYosys and z3), all at once: each proof works in
+# its own folder, so none shares anything with another, and the time is the one of the longest proof instead
+# of the sum. A repository without proofs adds nothing. -k lets the others finish when one fails and -O keeps
+# the output of each target together.
+FORMAL_JOBS := $(strip $(foreach s,$(SUBREPOS),$(addprefix formal/$(s)/,$(shell sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $(s)/Makefile 2>/dev/null))))
+
+.PHONY: formal formal-run $(FORMAL_JOBS)
+
 formal:
-	@set -e; for s in $(SUBREPOS); do \
-	  for t in $$(sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $$s/Makefile); do $(MAKE) -C $$s $$t; done; \
-	done
+	@test -n "$(FORMAL_JOBS)" || { echo "no formal target in $(SUBREPOS)"; exit 1; }
+	$(MAKE) -k -O -j$(words $(FORMAL_JOBS)) formal-run
+
+formal-run: $(FORMAL_JOBS)
+
+$(FORMAL_JOBS): formal/%:
+	$(MAKE) -C $(word 1,$(subst /, ,$*)) $(word 2,$(subst /, ,$*))
 
 clean:
 	rm -rf build
