@@ -7,7 +7,7 @@ SHELL := /bin/bash
 SUBREPOS := Common-Components Core Memory Peripherals
 # Core, Memory and Peripherals carry their own copy of Common-Components as a submodule
 # (Core in src/common since its R.1 layout).
-NESTED   := ! -path 'Core/src/common/*' ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
+NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'Peripherals/src/common/*'
 # The platforms of this repository: the simulation-only one and the board one.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
@@ -17,20 +17,22 @@ STD  := --std=08
 WDIR := build/ghdl
 
 # The UART of Peripherals is part of the simulation tops.
-UART_VHDL := Peripherals/UART/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd \
-             Peripherals/UART/vendor/opencores_uart2bus/baudGen.vhd \
-             Peripherals/UART/vendor/opencores_uart2bus/uartRx.vhd \
-             Peripherals/UART/vendor/opencores_uart2bus/uartTx.vhd \
-             Peripherals/UART/vendor/opencores_uart2bus/uartTop.vhd \
-             Peripherals/UART/uart.vhd
+UART_VHDL := Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd \
+             Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd \
+             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd \
+             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd \
+             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd \
+             Peripherals/src/UART/serial/uart.vhd
 
 # The simulation top of internal-mem (rv32i3stage_core_sim_test): the core with the simulation memories and peripherals.
-SIM_VHDL := $(shell find Common-Components/src Core/src Memory/sim -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
+SIM_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
+            Memory/src/ram/soc/ram_simulation.vhd Memory/src/rom/soc/rom_simulation.vhd \
             $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/rv32i3stage_core_sim_test.vhd
 
-# The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory.
-BOARD_VHDL := $(shell find Memory/external/sdram Memory/external/bus -name '*.vhd' -not -path '*/hw/*' | sort) \
-               $(addprefix Memory/external/cache/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
+# The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory, and the
+# external interconnect of this repository.
+BOARD_VHDL := $(shell find src/interconnect Memory/src/ram/soc Memory/src/barramento/soc Peripherals/src/UART/jtag Peripherals/src/display/soc -name '*.vhd' -not -path '*/cyclone-v/*' -not -name ram_simulation.vhd | sort) \
+               $(addprefix Memory/src/cache/soc/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
                $(PF)/de0-cv_sim_top.vhd
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.

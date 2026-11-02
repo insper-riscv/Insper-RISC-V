@@ -113,15 +113,15 @@ sim:
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
     - src/simulation/internal-mem/rtl/Blinky.vhd
-    - Memory/ips/BOOT_ROM1PORT/boot_rom1port.vhd
-    - Memory/ips/FLASH1PORT/flash1port.vhd
-    - Memory/ips/FLASH_MEM1PORT/flash_mem1port.vhd
-    - Memory/ips/RAM1PORT/ram1port.vhd
+    - Memory/src/rom/cyclone-v/boot_rom1port.vhd
+    - Memory/src/rom/cyclone-v/flash1port.vhd
+    - Memory/src/rom/cyclone-v/flash_mem1port.vhd
+    - Memory/src/ram/cyclone-v/ram1port.vhd
     - src/simulation/internal-mem/pll/pll_sim.vhd
-    - Peripherals/UART/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
-    - Peripherals/UART/vendor/opencores_uart2bus/baudGen.vhd
-    - Peripherals/UART/vendor/opencores_uart2bus/uartRx.vhd
-    - Peripherals/UART/vendor/opencores_uart2bus/uartTx.vhd
-    - Peripherals/UART/vendor/opencores_uart2bus/uartTop.vhd
-    - Peripherals/UART/uart.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/internal-mem/quartus/core_fpga_test.vhd

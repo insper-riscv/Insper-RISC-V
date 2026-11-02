@@ -72,15 +72,15 @@
             "Core/src/core/stage_ex.vhd",
             "Core/src/shared/reg_id_ex.vhd",
             "Core/src/core/core.vhd",
-            "Memory/external/bus/ext_interconnect.vhd",
-            "Memory/external/cache/dcache.vhd",
-            "Memory/external/cache/flash_arbiter.vhd",
-            "Memory/external/cache/flash_chip.vhd",
-            "Memory/external/cache/icache.vhd",
-            "Memory/external/cache/mem_region_router.vhd",
-            "Memory/external/cache/ram_chip.vhd",
-            "Memory/sim/ram_simulation.vhd",
-            "Memory/sim/rom_simulation.vhd",
+            "src/interconnect/ext_interconnect.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "Memory/src/cache/soc/flash_arbiter.vhd",
+            "Memory/src/cache/soc/flash_chip.vhd",
+            "Memory/src/cache/soc/icache.vhd",
+            "Memory/src/cache/soc/mem_region_router.vhd",
+            "Memory/src/ram/soc/ram_chip.vhd",
+            "Memory/src/ram/soc/ram_simulation.vhd",
+            "Memory/src/rom/soc/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
             "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
@@ -166,15 +166,15 @@
             "Core/src/core/stage_ex.vhd",
             "Core/src/shared/reg_id_ex.vhd",
             "Core/src/core/core.vhd",
-            "Memory/external/bus/ext_interconnect.vhd",
-            "Memory/external/cache/dcache.vhd",
-            "Memory/external/cache/flash_arbiter.vhd",
-            "Memory/external/cache/flash_chip.vhd",
-            "Memory/external/cache/icache.vhd",
-            "Memory/external/cache/mem_region_router.vhd",
-            "Memory/external/cache/ram_chip.vhd",
-            "Memory/sim/ram_simulation.vhd",
-            "Memory/sim/rom_simulation.vhd",
+            "src/interconnect/ext_interconnect.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "Memory/src/cache/soc/flash_arbiter.vhd",
+            "Memory/src/cache/soc/flash_chip.vhd",
+            "Memory/src/cache/soc/icache.vhd",
+            "Memory/src/cache/soc/mem_region_router.vhd",
+            "Memory/src/ram/soc/ram_chip.vhd",
+            "Memory/src/ram/soc/ram_simulation.vhd",
+            "Memory/src/rom/soc/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
             "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
@@ -261,15 +261,15 @@
             "Core/src/core/stage_ex.vhd",
             "Core/src/shared/reg_id_ex.vhd",
             "Core/src/core/core.vhd",
-            "Memory/external/bus/ext_interconnect.vhd",
-            "Memory/external/cache/dcache.vhd",
-            "Memory/external/cache/flash_arbiter.vhd",
-            "Memory/external/cache/flash_chip.vhd",
-            "Memory/external/cache/icache.vhd",
-            "Memory/external/cache/mem_region_router.vhd",
-            "Memory/external/cache/ram_chip.vhd",
-            "Memory/sim/ram_simulation.vhd",
-            "Memory/sim/rom_simulation.vhd",
+            "src/interconnect/ext_interconnect.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "Memory/src/cache/soc/flash_arbiter.vhd",
+            "Memory/src/cache/soc/flash_chip.vhd",
+            "Memory/src/cache/soc/icache.vhd",
+            "Memory/src/cache/soc/mem_region_router.vhd",
+            "Memory/src/ram/soc/ram_chip.vhd",
+            "Memory/src/ram/soc/ram_simulation.vhd",
+            "Memory/src/rom/soc/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
             "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
@@ -356,15 +356,15 @@
             "Core/src/core/stage_ex.vhd",
             "Core/src/shared/reg_id_ex.vhd",
             "Core/src/core/core.vhd",
-            "Memory/external/bus/ext_interconnect.vhd",
-            "Memory/external/cache/dcache.vhd",
-            "Memory/external/cache/flash_arbiter.vhd",
-            "Memory/external/cache/flash_chip.vhd",
-            "Memory/external/cache/icache.vhd",
-            "Memory/external/cache/mem_region_router.vhd",
-            "Memory/external/cache/ram_chip.vhd",
-            "Memory/sim/ram_simulation.vhd",
-            "Memory/sim/rom_simulation.vhd",
+            "src/interconnect/ext_interconnect.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "Memory/src/cache/soc/flash_arbiter.vhd",
+            "Memory/src/cache/soc/flash_chip.vhd",
+            "Memory/src/cache/soc/icache.vhd",
+            "Memory/src/cache/soc/mem_region_router.vhd",
+            "Memory/src/ram/soc/ram_chip.vhd",
+            "Memory/src/ram/soc/ram_simulation.vhd",
+            "Memory/src/rom/soc/rom_simulation.vhd",
             "src/simulation/internal-mem/rtl/clk_gen_3way.vhd",
             "src/simulation/modular/modular_map_pkg.vhd",
             "src/simulation/modular/modular_sim_top.vhd"
@@ -384,6 +384,76 @@
         ],
         "plusargs": [
             "--max-stack-alloc=0"
+        ]
+    },
+    "ExtBus": {
+        "toplevel": "ext_bus_system",
+        "sources": [
+            "Peripherals/src/UART/jtag/jtag_uart.vhd",
+            "src/interconnect/ext_interconnect.vhd",
+            "tests/vhdl/ext_bus_system.vhd"
+        ],
+        "test_module": "tests.python.unittests.integration.ext_bus",
+        "build_args": [
+            "--std=08"
+        ],
+        "test_args": [
+            "--std=08"
+        ]
+    },
+    "ExtAxiBus": {
+        "toplevel": "ext_axi_bus_system",
+        "sources": [
+            "Common-Components/src/utils_pkg.vhd",
+            "Peripherals/src/UART/jtag/jtag_uart.vhd",
+            "Memory/src/barramento/soc/axi_master_bridge.vhd",
+            "Memory/src/barramento/soc/axi_slave_word_bridge.vhd",
+            "src/interconnect/axi_slave_periph_bank.vhd",
+            "src/interconnect/axi_router.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "src/interconnect/ext_axi_interconnect.vhd",
+            "tests/vhdl/ext_axi_bus_system.vhd"
+        ],
+        "test_module": "tests.python.unittests.integration.ext_bus",
+        "build_args": [
+            "--std=08"
+        ],
+        "test_args": [
+            "--std=08"
+        ]
+    },
+    "ExtAxiCache": {
+        "toplevel": "ext_axi_bus_system",
+        "sources": [
+            "Common-Components/src/utils_pkg.vhd",
+            "Peripherals/src/UART/jtag/jtag_uart.vhd",
+            "Memory/src/barramento/soc/axi_master_bridge.vhd",
+            "Memory/src/barramento/soc/axi_slave_word_bridge.vhd",
+            "src/interconnect/axi_slave_periph_bank.vhd",
+            "src/interconnect/axi_router.vhd",
+            "Memory/src/cache/soc/dcache.vhd",
+            "src/interconnect/ext_axi_interconnect.vhd",
+            "tests/vhdl/ext_axi_bus_system.vhd"
+        ],
+        "test_module": "tests.python.unittests.integration.ext_axi_cache",
+        "build_args": [
+            "--std=08"
+        ],
+        "test_args": [
+            "--std=08"
+        ]
+    },
+    "AxiRouter": {
+        "toplevel": "axi_router",
+        "sources": [
+            "src/interconnect/axi_router.vhd"
+        ],
+        "test_module": "tests.python.unittests.integration.axi_router",
+        "build_args": [
+            "--std=08"
+        ],
+        "test_args": [
+            "--std=08"
         ]
     }
 }

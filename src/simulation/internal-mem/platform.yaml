@@ -72,10 +72,10 @@ checks:
   # --- Quartus IPs (only in RV32IM's tree) ---------------------------------
   # The Quartus wrappers hold a power of two (size_bytes); the BOOT_ROM region fills its IP, and the FLASH and RAM
   # regions leave the tail of the next power of two (32 KB for the 30 KB FLASH, 256 KB for the 160 KB RAM) unused.
-  - {name: BOOT_ROM IP size_bytes, file: Memory/ips/BOOT_ROM1PORT/boot_rom1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: BOOT_ROM.size}
-  - {name: FLASH IP size_bytes, file: Memory/ips/FLASH1PORT/flash1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
-  - {name: FLASH_MEM IP size_bytes, file: Memory/ips/FLASH_MEM1PORT/flash_mem1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
-  - {name: RAM IP size_bytes, file: Memory/ips/RAM1PORT/ram1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 262144}
+  - {name: BOOT_ROM IP size_bytes, file: Memory/src/rom/cyclone-v/boot_rom1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: BOOT_ROM.size}
+  - {name: FLASH IP size_bytes, file: Memory/src/rom/cyclone-v/flash1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
+  - {name: FLASH_MEM IP size_bytes, file: Memory/src/rom/cyclone-v/flash_mem1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
+  - {name: RAM IP size_bytes, file: Memory/src/ram/cyclone-v/ram1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 262144}
 
   # --- the test programs' header (only in RV32IM's tree) ----------------------------------
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
