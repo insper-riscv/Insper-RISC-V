@@ -26,7 +26,7 @@ pontual), faça isso em **um único** comando de shell, nunca em dois `Bash`
 separados:
 
 ```bash
-cd platforms/internal-mem/quartus && \
+cd src/simulation/internal-mem/quartus && \
   quartus_sh --flow compile core_fpga_test && \
   quartus_pgm -c "USB-Blaster [1-4]" -m JTAG -o "p;output_files/core_fpga_test.sof"
 ```

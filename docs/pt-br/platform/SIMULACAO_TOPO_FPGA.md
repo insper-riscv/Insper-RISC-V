@@ -15,7 +15,7 @@ O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo fe
 
 O núcleo (`rv32im_pipeline_core.vhd`) é o mesmo nos dois perfis.
 
-O PLL real (`platforms/internal-mem/pll/pll.vhd`) envolve uma IP `altera_pll` cujo modelo de simulação é SystemVerilog, que o GHDL não roda. O arquivo `platforms/internal-mem/pll/pll_sim.vhd` tem a mesma entidade e as mesmas portas, com os parâmetros do `pll_0002.v`, e entra no lugar dele só na simulação: não faz parte do projeto Quartus.
+O PLL real (`src/simulation/internal-mem/pll/pll.vhd`) envolve uma IP `altera_pll` cujo modelo de simulação é SystemVerilog, que o GHDL não roda. O arquivo `src/simulation/internal-mem/pll/pll_sim.vhd` tem a mesma entidade e as mesmas portas, com os parâmetros do `pll_0002.v`, e entra no lugar dele só na simulação: não faz parte do projeto Quartus.
 
 ## 2. Pré-requisitos
 
@@ -47,7 +47,7 @@ O workflow `sim-fpga.yml` faz o mesmo no runner self-hosted, dentro da imagem `c
 
 ## 4. O que a verificação faz
 
-O módulo de teste (`platforms/internal-mem/testbench/test_c_program.py`) é o mesmo dos dois perfis. Ele observa o barramento de escrita da RAM (`ram_wren`, `ram_en`, `ram_addr`, `ram_wdata`, `ram_byteena`), procura a escrita no `tohost` (1 é PASS, `(código << 1) | 1` é FAIL) e, em testes de memória, compara o conteúdo reconstruído da RAM com o golden. O perfil do topo de hardware só muda o que ele dirige, por variáveis de ambiente (`sim.env`): nome do clock e do reset, período, clock de amostragem (`pll_clk_idexmem`, o da RAM) e limite de ciclos.
+O módulo de teste (`src/simulation/internal-mem/testbench/test_c_program.py`) é o mesmo dos dois perfis. Ele observa o barramento de escrita da RAM (`ram_wren`, `ram_en`, `ram_addr`, `ram_wdata`, `ram_byteena`), procura a escrita no `tohost` (1 é PASS, `(código << 1) | 1` é FAIL) e, em testes de memória, compara o conteúdo reconstruído da RAM com o golden. O perfil do topo de hardware só muda o que ele dirige, por variáveis de ambiente (`sim.env`): nome do clock e do reset, período, clock de amostragem (`pll_clk_idexmem`, o da RAM) e limite de ciclos.
 
 ## 5. O que continua só no hardware
 

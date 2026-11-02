@@ -57,7 +57,7 @@ O armazenamento da placa tem 132 KB porque o maior teste do ACT4 (`I-jal-00`) oc
 | Simulação dos programas existentes | `riscv-tools --config tools/riscv_build/config.sdram-flash-regression.yaml compile --emit hex`, depois `sim --exclude uart-echo,uart-tx,uart-errors` (no repositório Tests) |
 | Simulação dos programas da SDRAM e da FLASH | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex`, depois `sim --exclude cpi-kernels,hex-id` |
 | Latência do chip | As configurações `config.sdram-flash-lat2.yaml`, `-lat20.yaml` e `-lat60.yaml`, e as `-regression-lat*` |
-| Compilar a placa | `quartus_sh --flow compile core_fpga_sdram_flash` em `platforms/sdram-flash/quartus` |
+| Compilar a placa | `quartus_sh --flow compile core_fpga_sdram_flash` em `src/cyclone-v/de0-cv/quartus` |
 | Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 na placa | `certify-board --skip-build` com a configuração `config.flash-board-<perfil>.yaml` do repositório Certification |
 
