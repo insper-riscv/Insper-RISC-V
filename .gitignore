@@ -18,3 +18,14 @@ output_files/
 *.pof
 *.rpt
 *.summary
+
+# Quartus-generated state of the platforms (source project files and tracked MIFs stay visible)
+src/*/*/quartus/db/
+src/*/*/quartus/incremental_db/
+src/*/*/quartus/output_files/
+src/*/*/quartus/simulation/
+src/*/*/quartus/c5_pin_model_dump.txt
+src/*/*/quartus/*.qws
+src/*/*/quartus/*.jdi
+src/*/*/quartus/*.done
+src/*/*/quartus/*.smsg

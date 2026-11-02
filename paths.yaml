@@ -4,3 +4,18 @@
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
+  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml]}
+  # The platform configs are written relative to the root of this repository, `base: .`.
+  - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: hardware-top sim sources, file: src/simulation/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: sim python_path, file: src/simulation/internal-mem/config.yaml, yaml: sim.python_path, base: .}
+  - {name: runtime sources, file: src/simulation/internal-mem/config.yaml, yaml: paths.sources, base: .}
+  - {name: boot ROM, file: src/simulation/internal-mem/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: boot ROM linker script, file: src/simulation/internal-mem/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: toolchain specs, file: src/simulation/internal-mem/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: Spike stand-in, file: src/simulation/internal-mem/config.yaml, yaml: emulator.sources, base: .}
+  - {name: PLL for freq-sweep, file: src/simulation/internal-mem/config.yaml, yaml: freq_sweep.pll_file, base: .}
+  - {name: Quartus project dir, file: src/simulation/internal-mem/config.yaml, yaml: quartus.project_dir, base: .}
+  - {name: board project (core_fpga_test.qsf), file: src/simulation/internal-mem/quartus/core_fpga_test.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
+  - {name: Quartus IPs of the PLL, paths: [src/simulation/internal-mem/pll/pll.qip, src/simulation/internal-mem/pll/pll_0002.qip]}
+  - {name: per-entity tests.json, file: tests/python/tests.json, yaml: "*.sources", base: .}

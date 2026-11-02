@@ -1,6 +1,6 @@
 # Configuration for the RISC-V test build/run pipeline.
 #
-# The "real" side is wired to ../TopLevel/platforms/internal-mem/quartus
+# The "real" side is wired to src/simulation/internal-mem/quartus
 # (core_fpga_test.qpf) — the only working core + Quartus project on
 # this workstation. Lines still marked "<<< ADJUST" depend on things
 # that vary per machine/runner (which JTAG cable, which self-hosted
@@ -15,7 +15,7 @@ toolchain:
   # The platform (memory map, crt0) is one GCC specs file. Tests link
   # against the toolchain's own picolibc, crt0 and picolibc.ld: this
   # project has no crt0 and no linker script of its own.
-  specs: ../TopLevel/platforms/internal-mem/runtime/rv32im-fpga.specs
+  specs: src/simulation/internal-mem/runtime/rv32im-fpga.specs
 
 isa:
   base: i                    # always implied, never written in a test's header
@@ -102,28 +102,28 @@ paths:
   # the _exit the toolchain's crt0 ends in, and the write function of
   # stdout (a buffer in RAM the host reads over JTAG).
   sources:
-    - ../TopLevel/platforms/internal-mem/runtime/_exit.c
-    - ../TopLevel/platforms/internal-mem/runtime/stdio.c
+    - src/simulation/internal-mem/runtime/_exit.c
+    - src/simulation/internal-mem/runtime/stdio.c
   # The fixed, shared bootloader (see boot_rom.S's own header comment)
   # — built ONCE (not per test) into boot_rom.elf/.hex/.mif. It only
   # clears the fixed words and jumps to FLASH_BASE, where the crt0 is,
   # and holds rv32_wait_restart.
-  boot_rom: ../TopLevel/platforms/internal-mem/runtime/boot_rom.S
-  boot_rom_linker_script: ../TopLevel/platforms/internal-mem/runtime/boot_rom.ld
+  boot_rom: src/simulation/internal-mem/runtime/boot_rom.S
+  boot_rom_linker_script: src/simulation/internal-mem/runtime/boot_rom.ld
 
 # Only needed by `riscv-tools freq-sweep` (Fmax search). The PLL has
 # three outputs (clk_if/clk_idexmem/clk_wb), one frequency in three
 # phases 0/120/240 degrees; the sweep rewrites all three together.
 # Path is relative to this project's root (RV32IM's root is one level up).
 freq_sweep:
-  pll_file: ../TopLevel/platforms/internal-mem/pll/pll_0002.v
+  pll_file: src/simulation/internal-mem/pll/pll_0002.v
   phase_count: 3
 
 quartus:
   # Points at RV32IM's real project — this repo (RISC-V-Workstation-
   # Tests) is vendored as RV32IM's own Tests/ submodule, so RV32IM's
   # root is one level up from this project's own root.
-  project_dir: ../TopLevel/platforms/internal-mem/quartus
+  project_dir: src/simulation/internal-mem/quartus
   project_name: core_fpga_test                     # core_fpga_test.qpf/.qsf
   sof_file: output_files/core_fpga_test.sof         # relative to project_dir
   # Path (relative to project_dir) the FLASH IP reads its initial
@@ -216,81 +216,81 @@ sim:
   # to this project's own root, not RV32IM's (see quartus.project_dir
   # above for how the two relate).
   vhdl_sources:
-    - ../Core/src/shared/pipeline_types.vhd
-    - ../Core/src/shared/byte_mask_consts.vhd
-    - ../Core/src/shared/opcode_consts.vhd
-    - ../Core/src/shared/funct3_consts.vhd
-    - ../Core/src/shared/funct7_consts.vhd
-    - ../Core/src/shared/alu_consts.vhd
-    - ../Core/src/shared/ext_imm_consts.vhd
-    - ../Core/src/shared/ext_ram_consts.vhd
-    - ../Core/src/shared/wb_sel_consts.vhd
-    - ../Core/src/shared/pc_src_consts.vhd
-    - ../Core/src/shared/mem_map_consts.vhd
-    - ../Core/src/shared/fwd_consts.vhd
-    - ../Core/src/shared/word_consts.vhd
-    - ../Core/src/M/muldiv_consts.vhd
-    - ../Core/src/Zicsr/csr_value_consts.vhd
-    - ../Core/src/Zicsr/trap_consts.vhd
-    - ../Common-Components/src/generic_register.vhd
-    - ../Common-Components/src/adder.vhd
-    - ../Common-Components/src/mux_2x1.vhd
-    - ../Common-Components/src/mux_4x1.vhd
-    - ../Common-Components/src/flip_flop.vhd
-    - ../Common-Components/src/utils_pkg.vhd
-    - ../Core/src/I/alu.vhd
-    - ../Common-Components/src/onehot_decoder.vhd
-    - ../Common-Components/src/mux_tree.vhd
-    - ../Core/src/shared/reg_file.vhd
-    - ../Core/src/I/extender_imm.vhd
-    - ../Core/src/I/extender_ram.vhd
-    - ../Core/src/I/store_manager.vhd
-    - ../Core/src/Zicclsm/misaligned_unit.vhd
-    - ../Core/src/shared/control_unit.vhd
-    - ../Core/src/shared/bubble_mux.vhd
-    - ../Core/src/shared/forwarding_match.vhd
-    - ../Core/src/shared/forwarding_unit.vhd
-    - ../Core/src/shared/hazard_detection_unit.vhd
-    - ../Core/src/M/m_decode.vhd
-    - ../Core/src/M/booth_multiplier_rv32.vhd
-    - ../Core/src/M/non_restoring_divider_rv32.vhd
-    - ../Core/src/M/muldiv_fusion.vhd
-    - ../Core/src/M/multdiv.vhd
-    - ../Core/src/Zicsr/csr_decode.vhd
-    - ../Core/src/Zicsr/csr_addr_consts.vhd
-    - ../Core/src/Zicsr/csr_event_consts.vhd
-    - ../Core/src/Zicntr/counter64.vhd
-    - ../Core/src/Zicntr/tick_divider.vhd
-    - ../Core/src/Zicsr/csr_file.vhd
-    - ../Core/src/Zicsr/trap_unit.vhd
-    - ../Core/src/Zifencei/fencei_unit.vhd
-    - ../Core/src/shared/pc_fetch.vhd
-    - ../Core/src/shared/reg_if_id.vhd
-    - ../Core/src/shared/reg_id_ex.vhd
-    - ../Core/src/shared/reg_ex_mem.vhd
-    - ../Core/src/shared/reg_mem_wb.vhd
-    - ../Core/src/core/stage_if.vhd
-    - ../Core/src/core/stage_id.vhd
-    - ../Core/src/core/stage_ex.vhd
-    - ../Core/src/core/stage_mem.vhd
-    - ../Core/src/core/stage_wb.vhd
-    - ../Core/src/core/core.vhd
-    - ../Memory/sim/ram_simulation.vhd
-    - ../Memory/sim/rom_simulation.vhd
-    - ../Peripherals/UART/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
-    - ../Peripherals/UART/vendor/opencores_uart2bus/baudGen.vhd
-    - ../Peripherals/UART/vendor/opencores_uart2bus/uartRx.vhd
-    - ../Peripherals/UART/vendor/opencores_uart2bus/uartTx.vhd
-    - ../Peripherals/UART/vendor/opencores_uart2bus/uartTop.vhd
-    - ../Peripherals/UART/uart.vhd
-    - ../TopLevel/platforms/internal-mem/rtl/clk_gen_3way.vhd
-    - ../TopLevel/platforms/internal-mem/rtl/rv32i3stage_core_sim_test.vhd
+    - Core/src/shared/pipeline_types.vhd
+    - Core/src/shared/byte_mask_consts.vhd
+    - Core/src/shared/opcode_consts.vhd
+    - Core/src/shared/funct3_consts.vhd
+    - Core/src/shared/funct7_consts.vhd
+    - Core/src/shared/alu_consts.vhd
+    - Core/src/shared/ext_imm_consts.vhd
+    - Core/src/shared/ext_ram_consts.vhd
+    - Core/src/shared/wb_sel_consts.vhd
+    - Core/src/shared/pc_src_consts.vhd
+    - Core/src/shared/mem_map_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
+    - Core/src/shared/word_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/trap_consts.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/adder.vhd
+    - Common-Components/src/mux_2x1.vhd
+    - Common-Components/src/mux_4x1.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/utils_pkg.vhd
+    - Core/src/I/alu.vhd
+    - Common-Components/src/onehot_decoder.vhd
+    - Common-Components/src/mux_tree.vhd
+    - Core/src/shared/reg_file.vhd
+    - Core/src/I/extender_imm.vhd
+    - Core/src/I/extender_ram.vhd
+    - Core/src/I/store_manager.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/shared/control_unit.vhd
+    - Core/src/shared/bubble_mux.vhd
+    - Core/src/shared/forwarding_match.vhd
+    - Core/src/shared/forwarding_unit.vhd
+    - Core/src/shared/hazard_detection_unit.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
+    - Core/src/Zicntr/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/shared/pc_fetch.vhd
+    - Core/src/shared/reg_if_id.vhd
+    - Core/src/shared/reg_id_ex.vhd
+    - Core/src/shared/reg_ex_mem.vhd
+    - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/core/stage_if.vhd
+    - Core/src/core/stage_id.vhd
+    - Core/src/core/stage_ex.vhd
+    - Core/src/core/stage_mem.vhd
+    - Core/src/core/stage_wb.vhd
+    - Core/src/core/core.vhd
+    - Memory/sim/ram_simulation.vhd
+    - Memory/sim/rom_simulation.vhd
+    - Peripherals/UART/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/UART/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/UART/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/UART/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/UART/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/UART/uart.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - src/simulation/internal-mem/rtl/rv32i3stage_core_sim_test.vhd
   # The cocotb testbench of the top lives in this repository; it is found
   # through python_path, which names it relative to the project that extends
   # this config.
   test_module: testbench.test_c_program
   python_path:
-    - ../TopLevel/platforms/internal-mem
+    - src/simulation/internal-mem
   env:
     # uart-errors exchanges a coordinated 32-byte RX/TX burst at 115200
     # baud. Five milliseconds leave room for that serial traffic plus boot;
@@ -330,6 +330,6 @@ sim:
 # address out of the link (see rv32im-fpga.specs).
 emulator:
   sources:
-    - ../TopLevel/platforms/internal-mem/runtime/spike_exit.S
+    - src/simulation/internal-mem/runtime/spike_exit.S
   gcc_flags:
     - -DRV32_SPIKE
