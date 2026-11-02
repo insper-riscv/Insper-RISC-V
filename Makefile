@@ -5,8 +5,9 @@
 SHELL := /bin/bash
 
 SUBREPOS := Common-Components Core Memory Peripherals
-# Core, Memory and Peripherals carry their own copy of Common-Components as a submodule.
-NESTED   := ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
+# Core, Memory and Peripherals carry their own copy of Common-Components as a submodule
+# (Core in src/common since its R.1 layout).
+NESTED   := ! -path 'Core/src/common/*' ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
