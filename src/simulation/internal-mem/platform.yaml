@@ -74,14 +74,12 @@ checks:
   - {name: core RAM_BASE_BIT, file: Core/src/shared/mem_map_consts.vhd, pattern: '\bRAM_BASE_BIT\s*:\s*natural\s*:=\s*(\d+)', expect: clog2(RAM.base)}
 
   # --- Quartus IPs (only in RV32IM's tree) ---------------------------------
-  - {name: BOOT_ROM IP numwords, file: Memory/ips/BOOT_ROM1PORT/boot_rom1port.vhd, optional: true, pattern: 'numwords_a => (\d+)', expect: BOOT_ROM.words}
-  - {name: BOOT_ROM IP widthad, file: Memory/ips/BOOT_ROM1PORT/boot_rom1port.vhd, optional: true, pattern: 'widthad_a => (\d+)', expect: clog2(BOOT_ROM.words)}
-  - {name: FLASH IP numwords, file: Memory/ips/FLASH1PORT/flash1port.vhd, optional: true, pattern: 'numwords_a => (\d+)', expect: FLASH.words}
-  - {name: FLASH IP widthad, file: Memory/ips/FLASH1PORT/flash1port.vhd, optional: true, pattern: 'widthad_a => (\d+)', expect: clog2(FLASH.words)}
-  - {name: FLASH_MEM IP numwords, file: Memory/ips/FLASH_MEM1PORT/flash_mem1port.vhd, optional: true, pattern: 'numwords_a => (\d+)', expect: FLASH.words}
-  - {name: FLASH_MEM IP widthad, file: Memory/ips/FLASH_MEM1PORT/flash_mem1port.vhd, optional: true, pattern: 'widthad_a => (\d+)', expect: clog2(FLASH.words)}
-  - {name: RAM IP numwords, file: Memory/ips/RAM1PORT/ram1port.vhd, optional: true, pattern: 'numwords_a => (\d+)', expect: RAM.words}
-  - {name: RAM IP widthad, file: Memory/ips/RAM1PORT/ram1port.vhd, optional: true, pattern: 'widthad_a => (\d+)', expect: clog2(RAM.words)}
+  # The Quartus wrappers hold a power of two (size_bytes); the BOOT_ROM region fills its IP, and the FLASH and RAM
+  # regions leave the tail of the next power of two (32 KB for the 30 KB FLASH, 256 KB for the 160 KB RAM) unused.
+  - {name: BOOT_ROM IP size_bytes, file: Memory/ips/BOOT_ROM1PORT/boot_rom1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: BOOT_ROM.size}
+  - {name: FLASH IP size_bytes, file: Memory/ips/FLASH1PORT/flash1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
+  - {name: FLASH_MEM IP size_bytes, file: Memory/ips/FLASH_MEM1PORT/flash_mem1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
+  - {name: RAM IP size_bytes, file: Memory/ips/RAM1PORT/ram1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 262144}
 
   # --- the test programs' header (only in RV32IM's tree) ----------------------------------
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}

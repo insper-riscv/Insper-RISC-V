@@ -313,7 +313,7 @@ begin
 
 	-- the storage behind the chip: a read-registered array loaded from the program image
 	FLASH_STORAGE : entity work.ROM_simulation
-		generic map (rom_file => ROM_FILE, memory_addr_width => rom_addr_width)
+		generic map (rom_file => ROM_FILE, size_bytes => 4 * 2 ** rom_addr_width)
 		port map (
 			i_addr => flash_mem_addr(31 downto 2),
 			i_clk  => pll_clk_idexmem,
@@ -372,7 +372,7 @@ begin
 	);
 
 	BOOT_ROM : entity work.ROM_simulation
-		generic map (rom_file => BOOT_ROM_FILE, memory_addr_width => boot_rom_addr_width)
+		generic map (rom_file => BOOT_ROM_FILE, size_bytes => 4 * 2 ** boot_rom_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,

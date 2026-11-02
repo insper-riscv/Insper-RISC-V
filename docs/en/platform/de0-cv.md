@@ -44,7 +44,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 
 | Item | Simulation | Board |
 | :--- | :--- | :--- |
-| FLASH chip window | 1 MB (`window_bits` equal to 20) | 256 KB (`window_bits` equal to 18) |
+| FLASH chip window | 1 MB (`size_bytes` equal to 1048576) | 256 KB (`size_bytes` equal to 262144) |
 | FLASH storage | 256 KB array | 132 KB in RAM blocks, rewritable over JTAG |
 | Chip latency | 24 edges to the first word and 4 between the following ones (default) | The same |
 

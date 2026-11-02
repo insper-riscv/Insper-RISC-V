@@ -34,6 +34,7 @@
 | Path | Platform |
 | :--- | :--- |
 | `src/simulation/internal-mem/` | Simulation-only platform, with BOOT_ROM, FLASH and RAM inside the FPGA and the `rv32i3stage_core_sim_test` simulation top. It is the base of the pipeline entity tests |
+| `src/simulation/modular/` | Configurable simulation top, with the instruction and data memories inside or outside the chip (`integrated`, `external-data`, `external-instruction` and `external`), 1 MB FLASH and RAM and 4 kbit caches by default. It is the base of the ACT4 simulation |
 | `src/cyclone-v/de0-cv/` | The DE0-CV board platform, with the BOOT_ROM in the core and the FLASH and the SDRAM behind the caches, plus a JTAG UART and a display. The Quartus top is `de0-cv_top.vhd` and the simulation top is `rv32im_sdram_flash_sim_test` |
 
 Every platform has the same structure.

@@ -228,7 +228,7 @@ begin
 	-- estagio MEM (ver rv32im_pipeline_core.vhd flash_addr2 -- o
 	-- copy-loop de .data em boot_rom.S le FLASH como dado).
 	BOOT_ROM : entity work.ROM_simulation
-		generic map (rom_file => BOOT_ROM_FILE, memory_addr_width => boot_rom_addr_width)
+		generic map (rom_file => BOOT_ROM_FILE, size_bytes => 4 * 2 ** boot_rom_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,
@@ -237,7 +237,7 @@ begin
 	);
 
 	FLASH : entity work.ROM_simulation
-		generic map (rom_file => ROM_FILE, memory_addr_width => rom_addr_width)
+		generic map (rom_file => ROM_FILE, size_bytes => 4 * 2 ** rom_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,
@@ -251,7 +251,7 @@ begin
 	);
 
 	RAM : entity work.RAM_simulation
-		generic map (memory_addr_width => ram_addr_width, ram_file => RAM_FILE)
+		generic map (size_bytes => 4 * 2 ** ram_addr_width, ram_file => RAM_FILE)
 		port map(
 			i_addr 		=> ram_addr(31 downto 2), -- word addressable
 			i_mask 		=> ram_byteena,
