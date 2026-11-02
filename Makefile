@@ -8,29 +8,67 @@ SUBREPOS := Common-Components Core Memory Peripherals
 # Core, Memory and Peripherals carry their own copy of Common-Components as a submodule
 # (Core in src/common since its R.1 layout).
 NESTED   := ! -path 'Core/src/common/*' ! -path 'Core/Common-Components/*' ! -path 'Memory/Common-Components/*' ! -path 'Peripherals/Common-Components/*'
+# The platforms of this repository: the simulation-only one and the board one.
+P  := src/simulation/internal-mem
+PF := src/cyclone-v/de0-cv
+GHDL := ghdl
+STD  := --std=08
+WDIR := build/ghdl
+
+# The UART of Peripherals is part of the simulation tops.
+UART_VHDL := Peripherals/UART/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd \
+             Peripherals/UART/vendor/opencores_uart2bus/baudGen.vhd \
+             Peripherals/UART/vendor/opencores_uart2bus/uartRx.vhd \
+             Peripherals/UART/vendor/opencores_uart2bus/uartTx.vhd \
+             Peripherals/UART/vendor/opencores_uart2bus/uartTop.vhd \
+             Peripherals/UART/uart.vhd
+
+# The simulation top of internal-mem (rv32i3stage_core_sim_test): the core with the simulation memories and peripherals.
+SIM_VHDL := $(shell find Common-Components/src Core/src Memory/sim -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
+            $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/rv32i3stage_core_sim_test.vhd
+
+# The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory.
+BOARD_VHDL := $(shell find Memory/external/sdram Memory/external/bus -name '*.vhd' -not -path '*/hw/*' | sort) \
+               $(addprefix Memory/external/cache/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
+               $(PF)/rtl/rv32im_sdram_flash_sim_test.vhd
+
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-unique unit-tests formal clean
+.PHONY: all sync paths check check-tops check-unique memory-map test unit-tests formal clean
 
 all: paths check unit-tests formal
 
 sync:
-	@set -e; for s in $(SUBREPOS); do (cd $$s && uv sync -q); done
+	@set -e; uv sync -q; for s in $(SUBREPOS); do (cd $$s && uv sync -q); done
 
 # Every file path that the configuration of each repository lists exists (the paths.yaml of each one),
-# and the ones of this repository.
+# and the ones of this repository (its platforms included).
 paths:
 	@set -e; for s in $(SUBREPOS); do $(MAKE) -C $$s paths; done
 	riscv-tools --root . check-paths --manifest paths.yaml
 
-# VHDL syntax check (GHDL) of every repository; the Core also elaborates each of its profiles.
+# VHDL syntax check (GHDL) of every repository (the Core also elaborates each of its profiles), of the two
+# simulation tops of the platforms and the uniqueness of the names.
 check:
 	$(MAKE) -C Common-Components check
 	$(MAKE) -C Core profiles
 	$(MAKE) -C Memory check
 	$(MAKE) -C Peripherals check
+	$(MAKE) check-tops
 	$(MAKE) check-unique
+
+# GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
+# they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
+check-tops:
+	@mkdir -p $(WDIR)
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL))
+	@printf '00000000\n' > $(WDIR)/default.hex
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32i3stage_core_sim_test
+	@echo "the simulation top of internal-mem builds"
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL))
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
+	@echo "the simulation top of the de0-cv platform builds"
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
@@ -42,8 +80,18 @@ check-unique:
 	if [ -n "$$dups" ]; then echo "defined more than once:"; echo "$$dups"; exit 1; fi; \
 	echo "no entity or package is defined twice"
 
-# The per-entity cocotb tests of each repository.
-unit-tests: sync
+# Every copy of the memory map (config, linker flags, boot ROM, runtime, the core's VHDL, the Quartus IPs)
+# agrees with platform.yaml, in each platform.
+memory-map:
+	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+
+# Per-entity cocotb tests of the RTL of the platforms (`make test TEST=clk_gen_3way`).
+test:
+	uv run python tests/python/runner.py $(TEST)
+
+# The per-entity cocotb tests of each repository and of the platforms, and the memory map check.
+unit-tests: sync memory-map test
 	$(MAKE) -C Common-Components test
 	$(MAKE) -C Core test
 	$(MAKE) -C Memory test

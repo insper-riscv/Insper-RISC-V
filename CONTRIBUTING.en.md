@@ -143,7 +143,18 @@ The project follows the *Design for Reuse* practice described in the *Reuse Meth
 | 5 | **Dependence on ports only:** the upper level knows the entity declaration, never the internals of its architecture | The top level never carries fine-grained implementation logic |
 | 6 | **Composition with already verified leaf blocks:** reuse existing primitives | Do not reimplement with ad-hoc processes or operators what a primitive or an already computed signal provides |
 
-## 6. Markdown Documentation Rules
+## 6. Python Standards
+
+| Rule | Specification |
+| :--- | :--- |
+| Package manager | `uv` (`uv add`, `uv sync`, `uv run`); `pip`, `pip install`, and `python -m pip` are prohibited |
+| Tests | `pytest`; every new behavior comes with a test |
+| Code documentation | NumPy-style docstrings on public modules, classes, and functions |
+| Typing | Complete annotations, checked by Pyright in `strict` mode |
+| Style and quality | `ruff` for lint and formatting; `deptry` for declared and used dependencies |
+| Naming | Identifiers in **English** with `snake_case`; comments and docstrings in **Portuguese** |
+
+## 7. Markdown Documentation Rules
 
 Every `README`, `CONTRIBUTING`, and `AUTHORS` maintains mirrored versions in Portuguese (`*.md`) and English (`*.en.md`), following these rules:
 
@@ -157,7 +168,7 @@ Every `README`, `CONTRIBUTING`, and `AUTHORS` maintains mirrored versions in Por
 6. **No changelog or open TODOs in technical docs:** architecture and contract documents describe exclusively the current state, without internal changelogs or lists of future tasks.
 7. **Usage guides only instruct:** installation and run instructions say how to do it, without justifying the choice of method.
 
-## 7. Mandatory Verification Before Opening a Pull Request
+## 8. Mandatory Verification Before Opening a Pull Request
 
 Any change to code, configuration, or documentation must pass all commands below without errors before submission:
 
@@ -171,6 +182,8 @@ The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `p
 When adding, renaming, or removing any versioned file, immediately update:
 - `paths.yaml`
 - the submodule pointers
+- `src/*/*/platform.yaml`
+- `docs/`
 - `README.md`, `README.en.md`, and the affected documentation
 
 ---

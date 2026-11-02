@@ -143,7 +143,18 @@ O projeto segue a prática de *Design for Reuse* descrita no *Reuse Methodology 
 | 5 | **Dependência apenas das portas:** o nível superior conhece a declaração da entidade, nunca detalhes internos de sua arquitetura | O topo nunca carrega lógica fina de implementação |
 | 6 | **Composição com blocos-folha já verificados:** reaproveitar primitivos existentes | Não reimplementar com processos ou operadores redundantes o que um primitivo ou um sinal já calculado fornece |
 
-## 6. Regras de Documentação Markdown
+## 6. Normas Python
+
+| Regra | Especificação |
+| :--- | :--- |
+| Gerenciador | `uv` (`uv add`, `uv sync`, `uv run`); `pip`, `pip install` e `python -m pip` são proibidos |
+| Testes | `pytest`; todo comportamento novo acompanha um teste |
+| Documentação de código | Docstrings no estilo NumPy em módulos, classes e funções públicas |
+| Tipagem | Anotações completas, verificadas pelo Pyright em modo `strict` |
+| Estilo e qualidade | `ruff` para lint e formatação; `deptry` para dependências declaradas e usadas |
+| Nomenclatura | Identificadores em **inglês** com `snake_case`; comentários e docstrings em **português** |
+
+## 7. Regras de Documentação Markdown
 
 Todo `README` e todo `CONTRIBUTING` e `AUTHORS` mantêm versões espelhadas em português (`*.md`) e em inglês (`*.en.md`), obedecendo às seguintes regras:
 
@@ -157,7 +168,7 @@ Todo `README` e todo `CONTRIBUTING` e `AUTHORS` mantêm versões espelhadas em p
 6. **Sem histórico ou pendências na documentação técnica:** documentos de arquitetura e contratos descrevem exclusivamente o estado atual, sem changelogs internos nem listas de tarefas futuras.
 7. **Guias de uso apenas instruem:** instruções de instalação e execução dizem como fazer, sem justificar a escolha do método.
 
-## 7. Verificação Obrigatória Antes de Abrir Pull Request
+## 8. Verificação Obrigatória Antes de Abrir Pull Request
 
 Qualquer alteração em código, configuração ou documentação deve passar sem erros pelos comandos abaixo antes do envio:
 
@@ -171,6 +182,8 @@ O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `
 Ao adicionar, renomear ou remover qualquer arquivo versionado, atualize imediatamente:
 - `paths.yaml`
 - os ponteiros dos submódulos
+- `src/*/*/platform.yaml`
+- `docs/`
 - `README.md`, `README.en.md` e a documentação afetada
 
 ---
