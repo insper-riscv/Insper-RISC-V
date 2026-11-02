@@ -3,6 +3,7 @@
 import argparse
 import json
 import os
+import resource
 import subprocess
 import sys
 from pathlib import Path
@@ -56,6 +57,17 @@ def _resolve_parameter(value: object) -> str:
     return str(value)
 
 
+def _raise_stack_limit() -> None:
+    """Raise the soft stack limit of this process to the hard one.
+
+    The memories of the simulation tops are arrays of hundreds of
+    thousands of words, and GHDL allocates them on the stack of the
+    simulation; the child process inherits the limit.
+    """
+    _soft, hard = resource.getrlimit(resource.RLIMIT_STACK)
+    resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
+
+
 def run_cocotb_test(config: dict[str, Any]) -> None:
     """Build and run one cocotb test described by a tests.json entry.
 
@@ -63,7 +75,8 @@ def run_cocotb_test(config: dict[str, Any]) -> None:
     ----------
     config : dict of {str: Any}
         Entry with ``toplevel``, ``sources`` and ``test_module`` and,
-        optionally, ``parameters``, ``build_args`` and ``test_args``.
+        optionally, ``parameters``, ``build_args``, ``test_args`` and
+        ``plusargs`` (simulation options, placed after the top unit).
 
     Raises
     ------
@@ -74,6 +87,7 @@ def run_cocotb_test(config: dict[str, Any]) -> None:
     test_module = config["test_module"]
     sys.path.append(str(REPO_ROOT))
 
+    _raise_stack_limit()
     runner = get_runner(os.getenv("SIM", "ghdl"))
     build_dir = _build_dir(toplevel, test_module)
     raw_parameters: dict[str, object] = config.get("parameters") or {}
@@ -96,7 +110,7 @@ def run_cocotb_test(config: dict[str, Any]) -> None:
         hdl_toplevel_lang="vhdl",
         test_module=test_module,
         build_dir=build_dir,
-        plusargs=[f"--wave={wave_file}"],
+        plusargs=[f"--wave={wave_file}", *(config.get("plusargs") or [])],
         test_args=config.get("test_args") or [],
     )
     print(f"Waves: {wave_file} (gerado)")

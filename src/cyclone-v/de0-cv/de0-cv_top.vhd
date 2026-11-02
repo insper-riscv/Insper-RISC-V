@@ -356,7 +356,7 @@ begin
 
 	-- the FLASH chip model: its storage is read with the address it registers, on the core clock
 	FLASH_CHIP : entity work.flash_chip
-		generic map (first_latency => 24, next_latency => 4, window_bits => 18)
+		generic map (first_latency => 24, next_latency => 4, size_bytes => 262144)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => fc_addr, i_rden => fc_rden, i_line => fc_line, i_advance => fc_adv,

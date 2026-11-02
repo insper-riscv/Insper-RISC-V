@@ -44,7 +44,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 
 | Item | Simulação | Placa |
 | :--- | :--- | :--- |
-| Janela do chip de FLASH | 1 MB (`window_bits` igual a 20) | 256 KB (`window_bits` igual a 18) |
+| Janela do chip de FLASH | 1 MB (`size_bytes` igual a 1048576) | 256 KB (`size_bytes` igual a 262144) |
 | Armazenamento da FLASH | Vetor de 256 KB | 132 KB em blocos de RAM, regravável por JTAG |
 | Latência do chip | 24 bordas até a primeira palavra e 4 entre as seguintes (padrão) | A mesma |
 
