@@ -3,10 +3,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 -- The core on the board with the FLASH as a chip behind the caches: the core holds only the BOOT_ROM; the FLASH
--- (a 132 KB storage inside the FPGA, at 0x20000000, written by the host over JTAG) and the SDRAM at 0x40000000
+-- (a 256 KB storage inside the FPGA, right after the BOOT_ROM at 0x800, written by the host over JTAG) and the SDRAM at 0x40000000
 -- are reached through an instruction cache and a write-through data cache, whose line requests a region router
 -- sends to the FLASH chip model (through its arbiter) or to the SDRAM bridge, arbiter and controller of the
--- Memory repository. The FLASH window of the chip is 2^18 bytes here; a read past it returns zero. The host reaches the
+-- Memory repository. The FLASH window of the chip ends at 256 KiB; a read past it returns zero. The host reaches the
 -- SDRAM through the debug master and its Virtual JTAG shell, as a second master of the controller. The core
 -- clock is 50 MHz; the controller and the debug master run on the 142.857 MHz clock of the same PLL.
 entity core_fpga_sdram_flash is
@@ -236,12 +236,12 @@ begin
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
 			boot_rom_bits  => 11,
-			rom_end_kib    => 0,
+			rom_end_kib    => 256,
 			rom_external   => true,
 			ram_base_kib   => 1048576,
-			ram_end_kib    => 1572864,
+			ram_end_kib    => 1114112,
 			ram_external   => true,
-			ext_base_kib   => 524288,
+			ext_base_kib   => 1114112,
 			periph_base_kib => 1572864,
 			hpm_counters => HPM_COUNTERS
 		)
@@ -285,6 +285,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
+		generic map (rom_base_kib => 2, rom_end_kib => 256)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -322,7 +323,7 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = x"43FFF" else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true)
+		generic map (write_through => true, rom_base_kib => 2, rom_end_kib => 256)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -381,7 +382,7 @@ begin
       q       => boot_rom_data
     );
 
-	-- the storage behind the FLASH chip: a 132 KB RAM block the host rewrites over JTAG (instance FLASH)
+	-- the storage behind the FLASH chip: a 256 KB RAM block the host rewrites over JTAG (instance FLASH)
 	FLASH_STORE : entity work.flash_store1port
     port map (
       address => flash_mem_addr(17 downto 2),
