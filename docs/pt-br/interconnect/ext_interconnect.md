@@ -1,0 +1,48 @@
+# Interconector externo
+
+## 1. O que é
+
+Todo acesso de dados do core em `0x40000000` ou acima sai por uma porta externa com handshake de `ready`. O interconector atrás dessa porta decide para onde ele vai, para a SDRAM ou para um periférico. Ele decodifica o mapa de endereços da plataforma, e por isso mora neste repositório (`src/interconnect/`) e não no Memory nem no Peripherals, que ele liga sem que um dependa do outro.
+
+| Bloco | Papel |
+| :--- | :--- |
+| Interconector (`ext_interconnect.vhd`) | Decodifica o endereço e dá ao core o ready e o dado do escravo que respondeu |
+| Ponte da SDRAM | O escravo de memória (ver [sdram_debug.md](https://github.com/insper-riscv/Memory/blob/main/docs/pt-br/ram/sdram_debug.md) no Memory para o caminho do hospedeiro até o mesmo chip) |
+| UART sobre JTAG | O único periférico hoje, com filas de transmissão e de recepção de 64 bytes e uma instância do Virtual JTAG para o hospedeiro (ver [jtag_uart.md](https://github.com/insper-riscv/Peripherals/blob/main/docs/pt-br/UART/jtag_uart.md) no Peripherals) |
+
+## 2. Mapa de endereços
+
+| Faixa | Escravo |
+| :--- | :--- |
+| Bit 31 = 0 (a partir de `0x40000000`) | A ponte da SDRAM |
+| Bit 31 = 1 | Uma janela de periféricos: os bits 30:28 são o id e os bits 9:2 o deslocamento de palavra dentro da janela |
+
+| Id | Janela | Periférico |
+| ---: | :--- | :--- |
+| 4 | `0xC0000000` | UART sobre JTAG |
+| 0 a 3, 5 a 7 | | Nenhum: uma leitura dá 0, uma escrita não tem efeito e o acesso termina |
+
+## 3. O handshake
+
+O core segura o acesso na porta até o `ready`, que fica alto como nível até `mem_advance`.
+
+1. Um acesso à memória passa direto: os strobes de leitura e escrita vão à ponte e o seu `ready` e o seu dado voltam, qualquer que seja o número de ciclos que ela leve.
+2. Um acesso a periférico leva um ciclo: o interconector envia um pulso de leitura ou de escrita ao escravo e depois mantém o `ready` alto até `mem_advance`. Um pipeline que continua parado por outro motivo não repete o pulso, então uma leitura que retira um byte de uma fila retira um só.
+3. O dado de um load é copiado quando o load avança, e a escolha do escravo é registrada ao mesmo tempo. O acesso seguinte, já na porta enquanto o load está no último estágio, não o perturba.
+
+## 4. A variante AXI4
+
+O `ext_axi_interconnect.vhd` faz a mesma decodificação sobre AXI4: a cache de dados e a ponte mestre do Memory na frente, depois o `axi_router.vhd` e, atrás dele, a ponte escrava da SDRAM do Memory e o `axi_slave_periph_bank.vhd`. O roteador envia `0x40000000` a `0x43FFFFFF` à SDRAM e `0x80000000` em diante aos periféricos, e responde DECERR em qualquer outro lugar. O banco de periféricos atende oito janelas de 256 palavras, escolhidas pelos bits 30:28. A cadeia inteira está descrita em [dcache_axi.md](https://github.com/insper-riscv/Memory/blob/main/docs/pt-br/barramento/dcache_axi.md) no Memory.
+
+## 5. Verificação
+
+Os testes rodam aqui, com o barramento do Memory e a UART sobre JTAG do Peripherals juntos (`make test TEST=<nome>`):
+
+| Teste | O que cobre |
+| :--- | :--- |
+| `ExtBus` | O interconector com a UART sobre JTAG no slot de periférico 4: bytes em ordem, pipeline parado que retira uma vez, filas cheias, janela sem mapa que lê 0, dado do load que se mantém enquanto o próximo acesso roda |
+| `ExtAxiBus` | Os mesmos testes sobre a cadeia AXI4, com uma memória de palavra atrás do escravo da SDRAM |
+| `ExtAxiCache` | A cache de dados sobre AXI4: flush, invalidação e o mestre compartilhado com o core |
+| `AxiRouter` | O roteador sozinho: os dois escravos, rajadas, W antes de AW e DECERR |
+
+O defeito achado no roteador pela leitura das regras de handshake está em [ROUTER_W_BEFORE_AW.md](../bugs/ROUTER_W_BEFORE_AW.md).

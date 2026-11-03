@@ -12,6 +12,7 @@
 - [CONTRIBUTING.en.md](CONTRIBUTING.en.md): mandatory contribution rules, the VHDL-2008, C23 and Python standards, documentation rules and the checks before opening a Pull Request.
 - [CITATION.cff](CITATION.cff): metadata to cite the software.
 - [docs/pt-br/](docs/pt-br): guides (board, simulation and KPIs), platforms (memory, boot and runtime) and diagnosed defects (in Portuguese).
+- [docs/en/interconnect/ext_interconnect.md](docs/en/interconnect/ext_interconnect.md): the external interconnect, which decodes the platform map between the SDRAM and the peripherals, its AXI4 variant and the integration tests.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): KPI scripts (frequency, resources, CPI and tests) from a Quartus run (in Portuguese).
 
 ## 2. Repositories
