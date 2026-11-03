@@ -47,11 +47,11 @@ entity modular_sim_top is
     -- A RAM é externa, atrás da cache de dados.
     ram_external        : boolean := false;
     -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
-    boot_rom_size_bytes : positive := 2 ** BOOT_ROM_BITS;
+    boot_rom_size_bytes : positive := BOOT_ROM_SIZE_BYTES;
     -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
-    rom_size_bytes      : positive := 1048576;
+    rom_size_bytes      : positive := ROM_STORAGE_BYTES;
     -- Tamanho da RAM em bytes, uma potência de dois.
-    ram_size_bytes      : positive := 1048576;
+    ram_size_bytes      : positive := RAM_STORAGE_BYTES;
     -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
     rom_end_kib         : natural  := ROM_END_KIB;
     -- Base, em KiB, da RAM (0x100000 por padrão).

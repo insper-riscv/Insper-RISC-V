@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.utils_pkg.all;
+use work.de0_cv_map_pkg.all;
 
 -- The core on the board with the FLASH as a chip behind the caches: the core holds only the BOOT_ROM; the FLASH
 -- (a 256 KB storage inside the FPGA, right after the BOOT_ROM at 0x800, written by the host over JTAG) and the SDRAM at 0x40000000
@@ -235,14 +237,14 @@ begin
 			tick_cycles  => 50,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
-			boot_rom_bits  => 11,
-			rom_end_kib    => 256,
-			rom_external   => true,
-			ram_base_kib   => 1048576,
-			ram_end_kib    => 1114112,
-			ram_external   => true,
-			ext_base_kib   => 1114112,
-			periph_base_kib => 1572864,
+			boot_rom_bits  => BOOT_ROM_BITS,
+			rom_end_kib    => ROM_END_KIB,
+			rom_external   => ROM_EXTERNAL,
+			ram_base_kib   => RAM_BASE_KIB,
+			ram_end_kib    => RAM_END_KIB,
+			ram_external   => RAM_EXTERNAL,
+			ext_base_kib   => EXT_BASE_KIB,
+			periph_base_kib => PERIPH_BASE_KIB,
 			hpm_counters => HPM_COUNTERS
 		)
 		port map (
@@ -285,7 +287,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
-		generic map (rom_base_kib => 2, rom_end_kib => 256)
+		generic map (rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -320,10 +322,10 @@ begin
 		);
 
 	-- the last 4 KB of the SDRAM hold the words the host shares with the program: never kept in the data cache
-	dc_bypass <= '1' when m_addr(31 downto 12) = x"43FFF" else '0';
+	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true, rom_base_kib => 2, rom_end_kib => 256)
+		generic map (write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -364,7 +366,7 @@ begin
 
 	-- the FLASH chip model: its storage is read with the address it registers, on the core clock
 	FLASH_CHIP : entity work.flash_chip
-		generic map (first_latency => 24, next_latency => 4, size_bytes => 262144)
+		generic map (first_latency => 24, next_latency => 4, size_bytes => ROM_STORAGE_BYTES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => fc_addr, i_rden => fc_rden, i_line => fc_line, i_advance => fc_adv,
@@ -385,7 +387,7 @@ begin
 	-- the storage behind the FLASH chip: a 256 KB RAM block the host rewrites over JTAG (instance FLASH)
 	FLASH_STORE : entity work.flash_store1port
     port map (
-      address => flash_mem_addr(17 downto 2),
+      address => flash_mem_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
       clock   => pll_clk_idexmem,
       rden    => '1',
       wren    => '0',

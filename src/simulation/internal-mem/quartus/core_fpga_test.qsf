@@ -130,6 +130,7 @@ set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/boot_r
 set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/flash1port.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ram/cyclone-v/ram1port.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/flash_mem1port.qip
+set_global_assignment -name VHDL_FILE ../rtl/internal_mem_map_pkg.vhd
 set_global_assignment -name VHDL_FILE core_fpga_test.vhd
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
 set_global_assignment -name VHDL_FILE ../../../../Core/src/M/m_decode.vhd

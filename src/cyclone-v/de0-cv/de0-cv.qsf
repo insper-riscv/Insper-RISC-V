@@ -121,6 +121,7 @@ set_global_assignment -name VHDL_FILE ../../../Core/src/core/core.vhd
 set_global_assignment -name VHDL_FILE ../../simulation/internal-mem/rtl/Blinky.vhd
 set_global_assignment -name QIP_FILE ../../../Memory/src/rom/cyclone-v/boot_rom1port.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/rom/cyclone-v/flash_store1port.qip
+set_global_assignment -name VHDL_FILE de0_cv_map_pkg.vhd
 set_global_assignment -name VHDL_FILE de0-cv_top.vhd
 
 #============================================================

@@ -62,7 +62,9 @@ The storage has 256 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 
 | Programs on the board | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 on the board | `certify-board --skip-build` with the `config.flash-board-<profile>.yaml` configuration of the Certification repository |
 
-The map checker (`check-memory-map`) checks the platform `platform.yaml` against `config.yaml`, the link flags, the boot ROM, the runtime, the core constants and the program header.
+The `platform.yaml` is the only source of the map. `riscv-tools generate-memory-map` (`make generate`) writes from it the `de0_cv_map_pkg.vhd` package, which the board top, the simulation top and the Quartus project (`de0-cv.qsf`) use for the limits of the regions, the size of the FLASH chip and the page of the SDRAM that the host shares with the program, plus the link flags and the linker script of the boot ROM. `config.yaml` declares `memory_map: platform.yaml` and receives from the map the bases, the words, `tohost`, `fromhost` and the address width of the simulation memories. The `check-memory-map` checker covers only what is left written by hand: the boot ROM, the runtime and the header of the programs.
+
+The peripherals take the upper 2 GiB of the address space (bit 31 set), with one 256 MiB window per peripheral chosen by bits 30:28: the JTAG UART at id 4 (`0xC0000000`) and the seven-segment display at id 5 (`0xD0000000`). The BOOT_ROM, the FLASH and the SDRAM sit in the lower 2 GiB.
 
 ## 6. ACT4
 

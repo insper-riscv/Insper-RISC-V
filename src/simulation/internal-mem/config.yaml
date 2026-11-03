@@ -25,77 +25,10 @@ isa:
   # and "// RV32_EXT: M,A" both normalize to rv32ima.
   canonical_order: "MAFDQLCBJTPVNH"
 
-memory:
-  # rv32im_pipeline_core now models 3 physical memories, matching a
-  # real SOC's hierarchy: BOOT_ROM (fixed — programmed once, never
-  # JTAG-rewritten per test; holds boot_rom.S, the shared bootloader),
-  # FLASH (this test's own "firmware" — .boot_header + .text, JTAG-
-  # rewritten per test the way ROM used to be) and RAM (real
-  # read/write data — the ONLY memory the MEM stage ever touches now;
-  # nothing reads data-side straight out of BOOT_ROM/FLASH anymore,
-  # see rv32im_pipeline_core.vhd's is_boot_rom_if/is_boot_rom_d).
-  #
-  # This replaces the old 2-region "Harvard modificado" address-
-  # comparison decode (is_rom_data) entirely — there's no MEM-stage
-  # ROM access left to decode. The IF stage still decodes BOOT_ROM vs
-  # FLASH by comparison (BOOT_ROM_SIZE_BYTES in
-  # rv32im_pipeline_core.vhd), but that's now the ONLY address
-  # decision left in the core.
-  #
-  # It also removes the old ROM_MEM duplicate IP instance entirely —
-  # that existed ONLY to give the (former) ROM a second read port for
-  # the MEM stage, working around Quartus Lite's DUAL_PORT +
-  # ENABLE_RUNTIME_MOD limitation (confirmed empirically via
-  # quartus_map). FLASH is genuinely single-port now, so that
-  # limitation no longer applies — and removing the duplicate is what
-  # brings total chip memory usage back under budget (the previous
-  # 160K+160K+128K=448K design exceeded the real 385K capacity by
-  # 63K; see the Fitter report's "Total block memory bits" line).
-  #
-  # boot_rom_base/boot_rom_words must match
-  # rv32im_pipeline_core.vhd's BOOT_ROM_SIZE_BYTES exactly (2K = 512
-  # words). rom_base/rom_words (FLASH) must start right where BOOT_ROM
-  # ends — both this and boot_rom.S's own hardcoded FLASH_BASE must
-  # agree. All .rodata is now copied to RAM at boot (boot_rom.S), not
-  # just small-data — see link.ld — since FLASH has no second read
-  # port for the MEM stage to read it from directly anymore.
-  #
-  # Sizes below (BOOT_ROM 2K / FLASH 30K / RAM 160K, ~192K total) are
-  # the SECOND cut — the first (66K/224K) genuinely worked in
-  # simulation but blew past the Cyclone V 5CEBA4F23's real, hard
-  # 308-M10K-block ceiling once FLASH_MEM (see quartus:
-  # rom_mem_instances below) doubled FLASH's cost: confirmed via a
-  # real `quartus_sh --flow compile` failure ("Error (170048): ...
-  # needs more than 308 to successfully fit"), not just bit-budget
-  # arithmetic (the 385K bit figure alone underestimates
-  # ENABLE_RUNTIME_MOD's real block overhead). This cut measures
-  # ~178 blocks (58% of the ceiling), leaving real margin.
-  #
-  # FLASH shrank to 30K (not 32K) specifically so RAM_BASE
-  # (rom_base + rom_words*4 = 0x800 + 0x7800) lands on a 4096-aligned
-  # address (0x8000) — required because every test's own asm tohost
-  # write uses a bare `lui xN, 0x30` (no addi) to reach
-  # ram_base+ram_words*4-4, which only encodes an address whose low 12
-  # bits are zero. Growing BOOT_ROM instead (to force FLASH_BASE onto
-  # a 4K boundary) would've worked too but touches strictly more files
-  # for no benefit — this way BOOT_ROM/FLASH_BASE are untouched.
-  boot_rom_base: 0x00000000
-  boot_rom_words: 512     # BOOT_ROM (ips/ROM1PORT, repurposed): numwords_a=512, widthad_a=9
-  rom_base: 0x00000800
-  rom_words: 7680         # FLASH (ips/FLASH1PORT, new): numwords_a=7680, widthad_a=13
-  ram_base: 0x00008000
-  ram_words: 40960        # RAM1PORT: numwords_a=40960, widthad_a=16
-  # HTIF words at the top of RAM, 8 bytes each. Fixed addresses hardcoded in
-  # boot_rom.S (which clears them on every _reset), _exit.c and
-  # tools/riscv_build/include/rv32_test.h (which RV32_PASS()/RV32_FAIL()
-  # write to); they must stay in sync with link.ld's RAM length below and
-  # with each other. Regenerate rv32_test.h via `riscv-tools generate-header`
-  # after changing tohost_addr.
-  tohost_addr: 0x0002FFE8
-  # The host writes a nonzero word here over JTAG, after loading a new FLASH
-  # image, to make boot_rom.S's restart loop jump back to _reset (see the "no
-  # full recompile per test" note under quartus: below).
-  fromhost_addr: 0x0002FFF0
+# The addresses and the sizes of the memories come from the map of the platform (platform.yaml): the BOOT_ROM,
+# the FLASH and the RAM, the HTIF words tohost and fromhost, and the address width of each simulation memory
+# (sim.parameters below). Nothing of the map is written here.
+memory_map: platform.yaml
 
 paths:
   # The platform's own parts of the runtime, compiled into every test:
@@ -284,6 +217,7 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
     - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
     - src/simulation/internal-mem/rtl/rv32i3stage_core_sim_test.vhd
   # The cocotb testbench of the top lives in this repository; it is found
   # through python_path, which names it relative to the project that extends
@@ -312,12 +246,6 @@ sim:
   parameters:
     BOOT_ROM_FILE: "{boot_rom_hex_path}"
     ROM_FILE: "{hex_path}"
-    # BOOT_ROM 2K (512 palavras, 9 bits) / FLASH 30K (7680 palavras,
-    # 13 bits) / RAM 160K (40960 palavras, 16 bits) -- ver memory:
-    # acima.
-    boot_rom_addr_width: "9"
-    rom_addr_width: "13"
-    ram_addr_width: "16"
     HAS_ZICSR: true
     HAS_ZICNTR: true
     HAS_ZIHPM: true
