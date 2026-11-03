@@ -26,7 +26,7 @@ O núcleo guarda só a BOOT_ROM. A FLASH (programa e constantes) e a SDRAM (dado
 | Região | Base | Tamanho | Acesso |
 | :--- | :--- | :--- | :--- |
 | BOOT_ROM | `0x00000000` | 2 KB | Busca e leitura, direto, sem cache |
-| FLASH | `0x20000000` | 1 MB de janela | Busca e leitura pelas caches, somente leitura |
+| FLASH | `0x00000800` | 254 KiB de janela, até `0x00040000` | Busca e leitura pelas caches, somente leitura |
 | SDRAM | `0x40000000` | 64 MB | Busca, leitura e escrita pelas caches |
 | Periféricos | `0x80000000` | janelas de 256 MB | Leitura e escrita, sem cache |
 
@@ -34,7 +34,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 
 ## 3. Comportamento
 
-1. **Busca.** O PC alimenta só a cache de instruções e a BOOT_ROM. A tag da cache leva o bit 29 do endereço, que separa as linhas da FLASH das da SDRAM.
+1. **Busca.** O PC alimenta só a cache de instruções e a BOOT_ROM. A tag da cache leva o bit da região, que separa as linhas da FLASH das da SDRAM; a região da FLASH é a faixa `[2 KiB, 256 KiB)` do endereço do núcleo.
 2. **Dados.** Loads e stores à FLASH e à SDRAM passam pela cache de dados, com linhas de 16 bytes e mapeamento direto de 4 KB. Um store à FLASH nunca altera a cache e é concluído pelo roteador sem efeito, como um chip protegido contra escrita.
 3. **FLASH.** O chip atende pedidos de linha ou de palavra com dois parâmetros de latência: bordas até a primeira palavra e bordas entre as palavras seguintes. Fora da janela do chip a leitura devolve zero.
 4. **Reinício.** O boot ROM executa `fence.i` antes de saltar para a FLASH. A instrução invalida a cache de instruções e a de dados, então o programa novo que o hospedeiro gravou não encontra linhas do anterior.
@@ -44,11 +44,11 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 
 | Item | Simulação | Placa |
 | :--- | :--- | :--- |
-| Janela do chip de FLASH | 1 MB (`size_bytes` igual a 1048576) | 256 KB (`size_bytes` igual a 262144) |
-| Armazenamento da FLASH | Vetor de 256 KB | 132 KB em blocos de RAM, regravável por JTAG |
+| Janela do chip de FLASH | 256 KB (`size_bytes` igual a 262144), dos quais a FLASH ocupa os 254 KiB depois da BOOT_ROM | A mesma |
+| Armazenamento da FLASH | Vetor de 256 KB | 256 KB em blocos de RAM, regravável por JTAG |
 | Latência do chip | 24 bordas até a primeira palavra e 4 entre as seguintes (padrão) | A mesma |
 
-O armazenamento da placa tem 132 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 872 bytes. O vetor de simulação tem 256 KB porque um vetor de 1 MB não roda no GHDL.
+O armazenamento tem 256 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 872 bytes e os primeiros 2 KB do vetor correspondem à BOOT_ROM, que o programa da FLASH não usa. Um vetor de 1 MB não roda no GHDL.
 
 ## 5. Como rodar
 

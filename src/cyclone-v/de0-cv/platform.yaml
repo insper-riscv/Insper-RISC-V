@@ -1,5 +1,5 @@
 # The memory map of the SDRAM platform with the FLASH behind the caches: the BOOT_ROM inside the core, the
-# FLASH (1 MB at 0x20000000) and the board's 64 MB SDRAM (the RAM) reached through the instruction and data
+# FLASH (right after the BOOT_ROM, up to 256 KiB) and the board's 64 MB SDRAM (the RAM) reached through the instruction and data
 # caches: the source of truth `riscv-tools check-memory-map` checks every hand-written copy against.
 #
 #   uv run riscv-tools --root . check-memory-map --platform src/cyclone-v/de0-cv/platform.yaml
@@ -14,7 +14,7 @@ profile: rv32im
 
 regions:
   - {name: BOOT_ROM, base: 0x00000000, size: 2K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x20000000, size: 1M,   kind: rom, exec: true}
+  - {name: FLASH,    base: 0x00000800, size: 254K, kind: rom, exec: true}
   - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
 
 # Words at the top of RAM: the contract between the boot ROM, the program and
@@ -25,7 +25,7 @@ reserved:
   fromhost: {base: 0x43FFFFF0, size: 8}
 
 boot:
-  entry: 0x20000000
+  entry: 0x00000800
   wait_restart: 0x00000100
 
 peripherals: []
@@ -42,7 +42,6 @@ checks:
   - {name: config boot_rom_words, file: src/simulation/internal-mem/config.yaml, yaml: memory.boot_rom_words, expect: BOOT_ROM.words}
   - {name: config rom_base, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.rom_base, expect: FLASH.base}
   - {name: config rom_words, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.rom_words, expect: FLASH.words}
-  - {name: config rom_origin, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.rom_origin, expect: FLASH.base}
   - {name: config ram_base, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.ram_base, expect: RAM.base}
   - {name: config ram_words, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.ram_words, expect: RAM.words}
   - {name: config tohost_addr, file: src/cyclone-v/de0-cv/config.yaml, yaml: memory.tohost_addr, expect: tohost.base}
@@ -64,7 +63,9 @@ checks:
 
   # --- VHDL of the core ----------------------------------------------------
   - {name: core boot_rom_bits, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'boot_rom_bits\s*=>\s*(\d+)', expect: clog2(BOOT_ROM.size)}
-  - {name: core ext_base_kib, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'ext_base_kib\s*=>\s*(\d+)', expect: FLASH.base / 1024}
+  - {name: core rom_end_kib, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'rom_end_kib\s*=>\s*(\d+),\s*$', expect: FLASH.end / 1024}
+  - {name: core ram_end_kib, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'ram_end_kib\s*=>\s*(\d+)', expect: RAM.end / 1024}
+  - {name: core ext_base_kib, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'ext_base_kib\s*=>\s*(\d+)', expect: RAM.end / 1024}
 
   # --- the SDRAM is the RAM: the core decodes it as its external data region -------------
   - {name: core ram_base_kib, file: src/cyclone-v/de0-cv/de0-cv_top.vhd, pattern: 'ram_base_kib\s*=>\s*(\d+)', expect: RAM.base / 1024}

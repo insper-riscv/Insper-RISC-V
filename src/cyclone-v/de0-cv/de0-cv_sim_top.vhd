@@ -5,8 +5,8 @@ use ieee.numeric_std.all;
 -- Simulation top of the SDRAM platform with the FLASH as a chip behind the caches: the core, the
 -- BOOT_ROM (a VHDL array), the instruction and data caches, the FLASH chip model with its storage (a
 -- VHDL array) and the SDRAM (bridge, arbiter, controller and chip model of the Memory repository) on
--- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH is at
--- 0x20000000 and the SDRAM at 0x40000000; both are reached only through the caches, whose line
+-- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH starts right after the BOOT_ROM and
+-- ends at 256 KiB, and the SDRAM is at 0x40000000; both are reached only through the caches, whose line
 -- requests a region router sends to the FLASH (through its arbiter) or to the SDRAM.
 --
 -- CLK is the base clock of the core (a clock generator divides it by three, as in internal-mem).
@@ -193,7 +193,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => 11, rom_end_kib => 0, rom_external => true, ram_base_kib => 1048576, ram_end_kib => 1572864, ram_external => true, ext_base_kib => 524288, periph_base_kib => 1572864, hpm_counters => hpm_count(HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => 11, rom_end_kib => 256, rom_external => true, ram_base_kib => 1048576, ram_end_kib => 1114112, ram_external => true, ext_base_kib => 1114112, periph_base_kib => 1572864, hpm_counters => hpm_count(HAS_ZIHPM))
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -237,6 +237,7 @@ begin
 	);
 
 	ICACHE : entity work.icache
+		generic map (rom_base_kib => 2, rom_end_kib => 256)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -263,7 +264,7 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = x"43FFF" else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true)
+		generic map (write_through => true, rom_base_kib => 2, rom_end_kib => 256)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,

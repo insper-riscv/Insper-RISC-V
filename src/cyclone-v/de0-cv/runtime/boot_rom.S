@@ -7,7 +7,7 @@
  * It does two things:
  *
  *  - _reset (address 0): clears the words the host and the test share
- *    (see below) and executes fence.i and jumps to FLASH_BASE (0x20000000), where the toolchain's
+ *    (see below) and executes fence.i and jumps to FLASH_BASE (0x800), where the toolchain's
  *    crt0 (_start, from rv32im-fpga.specs) is. The crt0 sets sp and gp,
  *    copies .data from FLASH to RAM, clears .bss, sets up TLS, runs the
  *    constructors and calls main; main returning lands in _exit
@@ -44,7 +44,7 @@ _reset:
     sw   x0, 0(t0)               // length
     sw   x0, 4(t0)               // truncated
     .word 0x0000100F             // fence.i (the boot ROM is assembled for rv32i): drop the lines of the previous program
-    li   t0, 0x20000000          // FLASH_BASE: the crt0's _start
+    li   t0, 0x800               // FLASH_BASE: the crt0's _start
     jr   t0
 
     /* The test has already written tohost (1 = pass, (code << 1) | 1 = fail,

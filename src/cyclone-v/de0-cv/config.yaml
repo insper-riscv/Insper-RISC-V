@@ -1,5 +1,5 @@
 # The de0-cv platform: the DE0-CV board (Cyclone V) with the FLASH as a chip behind the caches (the
-# design of a real SoC). The core holds only the BOOT_ROM; the FLASH (1 MB at 0x20000000) and the SDRAM
+# design of a real SoC). The core holds only the BOOT_ROM; the FLASH (254 KiB right after the BOOT_ROM) and the SDRAM
 # (64 MB at 0x40000000, 143 MHz) are reached through an instruction cache and a write-through data
 # cache, whose line requests a region router sends to the FLASH chip model (through its arbiter) or to
 # the SDRAM controller. The SDRAM is THE RAM: it holds .data, .bss, the heap, the stack and the words
@@ -16,10 +16,10 @@ memory:
   ram_words: 16777216          # 64 MB
   tohost_addr: 0x43FFFFE8
   fromhost_addr: 0x43FFFFF0
-  rom_base: 0x20000000
-  rom_words: 262144            # 1 MB
-  # the first word of the program image sits at the base of the FLASH: no leading padding
-  rom_origin: 0x20000000
+  # the FLASH starts right after the BOOT_ROM and fills the
+  # 256 KB of its storage: the image of the host carries the 2 KB of the BOOT_ROM as leading padding
+  rom_base: 0x00000800
+  rom_words: 65024             # 254 KiB
 
 paths:
   sources:
@@ -120,8 +120,8 @@ sim:
   parameters:
     HAS_ZIFENCEI: true
     HAS_ZIHPM: true
-    # the storage model of the FLASH is 256 KB (65536 words, 16 bits): the chip window is 1 MB, the model
-    # array is smaller because a larger one does not run in GHDL; the programs are far smaller
+    # the storage model of the FLASH is 256 KB (65536 words, 16 bits): the FLASH takes its 254 KiB after the
+    # BOOT_ROM, and a larger array does not run in GHDL
     rom_addr_width: "16"
   test_module: testbench.test_c_program
   python_path:

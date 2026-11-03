@@ -26,7 +26,7 @@ The core keeps only the BOOT_ROM. The FLASH (program and constants) and the SDRA
 | Region | Base | Size | Access |
 | :--- | :--- | :--- | :--- |
 | BOOT_ROM | `0x00000000` | 2 KB | Fetch and read, direct, uncached |
-| FLASH | `0x20000000` | 1 MB window | Fetch and read through the caches, read-only |
+| FLASH | `0x00000800` | 254 KiB window, up to `0x00040000` | Fetch and read through the caches, read-only |
 | SDRAM | `0x40000000` | 64 MB | Fetch, read and write through the caches |
 | Peripherals | `0x80000000` | 256 MB windows | Read and write, uncached |
 
@@ -34,7 +34,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 
 ## 3. Behavior
 
-1. **Fetch.** The PC feeds only the instruction cache and the BOOT_ROM. The cache tag carries address bit 29, which separates the FLASH lines from the SDRAM ones.
+1. **Fetch.** The PC feeds only the instruction cache and the BOOT_ROM. The cache tag carries the region bit, which separates the FLASH lines from the SDRAM ones; the FLASH region is the range `[2 KiB, 256 KiB)` of the core address.
 2. **Data.** Loads and stores to the FLASH and the SDRAM go through the data cache, with 16-byte lines and 4 KB direct mapping. A store to the FLASH never changes the cache and the router completes it with no effect, like a write-protected chip.
 3. **FLASH.** The chip serves line or word requests with two latency parameters, edges up to the first word and edges between the following words. Outside the chip window a read returns zero.
 4. **Restart.** The boot ROM executes `fence.i` before jumping to the FLASH. The instruction invalidates the instruction cache and the data cache, so the new program the host wrote does not find lines of the previous one.
@@ -44,11 +44,11 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 
 | Item | Simulation | Board |
 | :--- | :--- | :--- |
-| FLASH chip window | 1 MB (`size_bytes` equal to 1048576) | 256 KB (`size_bytes` equal to 262144) |
-| FLASH storage | 256 KB array | 132 KB in RAM blocks, rewritable over JTAG |
+| FLASH chip window | 256 KB (`size_bytes` equal to 262144), of which the FLASH takes the 254 KiB after the BOOT_ROM | The same |
+| FLASH storage | 256 KB array | 256 KB in RAM blocks, rewritable over JTAG |
 | Chip latency | 24 edges to the first word and 4 between the following ones (default) | The same |
 
-The board storage has 132 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 bytes. The simulation array has 256 KB because a 1 MB array does not run in GHDL.
+The storage has 256 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 bytes and the first 2 KB of the array stand for the BOOT_ROM, which the FLASH program does not use. A 1 MB array does not run in GHDL.
 
 ## 5. How to run
 
