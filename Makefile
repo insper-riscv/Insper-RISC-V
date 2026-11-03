@@ -27,13 +27,14 @@ UART_VHDL := Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_p
 # The simulation top of internal-mem (rv32i3stage_core_sim_test): the core with the simulation memories and peripherals.
 SIM_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
             Memory/src/ram/soc/ram_simulation.vhd Memory/src/rom/soc/rom_simulation.vhd \
-            $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/rv32i3stage_core_sim_test.vhd
+            $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/internal_mem_map_pkg.vhd \
+            $(P)/rtl/rv32i3stage_core_sim_test.vhd
 
 # The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory, and the
 # external interconnect of this repository.
 BOARD_VHDL := $(shell find src/interconnect Memory/src/ram/soc Memory/src/barramento/soc Peripherals/src/UART/jtag Peripherals/src/display/soc -name '*.vhd' -not -path '*/cyclone-v/*' -not -name ram_simulation.vhd | sort) \
                $(addprefix Memory/src/cache/soc/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
-               $(PF)/de0-cv_sim_top.vhd
+               $(PF)/de0_cv_map_pkg.vhd $(PF)/de0-cv_sim_top.vhd
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'

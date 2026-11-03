@@ -62,7 +62,9 @@ O armazenamento tem 256 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 8
 | Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 na placa | `certify-board --skip-build` com a configuração `config.flash-board-<perfil>.yaml` do repositório Certification |
 
-O verificador de mapa (`check-memory-map`) confere o `platform.yaml` da plataforma contra o `config.yaml`, as flags de ligação, o boot ROM, o runtime, as constantes do núcleo e o cabeçalho dos programas.
+O `platform.yaml` é a única fonte do mapa. O `riscv-tools generate-memory-map` (`make generate`) escreve dele o pacote `de0_cv_map_pkg.vhd`, que o topo da placa, o topo de simulação e o projeto do Quartus (`de0-cv.qsf`) usam para os limites das regiões, o tamanho do chip de FLASH e a página da SDRAM que o hospedeiro compartilha com o programa, além das flags de ligação e do linker script da boot ROM. O `config.yaml` declara `memory_map: platform.yaml` e recebe do mapa as bases, as palavras, o `tohost`, o `fromhost` e a largura de endereço das memórias de simulação. O verificador `check-memory-map` confere só o que sobra escrito à mão: o boot ROM, o runtime e o cabeçalho dos programas.
+
+Os periféricos ocupam os 2 GiB superiores do espaço de endereços (bit 31 em 1), com uma janela de 256 MiB por periférico escolhida pelos bits 30:28: a UART via JTAG no id 4 (`0xC0000000`) e o display de 7 segmentos no id 5 (`0xD0000000`). A BOOT_ROM, a FLASH e a SDRAM ficam nos 2 GiB inferiores.
 
 ## 6. ACT4
 

@@ -1,6 +1,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.utils_pkg.all;
+use work.internal_mem_map_pkg.all;
 
 entity core_fpga_test is
 	port (
@@ -49,8 +51,8 @@ architecture behaviour of core_fpga_test is
 	-- (test_c_program.py) snoops the raw ram_addr bus directly rather
 	-- than reading back RAM's internal array by JTAG-style 0-based
 	-- index, so this class of bug is invisible to it by construction.
-	constant RAM_BASE_WORD : unsigned(19 downto 0) := to_unsigned(16#00008000# / 4, 20);
-	signal ram_word_addr : unsigned(15 downto 0);
+	constant RAM_BASE_WORD : unsigned(19 downto 0) := to_unsigned(RAM_BASE_KIB * 256, 20);
+	signal ram_word_addr : unsigned(log2_exact(RAM_STORAGE_BYTES) - 3 downto 0);
 
 	signal ram_addr : std_logic_vector(31 downto 0);
 	signal ram_wdata : std_logic_vector(31 downto 0);
@@ -124,7 +126,19 @@ begin
 	LEDR(3) <= not core_reset;   -- '1' core fora de reset, rodando
 
 	CORE : entity work.core
-		generic map (has_m => true, has_zicsr => true, has_zicntr => true)
+		generic map (
+			has_m           => true,
+			has_zicsr       => true,
+			has_zicntr      => true,
+			boot_rom_bits   => BOOT_ROM_BITS,
+			rom_end_kib     => ROM_END_KIB,
+			rom_external    => ROM_EXTERNAL,
+			ram_base_kib    => RAM_BASE_KIB,
+			ram_end_kib     => RAM_END_KIB,
+			ram_external    => RAM_EXTERNAL,
+			ext_base_kib    => EXT_BASE_KIB,
+			periph_base_kib => PERIPH_BASE_KIB
+		)
 		port map (
 			i_clk          => pll_clk_idexmem,
 			i_rst        => core_reset,
@@ -188,8 +202,9 @@ begin
 	-- precisa de porta unica agora -- nada mais le dado direto dela
 	-- (ver rv32im_pipeline_core.vhd, estagio MEM so' fala com RAM).
 	BOOT_ROM : entity work.boot_rom1port
+    generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
     port map (
-      address => if_addr(10 downto 2),
+      address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
       clock   => pll_clk_if,
       rden    => if_rden,
       wren    => '0',
@@ -204,8 +219,9 @@ begin
 	-- proprio, nunca precisa ser lido como dado (ver FLASH_MEM abaixo
 	-- pra FLASH).
 	FLASH : entity work.flash1port
+    generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      address => if_addr(14 downto 2),
+      address => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
       clock   => pll_clk_if,
       rden    => if_rden,
       wren    => '0',
@@ -214,9 +230,10 @@ begin
     );
 
 	-- RAM-relative word address (see RAM_BASE_WORD's own comment above)
-	ram_word_addr <= resize(unsigned(ram_addr(21 downto 2)) - RAM_BASE_WORD, 16);
+	ram_word_addr <= resize(unsigned(ram_addr(21 downto 2)) - RAM_BASE_WORD, ram_word_addr'length);
 
 	RAM : entity work.ram1port
+	 generic map (size_bytes => RAM_STORAGE_BYTES)
 	 port map (
 		address => std_logic_vector(ram_word_addr),
 		byteena => ram_byteena,
@@ -236,8 +253,9 @@ begin
 	-- nao mudar o indice de instancia JTAG que RAM ja' tem (2) -- ver
 	-- config.yaml quartus.ram_mem_instance.
 	FLASH_MEM : entity work.flash_mem1port
+    generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      address => flash_addr2(14 downto 2),
+      address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
       clock   => pll_clk_idexmem,
       rden    => flash_rden2,
       wren    => '0',

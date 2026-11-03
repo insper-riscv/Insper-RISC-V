@@ -12,6 +12,8 @@ tests/python/unittests/rtl/data/modular/.
 
 from pathlib import Path
 
+from riscv_tools.memory_map import load_platform, symbols
+
 from tests.python.utils.rv32_asm import (
     T0,
     T1,
@@ -26,8 +28,12 @@ from tests.python.utils.rv32_asm import (
 )
 
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/modular"
-ROM_BASE_WORDS = 0x800 // 4  # a ROM começa logo depois da BOOT_ROM de 2 KiB
-RAM_HI20 = 0x100  # a RAM começa em 0x100000
+ROOT = Path(__file__).resolve().parents[2]
+MAP = symbols(load_platform(ROOT / "src/simulation/modular/platform.yaml"))
+ROM_BASE = MAP["ROM.base"]  # a ROM começa logo depois da BOOT_ROM
+RAM_BASE = MAP["RAM.base"]
+ROM_BASE_WORDS = ROM_BASE // 4
+RAM_HI20 = RAM_BASE >> 12
 FIRST = 0x5A
 
 

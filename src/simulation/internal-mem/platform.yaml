@@ -36,20 +36,23 @@ peripherals:
 generate:
   specs: {path: src/simulation/internal-mem/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/internal-mem/runtime/boot_rom.ld}
+  vhdl:
+    path: src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
+    package: internal_mem_map_pkg
+    rom: FLASH
+    ram: RAM
+    rom_external: false
+    ram_external: false
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`): the bases and
+# the words of the memories, tohost and fromhost, and the address width of each simulation memory.
+config:
+  rom: FLASH
+  ram: RAM
+  addr_widths: [boot_rom, rom, ram]
 
 checks:
   # --- config.yaml ---------------------------------------------------------
-  - {name: config boot_rom_base, file: src/simulation/internal-mem/config.yaml, yaml: memory.boot_rom_base, expect: BOOT_ROM.base}
-  - {name: config boot_rom_words, file: src/simulation/internal-mem/config.yaml, yaml: memory.boot_rom_words, expect: BOOT_ROM.words}
-  - {name: config rom_base, file: src/simulation/internal-mem/config.yaml, yaml: memory.rom_base, expect: FLASH.base}
-  - {name: config rom_words, file: src/simulation/internal-mem/config.yaml, yaml: memory.rom_words, expect: FLASH.words}
-  - {name: config ram_base, file: src/simulation/internal-mem/config.yaml, yaml: memory.ram_base, expect: RAM.base}
-  - {name: config ram_words, file: src/simulation/internal-mem/config.yaml, yaml: memory.ram_words, expect: RAM.words}
-  - {name: config tohost_addr, file: src/simulation/internal-mem/config.yaml, yaml: memory.tohost_addr, expect: tohost.base}
-  - {name: config fromhost_addr, file: src/simulation/internal-mem/config.yaml, yaml: memory.fromhost_addr, expect: fromhost.base}
-  - {name: config sim boot_rom_addr_width, file: src/simulation/internal-mem/config.yaml, yaml: sim.parameters.boot_rom_addr_width, expect: clog2(BOOT_ROM.words)}
-  - {name: config sim rom_addr_width, file: src/simulation/internal-mem/config.yaml, yaml: sim.parameters.rom_addr_width, expect: clog2(FLASH.words)}
-  - {name: config sim ram_addr_width, file: src/simulation/internal-mem/config.yaml, yaml: sim.parameters.ram_addr_width, expect: clog2(RAM.words)}
 
   # --- boot ROM (boot_rom.S; its linker script is generated) --------------
   - {name: boot_rom.S RAM end, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: '^\s*li\s+t0,\s*(0x[0-9A-Fa-f]+)\s*$', expect: RAM.end}
@@ -65,17 +68,10 @@ checks:
   - {name: spike_exit.S fromhost, file: src/simulation/internal-mem/runtime/spike_exit.S, pattern: '\.equ fromhost, (\S+)', expect: fromhost.base}
 
   # --- VHDL of the core ----------------------------------------------------
-  - {name: core boot_rom_bits, file: Core/src/core/core.vhd, pattern: 'boot_rom_bits\s*:\s*natural\s*:=\s*(\d+)', expect: clog2(BOOT_ROM.size)}
-  - {name: core rom_end_kib, file: Core/src/core/core.vhd, pattern: 'rom_end_kib\s*:\s*natural\s*:=\s*(\d+)', expect: FLASH.end / 1024}
-  - {name: core ram_base_kib, file: Core/src/core/core.vhd, pattern: 'ram_base_kib\s*:\s*natural\s*:=\s*(\d+)', expect: RAM.base / 1024}
 
   # --- Quartus IPs (only in RV32IM's tree) ---------------------------------
   # The Quartus wrappers hold a power of two (size_bytes); the BOOT_ROM region fills its IP, and the FLASH and RAM
   # regions leave the tail of the next power of two (32 KB for the 30 KB FLASH, 256 KB for the 160 KB RAM) unused.
-  - {name: BOOT_ROM IP size_bytes, file: Memory/src/rom/cyclone-v/boot_rom1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: BOOT_ROM.size}
-  - {name: FLASH IP size_bytes, file: Memory/src/rom/cyclone-v/flash1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
-  - {name: FLASH_MEM IP size_bytes, file: Memory/src/rom/cyclone-v/flash_mem1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 32768}
-  - {name: RAM IP size_bytes, file: Memory/src/ram/cyclone-v/ram1port.vhd, optional: true, pattern: 'size_bytes\s*:\s*POSITIVE\s*:=\s*(\d+)', expect: 262144}
 
   # --- the test programs' header (only in RV32IM's tree) ----------------------------------
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}

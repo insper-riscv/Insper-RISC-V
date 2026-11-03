@@ -11,15 +11,9 @@ extends: ../../simulation/internal-mem/config.yaml
 toolchain:
   specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs
 
-memory:
-  ram_base: 0x40000000
-  ram_words: 16777216          # 64 MB
-  tohost_addr: 0x43FFFFE8
-  fromhost_addr: 0x43FFFFF0
-  # the FLASH starts right after the BOOT_ROM and fills the
-  # 256 KB of its storage: the image of the host carries the 2 KB of the BOOT_ROM as leading padding
-  rom_base: 0x00000800
-  rom_words: 65024             # 254 KiB
+# The addresses and the sizes come from the map of the platform (platform.yaml), as in internal-mem: the SDRAM is
+# the RAM and the FLASH sits right after the BOOT_ROM.
+memory_map: platform.yaml
 
 paths:
   sources:
@@ -115,14 +109,12 @@ sim:
     - Peripherals/src/display/soc/seg_display.vhd
     - src/interconnect/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
   parameters:
     HAS_ZIFENCEI: true
     HAS_ZIHPM: true
-    # the storage model of the FLASH is 256 KB (65536 words, 16 bits): the FLASH takes its 254 KiB after the
-    # BOOT_ROM, and a larger array does not run in GHDL
-    rom_addr_width: "16"
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv

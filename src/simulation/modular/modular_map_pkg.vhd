@@ -13,16 +13,30 @@ use ieee.std_logic_1164.all;
 package modular_map_pkg is
 
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
-	constant BOOT_ROM_BITS  : natural := 11;
-	-- Fim exclusivo da ROM, em KiB, logo depois da BOOT_ROM.
-	constant ROM_END_KIB    : natural := 1024;
+	constant BOOT_ROM_BITS       : natural  := 11;
+	-- Tamanho da BOOT_ROM, em bytes.
+	constant BOOT_ROM_SIZE_BYTES : positive := 2048;
+	-- Base da ROM, em KiB, logo depois da BOOT_ROM.
+	constant ROM_BASE_KIB        : natural  := 2;
+	-- Fim exclusivo da ROM, em KiB.
+	constant ROM_END_KIB         : natural  := 1024;
+	-- Armazenamento da ROM, em bytes: a menor potência de dois que cobre
+	-- [0, fim da ROM).
+	constant ROM_STORAGE_BYTES   : positive := 1048576;
 	-- Base da RAM, em KiB.
-	constant RAM_BASE_KIB   : natural := 1024;
+	constant RAM_BASE_KIB        : natural  := 1024;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB    : natural := 2048;
-	-- Base da janela externa, em KiB.
-	constant EXT_BASE_KIB   : natural := 1048576;
-	-- Base da janela de periféricos, em KiB.
-	constant PERIPH_BASE_KIB : natural := 2097152;
+	constant RAM_END_KIB         : natural  := 2048;
+	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
+	-- o tamanho da RAM.
+	constant RAM_STORAGE_BYTES   : positive := 1048576;
+	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
+	-- palavras que o hospedeiro compartilha com o programa.
+	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
+		x"001FF";
+	-- Base da janela externa, em KiB; dali em diante é externo.
+	constant EXT_BASE_KIB        : natural  := 2097152;
+	-- Base da janela de periféricos, em KiB: os 2 GiB superiores do espaço.
+	constant PERIPH_BASE_KIB     : natural  := 2097152;
 
 end package modular_map_pkg;

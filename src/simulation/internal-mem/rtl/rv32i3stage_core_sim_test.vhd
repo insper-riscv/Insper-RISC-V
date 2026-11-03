@@ -1,6 +1,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.internal_mem_map_pkg.all;
 
 entity rv32i3stage_core_sim_test is
 	generic (
@@ -137,7 +138,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zicclsm => HAS_ZICCLSM)
+		generic map (boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zicclsm => HAS_ZICCLSM)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

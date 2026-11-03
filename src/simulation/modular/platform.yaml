@@ -14,15 +14,27 @@ regions:
   - {name: ROM,      base: 0x00000800, size: 1M-2K,    kind: rom, exec: true}
   - {name: RAM,      base: 0x00100000, size: 1M,       kind: ram}
 
+# Words at the top of RAM, as in the other platforms: where the host and the program would meet. The programs of
+# this platform (tests/python/gen_modular_images.py) do not use them yet.
+reserved:
+  stdout:   {base: 0x001FFBE0, size: 1K+8}
+  tohost:   {base: 0x001FFFE8, size: 8}
+  fromhost: {base: 0x001FFFF0, size: 8}
+
 boot:
   entry: 0x00000800
   wait_restart: 0x00000100
 
+# The window of the peripherals (0x80000000 and above) exists, but no device is wired: the models only
+# differ in where the ROM and the RAM sit.
+peripherals: []
+
 generate:
+  specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  boot_ld: {path: src/simulation/modular/runtime/boot_rom.ld}
   vhdl:
     path: src/simulation/modular/modular_map_pkg.vhd
     package: modular_map_pkg
     rom: ROM
     ram: RAM
-    ext_base: 0x40000000
-    periph_base: 0x80000000
+
