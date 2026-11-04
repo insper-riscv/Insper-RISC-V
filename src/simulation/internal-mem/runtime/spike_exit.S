@@ -12,8 +12,10 @@
  * this file takes no space in the ELF, so every address in it, and so in a
  * golden, is the one the image the hardware loads has.
  */
-    .equ tohost, 0x0002FFE8
-    .equ fromhost, 0x2FFF0
+#include "memory_map.h"
+
+    .equ tohost, RV32_TOHOST_ADDR
+    .equ fromhost, RV32_FROMHOST_ADDR
     .global tohost
     .global fromhost
 

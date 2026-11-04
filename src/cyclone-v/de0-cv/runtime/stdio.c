@@ -7,14 +7,16 @@
  * the stack never reaches it. The boot ROM clears the header on every
  * start.
  *
- *   0x43FFFBE0  length     bytes written, at most STDOUT_SIZE
- *   0x43FFFBE4  truncated  1 once a byte did not fit, 0 otherwise
- *   0x43FFFBE8  data       STDOUT_SIZE bytes
+ *   +0   length     bytes written, at most STDOUT_SIZE
+ *   +4   truncated  1 once a byte did not fit, 0 otherwise
+ *   +8   data       STDOUT_SIZE bytes
+ *
+ * from RV32_STDOUT_BASE (memory_map.h, generated from platform.yaml).
  *
  * The buffer is linear: when it is full, further bytes are dropped and
  * `truncated` is set. There is no input: reads report end of file.
  *
- * Every byte also goes to the JTAG UART at 0xC0000000, which a host console reads while the
+ * Every byte also goes to the JTAG UART, which a host console reads while the
  * program runs. The UART is a live view: the buffer stays the copy the test checks. A program
  * prints to the UART only once a host has scanned it (bit 17 of the status register), so one with
  * nobody listening is never slowed down; once someone listens it waits for a free place in the
@@ -24,11 +26,13 @@
 #include <stdio.h>
 #include <sys/cdefs.h>
 
-#define STDOUT_BASE 0x43FFFBE0u
+#include "memory_map.h"
+
+#define STDOUT_BASE RV32_STDOUT_BASE
 #define STDOUT_SIZE 1024u
 
-#define UART_TXDATA ((volatile uint32_t *)0xC0000000u)
-#define UART_STATUS ((volatile uint32_t *)0xC0000008u)
+#define UART_TXDATA ((volatile uint32_t *)RV32_UART_BASE)
+#define UART_STATUS ((volatile uint32_t *)(RV32_UART_BASE + 8u))
 #define UART_FREE(status)     ((status) & 0xFFu)
 #define UART_ATTACHED(status) (((status) >> 17) & 1u)
 #define UART_WAIT_POLLS 200000u

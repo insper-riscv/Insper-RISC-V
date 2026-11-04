@@ -43,6 +43,8 @@ entity rv32im_sdram_flash_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
 	  HAS_ZIHPM : boolean := false;
+	  -- Registradores do core: 32 no RV32I e 16 no RV32E (o perfil da plataforma por padrao).
+	  NUM_REGS : positive := work.de0_cv_map_pkg.NUM_REGS;
 	  -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 	  -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
 	  SDRAM_FILE : string := ""
@@ -194,7 +196,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, hpm_counters => hpm_count(HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, num_regs => NUM_REGS, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, hpm_counters => hpm_count(HAS_ZIHPM))
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

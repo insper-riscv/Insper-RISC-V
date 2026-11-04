@@ -73,7 +73,7 @@ LOG = logging.getLogger("cocotb.testbench")
 # RAM-relative, unlike the real-hardware JTAG path (htif.word_offset()'s
 # default). relative=False picks the bus-snoop convention instead, see
 # word_offset's own docstring.
-TOHOST_ADDR = 0x0002FFE8
+TOHOST_ADDR = int(os.environ["TOHOST_ADDR"], 0)
 TOHOST_WORD_OFFSET = word_offset(0, TOHOST_ADDR, relative=False)
 # tohost low word: 1 is a pass, (code << 1) | 1 is a failure with that
 # code.
