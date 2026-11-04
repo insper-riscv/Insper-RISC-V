@@ -6,8 +6,8 @@ This document describes, register by register and section by section, exactly wh
 
 ## 1. The boot sequence
 
-1. Reset enters `_reset` (`0x0`, in the BOOT_ROM). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x800`. It does not initialize `sp` or `gp` and copies nothing.
-2. At `0x800` is the `_start` of the picolibc `crt0-hosted`. It sets `sp` (from `__stack`) and `gp` (from `__global_pointer$`) and calls `_cstart`.
+1. Reset enters `_reset` (`0x0`, in the BOOT_ROM). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x1000` (`RV32_BOOT_ENTRY`). It does not initialize `sp` or `gp` and copies nothing.
+2. At `0x1000` is the `_start` of the picolibc `crt0-hosted`. It sets `sp` (from `__stack`) and `gp` (from `__global_pointer$`) and calls `_cstart`.
 3. `_cstart` copies `.data` and `.tdata` from the FLASH to the RAM (with `memcpy`), zeroes `.bss` (with `memset`), prepares TLS (`_set_tls`) and runs the constructors (`__libc_init_array`).
 4. It calls `main(0, 0)` with `jal`, and whatever `main` returns goes to `exit`, which calls the project `_exit` (`src/simulation/internal-mem/runtime/_exit.c`). A test that ends with `RV32_PASS()` or `RV32_FAIL()` writes `tohost` and jumps straight to `rv32_wait_restart`, without going through `_exit`.
 
@@ -29,11 +29,11 @@ This document describes, register by register and section by section, exactly wh
 
 ## 4. Memory sections
 
-The addresses come from `picolibc.ld` and `rv32im-fpga.specs` (FLASH from `0x800`, 30 KB, RAM from `0x8000`, minus the reserved regions at the top). There is no fixed budget per section. Each one takes what the program needs, and the linker refuses what does not fit.
+The addresses come from `picolibc.ld` and `rv32im-fpga.specs`, which `riscv-tools generate-memory-map` writes from `platform.yaml` (FLASH from `0x1000`, 28 KB, RAM from `0x8000`, minus the reserved regions at the top). There is no fixed budget per section. Each one takes what the program needs, and the linker refuses what does not fit.
 
 | Section | Region | State before `main()` |
 | :--- | :--- | :--- |
-| `.init` | FLASH, `0x800` | The `_start` and what picolibc puts at the beginning |
+| `.init` | FLASH, `0x1000` | The `_start` and what picolibc puts at the beginning |
 | `.text`, `.rodata` (includes `.srodata`) | FLASH | Already there, loaded over JTAG. `.rodata` is never copied to the RAM, and a `lw` reaches it through the second FLASH read port (see [memoria.md](memoria.md)) |
 | `.data` (includes `.sdata`), `.tdata` | RAM, from `0x8000`, LMA in the FLASH | Copied from the FLASH by `_cstart` |
 | `.bss` (includes `.sbss`), `.tbss` | RAM, after `.data` | Zeroed by `_cstart` |

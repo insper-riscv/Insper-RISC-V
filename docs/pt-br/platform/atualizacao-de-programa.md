@@ -30,8 +30,8 @@ concordar de antemão sobre onde tudo mora.
    em `tohost` antes de chegar lá.
 5. `_reset` zera `tohost`, `fromhost` e o cabeçalho do
    `stdout` (pra não vazar o resultado nem a saída do teste anterior) e
-   salta pra `FLASH_BASE` (`0x00000800`).
-6. Em `0x800` está o `_start` do `crt0` da picolibc, dentro da imagem do
+   salta pra `FLASH_BASE` (`0x00001000`).
+6. Em `0x1000` está o `_start` do `crt0` da picolibc, dentro da imagem do
    teste: ajusta `sp` e `gp`, copia `.data` de FLASH pra RAM, zera
    `.bss`, prepara o TLS e chama `main`, ver
    [boot.md](boot.md).
@@ -74,9 +74,9 @@ mínimo é:
 
 | Combinado | Valor | Quem usa |
 | :--- | :--- | :--- |
-| Entrada do programa | `0x800`, o `_start` da picolibc (o `picolibc.ld` põe `.init` no começo da FLASH) | BOOT_ROM salta pra lá |
+| Entrada do programa | `0x1000`, o `_start` da picolibc (o `picolibc.ld` põe `.init` no começo da FLASH) | BOOT_ROM salta pra lá |
 | `rv32_wait_restart` | `0x100` | o programa salta pra lá ao terminar |
-| Palavras do topo da RAM | `fromhost` `0x2FFF0`, `tohost` `0x2FFE8`, cabeçalho do `stdout` `0x2FBE0` | BOOT_ROM as zera, o programa e o host as usam |
+| Palavras do topo da RAM | `fromhost` `0x2FFF0`, `tohost` `0x2FFE8`, cabeçalho do `stdout` `0x2FBE0` (gerados do `platform.yaml` em `memory_map.h`) | BOOT_ROM as zera, o programa e o host as usam |
 
 Tudo o mais (onde ficam `.data`, `.bss`, heap e pilha, o tamanho de cada
 seção) é decidido no link de cada teste pelo linker script da toolchain, a

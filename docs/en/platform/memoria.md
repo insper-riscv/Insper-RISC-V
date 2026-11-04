@@ -20,7 +20,7 @@ This is called **modified Harvard**. A "true" Harvard would have fully independe
 
 Programmed **once**, as part of the initial full Quartus compile (`quartus_sh --flow compile` and `quartus_pgm`), and never rewritten over JTAG afterwards, unlike the FLASH. It holds `boot_rom.S` (`src/simulation/internal-mem/runtime/boot_rom.S`). That is the reset vector, which clears tohost, fromhost and the `stdout` header and jumps to the FLASH, and the wait and restart loop (`rv32_wait_restart`) that lets `riscv-tools run` change tests without reprogramming the whole FPGA. See [atualizacao-de-programa.md](atualizacao-de-programa.md) for the full flow of that change.
 
-It is generic on purpose and knows nothing about a test. The picolibc `crt0`, inside the image of each test (starting at `0x800`), copies `.data`, zeroes `.bss` and calls `main`. What the BOOT_ROM and the program agree on is only the entry point, the address of `rv32_wait_restart` and the words at the top of the RAM. See [runtime.md](runtime.md) and [atualizacao-de-programa.md](atualizacao-de-programa.md).
+It is generic on purpose and knows nothing about a test. The picolibc `crt0`, inside the image of each test (starting at `0x1000`), copies `.data`, zeroes `.bss` and calls `main`. What the BOOT_ROM and the program agree on is only the entry point, the address of `rv32_wait_restart` and the words at the top of the RAM. See [runtime.md](runtime.md) and [atualizacao-de-programa.md](atualizacao-de-programa.md).
 
 ### 1.2. FLASH: the "firmware" of each test
 
@@ -49,8 +49,8 @@ The BOOT_ROM never needs a second port, since it has no `.data` of its own, and 
 
 | Region | Base | Size | Words | widthad |
 | :--- | :--- | :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000` | 2K | 512 | 9 |
-| FLASH and FLASH_MEM | `0x00000800` | 30K | 7680 | 13 |
+| BOOT_ROM | `0x00000000` | 4K | 1024 | 10 |
+| FLASH and FLASH_MEM | `0x00001000` | 28K | 7168 | 13 |
 | RAM (physical space) | `0x00008000` | 160K | 40960 | 16 |
 | RAM (usable, `rv32im-fpga.specs`) | `0x00008000` | 160K minus 24 minus 1032 bytes | N/A | N/A |
 | `stdout` (header and data) | `0x0002FBE0` | 1032 bytes | N/A | N/A |
@@ -58,7 +58,11 @@ The BOOT_ROM never needs a second port, since it has no `.data` of its own, and 
 | tohost | `0x0002FFE8` | 2 words | N/A | N/A |
 | `__stack` (initial sp) | `0x0002FBE0` | N/A | N/A | N/A |
 
-The FLASH is **30K**, not the obvious round 32K, for a specific reason. The top of the RAM (`ram_base + ram_words*4 = 0x30000`) must fall on a 4096-byte aligned address, because the boot ROM builds the end of the RAM with `lui t0, 0x30` (with no `addi` after). `lui` only zeroes the low 12 bits, so it only works if those 12 bits are already zero in the real value. `0x800 (FLASH_BASE) + FLASH_SIZE` only falls on a multiple of 4096 if `FLASH_SIZE` is an odd multiple of 2048 (30K = 30720 = 15x2048 works, 32K = 32768 = 16x2048 does not).
+The FLASH takes `0x00001000` to `0x00008000` (**28K**), where the RAM starts. The top of the RAM (`ram_base + ram_words*4 = 0x30000`) and its base must fall on multiples of 4096 bytes, because the boot ROM builds the end of the RAM with `lui t0, 0x30` (with no `addi` after), and `lui` only zeroes the low 12 bits. Since the FLASH starts at `0x1000`, its end must also be a multiple of 4096:
+
+$$0x1000 + \text{FLASH\_SIZE} \equiv 0 \pmod{4096}$$
+
+This requires `FLASH_SIZE` to be a multiple of 4096, and 28K ($7 \times 4096 = 28672$) works and ends exactly at the base of the RAM.
 
 ### 3.1. The RAM block limit
 

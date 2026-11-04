@@ -12,7 +12,7 @@ A Cyclone V 5CEBA4F23 with BOOT_ROM, FLASH and RAM inside the FPGA. It is the ba
 | `quartus/` | The Quartus project of the board, with `core_fpga_test.vhd` (hardware top), `.qpf`, `.qsf`, `.sdc` and the initial `.mif` images |
 | `pll/` | The PLL IP (50 MHz in three phases) and `pll_sim.vhd`, the behavioral substitute that simulates it |
 | `rtl/` | The simulation top `rv32i3stage_core_sim_test` (plain VHDL arrays in place of the memory IPs), `clk_gen_3way` and `Blinky` |
-| `runtime/` | What the platform adds to the toolchain picolibc, with `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `_exit.c`, `stdio.c` and `spike_exit.S` |
+| `runtime/` | What the platform adds to the toolchain picolibc, with `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `memory_map.h`, `_exit.c`, `stdio.c` and `spike_exit.S` |
 | `testbench/` | `test_c_program.py`, the cocotb testbench that watches the RAM write bus to decide PASS or FAIL of a program |
 | `config.yaml`, `config.fpga-sim.yaml` | `riscv-tools` configuration for the platform, of the simulation top and of the hardware top over the Intel `altera_mf` models |
 

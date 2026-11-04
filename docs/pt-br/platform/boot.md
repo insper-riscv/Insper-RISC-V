@@ -7,8 +7,8 @@ Este documento descreve, registrador por registrador e seção por seção, exat
 
 ## A sequência de boot
 
-1. O reset entra em `_reset` (`0x0`, na BOOT_ROM): limpa `tohost`, `fromhost` e o cabeçalho do `stdout`, e salta para `0x800`. Não inicializa `sp`, `gp` nem copia nada.
-2. Em `0x800` está o `_start` do `crt0-hosted` da picolibc: ajusta `sp` (de `__stack`) e `gp` (de `__global_pointer$`) e chama o `_cstart`.
+1. O reset entra em `_reset` (`0x0`, na BOOT_ROM): limpa `tohost`, `fromhost` e o cabeçalho do `stdout`, e salta para `0x1000` (`RV32_BOOT_ENTRY`). Não inicializa `sp`, `gp` nem copia nada.
+2. Em `0x1000` está o `_start` do `crt0-hosted` da picolibc: ajusta `sp` (de `__stack`) e `gp` (de `__global_pointer$`) e chama o `_cstart`.
 3. O `_cstart` copia `.data` e `.tdata` da FLASH para a RAM (com `memcpy`), zera `.bss` (com `memset`), prepara o TLS (`_set_tls`) e roda os construtores (`__libc_init_array`).
 4. Chama `main(0, 0)` com `jal`, e o que `main` retornar vai para `exit`, que chama o `_exit` do projeto (`src/simulation/internal-mem/runtime/_exit.c`). Um teste que termina por `RV32_PASS()` ou `RV32_FAIL()` escreve o `tohost` e salta direto para o `rv32_wait_restart`, sem passar por `_exit`.
 
@@ -30,11 +30,11 @@ Este documento descreve, registrador por registrador e seção por seção, exat
 
 ## Seções de memória
 
-Os endereços vêm do `picolibc.ld` e de `rv32im-fpga.specs` (FLASH de `0x800`, 30 KB; RAM de `0x8000`, menos as regiões reservadas do topo). Não há orçamento fixo por seção: cada uma ocupa o que o programa precisa, e o linker recusa o que não cabe.
+Os endereços vêm do `picolibc.ld` e de `rv32im-fpga.specs`, que o `riscv-tools generate-memory-map` escreve do `platform.yaml` (FLASH de `0x1000`, 28 KB; RAM de `0x8000`, menos as regiões reservadas do topo). Não há orçamento fixo por seção: cada uma ocupa o que o programa precisa, e o linker recusa o que não cabe.
 
 | Seção | Região | Estado antes de `main()` |
 |---|---|---|
-| `.init` | FLASH, `0x800` | O `_start` e o que a picolibc põe no começo |
+| `.init` | FLASH, `0x1000` | O `_start` e o que a picolibc põe no começo |
 | `.text`, `.rodata` (inclui o `.srodata`) | FLASH | Já estão lá, carregados via JTAG; `.rodata` nunca é copiado pra RAM: um `lw` o alcança pela segunda porta de leitura da FLASH (ver [memoria.md](memoria.md)) |
 | `.data` (inclui o `.sdata`), `.tdata` | RAM, a partir de `0x8000`; LMA na FLASH | Copiados da FLASH pelo `_cstart` |
 | `.bss` (inclui o `.sbss`), `.tbss` | RAM, depois do `.data` | Zerados pelo `_cstart` |
