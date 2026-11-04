@@ -25,6 +25,8 @@ entity rv32im_sdram_flash_sim_test is
 	  ROM_FILE : string := "default.hex";
 	  boot_rom_addr_width : natural := 9;
 	  rom_addr_width : natural := 18;
+	  -- Quantidade de registradores do perfil (32 em RV32I, 16 em RV32E).
+	  NUM_REGS : positive := 32;
 	  -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
 	  FLASH_FIRST_LATENCY : natural := 24;
 	  FLASH_NEXT_LATENCY  : natural := 4;
@@ -194,7 +196,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, hpm_counters => hpm_count(HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, hpm_counters => hpm_count(HAS_ZIHPM), num_regs => NUM_REGS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

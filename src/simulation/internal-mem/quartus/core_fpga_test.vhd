@@ -5,6 +5,10 @@ use work.utils_pkg.all;
 use work.internal_mem_map_pkg.all;
 
 entity core_fpga_test is
+	generic (
+		-- Quantidade de registradores do perfil (32 em RV32I, 16 em RV32E).
+		NUM_REGS : positive := 32
+	);
 	port (
 		CLOCK_50     : in  std_logic;
 		FPGA_RESET_N : in  std_logic := '1';
@@ -130,6 +134,7 @@ begin
 			has_m           => true,
 			has_zicsr       => true,
 			has_zicntr      => true,
+			num_regs        => NUM_REGS,
 			boot_rom_bits   => BOOT_ROM_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,

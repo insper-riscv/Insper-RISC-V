@@ -27,6 +27,8 @@ entity rv32i3stage_core_sim_test is
 	  boot_rom_addr_width : natural := 9;
 	  rom_addr_width : natural := 9;
 	  ram_addr_width : natural := 9;
+	  -- Quantidade de registradores do perfil (32 em RV32I, 16 em RV32E).
+	  NUM_REGS : positive := 32;
 	  -- Zicsr no core (instrucoes CSR reais); false mantem o comportamento de NOP.
 	  HAS_ZICSR : boolean := false;
 	  -- Habilita os contadores da extensão Zicntr (implica Zicsr).
@@ -138,7 +140,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zicclsm => HAS_ZICCLSM)
+		generic map (boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zicclsm => HAS_ZICCLSM, num_regs => NUM_REGS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
