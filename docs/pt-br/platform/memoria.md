@@ -94,7 +94,7 @@ idênticas**, single-port cada uma:
 O `INSTANCE_NAME` diferente é o que faz o JTAG In-System Memory Content
 Editor tratá-las como dois taps independentes. O `riscv_tools` (tohost/
 rom_writer) escreve o **mesmo conteúdo** nas duas toda vez que troca de
-teste; `config.yaml`: `quartus.rom_mem_instances: [1, 3]`, uma lista com
+teste; `config.yaml`: `quartus.rom_mem_instances: [0, 2]`, uma lista com
 os dois índices JTAG, não um só.
 
 Esse é exatamente o mesmo truque que o design antigo (pré-BOOT_ROM/FLASH
@@ -130,16 +130,16 @@ A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de
 
 ## 4. Índices JTAG (`config.yaml: quartus:`)
 
-Ordem de instanciação em `core_fpga_test.vhd` (que é a ordem que o In-System
-Memory Content Editor usa pra numerar as instâncias):
+O In-System Memory Content Editor numera somente as memórias que declaram
+`ENABLE_RUNTIME_MOD`, na ordem em que aparecem em `core_fpga_test.vhd`:
 
-0. `BOOT_ROM`: sem índice usável em `config.yaml` de propósito, nunca é
-   reescrita em tempo real, só no compile inicial.
-1. `FLASH`: `quartus.rom_mem_instances[0]`.
-2. `RAM`: `quartus.ram_mem_instance`
+- `BOOT_ROM`: sem tap editável e sem índice em `config.yaml` de propósito;
+  nunca é reescrita em tempo real, só no compile inicial.
+- índice 0, `FLASH`: `quartus.rom_mem_instances[0]`.
+- índice 1, `RAM`: `quartus.ram_mem_instance`
    (`tohost` e `fromhost` moram dentro da RAM, então compartilham o índice dela).
-3. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
-   RAM de propósito, pra não deslocar o índice 2 que RAM já tem.
+- índice 2, `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois**
+  da RAM de propósito, para não deslocar o índice 1 que a RAM já tem.
 
 ## 5. LEDs (`core_fpga_test.vhd`)
 

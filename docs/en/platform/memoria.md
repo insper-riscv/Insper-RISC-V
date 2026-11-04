@@ -41,7 +41,7 @@ Instead of a dual-port FLASH, there are **two identical physical instances**, si
 - `FLASH` (`Memory/src/ROM/Cyclone-V/flash.vhd`): the instruction fetch port (IF), `INSTANCE_NAME=FLASH`.
 - `FLASH_MEM` (`Memory/src/ROM/Cyclone-V/flash_mem.vhd`): the data read port for the MEM stage, `INSTANCE_NAME=FLASH_MEM`. Same clock as the RAM (`pll_clk_idexmem`), since the MEM stage consumes both.
 
-The different `INSTANCE_NAME` is what makes the JTAG In-System Memory Content Editor treat them as two independent taps. `riscv_tools` (tohost and rom_writer) writes the **same content** to both every time a test changes. In `config.yaml`, `quartus.rom_mem_instances: [1, 3]` is a list with both JTAG indexes, not a single one.
+The different `INSTANCE_NAME` is what makes the JTAG In-System Memory Content Editor treat them as two independent taps. `riscv_tools` (tohost and rom_writer) writes the **same content** to both every time a test changes. In `config.yaml`, `quartus.rom_mem_instances: [0, 2]` is a list with both JTAG indexes, not a single one.
 
 The BOOT_ROM never needs a second port, since it has no `.data` of its own, and `boot_rom.S` only uses fixed immediates.
 
@@ -66,12 +66,13 @@ The Cyclone V 5CEBA4F23 has 308 M10K blocks of 10 Kbit, a limit on the number of
 
 ## 4. JTAG indexes (`config.yaml: quartus:`)
 
-The instantiation order in `core_fpga_test.vhd` is the order the In-System Memory Content Editor uses to number the instances:
+The In-System Memory Content Editor numbers only memories that declare
+`ENABLE_RUNTIME_MOD`, in their order in `core_fpga_test.vhd`:
 
-0. `BOOT_ROM` has no usable index in `config.yaml` on purpose, since it is never rewritten at run time, only at the initial compile.
-1. `FLASH` is `quartus.rom_mem_instances[0]`.
-2. `RAM` is `quartus.ram_mem_instance` (`tohost` and `fromhost` live inside the RAM, so they share its index).
-3. `FLASH_MEM` is `quartus.rom_mem_instances[1]`. It is instantiated **after** the RAM on purpose, so index 2, which the RAM already has, does not shift.
+- `BOOT_ROM` has no editable tap and no index in `config.yaml` on purpose; it is never rewritten at run time, only at the initial compile.
+- index 0, `FLASH`, is `quartus.rom_mem_instances[0]`.
+- index 1, `RAM`, is `quartus.ram_mem_instance` (`tohost` and `fromhost` live inside the RAM, so they share its index).
+- index 2, `FLASH_MEM`, is `quartus.rom_mem_instances[1]`. It is instantiated **after** the RAM on purpose, so the RAM's index 1 does not shift.
 
 ## 5. LEDs (`core_fpga_test.vhd`)
 

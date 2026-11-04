@@ -277,7 +277,7 @@ begin
 	-- ver o comentario em Memory/src/ROM/Cyclone-V/flash_mem.vhd para
 	-- o porque (ENABLE_RUNTIME_MOD nao compila em DUAL_PORT nesta
 	-- edicao do Quartus). Instanciada DEPOIS de RAM de proposito, para
-	-- nao mudar o indice de instancia JTAG que RAM ja' tem (2) -- ver
+	-- nao mudar o indice de instancia JTAG que RAM ja' tem (1) -- ver
 	-- config.yaml quartus.ram_mem_instance.
 	FLASH_MEM : entity work.flash_mem
     generic map (size_bytes => ROM_STORAGE_BYTES)

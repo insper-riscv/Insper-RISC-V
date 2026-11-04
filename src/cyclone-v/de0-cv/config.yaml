@@ -134,5 +134,6 @@ quartus:
   boot_rom_mif_target: boot_rom_init.mif
   # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
   ram_backend: sdram_debug
-  # The memory editor sees BOOT_ROM (0) and the FLASH storage (1); the SDRAM is reached through the debug port.
-  rom_mem_instances: [1]
+  # BOOT_ROM has no editable tap; the memory editor sees only the FLASH storage (0).
+  # The SDRAM is reached through the debug port.
+  rom_mem_instances: [0]

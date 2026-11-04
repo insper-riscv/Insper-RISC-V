@@ -88,10 +88,9 @@ quartus:
   # which doesn't change:
   jtag_device: "@1: 5CE(BA4|FA4) (0x02B050DD)"
   # Instance indices Quartus' In-System Memory Content Editor assigns
-  # to the FLASH/RAM debug taps, in declaration order in the project
-  # (see core_fpga_test.vhd: BOOT_ROM instantiated first (0), FLASH
-  # second (1), RAM third (2), FLASH_MEM last (3) — deliberately after
-  # RAM so it doesn't shift RAM's already-relied-on index). The
+  # only to memories with ENABLE_RUNTIME_MOD, in declaration order in
+  # the project (see core_fpga_test.vhd: BOOT_ROM has no editable tap;
+  # FLASH is 0, RAM is 1 and FLASH_MEM is 2). The
   # tohost and fromhost words live inside RAM, so they share RAM's instance index.
   # BOOT_ROM has NO instance index here on purpose —
   # build_fpga.py's per-test flow never JTAG-rewrites it, so nothing
@@ -100,7 +99,7 @@ quartus:
   # against the real quartus_map/fitter report if this project's
   # instantiation order in core_fpga_test.vhd ever changes.
   #
-  # FLASH_MEM (index 3) is FLASH's own second physical copy, backing
+  # FLASH_MEM (index 2) is FLASH's own second physical copy, backing
   # the MEM stage's data-read port (rv32im_pipeline_core.vhd
   # flash_addr2) — needed for boot_rom.S's .data copy-loop to read
   # FLASH as data at all (confirmed missing on real hardware: .bss/
@@ -110,8 +109,8 @@ quartus:
   # same recipe as the old ROM_MEM. Both must always carry the SAME
   # content — rom_writer's mem_edit.write_full_multi writes both from
   # this one list.
-  rom_mem_instances: [1, 3]
-  ram_mem_instance: 2
+  rom_mem_instances: [0, 2]
+  ram_mem_instance: 1
   # Fallback only: build_fpga.py compiles + quartus_pgm's ONCE, then
   # per test just JTAG-writes the new ROM image + writes fromhost_addr
   # (crt0.S jumps back to _start on its own — no recompile, no
