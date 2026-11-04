@@ -12,6 +12,22 @@ use ieee.std_logic_1164.all;
 
 package modular_map_pkg is
 
+	-- Registradores do perfil: 32 no RV32I e 16 no RV32E.
+	constant NUM_REGS            : positive := 32;
+	-- A extensão M está no perfil.
+	constant HAS_M               : boolean  := true;
+	-- A extensão Zmmul está no perfil.
+	constant HAS_ZMMUL           : boolean  := false;
+	-- A extensão Zicsr está no perfil.
+	constant HAS_ZICSR           : boolean  := false;
+	-- A extensão Zicntr está no perfil.
+	constant HAS_ZICNTR          : boolean  := false;
+	-- A extensão Zihpm está no perfil.
+	constant HAS_ZIHPM           : boolean  := false;
+	-- A extensão Zifencei está no perfil.
+	constant HAS_ZIFENCEI        : boolean  := false;
+	-- A extensão Zicclsm está no perfil.
+	constant HAS_ZICCLSM         : boolean  := true;
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
 	constant BOOT_ROM_BITS       : natural  := 11;
 	-- Tamanho da BOOT_ROM, em bytes.

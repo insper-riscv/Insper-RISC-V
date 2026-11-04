@@ -51,21 +51,17 @@ architecture behaviour of core_fpga_sdram_flash is
 		);
 	end component;
 
-	-- Perfil do core desta placa; os mesmos valores vão para o generic map do core e para os LEDs.
-	-- Extensão M (multiplicação e divisão).
-	constant HAS_M        : boolean := true;
-	-- Extensão Zmmul (só multiplicação; o M já a inclui, então os dois não aparecem juntos).
-	constant HAS_ZMMUL    : boolean := false;
-	-- Extensão Zicsr (CSRs e traps do modo máquina).
-	constant HAS_ZICSR    : boolean := true;
-	-- Extensão Zifencei (fence.i).
-	constant HAS_ZIFENCEI : boolean := true;
-	-- Extensão Zicclsm (load e store desalinhados executados pelo hardware).
-	constant HAS_ZICCLSM  : boolean := true;
-	-- Extensão Zicntr (contadores cycle, time e instret); implica Zicsr, que o core liga junto.
-	constant HAS_ZICNTR   : boolean := true;
-	-- Contadores de eventos da extensão Zihpm (quantidade; 0 = sem Zihpm); exige Zicsr.
-	constant HPM_COUNTERS : natural := 4;
+	-- Contadores de eventos da extensão Zihpm: quatro (índices 3 a 6) com a extensão, nenhum sem ela.
+	function hpm_count(present : boolean) return natural is
+	begin
+		if present then
+			return 4;
+		end if;
+		return 0;
+	end function;
+
+	-- O perfil do core desta placa (HAS_* e NUM_REGS) vem do pacote gerado do platform.yaml.
+	constant HPM_COUNTERS : natural := hpm_count(HAS_ZIHPM);
 
 	signal if_addr : std_logic_vector(31 downto 0);
 	signal if_rden : std_logic;
@@ -237,6 +233,7 @@ begin
 			tick_cycles  => 50,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
+			num_regs       => NUM_REGS,
 			boot_rom_bits  => BOOT_ROM_BITS,
 			rom_end_kib    => ROM_END_KIB,
 			rom_external   => ROM_EXTERNAL,

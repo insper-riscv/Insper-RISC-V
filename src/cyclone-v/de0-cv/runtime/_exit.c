@@ -7,11 +7,13 @@
  * to load the next test, a fixed address the specs file gives it
  * (rv32im-fpga.specs); Spike's image gets platform/spike_exit.S's instead.
  */
+#include "memory_map.h"
+
 extern void rv32_wait_restart(void) __attribute__((noreturn));
 
 void _exit(int code)
 {
-    volatile unsigned int *tohost = (volatile unsigned int *)0x43FFFFE8u;
+    volatile unsigned int *tohost = (volatile unsigned int *)RV32_TOHOST_ADDR;
     tohost[0] = code == 0 ? 1u : (((unsigned int)code << 1) | 1u);
     tohost[1] = 0u;
     rv32_wait_restart();

@@ -7,9 +7,11 @@
  * the stack never reaches it. The boot ROM clears the header on every
  * start.
  *
- *   0x0002FBE0  length     bytes written, at most STDOUT_SIZE
- *   0x0002FBE4  truncated  1 once a byte did not fit, 0 otherwise
- *   0x0002FBE8  data       STDOUT_SIZE bytes
+ *   +0   length     bytes written, at most STDOUT_SIZE
+ *   +4   truncated  1 once a byte did not fit, 0 otherwise
+ *   +8   data       STDOUT_SIZE bytes
+ *
+ * from RV32_STDOUT_BASE (memory_map.h, generated from platform.yaml).
  *
  * The buffer is linear: when it is full, further bytes are dropped and
  * `truncated` is set. There is no input: reads report end of file.
@@ -18,7 +20,9 @@
 #include <stdio.h>
 #include <sys/cdefs.h>
 
-#define STDOUT_BASE 0x0002FBE0u
+#include "memory_map.h"
+
+#define STDOUT_BASE RV32_STDOUT_BASE
 #define STDOUT_SIZE 1024u
 
 struct stdout_buffer {

@@ -52,6 +52,8 @@ entity modular_sim_top is
     rom_size_bytes      : positive := ROM_STORAGE_BYTES;
     -- Tamanho da RAM em bytes, uma potência de dois.
     ram_size_bytes      : positive := RAM_STORAGE_BYTES;
+    -- Registradores do núcleo: 32 no RV32I e 16 no RV32E (o perfil do platform.yaml por padrão).
+    num_regs            : natural  := NUM_REGS;
     -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
     rom_end_kib         : natural  := ROM_END_KIB;
     -- Base, em KiB, da RAM (0x100000 por padrão).
@@ -73,19 +75,19 @@ entity modular_sim_top is
     -- Bordas entre o pedido e a conclusão de um acesso ao chip de RAM externo.
     ext_ram_latency     : natural := 8;
     -- Zicsr no núcleo (instruções CSR reais); falso mantém o comportamento de NOP.
-    has_zicsr           : boolean := false;
+    has_zicsr           : boolean := HAS_ZICSR;
     -- Contadores da extensão Zicntr (implica Zicsr).
-    has_zicntr          : boolean := false;
+    has_zicntr          : boolean := HAS_ZICNTR;
     -- Contadores de eventos da extensão Zihpm (quatro, índices 3 a 6); exige Zicsr.
-    has_zihpm           : boolean := false;
+    has_zihpm           : boolean := HAS_ZIHPM;
     -- Extensão M completa no núcleo.
-    has_m               : boolean := true;
+    has_m               : boolean := HAS_M;
     -- Multiplicação sem divisão (Zmmul) no núcleo.
-    has_zmmul           : boolean := false;
+    has_zmmul           : boolean := HAS_ZMMUL;
     -- Zifencei no núcleo (FENCE.I invalida a cache de instruções); falso mantém o NOP.
-    has_zifencei        : boolean := false;
+    has_zifencei        : boolean := HAS_ZIFENCEI;
     -- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-    has_zicclsm         : boolean := true
+    has_zicclsm         : boolean := HAS_ZICCLSM
   );
   port (
     -- Clock base; um gerador o divide por três para os estágios do núcleo.
@@ -287,6 +289,7 @@ begin
       has_zicntr   => has_zicntr,
       has_zifencei => has_zifencei,
       has_zicclsm  => has_zicclsm,
+      num_regs      => num_regs,
       boot_rom_bits => log2_exact(boot_rom_size_bytes),
       rom_end_kib   => rom_end_kib,
       rom_external  => rom_external,

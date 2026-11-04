@@ -12,6 +12,22 @@ use ieee.std_logic_1164.all;
 
 package internal_mem_map_pkg is
 
+	-- Registradores do perfil: 32 no RV32I e 16 no RV32E.
+	constant NUM_REGS            : positive := 32;
+	-- A extensão M está no perfil.
+	constant HAS_M               : boolean  := true;
+	-- A extensão Zmmul está no perfil.
+	constant HAS_ZMMUL           : boolean  := false;
+	-- A extensão Zicsr está no perfil.
+	constant HAS_ZICSR           : boolean  := true;
+	-- A extensão Zicntr está no perfil.
+	constant HAS_ZICNTR          : boolean  := true;
+	-- A extensão Zihpm está no perfil.
+	constant HAS_ZIHPM           : boolean  := true;
+	-- A extensão Zifencei está no perfil.
+	constant HAS_ZIFENCEI        : boolean  := false;
+	-- A extensão Zicclsm está no perfil.
+	constant HAS_ZICCLSM         : boolean  := true;
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
 	constant BOOT_ROM_BITS       : natural  := 11;
 	-- Tamanho da BOOT_ROM, em bytes.
@@ -24,7 +40,7 @@ package internal_mem_map_pkg is
 	-- [0, fim da ROM).
 	constant ROM_STORAGE_BYTES   : positive := 32768;
 	-- A ROM fica fora do núcleo.
-	constant ROM_EXTERNAL       : boolean  := false;
+	constant ROM_EXTERNAL        : boolean  := false;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 32;
 	-- Fim exclusivo da RAM, em KiB.
@@ -37,7 +53,7 @@ package internal_mem_map_pkg is
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
 		x"0002F";
 	-- A RAM fica fora do núcleo.
-	constant RAM_EXTERNAL       : boolean  := false;
+	constant RAM_EXTERNAL        : boolean  := false;
 	-- Base da janela externa, em KiB; dali em diante é externo.
 	constant EXT_BASE_KIB        : natural  := 2097152;
 	-- Base da janela de periféricos, em KiB: os 2 GiB superiores do espaço.

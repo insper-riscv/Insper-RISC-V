@@ -10,7 +10,10 @@
 # generated rv32_test.h) are not here: its memory section is this platform's
 # config.yaml, extended, and the header is generated from it.
 platform: internal-mem
-profile: rv32im
+# The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
+# `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
+profile: rv32im_zicclsm_zicntr_zihpm
+profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
   - {name: BOOT_ROM, base: 0x00000000, size: 2K,   kind: rom, exec: true}
@@ -36,6 +39,7 @@ peripherals:
 generate:
   specs: {path: src/simulation/internal-mem/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/internal-mem/runtime/boot_rom.ld}
+  runtime: {path: src/simulation/internal-mem/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
     package: internal_mem_map_pkg
@@ -55,17 +59,8 @@ checks:
   # --- config.yaml ---------------------------------------------------------
 
   # --- boot ROM (boot_rom.S; its linker script is generated) --------------
-  - {name: boot_rom.S RAM end, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: '^\s*li\s+t0,\s*(0x[0-9A-Fa-f]+)\s*$', expect: RAM.end}
-  - {name: boot_rom.S stdout header, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: 'li\s+t0,\s*(0x[0-9A-Fa-f]+)\s*// stdout header', expect: stdout.base}
-  - {name: boot_rom.S FLASH_BASE, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: 'li\s+t0,\s*(0x[0-9A-Fa-f]+)\s*// FLASH_BASE', expect: boot.entry}
-  - {name: boot_rom.S fromhost offset, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: '(-\d+)\(t0\)\s*// fromhost', expect: fromhost.base - RAM.end}
-  - {name: boot_rom.S tohost offset, file: src/simulation/internal-mem/runtime/boot_rom.S, pattern: '(-\d+)\(t0\)\s*// tohost', expect: tohost.base - RAM.end}
 
   # --- runtime and Spike stand-in ------------------------------------------
-  - {name: _exit.c tohost, file: src/simulation/internal-mem/runtime/_exit.c, pattern: '\(volatile unsigned int \*\)(0x[0-9A-Fa-f]+)u', expect: tohost.base}
-  - {name: stdio.c STDOUT_BASE, file: src/simulation/internal-mem/runtime/stdio.c, pattern: '#define STDOUT_BASE (0x[0-9A-Fa-f]+)u', expect: stdout.base}
-  - {name: spike_exit.S tohost, file: src/simulation/internal-mem/runtime/spike_exit.S, pattern: '\.equ tohost, (\S+)', expect: tohost.base}
-  - {name: spike_exit.S fromhost, file: src/simulation/internal-mem/runtime/spike_exit.S, pattern: '\.equ fromhost, (\S+)', expect: fromhost.base}
 
   # --- VHDL of the core ----------------------------------------------------
 

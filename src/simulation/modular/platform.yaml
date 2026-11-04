@@ -7,7 +7,10 @@
 # only change where each memory sits, inside or outside the core. The ROM starts right after the
 # BOOT_ROM. rom_external and ram_external are per model, so the package does not fix them.
 platform: modular
-profile: rv32im
+# The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
+# `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
+profile: rv32im_zicclsm
+profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
   - {name: BOOT_ROM, base: 0x00000000, size: 2K,       kind: rom, exec: true}

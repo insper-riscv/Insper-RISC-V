@@ -18,32 +18,29 @@
  *    and written fromhost, then starts over at _reset. It lives here, and
  *    not in FLASH, because FLASH is rewritten while the core waits.
  *
- * The words it clears, all at the top of RAM:
- *
- *   0x0002FBE0  stdout length    platform/stdio.c
- *   0x0002FBE4  stdout truncated
- *   0x0002FFE8  tohost           HTIF, 8 bytes
- *   0x0002FFF0  fromhost         HTIF, 8 bytes
+ * The words it clears, all at the top of RAM: the stdout header (length and
+ * truncated), tohost and fromhost, at the addresses of memory_map.h, which
+ * `riscv-tools generate-memory-map` writes from platform.yaml.
  *
  * They must be clean on every entry, cold boot or restart: a stale nonzero
  * tohost reads as "already done", and the previous test's output must not
- * leak into the next one. They must match config.yaml's
- * memory.tohost_addr/fromhost_addr, rv32_test.h,
- * platform/_exit.c, platform/stdio.c and the RAM size in rv32im-fpga.specs.
+ * leak into the next one.
  */
+
+#include "memory_map.h"
 
     .section .text.reset
     .global _reset
 _reset:
-    li   t0, 0x00030000
-    sw   x0, -16(t0)             // fromhost  = 0x0002FFF0
-    sw   x0, -12(t0)
-    sw   x0, -24(t0)             // tohost    = 0x0002FFE8
-    sw   x0, -20(t0)
-    li   t0, 0x0002FBE0          // stdout header
+    li   t0, RV32_RAM_END
+    sw   x0, RV32_FROMHOST_ADDR - RV32_RAM_END(t0)
+    sw   x0, RV32_FROMHOST_ADDR - RV32_RAM_END + 4(t0)
+    sw   x0, RV32_TOHOST_ADDR - RV32_RAM_END(t0)
+    sw   x0, RV32_TOHOST_ADDR - RV32_RAM_END + 4(t0)
+    li   t0, RV32_STDOUT_BASE    // stdout header
     sw   x0, 0(t0)               // length
     sw   x0, 4(t0)               // truncated
-    li   t0, 0x00000800          // FLASH_BASE: the crt0's _start
+    li   t0, RV32_BOOT_ENTRY     // the crt0's _start
     jr   t0
 
     /* The test has already written tohost (1 = pass, (code << 1) | 1 = fail,
@@ -53,9 +50,9 @@ _reset:
     .section .text.wait_restart
     .global rv32_wait_restart
 rv32_wait_restart:
-    li   t0, 0x00030000
+    li   t0, RV32_RAM_END
 
 rv32_wait_restart_poll:
-    lw   t1, -16(t0)             // fromhost
+    lw   t1, RV32_FROMHOST_ADDR - RV32_RAM_END(t0)
     beqz t1, rv32_wait_restart_poll
     j    _reset

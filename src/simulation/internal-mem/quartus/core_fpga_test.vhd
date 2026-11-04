@@ -5,6 +5,24 @@ use work.utils_pkg.all;
 use work.internal_mem_map_pkg.all;
 
 entity core_fpga_test is
+	generic (
+		-- Registradores do core: 32 no RV32I e 16 no RV32E (o perfil da plataforma por padrao).
+		NUM_REGS     : positive := work.internal_mem_map_pkg.NUM_REGS;
+		-- Extensao M completa no core.
+		HAS_M        : boolean := work.internal_mem_map_pkg.HAS_M;
+		-- Multiplicacao sem divisao (Zmmul) no core.
+		HAS_ZMMUL    : boolean := work.internal_mem_map_pkg.HAS_ZMMUL;
+		-- Zicsr no core (CSRs e traps do modo maquina).
+		HAS_ZICSR    : boolean := work.internal_mem_map_pkg.HAS_ZICSR;
+		-- Contadores cycle, time e instret (Zicntr).
+		HAS_ZICNTR   : boolean := work.internal_mem_map_pkg.HAS_ZICNTR;
+		-- Contadores de eventos do Zihpm.
+		HAS_ZIHPM    : boolean := work.internal_mem_map_pkg.HAS_ZIHPM;
+		-- Zifencei no core (FENCE.I).
+		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
+		-- Acesso desalinhado executado em hardware (Zicclsm).
+		HAS_ZICCLSM  : boolean := work.internal_mem_map_pkg.HAS_ZICCLSM
+	);
 	port (
 		CLOCK_50     : in  std_logic;
 		FPGA_RESET_N : in  std_logic := '1';
@@ -82,6 +100,15 @@ architecture behaviour of core_fpga_test is
 	signal uart_read_d      : std_logic;
 	signal uart_rdata_d     : std_logic_vector(31 downto 0);
 
+	-- Contadores de eventos do Zihpm: quatro (indices 3 a 6) com a extensao, nenhum sem ela.
+	function hpm_count(present : boolean) return natural is
+	begin
+		if present then
+			return 4;
+		end if;
+		return 0;
+	end function;
+
 begin
 
 	-- rst era amarrado em '0' antes -- nunca pulsado. gui_pll_auto_reset
@@ -127,9 +154,14 @@ begin
 
 	CORE : entity work.core
 		generic map (
-			has_m           => true,
-			has_zicsr       => true,
-			has_zicntr      => true,
+			has_m           => HAS_M,
+			has_zmmul       => HAS_ZMMUL,
+			has_zicsr       => HAS_ZICSR,
+			has_zicntr      => HAS_ZICNTR,
+			hpm_counters    => hpm_count(HAS_ZIHPM),
+			has_zifencei    => HAS_ZIFENCEI,
+			has_zicclsm     => HAS_ZICCLSM,
+			num_regs        => NUM_REGS,
 			boot_rom_bits   => BOOT_ROM_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,

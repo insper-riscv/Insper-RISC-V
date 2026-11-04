@@ -51,9 +51,9 @@ def check(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-STDOUT_ADDR = 0x43FFFBE0
+STDOUT_ADDR = int(os.environ["STDOUT_ADDR"], 0)
 STDOUT_SIZE = 1024
-TOHOST_ADDR = 0x43FFFFE8
+TOHOST_ADDR = int(os.environ["TOHOST_ADDR"], 0)
 # tohost low word: 1 is a pass, (code << 1) | 1 is a failure with that
 # code.
 TOHOST_PASS = 1
