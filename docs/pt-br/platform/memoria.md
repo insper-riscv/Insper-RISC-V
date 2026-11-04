@@ -131,13 +131,13 @@ A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de
 Ordem de instanciação em `core_fpga_test.vhd` (que é a ordem que o In-System
 Memory Content Editor usa pra numerar as instâncias):
 
-0. `BOOT_ROM`: sem índice usável em `config.yaml` de propósito, nunca é
-   reescrita em tempo real, só no compile inicial.
-1. `FLASH`: `quartus.rom_mem_instances[0]`.
-2. `RAM`: `quartus.ram_mem_instance`
+A `BOOT_ROM` não declara `ENABLE_RUNTIME_MOD`, então não recebe índice: é gravada só no compile inicial e nunca reescrita em tempo real. Os índices abaixo são só os dos IPs que declaram a regravação.
+
+0. `FLASH`: `quartus.rom_mem_instances[0]`.
+1. `RAM`: `quartus.ram_mem_instance`
    (`tohost` e `fromhost` moram dentro da RAM, então compartilham o índice dela).
-3. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
-   RAM de propósito, pra não deslocar o índice 2 que RAM já tem.
+2. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
+   RAM de propósito, pra não deslocar o índice 1 que RAM já tem.
 
 ## 5. LEDs (`core_fpga_test.vhd`)
 

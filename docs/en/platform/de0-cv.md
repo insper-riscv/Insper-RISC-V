@@ -38,7 +38,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 2. **Data.** Loads and stores to the FLASH and the SDRAM go through the data cache, with 16-byte lines and 4 KB direct mapping. A store to the FLASH never changes the cache and the router completes it with no effect, like a write-protected chip.
 3. **FLASH.** The chip serves line or word requests with two latency parameters, edges up to the first word and edges between the following words. Outside the chip window a read returns zero.
 4. **Restart.** The boot ROM executes `fence.i` before jumping to the FLASH. The instruction invalidates the instruction cache and the data cache, so the new program the host wrote does not find lines of the previous one.
-5. **Host.** The host writes the FLASH image through the Quartus in-system memory (instance 1) and the data through the SDRAM debug port, with the core parked in the boot ROM restart loop. It restarts the core by writing a non-zero value to `fromhost`.
+5. **Host.** The host writes the FLASH image through the Quartus in-system memory (instance 0) and the data through the SDRAM debug port, with the core parked in the boot ROM restart loop. It restarts the core by writing a non-zero value to `fromhost`.
 
 ## 4. Sizes and latencies
 

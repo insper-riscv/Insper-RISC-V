@@ -72,10 +72,11 @@ The Cyclone V 5CEBA4F23 has 308 M10K blocks of 10 Kbit, a limit on the number of
 
 The instantiation order in `core_fpga_test.vhd` is the order the In-System Memory Content Editor uses to number the instances:
 
-0. `BOOT_ROM` has no usable index in `config.yaml` on purpose, since it is never rewritten at run time, only at the initial compile.
-1. `FLASH` is `quartus.rom_mem_instances[0]`.
-2. `RAM` is `quartus.ram_mem_instance` (`tohost` and `fromhost` live inside the RAM, so they share its index).
-3. `FLASH_MEM` is `quartus.rom_mem_instances[1]`. It is instantiated **after** the RAM on purpose, so index 2, which the RAM already has, does not shift.
+The `BOOT_ROM` does not declare `ENABLE_RUNTIME_MOD`, so it gets no index: it is written only at the initial compile and never rewritten at run time. The indices below are only those of the IPs that declare the rewrite.
+
+0. `FLASH` is `quartus.rom_mem_instances[0]`.
+1. `RAM` is `quartus.ram_mem_instance` (`tohost` and `fromhost` live inside the RAM, so they share its index).
+2. `FLASH_MEM` is `quartus.rom_mem_instances[1]`. It is instantiated **after** the RAM on purpose, so index 1, which the RAM already has, does not shift.
 
 ## 5. LEDs (`core_fpga_test.vhd`)
 

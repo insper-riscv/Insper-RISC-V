@@ -38,7 +38,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 2. **Dados.** Loads e stores à FLASH e à SDRAM passam pela cache de dados, com linhas de 16 bytes e mapeamento direto de 4 KB. Um store à FLASH nunca altera a cache e é concluído pelo roteador sem efeito, como um chip protegido contra escrita.
 3. **FLASH.** O chip atende pedidos de linha ou de palavra com dois parâmetros de latência: bordas até a primeira palavra e bordas entre as palavras seguintes. Fora da janela do chip a leitura devolve zero.
 4. **Reinício.** O boot ROM executa `fence.i` antes de saltar para a FLASH. A instrução invalida a cache de instruções e a de dados, então o programa novo que o hospedeiro gravou não encontra linhas do anterior.
-5. **Hospedeiro.** O hospedeiro grava a imagem da FLASH pela memória interna do Quartus (instância 1) e os dados pela porta de depuração da SDRAM, com o núcleo parado no laço de reinício do boot ROM. Ele reinicia o núcleo escrevendo um valor diferente de zero em `fromhost`.
+5. **Hospedeiro.** O hospedeiro grava a imagem da FLASH pela memória interna do Quartus (instância 0) e os dados pela porta de depuração da SDRAM, com o núcleo parado no laço de reinício do boot ROM. Ele reinicia o núcleo escrevendo um valor diferente de zero em `fromhost`.
 
 ## 4. Tamanhos e latências
 
