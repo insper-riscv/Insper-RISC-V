@@ -19,12 +19,12 @@ With a single external memory, the cache talks straight to the chip (`ram_chip` 
 
 ## 3. Memory map
 
-The map comes from generics and holds for the core and for the top. The default of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses (`make generate`, and `make generate-check` checks it in the CI). The values are those of the ACT4 simulation.
+The map comes from generics and holds for the core and for the top. The default of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses (`make generate`, and `make generate-check` checks it in the CI). The values are those of the ACT4 simulation. The package also carries `NUM_REGS` and the `HAS_*` of the platform profile, which are the default of the `num_regs` and `has_*` generics, plus `BOOT_ROM_BITS` (12) and `ROM_STORAGE_BYTES` (1048576).
 
 | Region | Start | End | Generics |
 | :--- | :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000` | `0x00000800` | `boot_rom_size_bytes` |
-| ROM | right after the BOOT_ROM, `0x00000800` | `0x00100000` | `rom_end_kib` |
+| BOOT_ROM | `0x00000000` | `0x00001000` | `boot_rom_size_bytes` |
+| ROM | right after the BOOT_ROM, `0x00001000` | `0x00100000` | `rom_end_kib` |
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | External window and peripherals | `0x40000000` | | `ext_base_kib`, `periph_base_kib` |
 
@@ -36,7 +36,7 @@ Every size is a power of two, checked at elaboration by `log2_exact` of `utils_p
 
 | Generic | Unit | Default |
 | :--- | :--- | :--- |
-| `boot_rom_size_bytes` | bytes | 2048, a multiple of 1 KiB |
+| `boot_rom_size_bytes` | bytes | 4096, a multiple of 1 KiB |
 | `rom_size_bytes` | bytes | 1048576 (1 MB) |
 | `ram_size_bytes` | bytes | 1048576 (1 MB) |
 | `icache_size_bits` | bits | 4096 (4 kbit) |

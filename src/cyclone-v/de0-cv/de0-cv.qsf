@@ -119,8 +119,8 @@ set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_mem.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/core/stage_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/core/core.vhd
 set_global_assignment -name VHDL_FILE ../../simulation/internal-mem/rtl/Blinky.vhd
-set_global_assignment -name QIP_FILE ../../../Memory/src/rom/cyclone-v/boot_rom1port.qip
-set_global_assignment -name QIP_FILE ../../../Memory/src/rom/cyclone-v/flash_store1port.qip
+set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_rom.qip
+set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_store.qip
 set_global_assignment -name VHDL_FILE de0_cv_map_pkg.vhd
 set_global_assignment -name VHDL_FILE de0-cv_top.vhd
 
@@ -399,19 +399,19 @@ set_instance_assignment -name PARTITION_HIERARCHY root_partition -to | -section_
 # --- the SDRAM platform ----------------------------------------------------
 # the core is written in VHDL-2008
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
-set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/soc/icache.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/soc/dcache.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/soc/flash_chip.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/soc/flash_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/soc/mem_region_router.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/icache.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/flash_chip.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/flash_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/mem_region_router.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/synchronizer.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_ctrl.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_cpu_bridge.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_arbiter.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_dbg_master.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/soc/sdram_jtag_core.vhd
-set_global_assignment -name VHDL_FILE ../../../Memory/src/ram/cyclone-v/sdram_jtag_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
+set_global_assignment -name VHDL_FILE sdram_jtag_shell.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/jtag_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../src/interconnect/ext_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/cyclone-v/jtag_uart_shell.vhd

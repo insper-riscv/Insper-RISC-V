@@ -29,11 +29,11 @@ package de0_cv_map_pkg is
 	-- A extensão Zicclsm está no perfil.
 	constant HAS_ZICCLSM         : boolean  := true;
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
-	constant BOOT_ROM_BITS       : natural  := 11;
+	constant BOOT_ROM_BITS       : natural  := 12;
 	-- Tamanho da BOOT_ROM, em bytes.
-	constant BOOT_ROM_SIZE_BYTES : positive := 2048;
+	constant BOOT_ROM_SIZE_BYTES : positive := 4096;
 	-- Base da ROM, em KiB, logo depois da BOOT_ROM.
-	constant ROM_BASE_KIB        : natural  := 2;
+	constant ROM_BASE_KIB        : natural  := 4;
 	-- Fim exclusivo da ROM, em KiB.
 	constant ROM_END_KIB         : natural  := 256;
 	-- Armazenamento da ROM, em bytes: a menor potência de dois que cobre

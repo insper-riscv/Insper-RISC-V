@@ -39,7 +39,7 @@ FLASH, e o loop de espera/restart (`rv32_wait_restart`) que deixa
 completo dessa troca.
 
 É genérico de propósito e não sabe nada de um teste: o `crt0` da picolibc,
-dentro da imagem de cada teste (começando em `0x800`), copia o `.data`,
+dentro da imagem de cada teste (começando em `0x1000`), copia o `.data`,
 zera o `.bss` e chama `main`; o que a BOOT_ROM e o programa combinam é só
 o ponto de entrada, o endereço do `rv32_wait_restart` e as palavras do topo
 da RAM. Ver [runtime.md](runtime.md) e
@@ -107,8 +107,8 @@ fixos).
 
 | Região                | Base         | Tamanho          | Words  | widthad |
 |------------------------|--------------|------------------|--------|---------|
-| BOOT_ROM               | `0x00000000` | 2K               | 512    | 9       |
-| FLASH / FLASH_MEM      | `0x00000800` | 30K              | 7680   | 13      |
+| BOOT_ROM               | `0x00000000` | 4K               | 1024   | 10      |
+| FLASH / FLASH_MEM      | `0x00001000` | 28K              | 7168   | 13      |
 | RAM (espaço físico)    | `0x00008000` | 160K             | 40960  | 16      |
 | RAM (útil, `rv32im-fpga.specs`) | `0x00008000` | 160K − 24 − 1032 bytes | N/A | N/A |
 | `stdout` (cabeçalho e dados) | `0x0002FBE0` | 1032 bytes | N/A | N/A |
@@ -116,13 +116,11 @@ fixos).
 | tohost                 | `0x0002FFE8` | 2 palavras       | N/A      | N/A       |
 | `__stack` (sp inicial) | `0x0002FBE0` | N/A                | N/A      | N/A       |
 
-FLASH ficou em **30K** (não 32K, que seria o número "redondo" óbvio) por um
-motivo específico: o topo de RAM (`ram_base + ram_words*4 = 0x30000`)
-precisa cair num endereço alinhado em 4096 bytes, porque o boot ROM monta o
-fim da RAM com `lui t0, 0x30` (sem `addi` depois): `lui` só zera os 12 bits baixos, então só funciona se
-esses 12 bits já forem zero no valor real. `0x800 (FLASH_BASE) + FLASH_SIZE`
-só cai num múltiplo de 4096 se `FLASH_SIZE` for um múltiplo ímpar de 2048
-(30K = 30720 = 15×2048 serve; 32K = 32768 = 16×2048 não).
+A FLASH ocupa `0x00001000` a `0x00008000` (**28K**), onde começa a RAM. O topo da RAM (`ram_base + ram_words*4 = 0x30000`) e a base precisam cair em múltiplos de 4096 bytes, porque o boot ROM monta o fim da RAM com `lui t0, 0x30` (sem `addi` depois), e o `lui` só zera os 12 bits baixos. Como a FLASH começa em `0x1000`, o fim dela tem de ser múltiplo de 4096 também:
+
+$$0x1000 + \text{FLASH\_SIZE} \equiv 0 \pmod{4096}$$
+
+Isso exige que `FLASH_SIZE` seja múltiplo de 4096, e 28K ($7 \times 4096 = 28672$) serve e termina exatamente na base da RAM.
 
 ### 3.1. O limite de blocos de RAM
 
@@ -133,13 +131,13 @@ A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de
 Ordem de instanciação em `core_fpga_test.vhd` (que é a ordem que o In-System
 Memory Content Editor usa pra numerar as instâncias):
 
-0. `BOOT_ROM`: sem índice usável em `config.yaml` de propósito, nunca é
-   reescrita em tempo real, só no compile inicial.
-1. `FLASH`: `quartus.rom_mem_instances[0]`.
-2. `RAM`: `quartus.ram_mem_instance`
+A `BOOT_ROM` não declara `ENABLE_RUNTIME_MOD`, então não recebe índice: é gravada só no compile inicial e nunca reescrita em tempo real. Os índices abaixo são só os dos IPs que declaram a regravação.
+
+0. `FLASH`: `quartus.rom_mem_instances[0]`.
+1. `RAM`: `quartus.ram_mem_instance`
    (`tohost` e `fromhost` moram dentro da RAM, então compartilham o índice dela).
-3. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
-   RAM de propósito, pra não deslocar o índice 2 que RAM já tem.
+2. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
+   RAM de propósito, pra não deslocar o índice 1 que RAM já tem.
 
 ## 5. LEDs (`core_fpga_test.vhd`)
 

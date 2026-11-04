@@ -21,14 +21,14 @@ riscv32-unknown-elf-gcc --specs=picolibc.specs -print-file-name=crt0-hosted.o
 
 ## 2. The platform file
 
-`rv32im-fpga.specs`, in `src/simulation/internal-mem/runtime/`, is a GCC specification file. It includes `picolibc.specs` and adds only what belongs to this hardware:
+`rv32im-fpga.specs`, in `src/simulation/internal-mem/runtime/`, is a GCC specification file, written by `riscv-tools generate-memory-map` from `platform.yaml` (the addresses and sizes are not written by hand). It includes `picolibc.specs` and adds only what belongs to this hardware:
 
 ```
 %include <picolibc.specs>
 %rename link rv32imfpga_picolibc_link
 
 *link:
-%(rv32imfpga_picolibc_link) --defsym=__flash=0x800 --defsym=__flash_size=30K --defsym=__ram=0x8000 --defsym=__ram_size=160K-24-1032 %{!DRV32_SPIKE:--defsym=rv32_wait_restart=0x100}
+%(rv32imfpga_picolibc_link) --defsym=__flash=0x1000 --defsym=__flash_size=0x7000 --defsym=__ram=0x8000 --defsym=__ram_size=0x27BE0 %{!DRV32_SPIKE:--defsym=rv32_wait_restart=0x100}
 
 *startfile:
 crt0-hosted%O%s
@@ -36,7 +36,7 @@ crt0-hosted%O%s
 
 | Part | What it does |
 | :--- | :--- |
-| `__flash`, `__flash_size` | Where `picolibc.ld` puts `.init`, `.text` and `.rodata` (the FLASH, from `0x800`, 30 KB) |
+| `__flash`, `__flash_size` | Where `picolibc.ld` puts `.init`, `.text` and `.rodata` (the FLASH, from `0x1000`, 28 KB) |
 | `__ram`, `__ram_size` | Where it puts `.data`, `.bss`, the heap and the stack (the RAM, from `0x8000`). The top 1056 bytes stay out, 24 for `tohost`, `fromhost` and 8 free ones, and 1032 for `stdout` (section 5) |
 | `rv32_wait_restart=0x100` | The fixed address of the BOOT_ROM routine every test ends in. It leaves the link when compiling with `-DRV32_SPIKE` (section 6) |
 | `crt0-hosted` | The picolibc startup, which sets `sp` and `gp`, copies `.data` from the FLASH, zeroes `.bss`, prepares TLS, runs constructors, calls `main` and calls `exit` with what `main` returned |
@@ -54,7 +54,7 @@ A program compiled this way is hosted. `main` can return (the return becomes `ex
 
 | Section | Address |
 | :--- | :--- |
-| `_start` (entry), `.init` | `0x800` |
+| `_start` (entry), `.init` | `0x1000` |
 | `.text`, `.rodata` (includes `.srodata`) | in the FLASH, after `.init` |
 | `.data` (includes `.sdata`), `.tdata` | VMA `0x8000`, LMA in the FLASH |
 | `.bss` | after `.data` |
@@ -71,7 +71,8 @@ In `src/simulation/internal-mem/runtime/`:
 
 | File | Role |
 | :--- | :--- |
-| `boot_rom.S`, `boot_rom.ld` | The BOOT_ROM, written once. It clears the shared words, jumps to `0x800` and keeps `rv32_wait_restart` at `0x100` (see [boot.md](boot.md)) |
+| `boot_rom.S`, `boot_rom.ld` | The BOOT_ROM, written once. It clears the shared words, jumps to `0x1000` (`RV32_BOOT_ENTRY`) and keeps `rv32_wait_restart` at `0x100` (see [boot.md](boot.md)) |
+| `memory_map.h` | Generated from `platform.yaml`: the addresses of `tohost`, `fromhost`, `stdout`, the UART and the boot entry (`RV32_BOOT_ENTRY`, `0x1000`), which the BOOT_ROM, `_exit.c`, `stdio.c` and `spike_exit.S` include |
 | `_exit.c` | The `_exit` the `crt0` ends in. Code 0 is PASS (`tohost` `1`), any other is FAIL (`tohost` `(code << 1) | 1`), and then it jumps to `rv32_wait_restart` |
 | `stdio.c` | The `stdout` write function (section 5) |
 | `spike_exit.S` | The substitute of `rv32_wait_restart` for the Spike ELF (section 6) |
@@ -90,7 +91,7 @@ The core has no external output. `stdout` (and `stderr`) is a 1 KB buffer in the
 
 The buffer is linear. When it fills, writing stops and `truncated` stays at 1. The BOOT_ROM zeroes the header at every start. There is no input, and a read returns end of file. `printf`, `puts` and `putchar` work with no change in the C code. The `c/stdout-printf` test checks the content and `c/stdout-truncate` checks the overflow. The host reads this region with `dump-ram`, at address `0x27BE0` relative to the start of the RAM.
 
-The full `printf` (with `double` support) costs about 12 KB of the 30 KB of the FLASH.
+The full `printf` (with `double` support) costs about 12 KB of the 28 KB of the FLASH.
 
 ## 6. Spike
 
