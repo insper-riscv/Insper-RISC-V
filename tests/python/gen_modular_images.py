@@ -2,7 +2,11 @@
 
 Uso, da raiz do repositório:
 
-    uv run python tests/python/gen_modular_images.py
+    PYTHONPATH=. /opt/riscv-tools/riscv-tools/bin/python \
+        tests/python/gen_modular_images.py
+
+O `riscv-tools` vem da imagem `ci-vhdl`, não das dependências do
+projeto, e o mapa é o de `src/simulation/modular/platform.yaml`.
 
 O programa guarda 0x5A na base da RAM, lê de volta, soma 1 e guarda o
 resultado na palavra seguinte. A BOOT_ROM salta para a ROM, que começa

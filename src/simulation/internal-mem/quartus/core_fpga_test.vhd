@@ -233,15 +233,15 @@ begin
 	-- por teste -- ver config.yaml quartus.boot_rom_mif_target). So'
 	-- precisa de porta unica agora -- nada mais le dado direto dela
 	-- (ver rv32im_pipeline_core.vhd, estagio MEM so' fala com RAM).
-	BOOT_ROM : entity work.boot_rom1port
+	BOOT_ROM : entity work.boot_rom
     generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
     port map (
-      address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
-      clock   => pll_clk_if,
-      rden    => if_rden,
-      wren    => '0',
-      data    => (others => '0'),
-      q       => boot_rom_data
+      i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
+      i_clk   => pll_clk_if,
+      i_rden    => if_rden,
+      i_wren    => '0',
+      i_data    => (others => '0'),
+      o_q       => boot_rom_data
     );
 
 	-- FLASH: "firmware" desse teste, reescrita por teste via JTAG (ver
@@ -250,30 +250,30 @@ begin
 	-- instrucao. BOOT_ROM continua so' single-port -- nunca tem .data
 	-- proprio, nunca precisa ser lido como dado (ver FLASH_MEM abaixo
 	-- pra FLASH).
-	FLASH : entity work.flash1port
+	FLASH : entity work.flash
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      address => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      clock   => pll_clk_if,
-      rden    => if_rden,
-      wren    => '0',
-      data    => (others => '0'),
-      q       => flash_data
+      i_address => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_clk   => pll_clk_if,
+      i_rden    => if_rden,
+      i_wren    => '0',
+      i_data    => (others => '0'),
+      o_q       => flash_data
     );
 
 	-- RAM-relative word address (see RAM_BASE_WORD's own comment above)
 	ram_word_addr <= resize(unsigned(ram_addr(21 downto 2)) - RAM_BASE_WORD, ram_word_addr'length);
 
-	RAM : entity work.ram1port
+	RAM : entity work.ram
 	 generic map (size_bytes => RAM_STORAGE_BYTES)
 	 port map (
-		address => std_logic_vector(ram_word_addr),
-		byteena => ram_byteena,
-		clock   => pll_clk_idexmem,
-		data    => ram_wdata,
-		rden => ram_rden and ram_en and not uart_selected,
-		wren => ram_wren and ram_en and not uart_selected,
-		q    => ram_memory_rdata
+		i_address => std_logic_vector(ram_word_addr),
+		i_byteena => ram_byteena,
+		i_clk   => pll_clk_idexmem,
+		i_data    => ram_wdata,
+		i_rden => ram_rden and ram_en and not uart_selected,
+		i_wren => ram_wren and ram_en and not uart_selected,
+		o_q    => ram_memory_rdata
 	 );
 
 	-- FLASH_MEM: segunda copia fisica da FLASH, so' para leitura de
@@ -284,15 +284,15 @@ begin
 	-- edicao do Quartus). Instanciada DEPOIS de RAM de proposito, para
 	-- nao mudar o indice de instancia JTAG que RAM ja' tem (2) -- ver
 	-- config.yaml quartus.ram_mem_instance.
-	FLASH_MEM : entity work.flash_mem1port
+	FLASH_MEM : entity work.flash_mem
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      clock   => pll_clk_idexmem,
-      rden    => flash_rden2,
-      wren    => '0',
-      data    => (others => '0'),
-      q       => flash_data2
+      i_address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_clk   => pll_clk_idexmem,
+      i_rden    => flash_rden2,
+      i_wren    => '0',
+      i_data    => (others => '0'),
+      o_q       => flash_data2
     );
 
 	 blink : entity work.Blinky

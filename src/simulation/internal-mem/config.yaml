@@ -208,8 +208,8 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
-    - Memory/src/ram/soc/ram_simulation.vhd
-    - Memory/src/rom/soc/rom_simulation.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd

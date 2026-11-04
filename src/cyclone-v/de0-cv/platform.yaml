@@ -16,8 +16,8 @@ profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 2K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00000800, size: 254K, kind: rom, exec: true}
+  - {name: BOOT_ROM, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: FLASH,    base: 0x00001000, size: 252K, kind: rom, exec: true}
   - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
 
 # Words at the top of RAM: the contract between the boot ROM, the program and
@@ -28,7 +28,7 @@ reserved:
   fromhost: {base: 0x43FFFFF0, size: 8}
 
 boot:
-  entry: 0x00000800
+  entry: 0x00001000
   wait_restart: 0x00000100
 
 # The slots of the external interconnect (bits 30:28 of the address): the JTAG UART and the seven-segment

@@ -8,7 +8,7 @@
 
 MEMORY
 {
-  boot_rom (rx) : ORIGIN = 0x0, LENGTH = 0x800
+  boot_rom (rx) : ORIGIN = 0x0, LENGTH = 0x1000
 }
 
 RESET_RESERVED = 0x100;

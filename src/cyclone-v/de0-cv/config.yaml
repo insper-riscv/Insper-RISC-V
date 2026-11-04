@@ -88,22 +88,22 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
-    - Memory/src/ram/soc/ram_simulation.vhd
-    - Memory/src/rom/soc/rom_simulation.vhd
-    - Memory/src/ram/soc/sdram_pkg.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
     - Common-Components/src/synchronizer.vhd
-    - Memory/src/ram/soc/sdram_ctrl.vhd
-    - Memory/src/ram/soc/sdram_cpu_bridge.vhd
-    - Memory/src/ram/soc/sdram_arbiter.vhd
-    - Memory/src/cache/soc/icache.vhd
-    - Memory/src/cache/soc/dcache.vhd
-    - Memory/src/cache/soc/flash_chip.vhd
-    - Memory/src/cache/soc/flash_arbiter.vhd
-    - Memory/src/cache/soc/mem_region_router.vhd
-    - Memory/src/ram/soc/sdram_dbg_master.vhd
-    - Memory/src/ram/soc/sdram_jtag_core.vhd
-    - Memory/src/ram/soc/sim/sdram_model.vhd
-    - Memory/src/ram/soc/sim/sdram_system.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
+    - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/cache/SoC/dcache.vhd
+    - Memory/src/cache/SoC/flash_chip.vhd
+    - Memory/src/cache/SoC/flash_arbiter.vhd
+    - Memory/src/cache/SoC/mem_region_router.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
+    - Memory/src/RAM/SoC/sim/sdram_model.vhd
+    - Memory/src/RAM/SoC/sim/sdram_system.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
