@@ -66,6 +66,14 @@ architecture behaviour of core_fpga_test is
 	signal ram_rden : std_logic;
 	signal ram_byteena : std_logic_vector(3 downto 0);
 
+	-- Porta externa do core, usada pela janela de periféricos.
+	signal sdram_addr     : std_logic_vector(31 downto 0);
+	signal sdram_wdata    : std_logic_vector(31 downto 0);
+	signal sdram_rdata    : std_logic_vector(31 downto 0);
+	signal sdram_byteena  : std_logic_vector(3 downto 0);
+	signal sdram_rden     : std_logic;
+	signal sdram_wren     : std_logic;
+
 	signal pll_clk_if     : std_logic;
 	signal pll_clk_idexmem: std_logic;
 	signal pll_locked     : std_logic;
@@ -114,11 +122,11 @@ begin
 
 	-- Seleciona a região 0xC0000000 - 0xCFFFFFFF.
 	uart_selected <= '1'
-		when ram_addr(31 downto 28) = x"C"
+		when sdram_addr(31 downto 28) = x"C"
 		else '0';
 
-	uart_write <= ram_wren and ram_en and uart_selected;
-	uart_read  <= ram_rden and ram_en and uart_selected;
+	uart_write <= sdram_wren and uart_selected;
+	uart_read  <= sdram_rden and uart_selected;
 
 	-- Status LEDs -- ver README.md/docs para o mapa completo. Baratos
 	-- o bastante pra deixar permanentes (nao so' debug de bring-up):
@@ -163,7 +171,16 @@ begin
 			o_ram_en      => ram_en,
 			o_ram_wren    => ram_wren,
 			o_ram_rden    => ram_rden,
-			o_ram_byteena => ram_byteena
+			o_ram_byteena => ram_byteena,
+
+			o_sdram_addr    => sdram_addr,
+			o_sdram_wdata   => sdram_wdata,
+			o_sdram_byteena => sdram_byteena,
+			o_sdram_rden    => sdram_rden,
+			o_sdram_wren    => sdram_wren,
+			i_sdram_rdata   => sdram_rdata,
+			i_sdram_ready   => '1',
+			o_mem_advance   => open
 	);
 
 	UART_PERIPHERAL : entity work.UART
@@ -173,8 +190,8 @@ begin
 		port map (
 			i_clk    => pll_clk_idexmem,
 			i_rst    => core_reset,
-			i_data_in  => ram_wdata,
-			i_address  => ram_addr(3 downto 2),
+			i_data_in  => sdram_wdata,
+			i_address  => sdram_addr(3 downto 2),
 			i_write    => uart_write,
 			i_read     => uart_read,
 			o_data_out => uart_rdata,
@@ -197,10 +214,10 @@ begin
 		end if;
 	end process;
 
-	-- Seleciona o resultado correspondente ao acesso do ciclo anterior.
-	ram_rdata <= uart_rdata_d
-		when uart_read_d = '1'
-		else ram_memory_rdata;
+	-- A UART responde no ciclo seguinte da porta externa; a RAM interna
+	-- permanece dedicada à sua própria porta do core.
+	sdram_rdata <= uart_rdata_d;
+	ram_rdata   <= ram_memory_rdata;
 
 	-- BOOT_ROM: fixa, gravada uma unica vez (nunca reescrita via JTAG
 	-- por teste -- ver config.yaml quartus.boot_rom_mif_target). So'
@@ -244,8 +261,8 @@ begin
 		byteena => ram_byteena,
 		clock   => pll_clk_idexmem,
 		data    => ram_wdata,
-		rden => ram_rden and ram_en and not uart_selected,
-		wren => ram_wren and ram_en and not uart_selected,
+		rden => ram_rden and ram_en,
+		wren => ram_wren and ram_en,
 		q    => ram_memory_rdata
 	 );
 
