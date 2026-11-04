@@ -27,7 +27,15 @@ paths: {include_dir: ..., build_dir: build, c_dir: c, asm_dir: asm}
 
 The paths inside `config.yaml` are relative to the root of the repository. The `sim.python_path` field puts `testbench/` on the search path of the simulation test module.
 
-## 4. Verification
+## 4. Serial UART
+
+Peripheral window 4, at `0xC0000000`, contains the physical serial UART. It operates at 115200 baud with 8N1 framing and has independent 16-byte transmit and receive queues. The hardware top connects RX to pin M16 and TX to pin C16 of the DE0-CV. The simulation top exposes the same lines to the testbench.
+
+The map has `TX_DATA` at `0xC0000000`, `RX_DATA` at `0xC0000004`, `STATUS` at `0xC0000008`, and `CONTROL` at `0xC000000C`. The complete register and queue contract is in the [serial UART documentation](https://github.com/insper-riscv/Peripherals/blob/main/docs/en/UART/serial_uart.md).
+
+This UART differs from the JTAG UART of the `de0-cv` platform. Both peripherals use the same window in different platforms, but they have separate host interfaces and status maps.
+
+## 5. Verification
 
 | Target | What it checks |
 | :--- | :--- |

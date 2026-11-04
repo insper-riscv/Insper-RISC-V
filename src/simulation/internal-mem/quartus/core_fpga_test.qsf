@@ -120,6 +120,7 @@ set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_mem.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/core/stage_wb.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/core/core.vhd
 set_global_assignment -name VHDL_FILE ../rtl/Blinky.vhd
+set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/uart_fifo.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/uart.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
