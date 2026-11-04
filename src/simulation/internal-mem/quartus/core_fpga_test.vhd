@@ -56,6 +56,8 @@ architecture behaviour of core_fpga_test is
 	-- than reading back RAM's internal array by JTAG-style 0-based
 	-- index, so this class of bug is invisible to it by construction.
 	constant RAM_BASE_WORD : unsigned(19 downto 0) := to_unsigned(RAM_BASE_KIB * 256, 20);
+	-- Quantidade de palavras de 32 bits na janela física de RAM.
+	constant RAM_WORD_COUNT : positive := (RAM_END_KIB - RAM_BASE_KIB) * 256;
 	signal ram_word_addr : unsigned(log2_exact(RAM_STORAGE_BYTES) - 3 downto 0);
 
 	signal ram_addr : std_logic_vector(31 downto 0);
@@ -255,7 +257,10 @@ begin
 	ram_word_addr <= resize(unsigned(ram_addr(21 downto 2)) - RAM_BASE_WORD, ram_word_addr'length);
 
 	RAM : entity work.ram1port
-	 generic map (size_bytes => RAM_STORAGE_BYTES)
+	 generic map (
+		size_bytes => RAM_STORAGE_BYTES,
+		word_count => RAM_WORD_COUNT
+	 )
 	 port map (
 		address => std_logic_vector(ram_word_addr),
 		byteena => ram_byteena,
