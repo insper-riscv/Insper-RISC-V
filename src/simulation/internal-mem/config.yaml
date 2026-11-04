@@ -65,7 +65,7 @@ quartus:
   # target below — it does NOT get touched by the per-test flow).
   #
   # NOT ips/FLASH1PORT/init.mif (that's just where the IP's own
-  # template copy lives) — flash1port.vhd's init_file generic is the
+  # template copy lives) — flash.vhd's init_file generic is the
   # literal string "./init.mif", resolved relative to quartus_sh's cwd
   # (project_dir) at compile time, i.e. the top-level file here.
   # Confirmed (back when this was still the "ROM" IP) by dumping it
@@ -208,8 +208,8 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
-    - Memory/src/ram/soc/ram_simulation.vhd
-    - Memory/src/rom/soc/rom_simulation.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd

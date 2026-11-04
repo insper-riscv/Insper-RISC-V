@@ -38,8 +38,8 @@ The obvious solution, giving the `FLASH` a second read port (a `DUAL_PORT` `alts
 
 Instead of a dual-port FLASH, there are **two identical physical instances**, single-port each:
 
-- `FLASH` (`ips/FLASH1PORT/flash1port.vhd`): the instruction fetch port (IF), `INSTANCE_NAME=FLASH`.
-- `FLASH_MEM` (`ips/FLASH_MEM1PORT/flash_mem1port.vhd`): the data read port for the MEM stage, `INSTANCE_NAME=FLASH_MEM`. Same clock as the RAM (`pll_clk_idexmem`), since the MEM stage consumes both.
+- `FLASH` (`Memory/src/ROM/Cyclone-V/flash.vhd`): the instruction fetch port (IF), `INSTANCE_NAME=FLASH`.
+- `FLASH_MEM` (`Memory/src/ROM/Cyclone-V/flash_mem.vhd`): the data read port for the MEM stage, `INSTANCE_NAME=FLASH_MEM`. Same clock as the RAM (`pll_clk_idexmem`), since the MEM stage consumes both.
 
 The different `INSTANCE_NAME` is what makes the JTAG In-System Memory Content Editor treat them as two independent taps. `riscv_tools` (tohost and rom_writer) writes the **same content** to both every time a test changes. In `config.yaml`, `quartus.rom_mem_instances: [1, 3]` is a list with both JTAG indexes, not a single one.
 

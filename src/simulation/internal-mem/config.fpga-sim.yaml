@@ -113,10 +113,10 @@ sim:
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
     - src/simulation/internal-mem/rtl/Blinky.vhd
-    - Memory/src/rom/cyclone-v/boot_rom1port.vhd
-    - Memory/src/rom/cyclone-v/flash1port.vhd
-    - Memory/src/rom/cyclone-v/flash_mem1port.vhd
-    - Memory/src/ram/cyclone-v/ram1port.vhd
+    - Memory/src/ROM/Cyclone-V/boot_rom.vhd
+    - Memory/src/ROM/Cyclone-V/flash.vhd
+    - Memory/src/ROM/Cyclone-V/flash_mem.vhd
+    - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
     - src/simulation/internal-mem/pll/pll_sim.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd

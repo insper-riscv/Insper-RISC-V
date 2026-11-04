@@ -7,7 +7,7 @@ O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo fe
 | Peça | `config.yaml` (padrão) | `config.fpga-sim.yaml` |
 | :--- | :--- | :--- |
 | Topo | `rv32i3stage_core_sim_test` | `core_fpga_test`, o mesmo arquivo do projeto Quartus, sem alteração |
-| Memórias | `ROM_simulation` e `RAM_simulation` (arrays VHDL) | `boot_rom1port`, `flash1port`, `flash_mem1port` e `ram1port`, os wrappers do Quartus sobre o modelo `altsyncram` |
+| Memórias | `rom_simulation` e `ram_simulation` (arrays VHDL) | `boot_rom`, `flash`, `flash_mem` e `ram`, os wrappers do Quartus sobre o modelo `altsyncram` |
 | Imagem carregada | `.hex`, por um generic VHDL | `.mif`, pelo `init_file` da IP (`init.mif` e `boot_rom_init.mif`), as mesmas imagens do hardware |
 | Endereço da RAM | Endereço absoluto do barramento | Endereço relativo a `ram_base`, como no hardware (veja `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`: pulsos de um clock base três vezes mais rápido | `pll_sim.vhd`: três clocks de 50 MHz, ciclo de trabalho de 50%, defasados 0, 6667 e 13333 ps, como o PLL real |

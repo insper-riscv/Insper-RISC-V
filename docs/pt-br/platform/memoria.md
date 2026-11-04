@@ -85,9 +85,9 @@ Memory Content Editor reescrever a FLASH a cada teste.
 **Fix**: em vez de uma FLASH dual-port, existem **duas instâncias físicas
 idênticas**, single-port cada uma:
 
-- `FLASH` (`ips/FLASH1PORT/flash1port.vhd`): porta de busca de instrução
+- `FLASH` (`Memory/src/ROM/Cyclone-V/flash.vhd`): porta de busca de instrução
   (IF), `INSTANCE_NAME=FLASH`.
-- `FLASH_MEM` (`ips/FLASH_MEM1PORT/flash_mem1port.vhd`): porta de leitura
+- `FLASH_MEM` (`Memory/src/ROM/Cyclone-V/flash_mem.vhd`): porta de leitura
   de dado pro estágio MEM, `INSTANCE_NAME=FLASH_MEM`. Mesmo clock que a RAM
   (`pll_clk_idexmem`), já que é o estágio MEM que consome as duas.
 

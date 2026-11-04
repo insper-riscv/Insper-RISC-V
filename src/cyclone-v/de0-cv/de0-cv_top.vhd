@@ -374,25 +374,25 @@ begin
 			o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
 		);
 
-	BOOT_ROM : entity work.boot_rom1port
+	BOOT_ROM : entity work.boot_rom
     port map (
-      address => if_addr(10 downto 2),
-      clock   => pll_clk_if,
-      rden    => if_rden,
-      wren    => '0',
-      data    => (others => '0'),
-      q       => boot_rom_data
+      i_address => if_addr(10 downto 2),
+      i_clk     => pll_clk_if,
+      i_rden    => if_rden,
+      i_wren    => '0',
+      i_data    => (others => '0'),
+      o_q       => boot_rom_data
     );
 
 	-- the storage behind the FLASH chip: a 256 KB RAM block the host rewrites over JTAG (instance FLASH)
-	FLASH_STORE : entity work.flash_store1port
+	FLASH_STORE : entity work.flash_store
     port map (
-      address => flash_mem_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      clock   => pll_clk_idexmem,
-      rden    => '1',
-      wren    => '0',
-      data    => (others => '0'),
-      q       => flash_mem_data
+      i_address => flash_mem_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_clk     => pll_clk_idexmem,
+      i_rden    => '1',
+      i_wren    => '0',
+      i_data    => (others => '0'),
+      o_q       => flash_mem_data
     );
 
 	-- SDRAM: the bridge (core clock), the arbiter and the controller (SDRAM clock), and the debug port

@@ -127,10 +127,10 @@ set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/ve
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
-set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/boot_rom1port.qip
-set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/flash1port.qip
-set_global_assignment -name QIP_FILE ../../../../Memory/src/ram/cyclone-v/ram1port.qip
-set_global_assignment -name QIP_FILE ../../../../Memory/src/rom/cyclone-v/flash_mem1port.qip
+set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/boot_rom.qip
+set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash.qip
+set_global_assignment -name QIP_FILE ../../../../Memory/src/RAM/FPGA/Cyclone-V/ram.qip
+set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash_mem.qip
 set_global_assignment -name VHDL_FILE ../rtl/internal_mem_map_pkg.vhd
 set_global_assignment -name VHDL_FILE core_fpga_test.vhd
 set_global_assignment -name VHDL_INPUT_VERSION VHDL_2008
