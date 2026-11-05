@@ -58,3 +58,21 @@ A prova formal (`formal/ext_interconnect_props.sv`, SymbiYosys sobre a netlist q
 | O dado lido de um periférico é o do escravo selecionado no pulso, e o da memória vem direto dela | Indução |
 
 Oito defeitos propositais do VHDL (identificação do escravo deslocada, pulso sem o estado livre, memória que vê o endereço de periférico, pronto sempre alto, dado do escravo errado, seleção do dado que não volta à memória, escrita que lê e endereço de palavra deslocado) fazem a prova falhar. O `make formal` roda só esta prova, e o `formal/aggregate.sh` decide o resultado dos engines.
+
+## 6. Avisos são erros
+
+Um aviso do GHDL, do Yosys ou do SymbiYosys indica código fora da norma ou no limite dela, e por isso faz a execução da prova falhar. A correção é no código, na prova ou na netlist, e nenhuma opção `-Wno-*` nem lista de avisos ignorados é permitida.
+
+| Etapa | Onde o aviso é detectado | Efeito |
+| :--- | :--- | :--- |
+| `ghdl -a` e `ghdl --synth` | Saída de erro do GHDL, lida por `ghdl_run` | O comando falha e imprime cada aviso com o arquivo e a linha do VHDL |
+| `sby` de cada prova e de cada mutante | Log completo da prova, lido por `prove` | O veredito vira `error`, mesmo quando o código de saída foi 0 ou 2, e a mensagem aponta `<log>:<linha>` |
+
+Um aviso é uma linha com a palavra `warning` ou `warnings`, em qualquer caixa, como palavra inteira. Nomes que apenas contêm a palavra (`no_warnings.sv`) e o resumo do Yosys com contagem zero (`Warnings: 0 unique messages, 0 total`) não contam. A única exceção são três mensagens do ABC, aceitas só no log do motor `abc-bmc3` (o relógio do módulo de propriedades sem driver, a contagem de bits sem driver e as saídas lidas como restrições), pois a leitura da netlist pelo ABC as produz. Yices, Bitwuzla e Boolector não têm exceção, e qualquer outra mensagem do ABC continua sendo erro.
+
+Duas regras mantêm as netlists sem aviso.
+
+1. Um sinal exposto como `dbg_<sinal>` que o GHDL removeu da netlist (porque um mutante tirou o único leitor) é ligado a zero, nunca deixado sem driver, pois um fio sem driver é livre e podia fazer uma propriedade falhar sem que o defeito fosse a causa.
+2. O `ext_interconnect.vhd` é analisado sem nenhum arquivo de submódulo, então nenhum atributo do Quartus chega à netlist. Se uma prova futura precisar de um arquivo com `altera_attribute`, a netlist formal deve ser gerada de uma cópia sem esse atributo.
+
+Os testes da guarda estão em `formal/aggregate_test.sh`, que injeta um aviso no GHDL e no `sby` de uma execução real e exige que ela falhe.

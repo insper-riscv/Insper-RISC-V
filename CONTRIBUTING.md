@@ -179,6 +179,8 @@ make all                                 # Executa paths, verificação de integ
 
 Cada repositório roda só as próprias verificações, os próprios testes cocotb e as próprias provas formais, no CI de cada um. O Insper-RISC-V roda só o que é dele ou de integração: os caminhos do `paths.yaml`, a construção dos topos de simulação com os submódulos fixados, a unicidade dos nomes entre repositórios, o mapa de memória, os testes cocotb das plataformas e a prova formal do interconector. Uma alteração em um submódulo é validada no repositório dele, não aqui.
 
+**Aviso no formal é erro.** Um aviso do GHDL, do Yosys ou do SymbiYosys indica código fora da norma ou no limite dela. A correção é sempre no código ou na prova; é proibido suprimir avisos com `-Wno-*` ou ignorá-los. O fluxo em `formal/common.sh` varre a saída do GHDL e o log de cada prova e de cada mutante, e falha com o arquivo e a linha do aviso (ver `docs/pt-br/interconnect/ext_interconnect.md`, seção 6).
+
 O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python, e o nome do job é o check que o ruleset da branch padrão exige, então não o renomeie.
 
 Ao adicionar, renomear ou remover qualquer arquivo versionado, atualize imediatamente:

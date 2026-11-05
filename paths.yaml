@@ -4,7 +4,7 @@
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
-  - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/ext_interconnect_props.sv]}
+  - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
   - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/simulation/modular/platform.yaml]}
   # The platform configs are written relative to the root of this repository, `base: .`.
   - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
