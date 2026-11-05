@@ -11,7 +11,7 @@ O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo fe
 | Imagem carregada | `.hex`, por um generic VHDL | `.mif`, pelo `init_file` da IP (`init.mif` e `boot_rom_init.mif`), as mesmas imagens do hardware |
 | Endereço da RAM | Endereço absoluto do barramento | Endereço relativo a `ram_base`, como no hardware (veja `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`: pulsos de um clock base três vezes mais rápido | `pll_sim.vhd`: três clocks de 50 MHz, ciclo de trabalho de 50%, defasados 0, 6667 e 13333 ps, como o PLL real |
-| Reset | Ativo em nível alto (`reset`) | `FPGA_RESET_N`, ativo em nível baixo, mais a espera pelo `locked` do PLL |
+| Reset | Ativo em nível alto (`i_rst`) | `i_fpga_reset_n`, ativo em nível baixo, mais a espera pelo `locked` do PLL |
 
 O núcleo (`rv32im_pipeline_core.vhd`) é o mesmo nos dois perfis.
 

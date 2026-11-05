@@ -34,11 +34,11 @@ sim:
     boot_rom_init.mif: "{boot_rom_mif_path}"
   test_module: testbench.test_c_program
   # What test_c_program.py drives: the hardware top's ports, not the
-  # simulation top's CLK/reset.
+  # simulation top's i_clk/i_rst.
   env:
-    SIM_CLOCK: CLOCK_50
+    SIM_CLOCK: i_clock_50
     SIM_CLOCK_PERIOD_NS: "20"
-    SIM_RESET: FPGA_RESET_N
+    SIM_RESET: i_fpga_reset_n
     SIM_RESET_ACTIVE: "0"
     # The RAM and the core run on the PLL's second output, so the write
     # bus is sampled on that clock, once per core cycle.

@@ -1,3 +1,12 @@
+-- =============================================================================
+-- Topo de hardware da plataforma internal-mem para a DE0-CV
+--
+-- Monta o núcleo com a BOOT_ROM, a FLASH e a RAM dentro da FPGA, a UART mapeada em
+-- 0xC0000000, o carregador da FLASH por JTAG e o PLL de três fases. Os LEDs mostram o
+-- estado do PLL, do reset e do carregador. O reset do núcleo é a soma do PLL sem lock, do
+-- botão físico (ativo em nível baixo) e do carregador da FLASH.
+-- =============================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -32,11 +41,16 @@ entity core_fpga_test is
 		HAS_ZICCLSM  : boolean := work.internal_mem_map_pkg.HAS_ZICCLSM
 	);
 	port (
-		CLOCK_50     : in  std_logic;
-		FPGA_RESET_N : in  std_logic := '1';
-		UART_RX      : in  std_logic := '1';
-		UART_TX      : out std_logic := '1';
-		LEDR         : out std_logic_vector(9 downto 0) := (others => '0')
+		-- Clock de 50 MHz da placa, entrada do PLL.
+		i_clock_50     : in  std_logic;
+		-- Botão físico de reset da placa, ativo em nível baixo ('0' = pressionado).
+		i_fpga_reset_n : in  std_logic := '1';
+		-- Entrada serial da UART (repouso em '1').
+		i_uart_rx      : in  std_logic := '1';
+		-- Saída serial da UART (repouso em '1').
+		o_uart_tx      : out std_logic := '1';
+		-- LEDs vermelhos da placa: bit 0 pisca, bits 1 a 4 mostram o estado do PLL, do reset e do carregador da FLASH.
+		o_ledr         : out std_logic_vector(9 downto 0) := (others => '0')
   	);
 end entity;
 
@@ -45,32 +59,47 @@ architecture behaviour of core_fpga_test is
 	-- IF stage: barramento unico compartilhado por BOOT_ROM e FLASH
 	-- (ver rv32im_pipeline_core.vhd is_boot_rom_if/is_boot_rom_d)
 	signal if_addr : std_logic_vector(31 downto 0);
+	-- Habilitação de leitura da busca de instrução ('1' = lê).
 	signal if_rden : std_logic;
+	-- Palavra de instrução lida da BOOT_ROM.
 	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra de instrução lida da FLASH.
 	signal flash_data : std_logic_vector(31 downto 0);
 
 	-- Estagio MEM: leitura da FLASH como dado, para o copy-loop de .data
 	-- em boot_rom.S (ver rv32im_pipeline_core.vhd flash_addr2). E' a porta B
 	-- da unica copia da FLASH, que o carregador JTAG assume com o core parado.
 	signal flash_addr2 : std_logic_vector(31 downto 0);
+	-- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
 	signal flash_rden2 : std_logic;
+	-- Palavra de dado lida da segunda porta da FLASH (estágio MEM).
 	signal flash_data2 : std_logic_vector(31 downto 0);
 
 	-- Carregador da FLASH: sinais entre a porta JTAG e o carregador.
 	signal flash_cmd_tog    : std_logic;
+	-- Código da operação pedida ao carregador da FLASH.
 	signal flash_op         : std_logic_vector(3 downto 0);
+	-- Endereço do comando enviado ao carregador da FLASH pelo JTAG.
 	signal flash_cmd_addr   : std_logic_vector(23 downto 0);
+	-- Dado do comando enviado ao carregador da FLASH pelo JTAG.
 	signal flash_cmd_data   : std_logic_vector(31 downto 0);
+	-- Toggle de conclusão do comando, do carregador para o JTAG.
 	signal flash_done_tog   : std_logic;
+	-- Endereço da resposta do carregador da FLASH.
 	signal flash_rsp_addr   : std_logic_vector(23 downto 0);
+	-- Dado da resposta do carregador da FLASH.
 	signal flash_rsp_data   : std_logic_vector(31 downto 0);
+	-- Status da resposta do carregador da FLASH.
 	signal flash_rsp_status : std_logic_vector(7 downto 0);
 	-- Core parado pelo carregador: entra no reset do core.
 	signal flash_halt       : std_logic;
 	-- Porta B da FLASH, ja' comutada entre o estagio MEM e o carregador.
 	signal flash_address_b  : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+	-- Habilitação de leitura da porta B da FLASH ('1' = lê).
 	signal flash_rden_b     : std_logic;
+	-- Habilitação de escrita da porta B da FLASH ('1' = escreve).
 	signal flash_wren_b     : std_logic;
+	-- Dado de escrita da porta B da FLASH, vindo do carregador.
 	signal flash_data_b     : std_logic_vector(31 downto 0);
 
 	-- RAM's In-System Memory Content Editor (JTAG) addresses it as a
@@ -93,40 +122,61 @@ architecture behaviour of core_fpga_test is
 	-- than reading back RAM's internal array by JTAG-style 0-based
 	-- index, so this class of bug is invisible to it by construction.
 	constant RAM_BASE_WORD : unsigned(19 downto 0) := to_unsigned(RAM_BASE_KIB * 256, 20);
+	-- Endereço de palavra da RAM relativo à base da RAM, como o JTAG o enxerga.
 	signal ram_word_addr : unsigned(log2_exact(RAM_STORAGE_BYTES) - 3 downto 0);
 
+	-- Endereço de byte do acesso à RAM do núcleo.
 	signal ram_addr : std_logic_vector(31 downto 0);
+	-- Dado de escrita na RAM do núcleo.
 	signal ram_wdata : std_logic_vector(31 downto 0);
+	-- Dado lido da RAM entregue ao núcleo.
 	signal ram_rdata : std_logic_vector(31 downto 0);
+	-- Habilitação geral da RAM do núcleo (estágio MEM).
 	signal ram_en : std_logic;
+	-- Habilitação de escrita da RAM do núcleo ('1' = escreve).
 	signal ram_wren : std_logic;
+	-- Habilitação de leitura da RAM do núcleo ('1' = lê).
 	signal ram_rden : std_logic;
+	-- Habilitação de bytes da escrita na RAM do núcleo.
 	signal ram_byteena : std_logic_vector(3 downto 0);
 
+	-- Clock do estágio de busca (IF), primeira fase do gerador de clock.
 	signal pll_clk_if     : std_logic;
+	-- Clock dos estágios ID, EX e MEM, segunda fase do gerador de clock.
 	signal pll_clk_idexmem: std_logic;
+	-- Indica que o PLL travou ('1' = travado).
 	signal pll_locked     : std_logic;
 
 	-- Mantém core em reset até o PLL estar travado, ou enquanto o
-	-- botão físico de reset (FPGA_RESET_N, ativo em nível baixo) for
+	-- botão físico de reset (i_fpga_reset_n, ativo em nível baixo) for
 	-- pressionado o que permite reiniciar o core sem reconfigurar a FPGA
 	-- (ex: depois de carregar um novo conteúdo de ROM via JTAG).
 	signal core_reset : std_logic;
 
 	-- UART memory-mapped em 0xC0000000
 	signal uart_selected : std_logic;
+	-- Escrita na UART ('1' = escreve; janela selecionada e escrita do núcleo).
 	signal uart_write    : std_logic;
+	-- Leitura da UART ('1' = lê; janela selecionada e leitura do núcleo).
 	signal uart_read     : std_logic;
+	-- Dado lido da UART.
 	signal uart_rdata    : std_logic_vector(31 downto 0);
+	-- Leitura da UART atrasada um ciclo, que acompanha a resposta registrada.
 	signal uart_read_d   : std_logic;
+	-- Dado lido da UART registrado, devolvido ao núcleo no ciclo seguinte.
 	signal uart_rdata_d  : std_logic_vector(31 downto 0);
 
 	-- Porta externa do core, usada pela janela de periféricos.
 	signal sdram_addr     : std_logic_vector(31 downto 0);
+	-- Dado de escrita do barramento externo do núcleo.
 	signal sdram_wdata    : std_logic_vector(31 downto 0);
+	-- Dado lido do barramento externo devolvido ao núcleo.
 	signal sdram_rdata    : std_logic_vector(31 downto 0);
+	-- Habilitação de bytes da escrita no barramento externo.
 	signal sdram_byteena  : std_logic_vector(3 downto 0);
+	-- Habilitação de leitura do barramento externo ('1' = lê).
 	signal sdram_rden     : std_logic;
+	-- Habilitação de escrita do barramento externo ('1' = escreve).
 	signal sdram_wren     : std_logic;
 
 
@@ -144,10 +194,10 @@ begin
 	-- for mesmo a causa da instabilidade intermitente de JTAG vista em
 	-- HARDWARE_PROGRAMMING.md/docs/DATA_HARVARD_BUG.md, apertar o botao
 	-- deve bastar em vez de precisar de power-cycle completo.
-	pll_inst : entity work.pll
+	u_pll : entity work.pll
     port map (
-      refclk   => CLOCK_50,
-      rst      => not FPGA_RESET_N,
+      refclk   => i_clock_50,
+      rst      => not i_fpga_reset_n,
       outclk_0 => pll_clk_if,
       outclk_1 => pll_clk_idexmem,
       outclk_2 => open,
@@ -156,7 +206,7 @@ begin
 
 	-- O carregador da FLASH segura o core em reset enquanto grava a imagem do
 	-- proximo teste; liberado, o core reinicia pela BOOT_ROM.
-	core_reset <= (not pll_locked) or (not FPGA_RESET_N) or flash_halt;
+	core_reset <= (not pll_locked) or (not i_fpga_reset_n) or flash_halt;
 
 
 	-- Seleciona a região 0xC0000000 - 0xCFFFFFFF.
@@ -172,12 +222,12 @@ begin
 	-- dao um jeito de ver, so' olhando a placa, se o problema e' antes
 	-- (PLL/reset) ou depois (logica do core/software) do reset, sem
 	-- precisar de uma sessao JTAG.
-	LEDR(1) <= pll_locked;       -- '1' travado (deveria ficar sempre aceso)
-	LEDR(2) <= FPGA_RESET_N;     -- '1' botao de reset fisico solto
-	LEDR(3) <= not core_reset;   -- '1' core fora de reset, rodando
-	LEDR(4) <= flash_halt;       -- '1' core parado pelo carregador da FLASH
+	o_ledr(1) <= pll_locked;       -- '1' travado (deveria ficar sempre aceso)
+	o_ledr(2) <= i_fpga_reset_n;     -- '1' botao de reset fisico solto
+	o_ledr(3) <= not core_reset;   -- '1' core fora de reset, rodando
+	o_ledr(4) <= flash_halt;       -- '1' core parado pelo carregador da FLASH
 
-	CORE : entity work.core
+	u_core : entity work.core
 		generic map (
 			has_m           => HAS_M,
 			has_zmmul       => HAS_ZMMUL,
@@ -231,7 +281,7 @@ begin
 			o_mem_advance   => open
 	);
 
-	UART_PERIPHERAL : entity work.UART
+	u_uart_peripheral : entity work.UART
 		generic map (
 			DATA_WIDTH => 32
 		)
@@ -244,8 +294,8 @@ begin
 			i_read     => uart_read,
 			o_data_out => uart_rdata,
 			o_irq      => open,
-			i_uart_rx  => UART_RX,
-			o_uart_tx  => UART_TX
+			i_uart_rx  => i_uart_rx,
+			o_uart_tx  => o_uart_tx
 		);
 
 	UART_READ_PIPELINE : process (core_reset, pll_clk_idexmem)
@@ -270,7 +320,7 @@ begin
 	-- por teste -- ver config.yaml quartus.boot_rom_mif_target). So'
 	-- precisa de porta unica agora -- nada mais le dado direto dela
 	-- (ver rv32im_pipeline_core.vhd, estagio MEM so' fala com RAM).
-	BOOT_ROM : entity work.boot_rom
+	u_boot_rom : entity work.boot_rom
     generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
     port map (
       i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
@@ -286,7 +336,7 @@ begin
 	-- com o core parado. Porta A: busca de instrucao. Porta B: dado do
 	-- estagio MEM (mesmo clock que a RAM) ou escrita do carregador.
 	-- BOOT_ROM continua so' de porta unica.
-	FLASH : entity work.flash
+	u_flash : entity work.flash
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
       i_clk_a     => pll_clk_if,
@@ -302,7 +352,7 @@ begin
     );
 
 	-- Carregador: dono da porta B com o core parado, e quem para o core.
-	FLASH_LOADER : entity work.flash_loader
+	u_flash_loader : entity work.flash_loader
     generic map (addr_width => log2_exact(ROM_STORAGE_BYTES) - 2)
     port map (
       i_clk         => pll_clk_idexmem,
@@ -326,7 +376,7 @@ begin
     );
 
 	-- Instancia do Virtual JTAG e a porta JTAG do carregador.
-	FLASH_JTAG : entity work.flash_jtag_shell
+	u_flash_jtag : entity work.flash_jtag_shell
     port map (
       o_cmd_tog    => flash_cmd_tog,
       o_op         => flash_op,
@@ -341,7 +391,7 @@ begin
 	-- RAM-relative word address (see RAM_BASE_WORD's own comment above)
 	ram_word_addr <= resize(unsigned(ram_addr(21 downto 2)) - RAM_BASE_WORD, ram_word_addr'length);
 
-	RAM : entity work.ram
+	u_ram : entity work.ram
 	 generic map (size_bytes => RAM_STORAGE_BYTES)
 	 port map (
 		i_address => std_logic_vector(ram_word_addr),
@@ -353,10 +403,10 @@ begin
 		o_q    => ram_rdata
 	 );
 
-	 blink : entity work.Blinky
+	 u_blink : entity work.Blinky
 	 port map (
-		clk => CLOCK_50,
-		led => LEDR(0)
+		i_clk => i_clock_50,
+		o_led => o_ledr(0)
 	 );
 
 end architecture;

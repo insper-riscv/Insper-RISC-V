@@ -115,15 +115,15 @@ gravada só no compile inicial, e a `FLASH`, regravada pelo carregador, não tem
 
 | LED     | Sinal              | Significado                                                        |
 |---------|--------------------|----------------------------------------------------------------------|
-| LEDR(0) | `Blinky`           | Pisca direto do `CLOCK_50`, sem relação com o core, "placa viva".  |
-| LEDR(1) | `pll_locked`       | Deveria ficar **sempre aceso** depois de configurar a FPGA. Apagado = PLL nunca travou. |
-| LEDR(2) | `FPGA_RESET_N`     | Aceso = botão físico de reset **solto**. Apagado = botão pressionado. |
-| LEDR(3) | `not core_reset`   | Aceso = core fora de reset, rodando. Apagado = core em reset (PLL sem lock, ou botão pressionado). |
-| LEDR(4) | `flash_halt`       | Aceso = core parado pelo carregador da FLASH (reset mantido enquanto a imagem é gravada). |
-| LEDR(5-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
+| o_ledr(0) | `Blinky`           | Pisca direto do `i_clock_50`, sem relação com o core, "placa viva".  |
+| o_ledr(1) | `pll_locked`       | Deveria ficar **sempre aceso** depois de configurar a FPGA. Apagado = PLL nunca travou. |
+| o_ledr(2) | `i_fpga_reset_n`     | Aceso = botão físico de reset **solto**. Apagado = botão pressionado. |
+| o_ledr(3) | `not core_reset`   | Aceso = core fora de reset, rodando. Apagado = core em reset (PLL sem lock, ou botão pressionado). |
+| o_ledr(4) | `flash_halt`       | Aceso = core parado pelo carregador da FLASH (reset mantido enquanto a imagem é gravada). |
+| o_ledr(5-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
 
-Como diagnóstico rápido sem precisar abrir uma sessão JTAG: se LEDR(1) ou
-LEDR(3) estiverem apagados, o problema está **antes** do core (PLL/reset);
+Como diagnóstico rápido sem precisar abrir uma sessão JTAG: se o_ledr(1) ou
+o_ledr(3) estiverem apagados, o problema está **antes** do core (PLL/reset);
 nenhum teste vai rodar. Se ambos estão acesos e mesmo assim um teste não
 passa, o problema está no software/lógica do core, não na configuração da
 placa.

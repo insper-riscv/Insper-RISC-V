@@ -128,132 +128,230 @@ architecture behaviour of modular_sim_top is
 
   -- Clocks dos estágios do núcleo.
   signal pll_clk_if      : std_logic;
+  -- Clock dos estágios ID, EX e MEM, segunda fase do gerador de clock.
   signal pll_clk_idexmem : std_logic;
+  -- Clock do estágio de escrita (WB), terceira fase do gerador de clock.
   signal pll_clk_wb      : std_logic;
 
   -- Sinais do núcleo: busca de instrução e FLASH interna.
   signal if_addr       : std_logic_vector(31 downto 0);
+  -- Habilitação de leitura da busca de instrução ('1' = lê).
   signal if_rden       : std_logic;
+  -- Palavra de instrução lida da BOOT_ROM.
   signal boot_rom_data : std_logic_vector(31 downto 0);
+  -- Palavra de instrução lida da FLASH.
   signal flash_data    : std_logic_vector(31 downto 0) := (others => '0');
+  -- Endereço da segunda porta da FLASH (estágio MEM).
   signal flash_addr2   : std_logic_vector(31 downto 0);
+  -- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
   signal flash_rden2   : std_logic;
+  -- Palavra de dado lida da segunda porta da FLASH (estágio MEM).
   signal flash_data2   : std_logic_vector(31 downto 0) := (others => '0');
 
   -- Sinais do núcleo: RAM interna.
   signal ram_addr      : std_logic_vector(31 downto 0);
+  -- Dado de escrita na RAM do núcleo.
   signal ram_wdata     : std_logic_vector(31 downto 0);
+  -- Dado lido da RAM entregue ao núcleo.
   signal ram_rdata     : std_logic_vector(31 downto 0) := (others => '0');
+  -- Habilitação geral da RAM do núcleo (estágio MEM).
   signal ram_en        : std_logic;
+  -- Habilitação de escrita da RAM do núcleo ('1' = escreve).
   signal ram_wren      : std_logic;
+  -- Habilitação de leitura da RAM do núcleo ('1' = lê).
   signal ram_rden      : std_logic;
+  -- Habilitação de bytes da escrita na RAM do núcleo.
   signal ram_byteena   : std_logic_vector(3 downto 0);
+  -- Leitura da RAM habilitada pelo núcleo e pelo enable geral ('1' = lê).
   signal ram_re_gated  : std_logic;
+  -- Escrita na RAM habilitada pelo núcleo e pelo enable geral ('1' = escreve).
   signal ram_we_gated  : std_logic;
 
   -- Sinais do núcleo: barramento externo de dados.
   signal sdram_addr    : std_logic_vector(31 downto 0);
+  -- Dado de escrita do barramento externo do núcleo.
   signal sdram_wdata   : std_logic_vector(31 downto 0);
+  -- Habilitação de bytes da escrita no barramento externo.
   signal sdram_byteena : std_logic_vector(3 downto 0);
+  -- Habilitação de leitura do barramento externo ('1' = lê).
   signal sdram_rden    : std_logic;
+  -- Habilitação de escrita do barramento externo ('1' = escreve).
   signal sdram_wren    : std_logic;
+  -- Dado lido do barramento externo devolvido ao núcleo.
   signal sdram_rdata   : std_logic_vector(31 downto 0) := (others => '0');
+  -- Resposta do barramento externo pronta ('1' = pronta).
   signal sdram_ready   : std_logic := '1';
+  -- Avanço do pipeline do núcleo liberado pela memória ('1' = avança).
   signal mem_advance   : std_logic;
 
   -- Sinais do núcleo: cache de instruções.
   signal ic_data       : std_logic_vector(31 downto 0) := (others => '0');
+  -- Cache de instruções pronta com a palavra pedida ('1' = pronta).
   signal ic_ready      : std_logic := '1';
+  -- Seleciona a cache de instruções para a região da ROM ('1' = selecionada).
   signal ic_sel        : std_logic;
+  -- Invalidação da cache de instruções pelo FENCE.I ('1' = invalida).
   signal ic_inval      : std_logic;
 
   -- Eventos das caches e da FLASH para o Zihpm.
   signal ic_miss       : std_logic := '0';
+  -- Pulso de falha (miss) na cache de dados, evento do Zihpm.
   signal dc_miss       : std_logic := '0';
+  -- Chip de FLASH ocupado com um acesso, evento do Zihpm ('1' = ocupado).
   signal flash_busy    : std_logic := '0';
+  -- Eventos externos do Zihpm: bit 0 falha de instrução, bit 1 falha de dados, bit 2 FLASH ocupada.
   signal hpm_ext_events : std_logic_vector(2 downto 0);
 
   -- Interconexão e cache de dados: lado do núcleo e lado da memória.
   signal m_addr        : std_logic_vector(31 downto 0);
+  -- Interconexão do núcleo para a cache de dados: dado de escrita.
   signal m_wdata       : std_logic_vector(31 downto 0);
+  -- Interconexão do núcleo para a cache de dados: habilitação de bytes da escrita.
   signal m_byteena     : std_logic_vector(3 downto 0);
+  -- Interconexão do núcleo para a cache de dados: habilitação de leitura ('1' = lê).
   signal m_rden        : std_logic;
+  -- Interconexão do núcleo para a cache de dados: habilitação de escrita ('1' = escreve).
   signal m_wren        : std_logic;
+  -- Interconexão do núcleo para a cache de dados: acesso concluído ('1' = pronto).
   signal m_ready       : std_logic;
+  -- Interconexão do núcleo para a cache de dados: dado lido.
   signal m_rdata       : std_logic_vector(31 downto 0);
+  -- Cache de dados, lado da memória: endereço de byte do acesso.
   signal dd_addr       : std_logic_vector(31 downto 0);
+  -- Cache de dados, lado da memória: dado de escrita.
   signal dd_wdata      : std_logic_vector(31 downto 0);
+  -- Cache de dados, lado da memória: habilitação de bytes da escrita.
   signal dd_be         : std_logic_vector(3 downto 0);
+  -- Cache de dados, lado da memória: habilitação de leitura ('1' = lê).
   signal dd_rden       : std_logic;
+  -- Cache de dados, lado da memória: habilitação de escrita ('1' = escreve).
   signal dd_wren       : std_logic;
+  -- Cache de dados, lado da memória: pedido de linha inteira de cache ('1' = acesso em linha).
   signal dd_line       : std_logic;
+  -- Cache de dados, lado da memória: avanço para a próxima palavra da linha ('1' = avança).
   signal dd_adv        : std_logic;
+  -- Cache de dados, lado da memória: acesso concluído ('1' = pronto).
   signal dd_ready      : std_logic;
+  -- Cache de dados, lado da memória: dado lido.
   signal dd_rdata      : std_logic_vector(31 downto 0);
+  -- Cache de dados, lado da memória: linha a escrever, barramento largo de 96 bits.
   signal dd_wdx        : std_logic_vector(95 downto 0);
+  -- Cache de dados, lado da memória: linha lida, barramento largo de 96 bits.
   signal dd_rdx        : std_logic_vector(95 downto 0);
+  -- Cache de dados concluiu o acesso pendente ('1' = concluído).
   signal dc_done       : std_logic;
+  -- Cache de dados ocupada com um acesso ao chip ('1' = ocupada).
   signal dc_busy       : std_logic;
 
   -- Cache de instruções: lado da memória.
   signal id_addr       : std_logic_vector(31 downto 0);
+  -- Cache de instruções, lado da memória: habilitação de leitura ('1' = lê).
   signal id_rden       : std_logic;
+  -- Cache de instruções, lado da memória: avanço para a próxima palavra da linha ('1' = avança).
   signal id_adv        : std_logic;
+  -- Cache de instruções, lado da memória: acesso concluído ('1' = pronto).
   signal id_ready      : std_logic;
+  -- Cache de instruções, lado da memória: dado lido.
   signal id_rdata      : std_logic_vector(31 downto 0);
+  -- Cache de instruções, lado da memória: pedido de linha inteira de cache ('1' = acesso em linha).
   signal id_line       : std_logic;
+  -- Cache de instruções, lado da memória: linha lida, barramento largo de 96 bits.
   signal id_rdx        : std_logic_vector(95 downto 0);
 
   -- Roteadores por região (as duas memórias externas): lado do chip de RAM de cada um.
   signal si_addr       : std_logic_vector(31 downto 0);
+  -- Roteador da ROM para o chip de RAM: dado de escrita.
   signal si_wdata      : std_logic_vector(31 downto 0);
+  -- Roteador da ROM para o chip de RAM: habilitação de bytes da escrita.
   signal si_be         : std_logic_vector(3 downto 0);
+  -- Roteador da ROM para o chip de RAM: habilitação de leitura ('1' = lê).
   signal si_rden       : std_logic;
+  -- Roteador da ROM para o chip de RAM: habilitação de escrita ('1' = escreve).
   signal si_wren       : std_logic;
+  -- Roteador da ROM para o chip de RAM: pedido de linha inteira de cache ('1' = acesso em linha).
   signal si_line       : std_logic;
+  -- Roteador da ROM para o chip de RAM: avanço para a próxima palavra da linha ('1' = avança).
   signal si_adv        : std_logic;
+  -- Roteador da ROM para o chip de RAM: acesso concluído ('1' = pronto).
   signal si_ready      : std_logic;
+  -- Roteador da ROM para o chip de RAM: dado lido.
   signal si_rdata      : std_logic_vector(31 downto 0);
+  -- Roteador da ROM para o chip de RAM: linha a escrever, barramento largo de 96 bits.
   signal si_wdx        : std_logic_vector(95 downto 0);
+  -- Roteador da ROM para o chip de RAM: linha lida, barramento largo de 96 bits.
   signal si_rdx        : std_logic_vector(95 downto 0);
+  -- Roteador de dados para o chip de RAM: endereço de byte do acesso.
   signal sd_addr       : std_logic_vector(31 downto 0);
+  -- Roteador de dados para o chip de RAM: dado de escrita.
   signal sd_wdata      : std_logic_vector(31 downto 0);
+  -- Roteador de dados para o chip de RAM: habilitação de bytes da escrita.
   signal sd_be         : std_logic_vector(3 downto 0);
+  -- Roteador de dados para o chip de RAM: habilitação de leitura ('1' = lê).
   signal sd_rden       : std_logic;
+  -- Roteador de dados para o chip de RAM: habilitação de escrita ('1' = escreve).
   signal sd_wren       : std_logic;
+  -- Roteador de dados para o chip de RAM: pedido de linha inteira de cache ('1' = acesso em linha).
   signal sd_line       : std_logic;
+  -- Roteador de dados para o chip de RAM: avanço para a próxima palavra da linha ('1' = avança).
   signal sd_adv        : std_logic;
+  -- Roteador de dados para o chip de RAM: acesso concluído ('1' = pronto).
   signal sd_ready      : std_logic;
+  -- Roteador de dados para o chip de RAM: dado lido.
   signal sd_rdata      : std_logic_vector(31 downto 0);
+  -- Roteador de dados para o chip de RAM: linha a escrever, barramento largo de 96 bits.
   signal sd_wdx        : std_logic_vector(95 downto 0);
+  -- Roteador de dados para o chip de RAM: linha lida, barramento largo de 96 bits.
   signal sd_rdx        : std_logic_vector(95 downto 0);
 
   -- Roteadores por região (as duas memórias externas): lado do chip de FLASH.
+  -- Endereço e dado lido dos roteadores A, B e C do chip de FLASH.
   signal fa_addr, fa_rdata, fb_addr, fb_rdata, fc_addr, fc_rdata : std_logic_vector(31 downto 0);
+  -- Roteador A para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
   signal fa_rden, fa_line, fa_adv, fa_ready : std_logic;
+  -- Roteador B para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
   signal fb_rden, fb_line, fb_adv, fb_ready : std_logic;
+  -- Roteador C para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
   signal fc_rden, fc_line, fc_adv, fc_ready : std_logic;
+  -- Linhas lidas dos roteadores A, B e C, barramentos largos de 96 bits.
   signal fa_rdx, fb_rdx, fc_rdx : std_logic_vector(95 downto 0);
+  -- Endereço de byte e dado lido do acesso ao chip de FLASH.
   signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
 
   -- Portas do chip de RAM externo: dados e instruções.
   signal rc_d_addr     : std_logic_vector(31 downto 0) := (others => '0');
+  -- Porta de dados do chip de RAM externo: dado de escrita.
   signal rc_d_wdata    : std_logic_vector(31 downto 0) := (others => '0');
+  -- Porta de dados do chip de RAM externo: habilitação de bytes da escrita.
   signal rc_d_be       : std_logic_vector(3 downto 0)  := (others => '0');
+  -- Porta de dados do chip de RAM externo: habilitação de leitura ('1' = lê).
   signal rc_d_rden     : std_logic := '0';
+  -- Porta de dados do chip de RAM externo: habilitação de escrita ('1' = escreve).
   signal rc_d_wren     : std_logic := '0';
+  -- Porta de dados do chip de RAM externo: pedido de linha inteira de cache ('1' = acesso em linha).
   signal rc_d_line     : std_logic := '0';
+  -- Porta de dados do chip de RAM externo: avanço para a próxima palavra da linha ('1' = avança).
   signal rc_d_adv      : std_logic := '0';
+  -- Porta de dados do chip de RAM externo: linha a escrever, barramento largo de 96 bits.
   signal rc_d_wdx      : std_logic_vector(95 downto 0) := (others => '0');
+  -- Porta de dados do chip de RAM externo: acesso concluído ('1' = pronto).
   signal rc_d_ready    : std_logic;
+  -- Porta de dados do chip de RAM externo: dado lido.
   signal rc_d_rdata    : std_logic_vector(31 downto 0);
+  -- Porta de dados do chip de RAM externo: linha lida, barramento largo de 96 bits.
   signal rc_d_rdx      : std_logic_vector(95 downto 0);
+  -- Porta de instruções do chip de RAM externo: endereço de byte do acesso.
   signal rc_i_addr     : std_logic_vector(31 downto 0) := (others => '0');
+  -- Porta de instruções do chip de RAM externo: habilitação de leitura ('1' = lê).
   signal rc_i_rden     : std_logic := '0';
+  -- Porta de instruções do chip de RAM externo: pedido de linha inteira de cache ('1' = acesso em linha).
   signal rc_i_line     : std_logic := '0';
+  -- Porta de instruções do chip de RAM externo: avanço para a próxima palavra da linha ('1' = avança).
   signal rc_i_adv      : std_logic := '0';
+  -- Porta de instruções do chip de RAM externo: acesso concluído ('1' = pronto).
   signal rc_i_ready    : std_logic;
+  -- Porta de instruções do chip de RAM externo: dado lido.
   signal rc_i_rdata    : std_logic_vector(31 downto 0);
+  -- Porta de instruções do chip de RAM externo: linha lida, barramento largo de 96 bits.
   signal rc_i_rdx      : std_logic_vector(95 downto 0);
 
 begin
@@ -273,16 +371,16 @@ begin
 
   hpm_ext_events <= flash_busy & dc_miss & ic_miss;
 
-  pll_inst : entity work.clk_gen_3way
+  u_pll : entity work.clk_gen_3way
     port map (
-      clk_in => i_clk,
-      reset  => i_rst,
-      clk0   => pll_clk_if,
-      clk1   => pll_clk_idexmem,
-      clk2   => pll_clk_wb
+      i_clk  => i_clk,
+      i_rst  => i_rst,
+      o_clk0 => pll_clk_if,
+      o_clk1 => pll_clk_idexmem,
+      o_clk2 => pll_clk_wb
     );
 
-  core_inst : entity work.core
+  u_core : entity work.core
     generic map (
       has_m        => has_m,
       has_zmmul    => has_zmmul,
@@ -341,7 +439,7 @@ begin
       o_ic_inval       => ic_inval
     );
 
-  boot_rom_inst : entity work.rom_simulation
+  u_boot_rom : entity work.rom_simulation
     generic map (rom_file => boot_rom_file, size_bytes => boot_rom_size_bytes)
     port map (
       i_addr => if_addr(31 downto 2),
@@ -353,7 +451,7 @@ begin
   -- ROM interna: a FLASH com duas portas, uma para instruções e outra para dados.
   g_rom_internal : if not rom_external generate
   begin
-    flash_inst : entity work.rom_simulation
+    u_flash : entity work.rom_simulation
       generic map (rom_file => rom_file, size_bytes => rom_size_bytes)
       port map (
         i_addr  => if_addr(31 downto 2),
@@ -370,7 +468,7 @@ begin
   -- RAM interna do núcleo.
   g_ram_internal : if not ram_external generate
   begin
-    ram_inst : entity work.ram_simulation
+    u_ram : entity work.ram_simulation
       generic map (size_bytes => ram_size_bytes, ram_file => ram_file)
       port map (
         i_addr     => ram_addr(31 downto 2),
@@ -388,7 +486,7 @@ begin
   -- núcleo e a memória.
   g_data_external : if ram_external generate
   begin
-    interconnect_inst : entity work.ext_interconnect
+    u_interconnect : entity work.ext_interconnect
       port map (
         i_clk         => pll_clk_idexmem,
         i_rst         => i_rst,
@@ -415,7 +513,7 @@ begin
         i_p_rdata     => (others => '0')
       );
 
-    dcache_inst : entity work.dcache
+    u_dcache : entity work.dcache
       generic map (
         size_bits     => dcache_size_bits,
         write_through => true,
@@ -456,7 +554,7 @@ begin
   -- Instruções externas: a cache de instruções entre o núcleo e a memória.
   g_instr_external : if rom_external generate
   begin
-    icache_inst : entity work.icache
+    u_icache : entity work.icache
       generic map (
         size_bits    => icache_size_bits,
         rom_base_kib => BOOT_KIB,
@@ -514,7 +612,7 @@ begin
   -- árbitro entre as duas.
   g_routed : if rom_external and ram_external generate
   begin
-    router_i_inst : entity work.mem_region_router
+    u_router_i : entity work.mem_region_router
       port map (
         i_clk => pll_clk_idexmem, i_rst => i_rst,
         i_addr => id_addr, i_wdata => (others => '0'), i_byteena => (others => '0'),
@@ -527,7 +625,7 @@ begin
         i_f_ready => fa_ready, i_f_rdata => fa_rdata, i_f_rdata_x => fa_rdx
       );
 
-    router_d_inst : entity work.mem_region_router
+    u_router_d : entity work.mem_region_router
       port map (
         i_clk => pll_clk_idexmem, i_rst => i_rst,
         i_addr => dd_addr, i_wdata => dd_wdata, i_byteena => dd_be,
@@ -540,7 +638,7 @@ begin
         i_f_ready => fb_ready, i_f_rdata => fb_rdata, i_f_rdata_x => fb_rdx
       );
 
-    flash_arbiter_inst : entity work.flash_arbiter
+    u_flash_arbiter : entity work.flash_arbiter
       port map (
         i_clk => pll_clk_idexmem, i_rst => i_rst,
         i_a_addr => fa_addr, i_a_rden => fa_rden, i_a_line => fa_line, i_a_advance => fa_adv,
@@ -575,7 +673,7 @@ begin
   -- O chip de FLASH externo e o seu armazenamento, quando a ROM é externa.
   g_rom_chip : if rom_external generate
   begin
-    flash_chip_inst : entity work.flash_chip
+    u_flash_chip : entity work.flash_chip
       generic map (
         first_latency => flash_first_latency,
         next_latency  => flash_next_latency,
@@ -588,7 +686,7 @@ begin
         o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
       );
 
-    flash_storage_inst : entity work.rom_simulation
+    u_flash_storage : entity work.rom_simulation
       generic map (rom_file => rom_file, size_bytes => rom_size_bytes)
       port map (
         i_addr => flash_mem_addr(31 downto 2),
@@ -601,7 +699,7 @@ begin
   -- O chip de RAM externo, quando algum lado é externo.
   g_ext_ram : if ram_external generate
   begin
-    ext_ram_inst : entity work.ram_chip
+    u_ext_ram : entity work.ram_chip
       generic map (
         init_file  => ram_file,
         latency    => ext_ram_latency,

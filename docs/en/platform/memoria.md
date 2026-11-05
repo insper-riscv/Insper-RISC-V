@@ -70,14 +70,14 @@ Only the `RAM` declares `ENABLE_RUNTIME_MOD`, so it is the only In-System Memory
 
 | LED | Signal | Meaning |
 | :--- | :--- | :--- |
-| LEDR(0) | `Blinky` | Blinks straight from `CLOCK_50`, unrelated to the core, "board alive" |
-| LEDR(1) | `pll_locked` | Should stay **always on** after the FPGA is configured. Off means the PLL never locked |
-| LEDR(2) | `FPGA_RESET_N` | On means the physical reset button is **released**. Off means it is pressed |
-| LEDR(3) | `not core_reset` | On means the core is out of reset and running. Off means the core is in reset (PLL without lock, or button pressed) |
-| LEDR(4) | `flash_halt` | Lit = core halted by the FLASH loader (reset held while the image is written) |
-| LEDR(5-9) | (unused) | Free |
+| o_ledr(0) | `Blinky` | Blinks straight from `i_clock_50`, unrelated to the core, "board alive" |
+| o_ledr(1) | `pll_locked` | Should stay **always on** after the FPGA is configured. Off means the PLL never locked |
+| o_ledr(2) | `i_fpga_reset_n` | On means the physical reset button is **released**. Off means it is pressed |
+| o_ledr(3) | `not core_reset` | On means the core is out of reset and running. Off means the core is in reset (PLL without lock, or button pressed) |
+| o_ledr(4) | `flash_halt` | Lit = core halted by the FLASH loader (reset held while the image is written) |
+| o_ledr(5-9) | (unused) | Free |
 
-As a quick diagnostic without opening a JTAG session, if LEDR(1) or LEDR(3) is off, the problem is **before** the core (PLL or reset) and no test will run. If both are on and a test still does not pass, the problem is in the software or the core logic, not in the board configuration.
+As a quick diagnostic without opening a JTAG session, if o_ledr(1) or o_ledr(3) is off, the problem is **before** the core (PLL or reset) and no test will run. If both are on and a test still does not pass, the problem is in the software or the core logic, not in the board configuration.
 
 ---
 

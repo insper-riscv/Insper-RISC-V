@@ -14,27 +14,31 @@ ZEROS = (0, 0, 0)
 
 def outputs(dut: Any) -> tuple[int, int, int]:
     """Return the three clock outputs as a tuple of ints."""
-    return (int(dut.clk0.value), int(dut.clk1.value), int(dut.clk2.value))
+    return (
+        int(dut.o_clk0.value),
+        int(dut.o_clk1.value),
+        int(dut.o_clk2.value),
+    )
 
 
 async def rise(dut: Any, half: int = 5) -> None:
-    """Drive clk_in high and wait half a period."""
-    dut.clk_in.value = 1
+    """Drive i_clk high and wait half a period."""
+    dut.i_clk.value = 1
     await Timer(half, unit="ns")
 
 
 async def fall(dut: Any, half: int = 5) -> None:
-    """Drive clk_in low and wait half a period."""
-    dut.clk_in.value = 0
+    """Drive i_clk low and wait half a period."""
+    dut.i_clk.value = 0
     await Timer(half, unit="ns")
 
 
 async def reset_pulse(dut: Any, width: int) -> None:
     """Pulse reset for width ns, then release it and wait 1 ns."""
-    dut.clk_in.value = 0
-    dut.reset.value = 1
+    dut.i_clk.value = 0
+    dut.i_rst.value = 1
     await Timer(width, "ns")
-    dut.reset.value = 0
+    dut.i_rst.value = 0
     await Timer(1, "ns")
 
 
@@ -73,31 +77,31 @@ async def async_reset_immediate_clear(dut: Any) -> None:
     aplicado tanto na fase alta quanto na fase baixa.
     """
     # inicia e roda 2 ciclos para entrar em operação
-    dut.clk_in.value = 0
-    dut.reset.value = 0
+    dut.i_clk.value = 0
+    dut.i_rst.value = 0
     await Timer(1, "ns")
     await rise(dut, half=4)
     await fall(dut, half=4)
 
     # aplica reset durante a fase baixa
-    dut.reset.value = 1
+    dut.i_rst.value = 1
     await Timer(1, "ns")
     after_reset_low = outputs(dut)
     check(after_reset_low == ZEROS, f"[reset low] obteve {after_reset_low}")
 
     # libera reset e roda um ciclo para voltar à operação
-    dut.reset.value = 0
+    dut.i_rst.value = 0
     await rise(dut, half=4)
     await fall(dut, half=4)
 
     # aplica reset durante a fase alta
     await rise(dut, half=4)
-    dut.reset.value = 1
+    dut.i_rst.value = 1
     await Timer(1, "ns")
     after_reset_high = outputs(dut)
     check(after_reset_high == ZEROS, f"[reset high] obteve {after_reset_high}")
 
-    dut.reset.value = 0
+    dut.i_rst.value = 0
     await Timer(1, "ns")
     LOG.info("async_reset_immediate_clear: OK")
 
@@ -112,10 +116,10 @@ async def release_reset_alignment(dut: Any) -> None:
     implementação, o primeiro high pode ser clk0 ou clk1.
     """
     # força reset, libera em low e aguarda uma subida
-    dut.clk_in.value = 0
-    dut.reset.value = 1
+    dut.i_clk.value = 0
+    dut.i_rst.value = 1
     await Timer(5, "ns")
-    dut.reset.value = 0
+    dut.i_rst.value = 0
     await Timer(1, "ns")
 
     await rise(dut, half=4)
@@ -143,13 +147,13 @@ async def output_changes_only_on_rising_edge(dut: Any) -> None:
     """Check that the outputs change only on the rising edge.
 
     Garante que a mudança de saída acontece na borda de subida, já que
-    as saídas são ativas quando clk_in='1' e cnt foi atualizado na
+    as saídas são ativas quando i_clk='1' e cnt foi atualizado na
     descida. Amostramos antes, logo após e um pouco depois da subida.
     """
-    dut.clk_in.value = 0
-    dut.reset.value = 1
+    dut.i_clk.value = 0
+    dut.i_rst.value = 1
     await Timer(3, "ns")
-    dut.reset.value = 0
+    dut.i_rst.value = 0
     await Timer(1, "ns")
 
     # avança um ciclo para ter cnt não trivial
@@ -158,12 +162,12 @@ async def output_changes_only_on_rising_edge(dut: Any) -> None:
 
     # amostra pouco antes da subida
     await Timer(1, "ns")
-    dut.clk_in.value = 0
+    dut.i_clk.value = 0
     await Timer(1, "ns")
     before = outputs(dut)
 
-    # na subida: amostra imediatamente após mudar clk_in para 1
-    dut.clk_in.value = 1
+    # na subida: amostra imediatamente após mudar i_clk para 1
+    dut.i_clk.value = 1
     await Timer(1, "ns")
     on_rise = outputs(dut)
 
