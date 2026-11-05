@@ -14,7 +14,11 @@ ZEROS = (0, 0, 0)
 
 def outputs(dut: Any) -> tuple[int, int, int]:
     """Return the three clock outputs as a tuple of ints."""
-    return (int(dut.o_clk0.value), int(dut.o_clk1.value), int(dut.o_clk2.value))
+    return (
+        int(dut.o_clk0.value),
+        int(dut.o_clk1.value),
+        int(dut.o_clk2.value),
+    )
 
 
 async def rise(dut: Any, half: int = 5) -> None:
