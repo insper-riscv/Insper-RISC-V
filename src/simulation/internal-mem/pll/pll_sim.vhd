@@ -1,36 +1,41 @@
+-- =============================================================================
+-- Modelo comportamental do PLL para simulação
+--
+-- Substitui o pll.vhd gerado pelo Quartus na simulação com GHDL, pois o modelo do altera_pll
+-- é SystemVerilog. Mantém o nome e as portas do PLL real, por isso as portas não levam os
+-- prefixos i_ e o_ (o top as associa pelos nomes do IP gerado).
+--
+-- Três saídas na frequência da referência (50 MHz), ciclo de trabalho de 50 %, defasadas em
+-- 0 ps, 6667 ps e 13333 ps. O sinal locked sobe LOCK_CYCLES ciclos da referência depois de
+-- rst descer. Não faz parte do projeto Quartus, que sintetiza o PLL real.
+-- =============================================================================
+
 library IEEE;
 use IEEE.std_logic_1164.all;
 
--- Behavioral stand-in for the PLL of src/PLL/pll.vhd, for simulating
--- the hardware top (quartus/core_fpga_test.vhd) under GHDL.
---
--- src/PLL/pll.vhd wraps pll_0002.v, an altera_pll whose simulation model
--- is SystemVerilog, which GHDL does not run. This entity has the same
--- name and ports, so a simulation compiles it instead of src/PLL/pll.vhd
--- and the top needs no change. It is not part of the Quartus project
--- (quartus/ does not list it), so synthesis still uses the real PLL.
---
--- The parameters are the ones pll_0002.v sets: three outputs at the
--- reference frequency (50 MHz), 50 % duty cycle, phase shifted 0 ps,
--- 6667 ps and 13333 ps against the reference. Keep them in step with
--- pll_0002.v if the PLL changes.
---
--- locked: low while rst is high, and high LOCK_CYCLES reference clocks
--- after rst goes low, as a stand-in for the real lock time.
 entity pll is
 	port (
+		-- Clock de referência (50 MHz).
 		refclk   : in  std_logic := '0';
+		-- Reset do PLL, ativo em '1'.
 		rst      : in  std_logic := '0';
+		-- Saída 0, em fase com a referência.
 		outclk_0 : out std_logic;
+		-- Saída 1, defasada em 6667 ps.
 		outclk_1 : out std_logic;
+		-- Saída 2, defasada em 13333 ps.
 		outclk_2 : out std_logic;
+		-- Indica o travamento do PLL ('1' = travado).
 		locked   : out std_logic
 	);
 end entity pll;
 
 architecture sim of pll is
+	-- Ciclos da referência entre a liberação de rst e o travamento.
 	constant LOCK_CYCLES : natural := 10;
+	-- Fases 0, 1 e 2 derivadas da referência.
 	signal c0, c1, c2 : std_logic := '0';
+	-- Indicador de travamento registrado.
 	signal lock_reg   : std_logic := '0';
 begin
 	c0 <= refclk;

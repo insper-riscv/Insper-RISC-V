@@ -38,7 +38,7 @@ Python-side ROM poking here at all.
 The same module drives the hardware top (core_fpga_test, see
 config.fpga-sim.yaml) too: its clock, reset and timeout come from the
 SIM_* environment variables that profile sets (sim.env), defaulting to
-the simulation top's CLK/reset. The bus watched is the same signals
+the simulation top's i_clk/i_rst. The bus watched is the same signals
 either way, they have the same names in both tops.
 """
 
@@ -93,15 +93,15 @@ _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
 # What this drives, by name. Defaults are rv32i3stage_core_sim_test's:
-# a base clock CLK that its clock generator divides by three, an
-# active-high reset, and a timeout counted in ticks of CLK (three per
+# a base clock i_clk that its clock generator divides by three, an
+# active-high reset, and a timeout counted in ticks of i_clk (three per
 # core cycle). config.fpga-sim.yaml overrides them for core_fpga_test,
-# whose clock is CLOCK_50, reset is the active-low FPGA_RESET_N, and
+# whose clock is i_clock_50, reset is the active-low i_fpga_reset_n, and
 # whose RAM is clocked by the PLL's second output (SIM_SAMPLE_CLOCK):
 # the bus is sampled on the clock the RAM captures it with.
-SIM_CLOCK = os.environ.get("SIM_CLOCK", "CLK")
+SIM_CLOCK = os.environ.get("SIM_CLOCK", "i_clk")
 SIM_CLOCK_PERIOD_NS = int(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
-SIM_RESET = os.environ.get("SIM_RESET", "reset")
+SIM_RESET = os.environ.get("SIM_RESET", "i_rst")
 SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", SIM_CLOCK)
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "200000"))
@@ -259,11 +259,11 @@ def start_uart(
     else:
         return None, None
     if test_name != "uart-tx":
-        dut.UART_RX.value = 1
+        dut.i_uart_rx.value = 1
     if test_name == "uart-errors":
-        capture = exchange_uart_errors(dut.UART_RX, dut.UART_TX)
+        capture = exchange_uart_errors(dut.i_uart_rx, dut.o_uart_tx)
     else:
-        capture = receive_uart_message(dut.UART_TX, len(expected))
+        capture = receive_uart_message(dut.o_uart_tx, len(expected))
     return expected, cocotb.start_soon(capture)
 
 
@@ -403,7 +403,7 @@ async def test_program(dut: Any) -> None:
     getattr(dut, SIM_RESET).value = 1 - SIM_RESET_ACTIVE
     if test_name == "uart-echo":
         uart_drive = cocotb.start_soon(
-            send_uart_message(dut.UART_RX, UART_ECHO_EXPECTED)
+            send_uart_message(dut.i_uart_rx, UART_ECHO_EXPECTED)
         )
     for _ in range(TIMEOUT_CYCLES):
         await RisingEdge(sample_clock)

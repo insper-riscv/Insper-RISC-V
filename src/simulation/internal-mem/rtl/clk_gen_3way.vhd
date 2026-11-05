@@ -1,28 +1,43 @@
+-- =============================================================================
+-- Gerador de clock de três fases
+--
+-- Divide o clock base por três: um contador mod-3, atualizado na borda de descida de i_clk,
+-- ativa uma das saídas o_clk0, o_clk1 e o_clk2 por vez durante a fase alta de i_clk.
+-- O reset i_rst é assíncrono, ativo em '1', e zera as três saídas imediatamente.
+-- =============================================================================
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity clk_gen_3way is
   port (
-    clk_in : in  std_logic;  -- clock de base (entrada)
-    reset  : in  std_logic;  -- reset ASSÍNCRONO ativo em '1'
-    clk0   : out std_logic;  -- pulse 0 
-    clk1   : out std_logic;  -- pulse 1
-    clk2   : out std_logic   -- pulse 2
+    -- Clock base (entrada).
+    i_clk : in  std_logic;
+    -- Reset assíncrono, ativo em '1'.
+    i_rst  : in  std_logic;
+    -- Pulso da fase 0 (ativo quando o contador vale 0 e i_clk está em '1').
+    o_clk0   : out std_logic;
+    -- Pulso da fase 1 (ativo quando o contador vale 1 e i_clk está em '1').
+    o_clk1   : out std_logic;
+    -- Pulso da fase 2 (ativo quando o contador vale 2 e i_clk está em '1').
+    o_clk2   : out std_logic
   );
 end entity clk_gen_3way;
 
 architecture rtl of clk_gen_3way is
+  -- Contador mod-3 que seleciona a fase ativa.
   signal cnt : unsigned(1 downto 0) := (others => '0');
 begin
 
-  -- Contador mod-3 atualizado na borda de descida; reset assíncrono
-  process(clk_in, reset)
+  -- Contador mod-3 atualizado na borda de descida; i_rst assíncrono
+  process(i_clk, i_rst)
+    -- Próximo valor do contador mod-3.
     variable next_cnt : unsigned(1 downto 0);
   begin
-    if reset = '1' then
+    if i_rst = '1' then
       cnt <= (others => '0');
-    elsif falling_edge(clk_in) then
+    elsif falling_edge(i_clk) then
       if cnt = to_unsigned(2, cnt'length) then
         next_cnt := (others => '0');
       else
@@ -32,14 +47,17 @@ begin
     end if;
   end process;
 
-  -- Saídas: ativas apenas durante a fase baixa de clk_in e quando cnt corresponde
-  clk0 <= '0' when reset = '1' else
-        '1' when (clk_in = '1' and cnt = to_unsigned(0, cnt'length)) else '0';
+  -- Saídas: ativas apenas durante a fase baixa de i_clk e quando cnt corresponde
+  -- Pulso da fase 0 (ativo quando o contador vale 0 e i_clk está em '1').
+  o_clk0 <= '0' when i_rst = '1' else
+        '1' when (i_clk = '1' and cnt = to_unsigned(0, cnt'length)) else '0';
 
-  clk1 <= '0' when reset = '1' else
-        '1' when (clk_in = '1' and cnt = to_unsigned(1, cnt'length)) else '0';
+  -- Pulso da fase 1 (ativo quando o contador vale 1 e i_clk está em '1').
+  o_clk1 <= '0' when i_rst = '1' else
+        '1' when (i_clk = '1' and cnt = to_unsigned(1, cnt'length)) else '0';
 
-  clk2 <= '0' when reset = '1' else
-        '1' when (clk_in = '1' and cnt = to_unsigned(2, cnt'length)) else '0';
+  -- Pulso da fase 2 (ativo quando o contador vale 2 e i_clk está em '1').
+  o_clk2 <= '0' when i_rst = '1' else
+        '1' when (i_clk = '1' and cnt = to_unsigned(2, cnt'length)) else '0';
 
 end architecture rtl;

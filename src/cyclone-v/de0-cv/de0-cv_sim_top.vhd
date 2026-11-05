@@ -189,11 +189,11 @@ begin
 
 	pll_inst : entity work.clk_gen_3way
     port map (
-      clk_in   => CLK,
-      reset    => reset,
-      clk0 => pll_clk_if,
-      clk1 => pll_clk_idexmem,
-      clk2 => pll_clk_wb
+      i_clk    => CLK,
+      i_rst    => reset,
+      o_clk0 => pll_clk_if,
+      o_clk1 => pll_clk_idexmem,
+      o_clk2 => pll_clk_wb
     );
 
 	CORE : entity work.core

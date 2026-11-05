@@ -1,3 +1,3 @@
-create_clock -name CLOCK_50 -period 20.000 [get_ports CLOCK_50]
+create_clock -name i_clock_50 -period 20.000 [get_ports i_clock_50]
 derive_pll_clocks
 derive_clock_uncertainty

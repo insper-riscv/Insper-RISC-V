@@ -11,7 +11,7 @@
 | Loaded image | `.hex`, through a VHDL generic | `.mif`, through the IP `init_file` (`init.mif` and `boot_rom_init.mif`), the same images as the hardware |
 | RAM address | Absolute bus address | Address relative to `ram_base`, as on the hardware (see `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`, pulses of a base clock three times faster | `pll_sim.vhd`, three 50 MHz clocks, 50 % duty cycle, shifted 0, 6667 and 13333 ps, like the real PLL |
-| Reset | Active high (`reset`) | `FPGA_RESET_N`, active low, plus the wait for the PLL `locked` |
+| Reset | Active high (`i_rst`) | `i_fpga_reset_n`, active low, plus the wait for the PLL `locked` |
 
 The core (`rv32im_pipeline_core.vhd`) is the same in both profiles.
 

@@ -39,3 +39,10 @@ references:
 exceptions:
   formal:
     - {entity: de0-cv_top, reason: "The board top only instantiates the PLL and the Quartus IPs (altera_mf, absent from the toolchain image) around the proven blocks (mem_region_router, icache, dcache, ext_interconnect, sdram_cpu_bridge); the map it receives is checked against platform.yaml by riscv-tools check-memory-map, and the board run covers the wiring."}
+
+# Files left out of `riscv-tools check-vhdl-style`: the behavioral stand-in of the generated PLL keeps the
+# port names of src/simulation/internal-mem/pll/pll.vhd (Quartus IP, itself exempt), because the hardware top
+# instantiates either of the two by the same names.
+tree:
+  vhdl_style:
+    exclude: [src/simulation/internal-mem/pll/pll_sim.vhd]
