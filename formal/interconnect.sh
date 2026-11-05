@@ -10,6 +10,7 @@
 # Besides the report, the run writes build/formal/result-<engine>.tsv, one line per proof with the columns
 # id, wanted (pass or fail), verdict (pass, fail, error or skip), sby exit code, milliseconds and the label, which
 # formal/aggregate.sh joins across engines.
+# A warning of GHDL, Yosys or SymbiYosys is an error (formal/common.sh): it is fixed, never silenced.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,6 +24,8 @@ case "$engine" in
 esac
 timeout_s="${FORMAL_TIMEOUT:-900}"
 results="$out/result-$engine.tsv"; : > "$results"
+# shellcheck source=formal/common.sh
+source "$root/formal/common.sh"
 
 fail=0
 # expect <label> <wanted: PASS|FAIL> <result: PASS|FAIL|SKIP|ERROR ...>. An ERROR (the tool did not reach a verdict)
@@ -45,12 +48,15 @@ expect() {
 # the outputs dbg_<signal>. The logic is the same; the proof states the invariants over these registers.
 expose() {
   local v="$1"; shift
-  local ports="" assigns="" s w nm
+  local ports="" assigns="" s w nm width src
   for s in "$@"; do
-    nm="${s%%:*}"; w=""; [ "$s" != "$nm" ] && w="[${s#*:}:0] "
+    nm="${s%%:*}"; w=""; width=1
+    if [ "$s" != "$nm" ]; then w="[${s#*:}:0] "; width=$(( ${s#*:} + 1 )); fi
     ports+=",
    output ${w}dbg_$nm"
-    assigns+="  assign dbg_$nm = $nm;
+    # a signal the netlist no longer has (GHDL drops what nothing reads) is exposed as 0, never left without a driver
+    if awk -v nm="$nm;" '/^module / { n = 0 } $1 ~ /^(reg|wire)$/ && $NF == nm { n = 1 } END { exit !n }' "$v"; then src="$nm"; else src="${width}'b0"; fi
+    assigns+="  assign dbg_$nm = $src;
 "
   done
   awk -v ports="$ports" -v assigns="$assigns" '
@@ -106,10 +112,19 @@ EOS
   began=$(date +%s%N)
   timeout "$timeout_s" sby -f "$6.sby" > "$6.log" 2>&1 || rc=$?
   ended=$(date +%s%N)
+  local found
   # ABC refuses a design without registers (the trap unit is combinational): that is a proof this engine does
   # not do, not a failure of the tool.
   if [ "$engine" = abc-bmc3 ] && [ "$rc" = 16 ] && grep -q 'Does not work for combinational networks' "$6.log"; then
     printf 'skip\t%s\t0\n' "$rc" > "$6.res"; echo "SKIP abc-bmc3 does not work for a combinational design"; return
+  fi
+  # A warning is an error, whatever the exit code was: no verdict is reached
+  found="$(warnings_in "$6.log" "$out/$6.log")"
+  if [ -n "$found" ]; then
+    echo "formal: the log of the proof has warnings, which are errors:" >&2
+    echo "$found" >&2
+    printf 'error\t%s\t%s\n' "$rc" "$(( (ended - began) / 1000000 ))" > "$6.res"
+    echo "ERROR warning in the log of the proof, first at $(echo "$found" | head -n 1 | cut -c1-200)"; return
   fi
   case "$rc" in
     0) verdict=PASS ;;
@@ -127,8 +142,8 @@ EOS
 # netlist <vhdl> <name>: the Verilog netlist GHDL synthesizes for the interconnect, with the state exposed.
 netlist() {
   local work="$out/work_$2"; mkdir -p "$work"
-  ghdl -a --std=08 -Wno-library --workdir="$work" "$1"
-  ghdl --synth --std=08 -Wno-library --workdir="$work" --out=verilog ext_interconnect > "$2.v"
+  ghdl_run -a --std=08 --workdir="$work" "$1"
+  ghdl_run --synth --std=08 --workdir="$work" --out=verilog ext_interconnect > "$2.v"
   expose "$2.v" st sel_wb p_rdata_q:31 pending:31
   grep -q dbg_st "$2.v" || { echo "the netlist has no register named st: the exposure did not apply"; exit 1; }
 }

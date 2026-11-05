@@ -58,3 +58,21 @@ The formal proof (`formal/ext_interconnect_props.sv`, SymbiYosys on the netlist 
 | The data read from a peripheral is the one of the slave selected at the pulse, and the memory data comes straight from it | Induction |
 
 Eight deliberate defects of the VHDL (shifted slave identification, pulse without the free state, memory that sees the peripheral address, ready always high, wrong slave data, data select that never returns to the memory, write that reads and shifted word address) make the proof fail. `make formal` runs only this proof, and `formal/aggregate.sh` decides the result of the engines.
+
+## 6. Warnings are errors
+
+A warning from GHDL, Yosys or SymbiYosys points to code outside the standard or at its limit, so it makes the run of the proof fail. The fix is in the code, the proof or the netlist, and neither a `-Wno-*` option nor a list of ignored warnings is allowed.
+
+| Step | Where the warning is detected | Effect |
+| :--- | :--- | :--- |
+| `ghdl -a` and `ghdl --synth` | Standard error of GHDL, read by `ghdl_run` | The command fails and prints each warning with the VHDL file and line |
+| `sby` of each proof and each mutant | Whole log of the proof, read by `prove` | The verdict becomes `error`, even when the exit code was 0 or 2, and the message points to `<log>:<line>` |
+
+A warning is a line with the word `warning` or `warnings`, in any case, as a whole word. Names that only contain the word (`no_warnings.sv`) and the Yosys summary with a count of zero (`Warnings: 0 unique messages, 0 total`) do not count. The only exception is three ABC messages, accepted only in the log of the `abc-bmc3` engine (the undriven clock of the property module, the count of undriven bits and the outputs read as constraints), because the way ABC reads the netlist produces them. Yices, Bitwuzla and Boolector have no exception, and any other ABC message is still an error.
+
+Two rules keep the netlists free of warnings.
+
+1. A signal exposed as `dbg_<signal>` that GHDL removed from the netlist (because a mutant took away its only reader) is tied to zero, never left without a driver, since a wire without a driver is free and could make a property fail without the defect being the cause.
+2. `ext_interconnect.vhd` is analyzed without any file of a submodule, so no Quartus attribute reaches the netlist. If a future proof needs a file with `altera_attribute`, the formal netlist must be generated from a copy without that attribute.
+
+The tests of the guard are in `formal/aggregate_test.sh`, which injects a warning into GHDL and into `sby` of a real run and requires it to fail.

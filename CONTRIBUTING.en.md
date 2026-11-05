@@ -179,6 +179,8 @@ make all                                 # Runs paths, the integration check, an
 
 Each repository runs only its own checks, its own cocotb tests and its own formal proofs, in its own CI. Insper-RISC-V runs only what is its own or integration: the paths of `paths.yaml`, the build of the simulation tops with the pinned submodules, the uniqueness of names across repositories, the memory map, the cocotb tests of the platforms and the formal proof of the interconnect. A change to a submodule is validated in its own repository, not here.
 
+**A warning in the formal flow is an error.** A warning from GHDL, Yosys or SymbiYosys points to code outside the standard or at its limit. The fix is always in the code or in the proof; suppressing warnings with `-Wno-*` or ignoring them is forbidden. The flow in `formal/common.sh` scans the output of GHDL and the log of each proof and each mutant, and fails with the file and line of the warning (see `docs/en/interconnect/ext_interconnect.md`, section 6).
+
 The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files, and the job name is the check the default-branch ruleset requires, so do not rename it.
 
 When adding, renaming, or removing any versioned file, immediately update:
