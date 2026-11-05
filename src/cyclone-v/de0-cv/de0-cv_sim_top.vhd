@@ -48,9 +48,21 @@ entity rv32im_sdram_flash_sim_test is
 	  -- Largura, em bits, de cada contador de eventos do Zihpm.
 	  HPM_WIDTH : natural range 0 to 64 := 64;
 	  -- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-	  HAS_ZIMOP : boolean := false;
+	  HAS_ZIMOP : boolean := work.de0_cv_map_pkg.HAS_ZIMOP;
 	  -- Extensao Zicond no core (czero.eqz e czero.nez).
-	  HAS_ZICOND : boolean := false;
+	  HAS_ZICOND : boolean := work.de0_cv_map_pkg.HAS_ZICOND;
+	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
+	  ROM_EXTERNAL : boolean := work.de0_cv_map_pkg.ROM_EXTERNAL;
+	  -- A RAM fica fora do core (o modelo de memória do platform.yaml).
+	  RAM_EXTERNAL : boolean := work.de0_cv_map_pkg.RAM_EXTERNAL;
+	  -- Existe cache de instruções (o modelo de memória do platform.yaml).
+	  HAS_ICACHE : boolean := work.de0_cv_map_pkg.HAS_ICACHE;
+	  -- Existe cache de dados (o modelo de memória do platform.yaml).
+	  HAS_DCACHE : boolean := work.de0_cv_map_pkg.HAS_DCACHE;
+	  -- Tamanho da cache de instruções, em bits (o modelo de memória do platform.yaml).
+	  ICACHE_SIZE_BITS : positive := work.de0_cv_map_pkg.ICACHE_SIZE_BITS;
+	  -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
+	  DCACHE_SIZE_BITS : positive := work.de0_cv_map_pkg.DCACHE_SIZE_BITS;
 	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
 	  HAS_E : boolean := work.de0_cv_map_pkg.HAS_E;
 	  -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
@@ -241,7 +253,7 @@ begin
 	);
 
 	ICACHE : entity work.icache
-		generic map (rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -268,7 +280,7 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,

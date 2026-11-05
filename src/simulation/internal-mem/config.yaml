@@ -246,11 +246,6 @@ sim:
   parameters:
     BOOT_ROM_FILE: "{boot_rom_hex_path}"
     ROM_FILE: "{hex_path}"
-    HAS_ZICSR: true
-    HAS_ZICNTR: true
-    HAS_ZIHPM: true
-    HAS_ZIMOP: true
-    HAS_ZICOND: true
 
 # Spike runs each test's own image, which starts at the crt0's _start.
 # On the hardware that image ends in rv32_wait_restart, a routine of the

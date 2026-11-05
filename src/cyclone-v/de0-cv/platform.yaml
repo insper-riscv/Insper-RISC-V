@@ -37,6 +37,17 @@ peripherals:
   - {name: UART,    base: 0xC0000000, id: 4}
   - {name: DISPLAY, base: 0xD0000000, id: 5}
 
+# The memory model: the FLASH and the SDRAM outside the core, behind the instruction and the data caches (32768 bits,
+# 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL, RAM_EXTERNAL and the caches from here.
+memory:
+  rom:    {external: true}
+  ram:    {external: true}
+  icache: {enabled: true, size_bits: 32768}
+  dcache: {enabled: true, size_bits: 32768}
+
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
+extras: [Zimop, Zicond]
+
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
 generate:
@@ -48,8 +59,6 @@ generate:
     package: de0_cv_map_pkg
     rom: FLASH
     ram: RAM
-    rom_external: true
-    ram_external: true
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`). The RAM is the SDRAM, so
 # only the BOOT_ROM and the FLASH are simulation arrays with an address width.

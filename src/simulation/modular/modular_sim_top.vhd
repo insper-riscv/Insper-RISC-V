@@ -43,9 +43,9 @@ entity modular_sim_top is
     -- Imagem inicial da RAM (interna, ou o chip de RAM externo); vazio deixa tudo em zero.
     ram_file            : string  := "";
     -- A ROM é externa, atrás da cache de instruções.
-    rom_external        : boolean := false;
+    rom_external        : boolean := ROM_EXTERNAL;
     -- A RAM é externa, atrás da cache de dados.
-    ram_external        : boolean := false;
+    ram_external        : boolean := RAM_EXTERNAL;
     -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
     boot_rom_size_bytes : positive := BOOT_ROM_SIZE_BYTES;
     -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
@@ -54,15 +54,15 @@ entity modular_sim_top is
     ram_size_bytes      : positive := RAM_STORAGE_BYTES;
     -- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil do platform.yaml por padrão).
     has_e               : boolean  := HAS_E;
-    -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
+    -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM.
     rom_end_kib         : natural  := ROM_END_KIB;
-    -- Base, em KiB, da RAM (0x100000 por padrão).
+    -- Base, em KiB, da RAM.
     ram_base_kib        : natural  := RAM_BASE_KIB;
-    -- Fim exclusivo, em KiB, da RAM (0x200000 por padrão).
+    -- Fim exclusivo, em KiB, da RAM.
     ram_end_kib         : natural  := RAM_END_KIB;
-    -- Base, em KiB, da janela externa de periféricos e outros dispositivos (0x40000000 por padrão).
+    -- Base, em KiB, da janela externa de periféricos e outros dispositivos.
     ext_base_kib        : natural  := EXT_BASE_KIB;
-    -- Base, em KiB, da janela de periféricos (0x80000000 por padrão).
+    -- Base, em KiB, da janela de periféricos.
     periph_base_kib     : natural  := PERIPH_BASE_KIB;
     -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
     icache_size_bits    : positive := 4096;
@@ -85,9 +85,9 @@ entity modular_sim_top is
     -- Largura, em bits, de cada contador de eventos do Zihpm.
     hpm_width           : natural range 0 to 64 := 64;
     -- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
-    has_zimop           : boolean := false;
+    has_zimop           : boolean := HAS_ZIMOP;
     -- Extensão Zicond no núcleo (czero.eqz e czero.nez).
-    has_zicond          : boolean := false;
+    has_zicond          : boolean := HAS_ZICOND;
     -- Extensão M completa no núcleo.
     has_m               : boolean := HAS_M;
     -- Multiplicação sem divisão (Zmmul) no núcleo.
