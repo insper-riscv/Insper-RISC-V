@@ -57,18 +57,20 @@ The per-entity tests of the platform RTL are in `tests/python/`, with the `tests
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/Insper-RISC-V.git
 cd Insper-RISC-V
-make all        # paths, VHDL check, per-entity tests and formal proofs
+make all        # paths, integration check, and the tests and formal proofs of this repository
 ```
 
 The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infra, which the continuous integration runs in.
 
 | Target | What it runs |
 | :--- | :--- |
-| `make paths` | Existence of every path the configuration lists (`paths.yaml`, `riscv-tools check-paths`) |
-| `make check` | VHDL syntax check of each repository, the elaboration of each `Core` profile, the build of the simulation top of each platform and the check that no entity or package is defined in two repositories |
+| `make paths` | Existence of the paths the configuration of this repository lists (`paths.yaml`, `riscv-tools check-paths`) and the shape of the tree |
+| `make check` | The build of the simulation top of each platform with the pinned submodules and the check that no entity or package is defined in two repositories |
 | `make memory-map` | Agreement of every copy of the memory map with the `platform.yaml` of the platform |
-| `make unit-tests` | Per-entity tests (cocotb and GHDL) of each repository and of the platforms, plus `memory-map` |
-| `make formal` | Formal proofs (SymbiYosys) of each repository that has them, with the engine of `FORMAL_ENGINE` (`bitwuzla` by default; the CI runs `yices`, `bitwuzla`, `boolector` and `abc-bmc3`) |
+| `make unit-tests` | Cocotb tests of the platforms of this repository, plus `memory-map` |
+| `make formal` | Formal proofs (SymbiYosys) of the interconnect of this repository, with the engine of `FORMAL_ENGINE` (`bitwuzla` by default; the CI runs `yices`, `bitwuzla`, `boolector` and `abc-bmc3`) |
+
+Each repository runs only its own checks, tests and proofs; those of the submodules run in the CI of each one.
 
 ## 5. Board
 

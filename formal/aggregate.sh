@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Joins the results of the formal engines and decides, per proof, whether the repository passes. Run from
+# Joins the results of the formal engines on the proofs of this repository (formal/interconnect.sh) and decides, per proof, whether it passes. Run from
 # anywhere:  bash formal/aggregate.sh <directory with result-<engine>.tsv files>
 #
 # Every engine writes result-<engine>.tsv (see formal/run.sh): one line per proof with the id, the wanted
