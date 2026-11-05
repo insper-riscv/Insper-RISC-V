@@ -18,6 +18,10 @@ entity core_fpga_test is
 		HAS_ZICNTR   : boolean := work.internal_mem_map_pkg.HAS_ZICNTR;
 		-- Contadores de eventos do Zihpm.
 		HAS_ZIHPM    : boolean := work.internal_mem_map_pkg.HAS_ZIHPM;
+		-- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
+		HAS_ZIMOP    : boolean := false;
+		-- Extensao Zicond no core (czero.eqz e czero.nez).
+		HAS_ZICOND   : boolean := false;
 		-- Zifencei no core (FENCE.I).
 		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
 		-- Acesso desalinhado executado em hardware (Zicclsm).
@@ -124,14 +128,6 @@ architecture behaviour of core_fpga_test is
 		return 0;
 	end function;
 
-	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
-	function reg_count(is_e : boolean) return positive is
-	begin
-		if is_e then
-			return 16;
-		end if;
-		return 32;
-	end function;
 
 begin
 
@@ -185,10 +181,14 @@ begin
 			has_zmmul       => HAS_ZMMUL,
 			has_zicsr       => HAS_ZICSR,
 			has_zicntr      => HAS_ZICNTR,
+			has_zihpm       => HAS_ZIHPM,
 			hpm_counters    => hpm_count(HAS_ZIHPM),
+			hpm_width       => 64,
+			has_zimop       => HAS_ZIMOP,
+			has_zicond      => HAS_ZICOND,
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
-			num_regs        => reg_count(HAS_E),
+			has_e           => HAS_E,
 			boot_rom_bits   => BOOT_ROM_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
