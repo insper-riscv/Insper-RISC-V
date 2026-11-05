@@ -119,20 +119,25 @@ unit-tests: sync memory-map test
 # Every make target named formal* of each repository (SymbiYosys; FORMAL_ENGINE=yices, bitwuzla, boolector or
 # abc-bmc3 on the command line goes to each of them), all at once: each proof works in
 # its own folder, so none shares anything with another, and the time is the one of the longest proof instead
-# of the sum. A repository without proofs adds nothing. -k lets the others finish when one fails and -O keeps
+# of the sum, together with the proofs of this repository (formal-interconnect). A repository without proofs adds nothing. -k lets the others finish when one fails and -O keeps
 # the output of each target together.
 FORMAL_JOBS := $(strip $(foreach s,$(SUBREPOS),$(addprefix formal/$(s)/,$(shell sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $(s)/Makefile 2>/dev/null))))
 
-.PHONY: formal formal-run $(FORMAL_JOBS)
+.PHONY: formal formal-run formal-interconnect $(FORMAL_JOBS)
 
 formal:
 	@test -n "$(FORMAL_JOBS)" || { echo "no formal target in $(SUBREPOS)"; exit 1; }
-	$(MAKE) -k -O -j$(words $(FORMAL_JOBS)) formal-run
+	$(MAKE) -k -O -j$(words $(FORMAL_JOBS) formal-interconnect) formal-run
 
-formal-run: $(FORMAL_JOBS)
+formal-run: $(FORMAL_JOBS) formal-interconnect
 
 $(FORMAL_JOBS): formal/%:
 	$(MAKE) -C $(word 1,$(subst /, ,$*)) $(word 2,$(subst /, ,$*))
+
+# The proofs of this repository: the external interconnect (src/interconnect), whose result is
+# build/formal/result-<engine>.tsv, read by formal/aggregate.sh.
+formal-interconnect:
+	FORMAL_ENGINE=$(FORMAL_ENGINE) bash formal/interconnect.sh
 
 clean:
 	rm -rf build

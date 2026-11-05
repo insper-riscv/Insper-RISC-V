@@ -46,3 +46,15 @@ The tests run here, with the bus of Memory and the JTAG UART of Peripherals toge
 | `AxiRouter` | The router alone: both slaves, bursts, W before AW, DECERR |
 
 The defect found in the router by reading the handshake rules is in [ROUTER_W_BEFORE_AW.md](../bugs/ROUTER_W_BEFORE_AW.md).
+
+The formal proof (`formal/ext_interconnect_props.sv`, SymbiYosys on the netlist GHDL synthesizes, with the Core's method) covers the interconnect alone, with the core, the memory and the eight peripherals free and held to the contract by assumptions.
+
+| Property | Proof |
+| :--- | :--- |
+| One slave selected per access: at most one select bit, the one of the identification field of the address | Induction |
+| Memory and peripheral exclude each other: a peripheral address does not reach the memory, and a memory address does not reach a peripheral | Induction |
+| The address, the data and the mask pass unchanged | Induction |
+| The pulse to the peripheral lasts one cycle, only with the interconnect free, and the access ends in the next cycle with the answer held until the advance (no access hangs) | Induction |
+| The data read from a peripheral is the one of the slave selected at the pulse, and the memory data comes straight from it | Induction |
+
+Eight deliberate defects of the VHDL (shifted slave identification, pulse without the free state, memory that sees the peripheral address, ready always high, wrong slave data, data select that never returns to the memory, write that reads and shifted word address) make the proof fail. `make formal` runs the proof together with the submodules', and `formal/aggregate.sh` decides the result of the engines.
