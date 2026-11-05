@@ -69,3 +69,7 @@ The peripherals take the upper 2 GiB of the address space (bit 31 set), with one
 ## 6. ACT4
 
 The ACT4 ELFs have code and constants in the FLASH and data, stack and the HTIF words in the SDRAM. The `Zifencei-fence.i-00` test rewrites its own code, and the FLASH ignores stores, so it uses a variant of the target where the test body sits in the SDRAM and only the entry, the model macros and the constants stay in the FLASH.
+
+## 7. Simulation top test
+
+The catalog `tests/python/tests.json` has the entry `De0CvSimTop`, which runs the top `rv32im_sdram_flash_sim_test` with a minimal program in each region. The BOOT_ROM stores a mark in the SDRAM and jumps to the FLASH, the FLASH stores another mark, writes to the display and jumps to the code the SDRAM has held since time zero (`SDRAM_FILE`), and that code stores the third mark and writes `tohost`. The test reads the SDRAM through the debug port of the chip and checks the three marks, `tohost` and the display value. The images come from `tests/python/gen_de0_cv_images.py`, built from `platform.yaml`.
