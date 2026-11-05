@@ -5,23 +5,23 @@ Este documento descreve a memória da plataforma `internal-mem`. A da `de0-cv`, 
 ## Resumo
 
 O core (`rv32im_pipeline_core`) modela a hierarquia de memória de uma SoC de
-verdade com **3 papéis lógicos**, implementados em **4 instâncias físicas**
+verdade com **3 papéis lógicos**, implementados em **3 instâncias físicas**
 de memória:
 
-| Papel     | Instância(s) física(s)      | Reescrita via JTAG?          | Quem acessa                    |
-|-----------|------------------------------|-------------------------------|---------------------------------|
-| BOOT_ROM  | `BOOT_ROM`                    | Não: só no compile inicial   | Só busca de instrução (IF)     |
-| FLASH     | `FLASH` + `FLASH_MEM`         | Sim: a cada troca de teste   | `FLASH`: IF. `FLASH_MEM`: MEM  |
-| RAM       | `RAM`                         | Não (JTAG só lê/escreve dado) | IF nunca. MEM sempre.          |
+| Papel     | Instância física | Reescrita via JTAG?          | Quem acessa                    |
+|-----------|------------------|-------------------------------|---------------------------------|
+| BOOT_ROM  | `BOOT_ROM`       | Não: só no compile inicial   | Só busca de instrução (IF)     |
+| FLASH     | `FLASH`          | Sim: a cada troca de teste, pelo carregador JTAG | Porta A: IF. Porta B: MEM e carregador |
+| RAM       | `RAM`            | Não (JTAG só lê/escreve dado) | IF nunca. MEM sempre.          |
 
 Isso é chamado de **"Harvard modificado"**: um Harvard "de verdade" teria
 barramentos de instrução e dado totalmente independentes, sem nenhuma
 sobreposição. Aqui, IF busca instrução de BOOT_ROM/FLASH (nunca de RAM), e o
 estágio MEM (load/store) só toca RAM, **exceto** por uma abertura
-deliberada: o estágio MEM também consegue ler `FLASH_MEM` (a segunda cópia
-física da FLASH), só para o bootloader copiar `.data` de FLASH pra RAM no
-boot. Essa é a única exceção à separação instrução/dado: ver
-[FLASH precisa de uma segunda porta de leitura](#2-flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)
+deliberada: o estágio MEM também consegue ler a FLASH pela porta B dela, só
+para o bootloader copiar `.data` de FLASH pra RAM no boot. Essa é a única
+exceção à separação instrução/dado: ver
+[FLASH: o "firmware" de cada teste](#12-flash-o-firmware-de-cada-teste)
 abaixo.
 
 ## 1. Os três papéis, em detalhe
@@ -48,67 +48,37 @@ da RAM. Ver [runtime.md](runtime.md) e
 ### 1.2. FLASH: o "firmware" de cada teste
 
 O programa de verdade de cada teste (`.init` + `.text` + `.rodata`, mais a imagem inicial de `.data`), reescrito
-via JTAG (In-System Memory Content Editor) toda vez que um teste troca;
+pelo carregador JTAG (`flash_loader`, do Memory) toda vez que um teste troca;
 mesmo papel que a antiga `ROM` tinha antes do redesign. Fisicamente é uma
-`altsyncram` do tipo RAM (não uma flash de verdade), mas architeturalmente
-representa o armazenamento não-volátil: só é regravada explicitamente entre
-execuções, nunca pela CPU em tempo de execução.
+`altsyncram` de duas portas verdadeiras (não uma flash de verdade), **uma só cópia**,
+mas architeturalmente representa o armazenamento não-volátil: só é regravada
+explicitamente entre execuções, nunca pela CPU em tempo de execução.
+
+A porta A é a busca de instrução (IF) e a porta B é a leitura de dado do estágio
+MEM, que o loop de cópia de `.data` de `boot_rom.S` usa (`lw a0, 0(t1)`, onde `t1`
+aponta pra dentro de FLASH, o LMA de `.data`). O carregador para o core (a saída
+de parada dele entra no `core_reset`), escreve a imagem pela porta B e solta o core,
+que reinicia pela BOOT_ROM; com o core em execução a escrita é forçada a `'0'` em
+hardware, e o core só lê. O protocolo está na documentação do Memory (`flash_loader`),
+e o host escolhe esse caminho com `quartus.rom_write_method: jtag_loader`.
 
 ### 1.3. RAM: dado de verdade
 
 `.data`/`.sdata`/`.sbss`/`.bss`/pilha/heap. A única memória que o estágio
 MEM (load/store) sempre alcança para escrita; `.rodata` (constantes
-grandes) fica residente em FLASH, nunca copiado pra cá, ver "FLASH precisa
-de uma segunda porta de leitura" abaixo. Os últimos 1056 bytes do espaço
+grandes) fica residente em FLASH, nunca copiado pra cá, ver "FLASH: o
+firmware de cada teste" acima. Os últimos 1056 bytes do espaço
 físico da IP são reservados (fora do `__ram_size` que `rv32im-fpga.specs`
 dá ao teste) para: tohost/fromhost (4
 palavras, convenção HTIF, com 2 palavras livres) e o buffer do `stdout`
 (1032 bytes, ver [runtime.md](runtime.md)).
 
-## 2. FLASH precisa de uma segunda porta de leitura: o limite do Quartus Lite
-
-O estágio MEM precisa ler FLASH como dado especificamente para o loop de
-cópia de `.data` em `boot_rom.S` (`lw a0, 0(t1)`, onde `t1` aponta pra
-dentro de FLASH, o LMA de `.data`). Isso só foi descoberto num bug real em
-hardware: `.bss`/computação funcionavam normalmente, mas globais com valor
-inicial não-zero ficavam sempre zerados, porque o `lw` do copy-loop não
-alcançava FLASH (só RAM) na primeira versão deste redesign.
-
-A solução óbvia, dar à `FLASH` uma segunda porta de leitura (uma IP
-`altsyncram` `DUAL_PORT`), **não compila no Quartus Prime Lite**: uma
-`altsyncram` com `operation_mode => DUAL_PORT` **e**
-`lpm_hint => "ENABLE_RUNTIME_MOD=YES"` ao mesmo tempo falha a compilar nessa
-edição (confirmado empiricamente rodando `quartus_map` isolado nessa IP).
-`ENABLE_RUNTIME_MOD` é obrigatório porque é o que permite ao JTAG In-System
-Memory Content Editor reescrever a FLASH a cada teste.
-
-**Fix**: em vez de uma FLASH dual-port, existem **duas instâncias físicas
-idênticas**, single-port cada uma:
-
-- `FLASH` (`ips/FLASH1PORT/flash1port.vhd`): porta de busca de instrução
-  (IF), `INSTANCE_NAME=FLASH`.
-- `FLASH_MEM` (`ips/FLASH_MEM1PORT/flash_mem1port.vhd`): porta de leitura
-  de dado pro estágio MEM, `INSTANCE_NAME=FLASH_MEM`. Mesmo clock que a RAM
-  (`pll_clk_idexmem`), já que é o estágio MEM que consome as duas.
-
-O `INSTANCE_NAME` diferente é o que faz o JTAG In-System Memory Content
-Editor tratá-las como dois taps independentes. O `riscv_tools` (tohost/
-rom_writer) escreve o **mesmo conteúdo** nas duas toda vez que troca de
-teste; `config.yaml`: `quartus.rom_mem_instances: [1, 3]`, uma lista com
-os dois índices JTAG, não um só.
-
-Esse é exatamente o mesmo truque que o design antigo (pré-BOOT_ROM/FLASH
-split) já usava para `ROM`/`ROM_MEM`, pela mesma limitação do Quartus Lite;
-só que agora escopado apenas à FLASH (BOOT_ROM nunca precisa de segunda
-porta, já que não tem `.data` próprio: `boot_rom.S` só usa imediatos
-fixos).
-
-## 3. Mapa de memória
+## 2. Mapa de memória
 
 | Região                | Base         | Tamanho          | Words  | widthad |
 |------------------------|--------------|------------------|--------|---------|
 | BOOT_ROM               | `0x00000000` | 4K               | 1024   | 10      |
-| FLASH / FLASH_MEM      | `0x00001000` | 28K              | 7168   | 13      |
+| FLASH                  | `0x00001000` | 28K              | 7168   | 13      |
 | RAM (espaço físico)    | `0x00008000` | 160K             | 40960  | 16      |
 | RAM (útil, `rv32im-fpga.specs`) | `0x00008000` | 160K − 24 − 1032 bytes | N/A | N/A |
 | `stdout` (cabeçalho e dados) | `0x0002FBE0` | 1032 bytes | N/A | N/A |
@@ -122,24 +92,26 @@ $$0x1000 + \text{FLASH\_SIZE} \equiv 0 \pmod{4096}$$
 
 Isso exige que `FLASH_SIZE` seja múltiplo de 4096, e 28K ($7 \times 4096 = 28672$) serve e termina exatamente na base da RAM.
 
-### 3.1. O limite de blocos de RAM
+### 2.1. O limite de blocos de RAM
 
-A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de blocos além do de bits totais. A FLASH duplicada (`FLASH` e `FLASH_MEM`) conta duas vezes, e o mapa atual usa cerca de 178 blocos (58 % do teto).
+A Cyclone V 5CEBA4F23 tem 308 blocos M10K de 10 Kbit, um limite de quantidade de blocos além do de bits totais. O relatório do Fitter do mapa atual registra o uso abaixo, 288 blocos (94 % do teto).
 
-## 4. Índices JTAG (`config.yaml: quartus:`)
+| Memória | Blocos M10K |
+| :--- | ---: |
+| `BOOT_ROM` | 4 |
+| `FLASH` | 28 |
+| `RAM` | 256 |
+| **Total** | **288 de 308** |
 
-Ordem de instanciação em `core_fpga_test.vhd` (que é a ordem que o In-System
-Memory Content Editor usa pra numerar as instâncias):
+## 3. Índices JTAG (`config.yaml: quartus:`)
 
-A `BOOT_ROM` não declara `ENABLE_RUNTIME_MOD`, então não recebe índice: é gravada só no compile inicial e nunca reescrita em tempo real. Os índices abaixo são só os dos IPs que declaram a regravação.
+Só a `RAM` declara `ENABLE_RUNTIME_MOD`, então ela é a única instância do In-System
+Memory Content Editor e tem o índice 0 (`quartus.ram_mem_instance`; `tohost` e
+`fromhost` moram dentro da RAM, então compartilham o índice dela). A `BOOT_ROM` é
+gravada só no compile inicial, e a `FLASH`, regravada pelo carregador, não tem índice
+(`quartus.rom_mem_instances: []`).
 
-0. `FLASH`: `quartus.rom_mem_instances[0]`.
-1. `RAM`: `quartus.ram_mem_instance`
-   (`tohost` e `fromhost` moram dentro da RAM, então compartilham o índice dela).
-2. `FLASH_MEM`: `quartus.rom_mem_instances[1]`. Instanciada **depois** de
-   RAM de propósito, pra não deslocar o índice 1 que RAM já tem.
-
-## 5. LEDs (`core_fpga_test.vhd`)
+## 4. LEDs (`core_fpga_test.vhd`)
 
 | LED     | Sinal              | Significado                                                        |
 |---------|--------------------|----------------------------------------------------------------------|
@@ -147,7 +119,8 @@ A `BOOT_ROM` não declara `ENABLE_RUNTIME_MOD`, então não recebe índice: é g
 | LEDR(1) | `pll_locked`       | Deveria ficar **sempre aceso** depois de configurar a FPGA. Apagado = PLL nunca travou. |
 | LEDR(2) | `FPGA_RESET_N`     | Aceso = botão físico de reset **solto**. Apagado = botão pressionado. |
 | LEDR(3) | `not core_reset`   | Aceso = core fora de reset, rodando. Apagado = core em reset (PLL sem lock, ou botão pressionado). |
-| LEDR(4-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
+| LEDR(4) | `flash_halt`       | Aceso = core parado pelo carregador da FLASH (reset mantido enquanto a imagem é gravada). |
+| LEDR(5-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
 
 Como diagnóstico rápido sem precisar abrir uma sessão JTAG: se LEDR(1) ou
 LEDR(3) estiverem apagados, o problema está **antes** do core (PLL/reset);

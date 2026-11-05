@@ -18,10 +18,10 @@ concordar de antemão sobre onde tudo mora.
    inicial de BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`) e da primeira FLASH/RAM.
    BOOT_ROM nunca mais é tocada depois disso.
 2. **Troca de teste (caminho rápido)**: `riscv-tools run` reescreve
-   FLASH (as duas cópias físicas, `FLASH`/`FLASH_MEM`, ver
-   `quartus.rom_mem_instances`) via JTAG (In-System Memory Content
-   Editor), sem recompilar nem reprogramar a FPGA; depois escreve `1`
-   em `fromhost_addr`.
+   a FLASH, que tem uma só cópia, pelo carregador JTAG (`quartus.rom_write_method:
+   jtag_loader`): para o core, grava a imagem, confere a contagem e a soma de
+   verificação e solta o core, que reinicia pela BOOT_ROM no passo 5, sem
+   recompilar nem reprogramar a FPGA e sem escrever `fromhost`.
 3. **O core, do lado de dentro**: entre um teste e outro, o core fica
    parado em `rv32_wait_restart` (endereço fixo `0x100` em BOOT_ROM),
    num loop que só faz `lw` de `fromhost_addr` até ler não-zero.
@@ -85,8 +85,8 @@ disso, porque quem copia o `.data` e zera o `.bss` é o `crt0` do próprio
 programa. Por isso a imagem de um teste carrega tudo o que varia nela.
 
 O estágio MEM deste core tem, de fato, um caminho de leitura até FLASH
-(a segunda porta física, `FLASH_MEM`, ver
-[memoria.md](memoria.md#2-flash-precisa-de-uma-segunda-porta-de-leitura-o-limite-do-quartus-lite)):
+(a porta B da FLASH, ver
+[memoria.md](memoria.md#12-flash-o-firmware-de-cada-teste)):
 é assim que o `crt0` lê o `.data` inicial da FLASH pra copiá-lo pra RAM, e
 é assim que `.rodata` consegue ficar residente em FLASH (nunca copiado pra
 RAM, ver [memoria.md](memoria.md)).

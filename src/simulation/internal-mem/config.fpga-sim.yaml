@@ -26,7 +26,7 @@ sim:
   # The hardware top has no VHDL generics: the memory IP reads its
   # initial content from the files named below.
   parameters: null
-  # altsyncram's init_file is "./init.mif" (FLASH and FLASH_MEM) and
+  # altsyncram's init_file is "./init.mif" (FLASH) and
   # "./boot_rom_init.mif" (BOOT_ROM), read from the simulator's working
   # directory at time zero; the same names the Quartus flow uses.
   run_files:
@@ -115,7 +115,9 @@ sim:
     - src/simulation/internal-mem/rtl/Blinky.vhd
     - Memory/src/ROM/Cyclone-V/boot_rom.vhd
     - Memory/src/ROM/Cyclone-V/flash.vhd
-    - Memory/src/ROM/Cyclone-V/flash_mem.vhd
+    - Memory/src/ROM/SoC/flash_jtag_core.vhd
+    - Memory/src/ROM/SoC/flash_loader.vhd
+    - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
     - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
     - src/simulation/internal-mem/pll/pll_sim.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd

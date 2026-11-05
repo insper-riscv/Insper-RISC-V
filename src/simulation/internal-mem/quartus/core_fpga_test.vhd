@@ -41,14 +41,29 @@ architecture behaviour of core_fpga_test is
 	signal boot_rom_data : std_logic_vector(31 downto 0);
 	signal flash_data : std_logic_vector(31 downto 0);
 
-	-- Estagio MEM: segunda porta da FLASH, so' para o copy-loop de
-	-- .data em boot_rom.S (ver rv32im_pipeline_core.vhd flash_addr2 --
-	-- confirmado em hardware real que sem isso .data nunca era
-	-- copiado: bss/computo funcionavam, .data inicializado ficava
-	-- zerado, ja que o `lw` do copy-loop nao alcancava FLASH).
+	-- Estagio MEM: leitura da FLASH como dado, para o copy-loop de .data
+	-- em boot_rom.S (ver rv32im_pipeline_core.vhd flash_addr2). E' a porta B
+	-- da unica copia da FLASH, que o carregador JTAG assume com o core parado.
 	signal flash_addr2 : std_logic_vector(31 downto 0);
 	signal flash_rden2 : std_logic;
 	signal flash_data2 : std_logic_vector(31 downto 0);
+
+	-- Carregador da FLASH: sinais entre a porta JTAG e o carregador.
+	signal flash_cmd_tog    : std_logic;
+	signal flash_op         : std_logic_vector(3 downto 0);
+	signal flash_cmd_addr   : std_logic_vector(23 downto 0);
+	signal flash_cmd_data   : std_logic_vector(31 downto 0);
+	signal flash_done_tog   : std_logic;
+	signal flash_rsp_addr   : std_logic_vector(23 downto 0);
+	signal flash_rsp_data   : std_logic_vector(31 downto 0);
+	signal flash_rsp_status : std_logic_vector(7 downto 0);
+	-- Core parado pelo carregador: entra no reset do core.
+	signal flash_halt       : std_logic;
+	-- Porta B da FLASH, ja' comutada entre o estagio MEM e o carregador.
+	signal flash_address_b  : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+	signal flash_rden_b     : std_logic;
+	signal flash_wren_b     : std_logic;
+	signal flash_data_b     : std_logic_vector(31 downto 0);
 
 	-- RAM's In-System Memory Content Editor (JTAG) addresses it as a
 	-- 0-based array relative to memory.ram_base (see
@@ -141,7 +156,9 @@ begin
       locked   => pll_locked
     );
 
-	core_reset <= (not pll_locked) or (not FPGA_RESET_N);
+	-- O carregador da FLASH segura o core em reset enquanto grava a imagem do
+	-- proximo teste; liberado, o core reinicia pela BOOT_ROM.
+	core_reset <= (not pll_locked) or (not FPGA_RESET_N) or flash_halt;
 
 
 	-- Seleciona a região 0xC0000000 - 0xCFFFFFFF.
@@ -160,6 +177,7 @@ begin
 	LEDR(1) <= pll_locked;       -- '1' travado (deveria ficar sempre aceso)
 	LEDR(2) <= FPGA_RESET_N;     -- '1' botao de reset fisico solto
 	LEDR(3) <= not core_reset;   -- '1' core fora de reset, rodando
+	LEDR(4) <= flash_halt;       -- '1' core parado pelo carregador da FLASH
 
 	CORE : entity work.core
 		generic map (
@@ -253,21 +271,61 @@ begin
       o_q       => boot_rom_data
     );
 
-	-- FLASH: "firmware" desse teste, reescrita por teste via JTAG (ver
-	-- config.yaml quartus.rom_mif_target/rom_mem_instances) -- mesmo
-	-- papel que a antiga ROM tinha. Porta 1 (esta), so' busca de
-	-- instrucao. BOOT_ROM continua so' single-port -- nunca tem .data
-	-- proprio, nunca precisa ser lido como dado (ver FLASH_MEM abaixo
-	-- pra FLASH).
+	-- FLASH: "firmware" desse teste, uma so' copia de duas portas, reescrita
+	-- por teste pelo carregador JTAG (ver config.yaml quartus.rom_write_method)
+	-- com o core parado. Porta A: busca de instrucao. Porta B: dado do
+	-- estagio MEM (mesmo clock que a RAM) ou escrita do carregador.
+	-- BOOT_ROM continua so' de porta unica.
 	FLASH : entity work.flash
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      i_address => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      i_clk   => pll_clk_if,
-      i_rden    => if_rden,
-      i_wren    => '0',
-      i_data    => (others => '0'),
-      o_q       => flash_data
+      i_clk_a     => pll_clk_if,
+      i_address_a => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_rden_a    => if_rden,
+      o_q_a       => flash_data,
+      i_clk_b     => pll_clk_idexmem,
+      i_address_b => flash_address_b,
+      i_rden_b    => flash_rden_b,
+      i_wren_b    => flash_wren_b,
+      i_data_b    => flash_data_b,
+      o_q_b       => flash_data2
+    );
+
+	-- Carregador: dono da porta B com o core parado, e quem para o core.
+	FLASH_LOADER : entity work.flash_loader
+    generic map (addr_width => log2_exact(ROM_STORAGE_BYTES) - 2)
+    port map (
+      i_clk         => pll_clk_idexmem,
+      i_rst         => not pll_locked,
+      i_cmd_tog     => flash_cmd_tog,
+      o_done_tog    => flash_done_tog,
+      i_op          => flash_op,
+      i_addr        => flash_cmd_addr,
+      i_data        => flash_cmd_data,
+      o_rsp_addr    => flash_rsp_addr,
+      o_rsp_data    => flash_rsp_data,
+      o_rsp_status  => flash_rsp_status,
+      o_halt        => flash_halt,
+      i_mem_address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_mem_rden    => flash_rden2,
+      o_address_b   => flash_address_b,
+      o_rden_b      => flash_rden_b,
+      o_wren_b      => flash_wren_b,
+      o_data_b      => flash_data_b,
+      i_q_b         => flash_data2
+    );
+
+	-- Instancia do Virtual JTAG e a porta JTAG do carregador.
+	FLASH_JTAG : entity work.flash_jtag_shell
+    port map (
+      o_cmd_tog    => flash_cmd_tog,
+      o_op         => flash_op,
+      o_addr       => flash_cmd_addr,
+      o_data       => flash_cmd_data,
+      i_done_tog   => flash_done_tog,
+      i_rsp_addr   => flash_rsp_addr,
+      i_rsp_data   => flash_rsp_data,
+      i_rsp_status => flash_rsp_status
     );
 
 	-- RAM-relative word address (see RAM_BASE_WORD's own comment above)
@@ -284,25 +342,6 @@ begin
 		i_wren => ram_wren and ram_en and not uart_selected,
 		o_q    => ram_memory_rdata
 	 );
-
-	-- FLASH_MEM: segunda copia fisica da FLASH, so' para leitura de
-	-- dado pelo estagio MEM (mesmo clock que a RAM, ja' que e' o MEM
-	-- stage que consome as duas). Nao e' uma "porta B" da mesma IP --
-	-- ver o comentario em ips/FLASH_MEM1PORT/flash_mem1port.vhd para
-	-- o porque (ENABLE_RUNTIME_MOD nao compila em DUAL_PORT nesta
-	-- edicao do Quartus). Instanciada DEPOIS de RAM de proposito, para
-	-- nao mudar o indice de instancia JTAG que RAM ja' tem (2) -- ver
-	-- config.yaml quartus.ram_mem_instance.
-	FLASH_MEM : entity work.flash_mem
-    generic map (size_bytes => ROM_STORAGE_BYTES)
-    port map (
-      i_address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      i_clk   => pll_clk_idexmem,
-      i_rden    => flash_rden2,
-      i_wren    => '0',
-      i_data    => (others => '0'),
-      o_q       => flash_data2
-    );
 
 	 blink : entity work.Blinky
 	 port map (
