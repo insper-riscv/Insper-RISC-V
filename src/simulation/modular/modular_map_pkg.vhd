@@ -28,6 +28,10 @@ package modular_map_pkg is
 	constant HAS_ZIMOP           : boolean  := false;
 	-- A extensão Zicond está no perfil.
 	constant HAS_ZICOND          : boolean  := false;
+	-- A extensão Zihintntl está no perfil.
+	constant HAS_ZIHINTNTL       : boolean  := false;
+	-- A extensão Zihintpause está no perfil.
+	constant HAS_ZIHINTPAUSE     : boolean  := false;
 	-- A extensão Zifencei está no perfil.
 	constant HAS_ZIFENCEI        : boolean  := false;
 	-- A extensão Zicclsm está no perfil.
