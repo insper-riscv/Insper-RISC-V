@@ -32,18 +32,21 @@ references:
   - {name: de0-cv sim top test and its images, paths: [tests/python/gen_de0_cv_images.py, tests/python/unittests/rtl/data/de0_cv/boot_rom.hex, tests/python/unittests/rtl/data/de0_cv/flash.hex, tests/python/unittests/rtl/data/de0_cv/sdram.hex, tests/python/unittests/rtl/de0_cv_sim_top.py, tests/python/unittests/integration/ext_interconnect.py, tests/python/unittests/integration/axi_slave_periph_bank.py]}
   - {name: modular top and its images, paths: [src/simulation/modular/modular_sim_top.vhd, src/simulation/modular/platform.yaml, src/simulation/modular/modular_map_pkg.vhd, tests/python/gen_modular_images.py, tests/python/unittests/rtl/data/modular/boot_to_rom.hex, tests/python/unittests/rtl/data/modular/rom_program.hex, tests/python/unittests/rtl/modular_common.py, tests/python/unittests/rtl/modular_integrated.py, tests/python/unittests/rtl/modular_external_data.py, tests/python/unittests/rtl/modular_external_instruction.py, tests/python/unittests/rtl/modular_external.py, docs/pt-br/platform/modular.md, docs/en/platform/modular.md]}
   - {name: bus integration tests, paths: [src/interconnect/ext_interconnect.vhd, src/interconnect/ext_axi_interconnect.vhd, src/interconnect/axi_router.vhd, src/interconnect/axi_slave_periph_bank.vhd, tests/python/unittests/integration/axi_router.py, tests/vhdl/ext_bus_system.vhd, tests/vhdl/ext_axi_bus_system.vhd, tests/python/unittests/integration/ext_bus.py, tests/python/unittests/integration/ext_axi_cache.py, tests/python/unittests/integration/jtag.py, tests/python/unittests/integration/checks.py, tests/python/unittests/integration/dut.py]}
-  - {name: boot entry contract documents, paths: [docs/pt-br/platform/contrato-de-entrada.md, docs/en/platform/contrato-de-entrada.md]}
   - {name: interconnect documents, paths: [docs/pt-br/interconnect/ext_interconnect.md, docs/en/interconnect/ext_interconnect.md, docs/pt-br/bugs/ROUTER_W_BEFORE_AW.md, docs/en/bugs/ROUTER_W_BEFORE_AW.md]}
-
-# Entities of src/ that have no entity test in tests.json or no proof in formal/, and why (changed only with a
-# justification in the pull request).
-exceptions:
-  formal:
-    - {entity: de0-cv_top, reason: "The board top only instantiates the PLL and the Quartus IPs (altera_mf, absent from the toolchain image) around the proven blocks (mem_region_router, icache, dcache, ext_interconnect, sdram_cpu_bridge); the map it receives is checked against platform.yaml by riscv-tools check-memory-map, and the board run covers the wiring."}
 
 # Files left out of `riscv-tools check-vhdl-style`: the behavioral stand-in of the generated PLL keeps the
 # port names of src/simulation/internal-mem/pll/pll.vhd (Quartus IP, itself exempt), because the hardware top
 # instantiates either of the two by the same names.
 tree:
+  coverage:
+    formal:
+      ext_interconnect: []
+    # Entities without an entity test of their own, and why (changed only with a justification in the pull request).
+    exceptions:
+      blinky: "Board demonstration top, with no behavior to test beyond the pins; compiled by the Quartus project."
+      core_fpga_test: "Board top of the internal-memory platform; the sim top test and the Quartus compilation cover its wiring."
+      pll: "Behavioral stand-in of the generated PLL, used by the simulation tops."
+      rv32i3stage_core_sim_test: "Simulation top of the internal-memory platform; the tests of tests.json run on it."
+      ext_axi_interconnect: "Exercised through the ExtAxiBus and ExtAxiCache tests (toplevel ext_axi_bus_system)."
   vhdl_style:
     exclude: [src/simulation/internal-mem/pll/pll_sim.vhd]
