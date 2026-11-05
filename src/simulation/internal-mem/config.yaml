@@ -208,6 +208,7 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
     - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
@@ -219,10 +220,10 @@ sim:
   python_path:
     - src/simulation/internal-mem
   env:
-    # uart-errors exchanges a coordinated 32-byte RX/TX burst at 115200
-    # baud. Five milliseconds leave room for that serial traffic plus boot;
-    # short tests still return immediately when they write tohost.
-    SIM_TIMEOUT_CYCLES: "500000"
+    # uart-errors fills both 16-byte queues before exchanging a coordinated
+    # 32-byte RX/TX burst at 115200 baud. Ten milliseconds leave room for
+    # that serial traffic plus boot; short tests still return at tohost.
+    SIM_TIMEOUT_CYCLES: "1000000"
   ghdl_std: "08"
   # ROM_simulation reads its program image via a VHDL generic (a
   # file-open process inside the VHDL itself), not sim_runner's own
