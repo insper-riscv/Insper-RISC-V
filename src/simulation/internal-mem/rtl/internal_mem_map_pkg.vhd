@@ -12,8 +12,8 @@ use ieee.std_logic_1164.all;
 
 package internal_mem_map_pkg is
 
-	-- Registradores do perfil: 32 no RV32I e 16 no RV32E.
-	constant NUM_REGS            : positive := 32;
+	-- O perfil é o RV32E (16 registradores); falso é o RV32I (32).
+	constant HAS_E               : boolean  := false;
 	-- A extensão M está no perfil.
 	constant HAS_M               : boolean  := true;
 	-- A extensão Zmmul está no perfil.
