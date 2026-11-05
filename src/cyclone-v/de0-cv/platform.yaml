@@ -31,6 +31,15 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
+# The two banks of the FLASH for the program update: each starts with the 256-byte header page of the image
+# (riscv-tools flash-image), so its program is linked from the bank base + 0x100. Bank A [0x1000, 0x20000) and
+# bank B [0x20000, 0x40000) are aligned to the 4 KiB sector.
+flash:
+  region: FLASH
+  banks:
+    - {name: A, base: 0x00001000, size: 124K}
+    - {name: B, base: 0x00020000, size: 128K}
+
 # The slots of the external interconnect (bits 30:28 of the address): the JTAG UART and the seven-segment
 # display of the board top.
 peripherals:
@@ -41,6 +50,10 @@ peripherals:
 # flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
 generate:
   specs: {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
+  bank_specs:
+    - {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
+    - {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
+  banks_h: {path: src/cyclone-v/de0-cv/runtime/flash_banks.h}
   boot_ld: {path: src/cyclone-v/de0-cv/runtime/boot_rom.ld}
   runtime: {path: src/cyclone-v/de0-cv/runtime/memory_map.h, ram: RAM}
   vhdl:

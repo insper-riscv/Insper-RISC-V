@@ -106,6 +106,26 @@ Tools tem os detalhes de quando cada tier dispara, e
 [placa.md](../guide/placa.md) traz a regra de como compilar e programar
 sem quebrar a sessão JTAG.
 
+## 5. As bancas da FLASH e a imagem
+
+A FLASH da `de0-cv` tem duas bancas para a atualização de programa em campo, declaradas em `flash.banks` do `platform.yaml`.
+
+| Banca | Início | Tamanho | Início do programa |
+| :--- | :--- | :--- | :--- |
+| A | `0x00001000` | 124 KiB | `0x00001100` |
+| B | `0x00020000` | 128 KiB | `0x00020100` |
+
+Cada banca começa por uma página de cabeçalho de 256 bytes (magia, tamanho, CRC-32 da carga, versão e CRC do cabeçalho; o formato está no módulo `flash_image` do Tools), e o programa vem logo depois. A rotina de atualização grava a carga primeiro e o cabeçalho por último, então a boot ROM só aceita uma banca de cabeçalho válido.
+
+O `make generate` escreve, a partir das bancas, os arquivos abaixo.
+
+| Arquivo | Conteúdo |
+| :--- | :--- |
+| `runtime/rv32im-fpga-bank-a.specs` e `runtime/rv32im-fpga-bank-b.specs` | Flags do linker de um programa para cada banca, com `__flash` no início do programa e `__flash_size` sem a página do cabeçalho |
+| `runtime/flash_banks.h` | Magia da imagem, tamanho da página do cabeçalho e, de cada banca, `RV32_BANK_<NOME>_BASE`, `_SIZE` e `_ENTRY`, para a boot ROM e para a rotina de atualização |
+
+Um programa para a banca B compila com `--specs` apontando para o arquivo de specs dela, e `riscv-tools flash-image pack programa.bin --output imagem.bin --version N --platform src/cyclone-v/de0-cv/platform.yaml --bank B` monta a imagem e confere que cabe. O `riscv-tools check-memory-map` valida as bancas (alinhadas ao setor de 4 KiB, dentro da FLASH, sem sobreposição).
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).
