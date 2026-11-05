@@ -2,9 +2,9 @@
 
 🌐 [Português](CONTRIBUTING.md) · [English](CONTRIBUTING.en.md)
 
-This document defines the mandatory coding, structural organization, documentation, and verification rules for any contribution to the `RV32IM` repository.
+This document defines the mandatory coding (VHDL, C, and Python), structural organization, documentation, and verification rules for any contribution to the `Insper-RISC-V` repository.
 
-## 1. VHDL Standards and Synthesis Compatibility
+## 1. VHDL-2008 Standard and Synthesis Compatibility
 
 All hardware code in the project is written and validated under the **IEEE 1076-2008 (VHDL-2008)** standard, compiled in GHDL with the `--std=08` flag, and synthesized in Quartus Prime.
 
@@ -56,7 +56,7 @@ The design-for-reuse methodology for hardware blocks follows the book *Reuse Met
 
 ## 2. C Standard and Test Programs
 
-All C code in the project (test programs in `Tests/c/`, runtime and platform startup code) is written under the **ISO/IEC 9899:2024 (C23)** standard, compiled with the `-std=c23` flag. C is the language of the programs that exercise the processor, and it is through them that the other modules are verified: Core, Memory, Peripherals and TopLevel run these programs in simulation and on the board, and the result of each one is compared against its expected golden.
+All C code in the project, wherever it lives (test programs, runtime, and platform startup code), is written under the **ISO/IEC 9899:2024 (C23)** standard and compiled with the `-std=c23` flag. C is the language of the programs that exercise the processor, and it is through them that the hardware modules are verified in simulation and on the board.
 
 | Rule | Specification |
 | :--- | :--- |
@@ -82,14 +82,14 @@ All code identifiers must be written in **English**, whereas all comments and fi
 
 | VHDL Element | Convention | Examples |
 | :--- | :--- | :--- |
-| Entities, architectures, and packages | `snake_case` | `mux_2x1`, `generic_register`, `alu_consts`, `rtl` |
-| Input ports (`in`) | Mandatory `i_` prefix + `snake_case` | `i_clk`, `i_rst`, `i_data`, `i_addr` |
-| Output ports (`out`) | Mandatory `o_` prefix + `snake_case` | `o_data`, `o_irq`, `o_ready` |
+| Entities, architectures, and packages | `snake_case` | `ext_interconnect`, `axi_router`, `modular_map_pkg`, `rtl` |
+| Input ports (`in`) | Mandatory `i_` prefix + `snake_case` | `i_clk`, `i_addr`, `i_byteena`, `i_rden` |
+| Output ports (`out`) | Mandatory `o_` prefix + `snake_case` | `o_m_addr`, `o_m_byteena`, `o_m_rden` |
 | Generics | Descriptive `snake_case` | `data_width`, `addr_width` |
-| Constants (`constant`) | `UPPER_SNAKE_CASE` | `WORD_WIDTH`, `REG_ZERO` |
-| Types and subtypes (`type`, `subtype`) | `snake_case` with `_t` suffix | `word_t`, `reg_idx_t` |
-| Internal signals and variables | `snake_case` | `rd_data`, `wr_en` |
-| Instance labels | `u_` prefix + `snake_case` | `u_reg_file`, `u_mux` |
+| Constants (`constant`) | `UPPER_SNAKE_CASE` | `HAS_M`, `HAS_ZMMUL` |
+| Types and subtypes (`type`, `subtype`) | `snake_case` with `_t` suffix | `state_t` |
+| Internal signals and variables | `snake_case` | `is_periph`, `sel_wb`, `wr_act` |
+| Instance labels | `u_` prefix + `snake_case` | `u_core`, `u_ext_interconnect` |
 
 ## 4. VHDL File Headers and Docstrings
 
@@ -99,9 +99,10 @@ Every `.vhd` file must begin with a 72-column header block (`-- ====...====`) in
 
 ```vhdl
 -- ============================================================================
--- <Título curto do pacote ou entidade>
+-- <Short title of the package or entity>
 -- ============================================================================
--- <Descrição clara em português da função do módulo, interfaces principais, invariantes de ciclo/latência ou parâmetros.>
+-- <Clear description in Portuguese of the module's role in the processor,
+--  primary interfaces, cycle/latency invariants, or parameters.>
 -- ============================================================================
 ```
 
@@ -137,26 +138,80 @@ The project follows the *Design for Reuse* practice described in the *Reuse Meth
 | # | Rule | Review criterion |
 | :--- | :--- | :--- |
 | 1 | **Single-purpose blocks:** separate control, datapath, and protocol interface into distinct entities | An entity with more than one job must be split; a structural top level only connects instances |
-| 2 | **Parameterization through `generic` and package constants:** no width, depth, or feature fixed inside the architecture | No magic literal in logic; codes, addresses, and selectors live in constant packages |
+| 2 | **Parameterization through `generic` and package constants:** no width, depth, or feature fixed inside the architecture | No magic literal in the logic; codes, addresses, and selectors live in constant packages |
 | 3 | **Standardized, interchangeable interfaces:** entities with the same port signature can be swapped without changing whoever instantiates them | Changing a block's architecture must not change its ports or its externally observable behavior |
 | 4 | **Lean ports:** the entity exposes only the ports and generics it uses | Signals or generics "for future use" do not belong in an entity |
 | 5 | **Dependence on ports only:** the upper level knows the entity declaration, never the internals of its architecture | The top level never carries fine-grained implementation logic |
 | 6 | **Composition with already verified leaf blocks:** reuse existing primitives | Do not reimplement with ad-hoc processes or operators what a primitive or an already computed signal provides |
+| 7 | **The top level only connects:** each platform under `src/<family>/<platform>/` instantiates Core, Memory, and Peripherals, and a block's logic lives in the repository that owns it | No reusable block is defined in a platform; it goes to the owning repository and arrives as a submodule |
 
 ## 6. Python Standards
+
+The Python code (runner and tests under `tests/python/`) follows [PEP 8](https://peps.python.org/pep-0008) (style) and [PEP 257](https://peps.python.org/pep-0257) (docstrings); `ruff` checks both (rules `E`, `W`, `N`, and `D`).
+
+### 6.1. Code Style (PEP 8)
+
+> **Deviation from PEP 8.** PEP 8 asks for comments in English, and this project writes them in **Portuguese**. Every other PEP 8 recommendation on comments still applies, namely complete sentences, kept up to date, and never restating what the code already says. Identifiers stay in English.
+
+| Rule | Specification |
+| :--- | :--- |
+| Indentation | 4 spaces per level; tabs prohibited |
+| Encoding | UTF-8, with no encoding declaration in the file |
+| Line length | At most 79 characters for code; 72 for docstrings and comments |
+| Naming | `snake_case` for functions, methods, variables, and modules; `PascalCase` for classes; `UPPER_SNAKE_CASE` for constants; `_` prefix for internal names |
+| Imports | At the top of the file, one per line, in three groups separated by a blank line (standard library, third party, project), each group sorted alphabetically; absolute imports only (relative imports prohibited); `import *` prohibited |
+| Blank lines | Two between module-level definitions; one between methods |
+| Whitespace | One space around operators and after commas; none before a call's `(`, inside brackets, or at the end of a line |
+| Comparisons | `is` and `is not` for `None`; `if seq:` instead of `if len(seq):`; never `== True` or `== False` |
+| Exceptions | `except` always names the specific exception; bare `except:` prohibited |
+| Comments | **In Portuguese** (deviation from PEP 8); complete sentences, capitalized, on their own line or after two spaces at the end of code, starting with `# `; they explain why, not what the code does |
+| Language | Identifiers in **English**; comments in **Portuguese** |
+
+### 6.2. Docstrings (PEP 257)
+
+| Rule | Specification |
+| :--- | :--- |
+| Scope | Every public module, class, function, and method has a docstring |
+| Delimiter | Triple double quotes (`"""`), including one-line docstrings |
+| Summary | First line on the same line as the opening quotes, in the imperative mood, ending with a period |
+| One-line docstring | Closing quotes on the same line, no blank line before or after the text |
+| Multi-line docstring | Summary, blank line, detailed description; closing quotes alone on the last line |
+| Classes | Docstring on the class, not on `__init__`; blank line after the docstring |
+| Sections | NumPy style (`Parameters`, `Returns`, `Raises`, `Examples`), with the type repeating the annotation |
+| Language | Portuguese |
+
+```python
+def fetch_user(user_id: str, include_roles: bool = False) -> User:
+    """Busca um usuário pelo identificador.
+
+    Parameters
+    ----------
+    user_id : str
+        Identificador único do usuário.
+    include_roles : bool, optional
+        Inclui a lista de papéis na resposta, por padrão False.
+
+    Returns
+    -------
+    User
+        Dados do usuário.
+    """
+```
+
+### 6.3. Tooling and Process
 
 | Rule | Specification |
 | :--- | :--- |
 | Package manager | `uv` (`uv add`, `uv sync`, `uv run`); `pip`, `pip install`, and `python -m pip` are prohibited |
 | Tests | `pytest`; every new behavior comes with a test |
-| Code documentation | NumPy-style docstrings on public modules, classes, and functions |
-| Typing | Complete annotations, checked by Pyright in `strict` mode |
-| Style and quality | `ruff` for lint and formatting; `deptry` for declared and used dependencies |
-| Naming | Identifiers in **English** with `snake_case`; comments and docstrings in **Portuguese** |
+| Typing | Complete annotations, checked by Pyright and Pyrefly, both in `strict` mode |
+| Style and quality | `ruff` for lint and formatting; `pylint` with a minimum score of 10; `deptry` for declared and used dependencies |
+| Complexity and duplication | `complexipy` with a maximum of 10 per function; `codeclone` for duplicated code |
+| Security | `semgrep` for static analysis; `uv audit` for dependency vulnerabilities |
 
 ## 7. Markdown Documentation Rules
 
-Every `README`, `CONTRIBUTING`, and `AUTHORS` maintains mirrored versions in Portuguese (`*.md`) and English (`*.en.md`), following these rules:
+`README`, `CONTRIBUTING`, and `AUTHORS` maintain mirrored versions in Portuguese (`*.md`) and English (`*.en.md`), and the documentation under `docs/` maintains the mirrored folders `docs/pt-br/` and `docs/en/`, following these rules:
 
 1. **Language switcher and license footer:** every `README.md` and `README.en.md` includes the `🌐 [Português](...) · [English](...)` switcher at the top, and every `.md` file ends with the copyright footer linking to `LICENSE`.
 2. **Numbered progressive sections:** all sections starting at `##` must be numbered (`## 1.`, `### 1.1.`, `## 2.`) in a logical reading order.
@@ -165,30 +220,37 @@ Every `README`, `CONTRIBUTING`, and `AUTHORS` maintains mirrored versions in Por
    - **Chained colons are prohibited** (more than one `:` in the same sentence or table cell).
 4. **Behavior explanation:** never cite an internal file, module, or signal name as if the name itself explained what the system does; always describe the operation performed.
 5. **Non-redundant tables and LaTeX:** structured data belongs in Markdown tables and mathematical/boolean equations in LaTeX blocks (`$$ ... $$` or `$ ... $`), without repeating in prose what the table or equation already states.
-6. **No changelog or open TODOs in technical docs:** architecture and contract documents describe exclusively the current state, without internal changelogs or lists of future tasks.
+6. **No changelog or open TODOs in technical docs:** architecture and contract documents describe exclusively the current state, without historical bugfix notes or unimplemented work lists.
 7. **Usage guides only instruct:** installation and run instructions say how to do it, without justifying the choice of method.
 
 ## 8. Mandatory Verification Before Opening a Pull Request
 
-Any change to code, configuration, or documentation must pass all commands below without errors before submission:
+Any change to code, configuration, or documentation must pass the commands below without errors before submission:
 
 ```bash
-git submodule update --init --recursive  # Initializes every submodule at its pinned version
-make all                                 # Runs paths, the integration check, and this repository's own tests and formal proofs
+git submodule update --init --recursive  # Initialize all submodules at the pinned versions
+make all                                 # Run paths, integration checks, tests, and formal proofs specific to this repository
+make generate-check                      # Verify that the files generated from each platform.yaml are up to date
 ```
 
-Each repository runs only its own checks, its own cocotb tests and its own formal proofs, in its own CI. Insper-RISC-V runs only what is its own or integration: the paths of `paths.yaml`, the build of the simulation tops with the pinned submodules, the uniqueness of names across repositories, the memory map, the cocotb tests of the platforms and the formal proof of the interconnect. A change to a submodule is validated in its own repository, not here.
+Each repository runs only its own checks, its own cocotb tests, and its own formal proofs, in its own CI. Insper-RISC-V runs only what belongs to it or is integration: the `paths.yaml` paths, the build of the simulation tops with the pinned submodules, name uniqueness across repositories, the memory map, the platform cocotb tests, and the formal proof of the interconnect. A change to a submodule is validated in its own repository, not here.
 
-**A warning in the formal flow is an error.** A warning from GHDL, Yosys or SymbiYosys points to code outside the standard or at its limit. The fix is always in the code or in the proof; suppressing warnings with `-Wno-*` or ignoring them is forbidden. The flow in `formal/common.sh` scans the output of GHDL and the log of each proof and each mutant, and fails with the file and line of the warning (see `docs/en/interconnect/ext_interconnect.md`, section 6).
+When a `platform.yaml` changes, run `make generate` and commit the files it generates.
+
+The `formal` CI job runs the proofs once per engine (`formal - yices`, `formal - bitwuzla`, `formal - boolector`, and `formal - abc-bmc3`) and the aggregator job `formal` decides from the results: every proof must have an answer, and the engines that answered must agree with each other and with the expected result. The name `formal` is the check the default-branch ruleset requires, so do not rename it; the `formal - <engine>` jobs are not required.
+
+A warning in the formal run is an error. The formal flow scans the GHDL output and the Yosys and SymbiYosys logs after every step, including on the mutants, and fails pointing at the file and line of the warning. The fix is always in the code or in the properties, never in an option that hides the warning (`-Wno-*`). The details are in [docs/en/interconnect/ext_interconnect.md](docs/en/interconnect/ext_interconnect.md).
 
 The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files, and the job name is the check the default-branch ruleset requires, so do not rename it.
 
 When adding, renaming, or removing any versioned file, immediately update:
 - `paths.yaml`
 - the submodule pointers
-- `src/*/*/platform.yaml`
+- `src/*/*/platform.yaml` and the files that `make generate` produces from it
 - `docs/`
 - `README.md`, `README.en.md`, and the affected documentation
+
+The CI runs these checks on every push. On a pull request from someone outside the project, it starts only after a member who can merge approves the run in the pull request page.
 
 ---
 
