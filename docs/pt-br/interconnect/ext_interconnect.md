@@ -46,3 +46,15 @@ Os testes rodam aqui, com o barramento do Memory e a UART sobre JTAG do Peripher
 | `AxiRouter` | O roteador sozinho: os dois escravos, rajadas, W antes de AW e DECERR |
 
 O defeito achado no roteador pela leitura das regras de handshake está em [ROUTER_W_BEFORE_AW.md](../bugs/ROUTER_W_BEFORE_AW.md).
+
+A prova formal (`formal/ext_interconnect_props.sv`, SymbiYosys sobre a netlist que o GHDL sintetiza, com o método do Core) cobre o interconector sozinho, com o núcleo, a memória e os oito periféricos livres e presos ao contrato por suposições.
+
+| Propriedade | Prova |
+| :--- | :--- |
+| Um só escravo selecionado por acesso: no máximo um bit de seleção, o do campo de identificação do endereço | Indução |
+| Memória e periférico se excluem: o endereço de periférico não chega à memória, e o de memória não chega a periférico | Indução |
+| O endereço, o dado e a máscara passam sem mudar | Indução |
+| O pulso ao periférico dura um ciclo, só com o interconector livre, e o acesso termina no ciclo seguinte com a resposta mantida até o avanço (nenhum acesso trava) | Indução |
+| O dado lido de um periférico é o do escravo selecionado no pulso, e o da memória vem direto dela | Indução |
+
+Oito defeitos propositais do VHDL (identificação do escravo deslocada, pulso sem o estado livre, memória que vê o endereço de periférico, pronto sempre alto, dado do escravo errado, seleção do dado que não volta à memória, escrita que lê e endereço de palavra deslocado) fazem a prova falhar. O `make formal` roda a prova junto com as dos submódulos, e o `formal/aggregate.sh` decide o resultado dos engines.
