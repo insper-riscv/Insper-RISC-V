@@ -18,6 +18,10 @@ entity core_fpga_test is
 		HAS_ZICNTR   : boolean := work.internal_mem_map_pkg.HAS_ZICNTR;
 		-- Contadores de eventos do Zihpm.
 		HAS_ZIHPM    : boolean := work.internal_mem_map_pkg.HAS_ZIHPM;
+		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
+		HPM_COUNTERS : natural range 0 to 29 := 29;
+		-- Largura, em bits, de cada contador de eventos do Zihpm.
+		HPM_WIDTH    : natural range 0 to 64 := 64;
 		-- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
 		HAS_ZIMOP    : boolean := false;
 		-- Extensao Zicond no core (czero.eqz e czero.nez).
@@ -119,14 +123,6 @@ architecture behaviour of core_fpga_test is
 	signal uart_read_d      : std_logic;
 	signal uart_rdata_d     : std_logic_vector(31 downto 0);
 
-	-- Contadores de eventos do Zihpm: quatro (indices 3 a 6) com a extensao, nenhum sem ela.
-	function hpm_count(present : boolean) return natural is
-	begin
-		if present then
-			return 4;
-		end if;
-		return 0;
-	end function;
 
 
 begin
@@ -182,8 +178,8 @@ begin
 			has_zicsr       => HAS_ZICSR,
 			has_zicntr      => HAS_ZICNTR,
 			has_zihpm       => HAS_ZIHPM,
-			hpm_counters    => hpm_count(HAS_ZIHPM),
-			hpm_width       => 64,
+			hpm_counters    => HPM_COUNTERS,
+			hpm_width       => HPM_WIDTH,
 			has_zimop       => HAS_ZIMOP,
 			has_zicond      => HAS_ZICOND,
 			has_zifencei    => HAS_ZIFENCEI,

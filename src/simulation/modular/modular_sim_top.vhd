@@ -80,6 +80,10 @@ entity modular_sim_top is
     has_zicntr          : boolean := HAS_ZICNTR;
     -- Contadores de eventos da extensão Zihpm (quatro, índices 3 a 6); exige Zicsr.
     has_zihpm           : boolean := HAS_ZIHPM;
+    -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
+    hpm_counters        : natural range 0 to 29 := 29;
+    -- Largura, em bits, de cada contador de eventos do Zihpm.
+    hpm_width           : natural range 0 to 64 := 64;
     -- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
     has_zimop           : boolean := false;
     -- Extensão Zicond no núcleo (czero.eqz e czero.nez).
@@ -117,14 +121,6 @@ end entity modular_sim_top;
 
 architecture behaviour of modular_sim_top is
 
-  -- Quantidade de contadores de eventos do Zihpm: quatro com a extensão, nenhum sem ela.
-  function hpm_count (present : boolean) return natural is
-  begin
-    if present then
-      return 4;
-    end if;
-    return 0;
-  end function hpm_count;
 
 
   -- Tamanho da BOOT_ROM em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
@@ -304,8 +300,8 @@ begin
       ext_base_kib  => ext_base_kib,
       periph_base_kib => periph_base_kib,
       has_zihpm    => has_zihpm,
-      hpm_counters => hpm_count(has_zihpm),
-      hpm_width    => 64,
+      hpm_counters => hpm_counters,
+      hpm_width    => hpm_width,
       has_zimop    => has_zimop,
       has_zicond   => has_zicond
     )
