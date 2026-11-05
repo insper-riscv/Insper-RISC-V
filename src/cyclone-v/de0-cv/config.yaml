@@ -117,6 +117,12 @@ sim:
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
+  parameters:
+    HAS_ZIFENCEI: true
+    HAS_ZIHPM: true
+    HAS_ZIMOP: true
+    HAS_ZICOND: true
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv
@@ -139,3 +145,6 @@ quartus:
   # The memory editor sees only the FLASH storage (0), the one IP that declares ENABLE_RUNTIME_MOD; the BOOT_ROM is
   # written once by the full compile and the SDRAM is reached through the debug port.
   rom_mem_instances: [0]
+  # The de0-cv top has no JTAG loader (internal-mem has): the FLASH store is rewritten through the memory editor, so the
+  # method inherited from internal-mem (jtag_loader) must be overridden.
+  rom_write_method: mem_edit
