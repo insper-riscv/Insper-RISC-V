@@ -145,3 +145,6 @@ quartus:
   # The memory editor sees only the FLASH storage (0), the one IP that declares ENABLE_RUNTIME_MOD; the BOOT_ROM is
   # written once by the full compile and the SDRAM is reached through the debug port.
   rom_mem_instances: [0]
+  # The de0-cv top has no JTAG loader (internal-mem has): the FLASH store is rewritten through the memory editor, so the
+  # method inherited from internal-mem (jtag_loader) must be overridden.
+  rom_write_method: mem_edit
