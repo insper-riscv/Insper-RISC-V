@@ -1,5 +1,5 @@
 # The parent repository: it pins Common-Components, Core, Memory and Peripherals, and
-# this Makefile runs them together. Each of them has its own Makefile and uv project;
+# this Makefile runs only what is its own or integrates them (each submodule runs its own checks, tests and proofs in its CI). Each of them has its own Makefile and uv project;
 # `git submodule update --init --recursive` first. The riscv-tools command comes from
 # the toolchain image of insper-riscv/Infra.
 SHELL := /bin/bash
@@ -47,22 +47,17 @@ all: paths check unit-tests formal
 sync:
 	@set -e; uv sync -q; for s in $(SUBREPOS); do (cd $$s && uv sync -q); done
 
-# Every file path that the configuration of each repository lists exists (the paths.yaml of each one),
-# and the ones of this repository (its platforms included), and the tree has the shape the Capstone defines.
+# Every file path that the configuration of this repository lists exists (its paths.yaml, its platforms
+# included), and the tree has the shape the Capstone defines. The paths of the submodules are checked in
+# the CI of each one.
 paths:
-	@set -e; for s in $(SUBREPOS); do $(MAKE) -C $$s paths; done
 	riscv-tools --root . check-paths --manifest paths.yaml
 	riscv-tools --root . check-tree --kind top
 
-# VHDL syntax check (GHDL) of every repository (the Core also elaborates each of its profiles), of the two
-# simulation tops of the platforms and the uniqueness of the names.
-check:
-	$(MAKE) -C Common-Components check
-	$(MAKE) -C Core profiles
-	$(MAKE) -C Memory check
-	$(MAKE) -C Peripherals check
-	$(MAKE) check-tops
-	$(MAKE) check-unique
+# What only this repository can check: the two simulation tops of the platforms build with the pinned
+# submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
+# the Core) is checked in the CI of each one.
+check: check-tops check-unique
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -110,30 +105,23 @@ generate-check:
 test:
 	uv run python tests/python/runner.py $(TEST)
 
-# The per-entity cocotb tests of each repository and of the platforms, and the memory map check.
+# The per-entity cocotb tests of this repository (the platforms) and the memory map check. The tests of
+# Common-Components, Core, Memory and Peripherals run in the CI of each one (`make test` there), not here.
 unit-tests: sync memory-map test
-	$(MAKE) -C Common-Components test
-	$(MAKE) -C Core test
-	$(MAKE) -C Memory test
-	$(MAKE) -C Peripherals test
 
-# Every make target named formal* of each repository (SymbiYosys; FORMAL_ENGINE=yices, bitwuzla, boolector or
-# abc-bmc3 on the command line goes to each of them), all at once: each proof works in
-# its own folder, so none shares anything with another, and the time is the one of the longest proof instead
-# of the sum, together with the proofs of this repository (formal-interconnect). A repository without proofs adds nothing. -k lets the others finish when one fails and -O keeps
-# the output of each target together.
-FORMAL_JOBS := $(strip $(foreach s,$(SUBREPOS),$(addprefix formal/$(s)/,$(shell sed -n 's/^\(formal[a-z-]*\):.*/\1/p' $(s)/Makefile 2>/dev/null))))
+# The formal proofs of this repository only: the external interconnect (src/interconnect), with the engine
+# FORMAL_ENGINE (yices, bitwuzla, boolector or abc-bmc3; bitwuzla by default). The proofs of the submodules
+# run in the CI of each one. FORMAL_JOBS is empty by construction and stays as the list of the proofs
+# of the submodules that this repository does not run. Each proof works in its own folder, -k lets the
+# others finish when one fails and -O keeps the output of each target together.
+FORMAL_JOBS :=
 
-.PHONY: formal formal-run formal-interconnect $(FORMAL_JOBS)
+.PHONY: formal formal-run formal-interconnect
 
 formal:
-	@test -n "$(FORMAL_JOBS)" || { echo "no formal target in $(SUBREPOS)"; exit 1; }
 	$(MAKE) -k -O -j$(words $(FORMAL_JOBS) formal-interconnect) formal-run
 
 formal-run: $(FORMAL_JOBS) formal-interconnect
-
-$(FORMAL_JOBS): formal/%:
-	$(MAKE) -C $(word 1,$(subst /, ,$*)) $(word 2,$(subst /, ,$*))
 
 # The proofs of this repository: the external interconnect (src/interconnect), whose result is
 # build/formal/result-<engine>.tsv, read by formal/aggregate.sh.

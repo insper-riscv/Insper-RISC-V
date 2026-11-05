@@ -174,8 +174,10 @@ Qualquer alteração em código, configuração ou documentação deve passar se
 
 ```bash
 git submodule update --init --recursive  # Inicializa todos os submódulos nas versões fixadas
-make all                                 # Executa paths, verificação VHDL, verificações de cada repositório e a suíte de simulação
+make all                                 # Executa paths, verificação de integração, testes e provas formais próprios deste repositório
 ```
+
+Cada repositório roda só as próprias verificações, os próprios testes cocotb e as próprias provas formais, no CI de cada um. O Insper-RISC-V roda só o que é dele ou de integração: os caminhos do `paths.yaml`, a construção dos topos de simulação com os submódulos fixados, a unicidade dos nomes entre repositórios, o mapa de memória, os testes cocotb das plataformas e a prova formal do interconector. Uma alteração em um submódulo é validada no repositório dele, não aqui.
 
 O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python, e o nome do job é o check que o ruleset da branch padrão exige, então não o renomeie.
 

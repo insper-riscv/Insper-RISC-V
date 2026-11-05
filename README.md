@@ -57,18 +57,20 @@ Os testes por entidade do RTL das plataformas ficam em `tests/python/`, com o ca
 ```bash
 git clone --recurse-submodules https://github.com/insper-riscv/Insper-RISC-V.git
 cd Insper-RISC-V
-make all        # paths, verificação VHDL, testes por entidade e provas formais
+make all        # paths, verificação de integração, testes e provas formais deste repositório
 ```
 
 As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infra, em que a integração contínua executa.
 
 | Alvo | O que executa |
 | :--- | :--- |
-| `make paths` | Existência de todos os caminhos listados na configuração (`paths.yaml`, `riscv-tools check-paths`) |
-| `make check` | Verificação de sintaxe VHDL de cada repositório, a elaboração de cada perfil do `Core`, a construção do topo de simulação de cada plataforma e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
+| `make paths` | Existência dos caminhos listados na configuração deste repositório (`paths.yaml`, `riscv-tools check-paths`) e a forma da árvore |
+| `make check` | A construção do topo de simulação de cada plataforma com os submódulos fixados e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
 | `make memory-map` | Concordância de cada cópia do mapa de memória com o `platform.yaml` da plataforma |
-| `make unit-tests` | Testes por entidade (cocotb e GHDL) de cada repositório e das plataformas, mais o `memory-map` |
-| `make formal` | Provas formais (SymbiYosys) de cada repositório que as tem, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla`, `boolector` e `abc-bmc3`) |
+| `make unit-tests` | Testes cocotb das plataformas deste repositório, mais o `memory-map` |
+| `make formal` | Provas formais (SymbiYosys) do interconector deste repositório, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla`, `boolector` e `abc-bmc3`) |
+
+Cada repositório roda só as próprias verificações, testes e provas; as dos submódulos rodam no CI de cada um.
 
 ## 5. Placa
 
