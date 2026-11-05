@@ -5,7 +5,8 @@
 #
 # The four models (integrated, external-data, external-instruction and external) share this map: they
 # only change where each memory sits, inside or outside the core. The ROM starts right after the
-# BOOT_ROM. rom_external and ram_external are per model, so the package does not fix them.
+# BOOT_ROM. The `memory` section below is the default model (integrated); a test replaces it for one run
+# (`--memory`, or the rom_external and ram_external generics of the top).
 platform: modular
 # The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
 # `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
@@ -32,6 +33,13 @@ boot:
 # differ in where the ROM and the RAM sit.
 peripherals: []
 
+# The default memory model: both memories inside the chip, no cache.
+memory:
+  rom:    {external: false}
+  ram:    {external: false}
+  icache: {enabled: false}
+  dcache: {enabled: false}
+
 generate:
   specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/modular/runtime/boot_rom.ld}
@@ -41,3 +49,7 @@ generate:
     rom: ROM
     ram: RAM
 
+
+# The copies that the tests of this platform hold by hand.
+checks:
+  - {name: modular_common RAM_BASE, file: tests/python/unittests/rtl/modular_common.py, pattern: '^RAM_BASE = (0x[0-9A-Fa-f]+)', expect: RAM.base}

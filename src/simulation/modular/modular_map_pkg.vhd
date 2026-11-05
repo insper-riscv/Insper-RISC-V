@@ -24,6 +24,10 @@ package modular_map_pkg is
 	constant HAS_ZICNTR          : boolean  := false;
 	-- A extensão Zihpm está no perfil.
 	constant HAS_ZIHPM           : boolean  := false;
+	-- A extensão Zimop está no perfil.
+	constant HAS_ZIMOP           : boolean  := false;
+	-- A extensão Zicond está no perfil.
+	constant HAS_ZICOND          : boolean  := false;
 	-- A extensão Zifencei está no perfil.
 	constant HAS_ZIFENCEI        : boolean  := false;
 	-- A extensão Zicclsm está no perfil.
@@ -39,6 +43,8 @@ package modular_map_pkg is
 	-- Armazenamento da ROM, em bytes: a menor potência de dois que cobre
 	-- [0, fim da ROM).
 	constant ROM_STORAGE_BYTES   : positive := 1048576;
+	-- A ROM fica fora do núcleo.
+	constant ROM_EXTERNAL        : boolean  := false;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1024;
 	-- Fim exclusivo da RAM, em KiB.
@@ -50,9 +56,23 @@ package modular_map_pkg is
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
 		x"001FF";
+	-- A RAM fica fora do núcleo.
+	constant RAM_EXTERNAL        : boolean  := false;
 	-- Base da janela externa, em KiB; dali em diante é externo.
 	constant EXT_BASE_KIB        : natural  := 2097152;
 	-- Base da janela de periféricos, em KiB: os 2 GiB superiores do espaço.
 	constant PERIPH_BASE_KIB     : natural  := 2097152;
+	-- Existe cache de instruções.
+	constant HAS_ICACHE          : boolean  := false;
+	-- Existe cache de dados.
+	constant HAS_DCACHE          : boolean  := false;
+	-- Tamanho da cache de instruções, em bits (256 se não existe).
+	constant ICACHE_SIZE_BITS    : positive := 256;
+	-- Tamanho da cache de dados, em bits (256 se não existe).
+	constant DCACHE_SIZE_BITS    : positive := 256;
+	-- A ROM é alcançada pela porta do núcleo (externa ou com cache).
+	constant ROM_VIA_PORT        : boolean  := ROM_EXTERNAL or HAS_ICACHE;
+	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).
+	constant RAM_VIA_PORT        : boolean  := RAM_EXTERNAL or HAS_DCACHE;
 
 end package modular_map_pkg;

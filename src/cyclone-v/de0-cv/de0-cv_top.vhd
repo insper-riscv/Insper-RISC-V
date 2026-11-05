@@ -242,7 +242,9 @@ begin
 			periph_base_kib => PERIPH_BASE_KIB,
 			has_zihpm    => HAS_ZIHPM,
 			hpm_counters => HPM_COUNTERS,
-			hpm_width    => HPM_WIDTH
+			hpm_width    => HPM_WIDTH,
+			has_zimop    => HAS_ZIMOP,
+			has_zicond   => HAS_ZICOND
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -284,7 +286,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
-		generic map (rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -322,7 +324,7 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -408,20 +410,20 @@ begin
 			o_p_we => p_we, o_p_re => p_re, i_p_rdata => p_rdata
 		);
 
-	-- the UART whose other end is a host on JTAG (0xC0000000)
+	-- the UART whose other end is a host on JTAG (UART_BASE)
 	JTAG_UART : entity work.jtag_uart_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
-			o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4)
+			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
 		);
 
-	-- the seven-segment display and its host port (0xD0000000)
+	-- the seven-segment display and its host port (DISPLAY_BASE)
 	DISPLAY : entity work.seg_display_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(5), i_re => p_re(5),
-			o_rdata => p_rdata(32 * 5 + 31 downto 32 * 5),
+			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			o_hex => display_hex, o_value => display_value, o_fail => display_fail
 		);
 

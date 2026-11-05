@@ -34,6 +34,16 @@ boot:
 peripherals:
   - {name: UART, base: 0xC0000000, id: 4}
 
+# The memory model: both memories inside the chip, no cache. The package takes ROM_EXTERNAL and RAM_EXTERNAL from here.
+memory:
+  rom:    {external: false}
+  ram:    {external: false}
+  icache: {enabled: false}
+  dcache: {enabled: false}
+
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
+extras: [Zimop, Zicond]
+
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
 generate:
@@ -45,8 +55,6 @@ generate:
     package: internal_mem_map_pkg
     rom: FLASH
     ram: RAM
-    rom_external: false
-    ram_external: false
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`): the bases and
 # the words of the memories, tohost and fromhost, and the address width of each simulation memory.

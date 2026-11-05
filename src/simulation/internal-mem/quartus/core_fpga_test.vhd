@@ -32,9 +32,9 @@ entity core_fpga_test is
 		-- Largura, em bits, de cada contador de eventos do Zihpm.
 		HPM_WIDTH    : natural range 0 to 64 := 64;
 		-- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-		HAS_ZIMOP    : boolean := false;
+		HAS_ZIMOP    : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
 		-- Extensao Zicond no core (czero.eqz e czero.nez).
-		HAS_ZICOND   : boolean := false;
+		HAS_ZICOND   : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
 		-- Zifencei no core (FENCE.I).
 		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
 		-- Acesso desalinhado executado em hardware (Zicclsm).
@@ -153,7 +153,7 @@ architecture behaviour of core_fpga_test is
 	-- (ex: depois de carregar um novo conteúdo de ROM via JTAG).
 	signal core_reset : std_logic;
 
-	-- UART memory-mapped em 0xC0000000
+	-- UART memory-mapped em UART_BASE
 	signal uart_selected : std_logic;
 	-- Escrita na UART ('1' = escreve; janela selecionada e escrita do núcleo).
 	signal uart_write    : std_logic;
@@ -209,9 +209,9 @@ begin
 	core_reset <= (not pll_locked) or (not i_fpga_reset_n) or flash_halt;
 
 
-	-- Seleciona a região 0xC0000000 - 0xCFFFFFFF.
+	-- Seleciona a janela de 256 MiB da UART (UART_BASE, do pacote gerado do platform.yaml).
 	uart_selected <= '1'
-		when sdram_addr(31 downto 28) = x"C"
+		when sdram_addr(31 downto 28) = UART_BASE(31 downto 28)
 		else '0';
 
 	uart_write <= sdram_wren and uart_selected;
