@@ -22,6 +22,7 @@ UART_VHDL := Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_p
              Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd \
              Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd \
              Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd \
+             Peripherals/src/UART/serial/uart_fifo.vhd \
              Peripherals/src/UART/serial/uart.vhd
 
 # The simulation top of internal-mem (rv32i3stage_core_sim_test): the core with the simulation memories and peripherals.

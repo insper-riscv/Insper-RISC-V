@@ -131,6 +131,7 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
     - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
     - src/simulation/internal-mem/quartus/core_fpga_test.vhd
