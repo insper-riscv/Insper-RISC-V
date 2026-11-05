@@ -174,8 +174,10 @@ Any change to code, configuration, or documentation must pass all commands below
 
 ```bash
 git submodule update --init --recursive  # Initializes every submodule at its pinned version
-make all                                 # Runs paths, the VHDL check, every repository's own checks, and the simulation suite
+make all                                 # Runs paths, the integration check, and this repository's own tests and formal proofs
 ```
+
+Each repository runs only its own checks, its own cocotb tests and its own formal proofs, in its own CI. Insper-RISC-V runs only what is its own or integration: the paths of `paths.yaml`, the build of the simulation tops with the pinned submodules, the uniqueness of names across repositories, the memory map, the cocotb tests of the platforms and the formal proof of the interconnect. A change to a submodule is validated in its own repository, not here.
 
 The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files, and the job name is the check the default-branch ruleset requires, so do not rename it.
 

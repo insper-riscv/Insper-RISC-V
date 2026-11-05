@@ -57,4 +57,4 @@ A prova formal (`formal/ext_interconnect_props.sv`, SymbiYosys sobre a netlist q
 | O pulso ao periférico dura um ciclo, só com o interconector livre, e o acesso termina no ciclo seguinte com a resposta mantida até o avanço (nenhum acesso trava) | Indução |
 | O dado lido de um periférico é o do escravo selecionado no pulso, e o da memória vem direto dela | Indução |
 
-Oito defeitos propositais do VHDL (identificação do escravo deslocada, pulso sem o estado livre, memória que vê o endereço de periférico, pronto sempre alto, dado do escravo errado, seleção do dado que não volta à memória, escrita que lê e endereço de palavra deslocado) fazem a prova falhar. O `make formal` roda a prova junto com as dos submódulos, e o `formal/aggregate.sh` decide o resultado dos engines.
+Oito defeitos propositais do VHDL (identificação do escravo deslocada, pulso sem o estado livre, memória que vê o endereço de periférico, pronto sempre alto, dado do escravo errado, seleção do dado que não volta à memória, escrita que lê e endereço de palavra deslocado) fazem a prova falhar. O `make formal` roda só esta prova, e o `formal/aggregate.sh` decide o resultado dos engines.
