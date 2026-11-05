@@ -60,7 +60,16 @@ architecture behaviour of core_fpga_sdram_flash is
 		return 0;
 	end function;
 
-	-- O perfil do core desta placa (HAS_* e NUM_REGS) vem do pacote gerado do platform.yaml.
+	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
+	function reg_count(is_e : boolean) return positive is
+	begin
+		if is_e then
+			return 16;
+		end if;
+		return 32;
+	end function;
+
+	-- O perfil do core desta placa (HAS_*) vem do pacote gerado do platform.yaml.
 	constant HPM_COUNTERS : natural := hpm_count(HAS_ZIHPM);
 
 	signal if_addr : std_logic_vector(31 downto 0);
@@ -233,7 +242,7 @@ begin
 			tick_cycles  => 50,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
-			num_regs       => NUM_REGS,
+			num_regs       => reg_count(HAS_E),
 			boot_rom_bits  => BOOT_ROM_BITS,
 			rom_end_kib    => ROM_END_KIB,
 			rom_external   => ROM_EXTERNAL,

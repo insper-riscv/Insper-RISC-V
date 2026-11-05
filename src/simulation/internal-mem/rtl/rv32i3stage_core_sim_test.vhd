@@ -41,8 +41,8 @@ entity rv32i3stage_core_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Zifencei no core (FENCE.I); false mantem o NOP.
 	  HAS_ZIFENCEI : boolean := false;
-	  -- Registradores do core: 32 no RV32I e 16 no RV32E (o perfil da plataforma por padrao).
-	  NUM_REGS : positive := work.internal_mem_map_pkg.NUM_REGS
+	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
+	  HAS_E : boolean := work.internal_mem_map_pkg.HAS_E
   	);
 	port (
 		CLK     : in  std_logic;
@@ -61,6 +61,15 @@ architecture behaviour of rv32i3stage_core_sim_test is
 			return 4;
 		end if;
 		return 0;
+	end function;
+
+	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
+	function reg_count(is_e : boolean) return positive is
+	begin
+		if is_e then
+			return 16;
+		end if;
+		return 32;
 	end function;
 
 	-- Exceção sinalizada pelo core sem Zicsr (um ciclo em '1'); com Zicsr fica em '0'.
@@ -142,7 +151,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (num_regs => NUM_REGS, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
+		generic map (num_regs => reg_count(HAS_E), boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, hpm_counters => hpm_count(HAS_ZIHPM), has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

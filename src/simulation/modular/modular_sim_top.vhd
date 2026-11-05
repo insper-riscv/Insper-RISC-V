@@ -52,8 +52,8 @@ entity modular_sim_top is
     rom_size_bytes      : positive := ROM_STORAGE_BYTES;
     -- Tamanho da RAM em bytes, uma potência de dois.
     ram_size_bytes      : positive := RAM_STORAGE_BYTES;
-    -- Registradores do núcleo: 32 no RV32I e 16 no RV32E (o perfil do platform.yaml por padrão).
-    num_regs            : natural  := NUM_REGS;
+    -- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil do platform.yaml por padrão).
+    has_e               : boolean  := HAS_E;
     -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM (0x100000 por padrão).
     rom_end_kib         : natural  := ROM_END_KIB;
     -- Base, em KiB, da RAM (0x100000 por padrão).
@@ -121,6 +121,15 @@ architecture behaviour of modular_sim_top is
     end if;
     return 0;
   end function hpm_count;
+
+  -- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
+  function reg_count (is_e : boolean) return positive is
+  begin
+    if is_e then
+      return 16;
+    end if;
+    return 32;
+  end function reg_count;
 
   -- Tamanho da BOOT_ROM em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
   constant BOOT_KIB : natural := boot_rom_size_bytes / 1024;
@@ -289,7 +298,7 @@ begin
       has_zicntr   => has_zicntr,
       has_zifencei => has_zifencei,
       has_zicclsm  => has_zicclsm,
-      num_regs      => num_regs,
+      num_regs      => reg_count(has_e),
       boot_rom_bits => log2_exact(boot_rom_size_bytes),
       rom_end_kib   => rom_end_kib,
       rom_external  => rom_external,

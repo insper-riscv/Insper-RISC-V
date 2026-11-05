@@ -6,8 +6,8 @@ use work.internal_mem_map_pkg.all;
 
 entity core_fpga_test is
 	generic (
-		-- Registradores do core: 32 no RV32I e 16 no RV32E (o perfil da plataforma por padrao).
-		NUM_REGS     : positive := work.internal_mem_map_pkg.NUM_REGS;
+		-- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
+		HAS_E        : boolean := work.internal_mem_map_pkg.HAS_E;
 		-- Extensao M completa no core.
 		HAS_M        : boolean := work.internal_mem_map_pkg.HAS_M;
 		-- Multiplicacao sem divisao (Zmmul) no core.
@@ -124,6 +124,15 @@ architecture behaviour of core_fpga_test is
 		return 0;
 	end function;
 
+	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
+	function reg_count(is_e : boolean) return positive is
+	begin
+		if is_e then
+			return 16;
+		end if;
+		return 32;
+	end function;
+
 begin
 
 	-- rst era amarrado em '0' antes -- nunca pulsado. gui_pll_auto_reset
@@ -179,7 +188,7 @@ begin
 			hpm_counters    => hpm_count(HAS_ZIHPM),
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
-			num_regs        => NUM_REGS,
+			num_regs        => reg_count(HAS_E),
 			boot_rom_bits   => BOOT_ROM_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
