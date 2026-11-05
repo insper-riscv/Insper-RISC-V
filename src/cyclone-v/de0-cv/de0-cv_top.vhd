@@ -12,6 +12,12 @@ use work.de0_cv_map_pkg.all;
 -- SDRAM through the debug master and its Virtual JTAG shell, as a second master of the controller. The core
 -- clock is 50 MHz; the controller and the debug master run on the 142.857 MHz clock of the same PLL.
 entity core_fpga_sdram_flash is
+	generic (
+		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
+		HPM_COUNTERS : natural range 0 to 29 := 29;
+		-- Largura, em bits, de cada contador de eventos do Zihpm.
+		HPM_WIDTH    : natural range 0 to 64 := 64
+	);
 	port (
 		CLOCK_50 : in std_logic;
 		FPGA_RESET_N : in std_logic := '1';
@@ -51,26 +57,9 @@ architecture behaviour of core_fpga_sdram_flash is
 		);
 	end component;
 
-	-- Contadores de eventos da extensão Zihpm: quatro (índices 3 a 6) com a extensão, nenhum sem ela.
-	function hpm_count(present : boolean) return natural is
-	begin
-		if present then
-			return 4;
-		end if;
-		return 0;
-	end function;
 
-	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
-	function reg_count(is_e : boolean) return positive is
-	begin
-		if is_e then
-			return 16;
-		end if;
-		return 32;
-	end function;
 
 	-- O perfil do core desta placa (HAS_*) vem do pacote gerado do platform.yaml.
-	constant HPM_COUNTERS : natural := hpm_count(HAS_ZIHPM);
 
 	signal if_addr : std_logic_vector(31 downto 0);
 	signal if_rden : std_logic;
@@ -242,7 +231,7 @@ begin
 			tick_cycles  => 50,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
-			num_regs       => reg_count(HAS_E),
+			has_e          => HAS_E,
 			boot_rom_bits  => BOOT_ROM_BITS,
 			rom_end_kib    => ROM_END_KIB,
 			rom_external   => ROM_EXTERNAL,
@@ -251,7 +240,9 @@ begin
 			ram_external   => RAM_EXTERNAL,
 			ext_base_kib   => EXT_BASE_KIB,
 			periph_base_kib => PERIPH_BASE_KIB,
-			hpm_counters => HPM_COUNTERS
+			has_zihpm    => HAS_ZIHPM,
+			hpm_counters => HPM_COUNTERS,
+			hpm_width    => HPM_WIDTH
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,

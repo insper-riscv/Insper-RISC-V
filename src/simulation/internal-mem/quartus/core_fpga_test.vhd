@@ -18,6 +18,14 @@ entity core_fpga_test is
 		HAS_ZICNTR   : boolean := work.internal_mem_map_pkg.HAS_ZICNTR;
 		-- Contadores de eventos do Zihpm.
 		HAS_ZIHPM    : boolean := work.internal_mem_map_pkg.HAS_ZIHPM;
+		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
+		HPM_COUNTERS : natural range 0 to 29 := 29;
+		-- Largura, em bits, de cada contador de eventos do Zihpm.
+		HPM_WIDTH    : natural range 0 to 64 := 64;
+		-- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
+		HAS_ZIMOP    : boolean := false;
+		-- Extensao Zicond no core (czero.eqz e czero.nez).
+		HAS_ZICOND   : boolean := false;
 		-- Zifencei no core (FENCE.I).
 		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
 		-- Acesso desalinhado executado em hardware (Zicclsm).
@@ -110,28 +118,18 @@ architecture behaviour of core_fpga_test is
 	signal uart_write    : std_logic;
 	signal uart_read     : std_logic;
 	signal uart_rdata    : std_logic_vector(31 downto 0);
+	signal uart_read_d   : std_logic;
+	signal uart_rdata_d  : std_logic_vector(31 downto 0);
 
-	signal ram_memory_rdata : std_logic_vector(31 downto 0);
-	signal uart_read_d      : std_logic;
-	signal uart_rdata_d     : std_logic_vector(31 downto 0);
+	-- Porta externa do core, usada pela janela de periféricos.
+	signal sdram_addr     : std_logic_vector(31 downto 0);
+	signal sdram_wdata    : std_logic_vector(31 downto 0);
+	signal sdram_rdata    : std_logic_vector(31 downto 0);
+	signal sdram_byteena  : std_logic_vector(3 downto 0);
+	signal sdram_rden     : std_logic;
+	signal sdram_wren     : std_logic;
 
-	-- Contadores de eventos do Zihpm: quatro (indices 3 a 6) com a extensao, nenhum sem ela.
-	function hpm_count(present : boolean) return natural is
-	begin
-		if present then
-			return 4;
-		end if;
-		return 0;
-	end function;
 
-	-- Registradores do core: 16 no RV32E (HAS_E) e 32 no RV32I.
-	function reg_count(is_e : boolean) return positive is
-	begin
-		if is_e then
-			return 16;
-		end if;
-		return 32;
-	end function;
 
 begin
 
@@ -163,11 +161,11 @@ begin
 
 	-- Seleciona a região 0xC0000000 - 0xCFFFFFFF.
 	uart_selected <= '1'
-		when ram_addr(31 downto 28) = x"C"
+		when sdram_addr(31 downto 28) = x"C"
 		else '0';
 
-	uart_write <= ram_wren and ram_en and uart_selected;
-	uart_read  <= ram_rden and ram_en and uart_selected;
+	uart_write <= sdram_wren and uart_selected;
+	uart_read  <= sdram_rden and uart_selected;
 
 	-- Status LEDs -- ver README.md/docs para o mapa completo. Baratos
 	-- o bastante pra deixar permanentes (nao so' debug de bring-up):
@@ -185,10 +183,14 @@ begin
 			has_zmmul       => HAS_ZMMUL,
 			has_zicsr       => HAS_ZICSR,
 			has_zicntr      => HAS_ZICNTR,
-			hpm_counters    => hpm_count(HAS_ZIHPM),
+			has_zihpm       => HAS_ZIHPM,
+			hpm_counters    => HPM_COUNTERS,
+			hpm_width       => HPM_WIDTH,
+			has_zimop       => HAS_ZIMOP,
+			has_zicond      => HAS_ZICOND,
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
-			num_regs        => reg_count(HAS_E),
+			has_e           => HAS_E,
 			boot_rom_bits   => BOOT_ROM_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
@@ -217,7 +219,16 @@ begin
 			o_ram_en      => ram_en,
 			o_ram_wren    => ram_wren,
 			o_ram_rden    => ram_rden,
-			o_ram_byteena => ram_byteena
+			o_ram_byteena => ram_byteena,
+
+			o_sdram_addr    => sdram_addr,
+			o_sdram_wdata   => sdram_wdata,
+			o_sdram_byteena => sdram_byteena,
+			o_sdram_rden    => sdram_rden,
+			o_sdram_wren    => sdram_wren,
+			i_sdram_rdata   => sdram_rdata,
+			i_sdram_ready   => '1',
+			o_mem_advance   => open
 	);
 
 	UART_PERIPHERAL : entity work.UART
@@ -227,8 +238,8 @@ begin
 		port map (
 			i_clk    => pll_clk_idexmem,
 			i_rst    => core_reset,
-			i_data_in  => ram_wdata,
-			i_address  => ram_addr(3 downto 2),
+			i_data_in  => sdram_wdata,
+			i_address  => sdram_addr(3 downto 2),
 			i_write    => uart_write,
 			i_read     => uart_read,
 			o_data_out => uart_rdata,
@@ -251,10 +262,9 @@ begin
 		end if;
 	end process;
 
-	-- Seleciona o resultado correspondente ao acesso do ciclo anterior.
-	ram_rdata <= uart_rdata_d
-		when uart_read_d = '1'
-		else ram_memory_rdata;
+	-- A UART responde no ciclo seguinte da porta externa; a RAM interna
+	-- permanece dedicada à sua própria porta do core.
+	sdram_rdata <= uart_rdata_d;
 
 	-- BOOT_ROM: fixa, gravada uma unica vez (nunca reescrita via JTAG
 	-- por teste -- ver config.yaml quartus.boot_rom_mif_target). So'
@@ -338,9 +348,9 @@ begin
 		i_byteena => ram_byteena,
 		i_clk   => pll_clk_idexmem,
 		i_data    => ram_wdata,
-		i_rden => ram_rden and ram_en and not uart_selected,
-		i_wren => ram_wren and ram_en and not uart_selected,
-		o_q    => ram_memory_rdata
+		i_rden => ram_rden and ram_en,
+		i_wren => ram_wren and ram_en,
+		o_q    => ram_rdata
 	 );
 
 	 blink : entity work.Blinky

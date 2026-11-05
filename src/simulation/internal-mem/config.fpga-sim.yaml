@@ -43,11 +43,11 @@ sim:
     # The RAM and the core run on the PLL's second output, so the write
     # bus is sampled on that clock, once per core cycle.
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
-    # config.yaml's 200000 counts ticks of the simulation top's base
-    # clock, three per core cycle; here one tick is one core cycle.
-    # uart-errors exchanges 32 raw bytes at 115200 baud, so its coordinated
-    # serial protocol needs about 4 ms even though the CPU work is short.
-    SIM_TIMEOUT_CYCLES: "250000"
+    # config.yaml counts ticks of the simulation top's base clock, three per
+    # core cycle; here one tick is one core cycle.
+    # uart-errors fills both 16-byte queues and exchanges 32 raw bytes at
+    # 115200 baud, so its coordinated protocol needs about 8 ms.
+    SIM_TIMEOUT_CYCLES: "500000"
   # In dependency order. The core is the same as config.yaml's, the
   # memories are the Quartus IP wrappers of the hardware project, the
   # PLL is a behavioral stand-in (its real model is SystemVerilog) and
@@ -67,21 +67,23 @@ sim:
     - Core/src/shared/fwd_consts.vhd
     - Core/src/shared/word_consts.vhd
     - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicond/zicond_consts.vhd
     - Core/src/Zicsr/csr_value_consts.vhd
     - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zimop/zimop_consts.vhd
     - Common-Components/src/generic_register.vhd
     - Common-Components/src/adder.vhd
     - Common-Components/src/mux_2x1.vhd
     - Common-Components/src/mux_4x1.vhd
     - Common-Components/src/flip_flop.vhd
     - Common-Components/src/utils_pkg.vhd
-    - Core/src/I/alu.vhd
+    - Core/src/I-E/alu.vhd
     - Common-Components/src/onehot_decoder.vhd
     - Common-Components/src/mux_tree.vhd
     - Core/src/shared/reg_file.vhd
-    - Core/src/I/extender_imm.vhd
-    - Core/src/I/extender_ram.vhd
-    - Core/src/I/store_manager.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
     - Core/src/Zicclsm/misaligned_unit.vhd
     - Core/src/shared/control_unit.vhd
     - Core/src/shared/bubble_mux.vhd
@@ -93,11 +95,15 @@ sim:
     - Core/src/M/non_restoring_divider_rv32.vhd
     - Core/src/M/muldiv_fusion.vhd
     - Core/src/M/multdiv.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
     - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zimop/zimop_decode.vhd
     - Core/src/Zicsr/csr_addr_consts.vhd
     - Core/src/Zicsr/csr_event_consts.vhd
     - Core/src/Zicntr/counter64.vhd
     - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
     - Core/src/Zicsr/csr_file.vhd
     - Core/src/Zicsr/trap_unit.vhd
     - Core/src/Zifencei/fencei_unit.vhd
@@ -125,6 +131,7 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
     - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
     - src/simulation/internal-mem/quartus/core_fpga_test.vhd

@@ -27,7 +27,15 @@ paths: {include_dir: ..., build_dir: build, c_dir: c, asm_dir: asm}
 
 Os caminhos dentro do `config.yaml` são relativos à raiz do repositório. O campo `sim.python_path` coloca `testbench/` no caminho de busca do módulo de teste da simulação.
 
-## 4. Verificação
+## 4. UART serial
+
+A janela de periférico 4, em `0xC0000000`, contém a UART serial física. Ela opera em 115200 baud, 8N1, e possui filas independentes de transmissão e recepção com 16 bytes cada. O topo de hardware liga RX ao pino M16 e TX ao pino C16 da DE0-CV. O topo de simulação expõe as mesmas linhas para o testbench.
+
+O mapa tem `TX_DATA` em `0xC0000000`, `RX_DATA` em `0xC0000004`, `STATUS` em `0xC0000008` e `CONTROL` em `0xC000000C`. O contrato completo dos registradores e das filas está na [documentação da UART serial](https://github.com/insper-riscv/Peripherals/blob/main/docs/pt-br/UART/serial_uart.md).
+
+Esta UART é diferente da UART sobre JTAG da plataforma `de0-cv`. Os dois periféricos usam a mesma janela em plataformas distintas, mas possuem interfaces com o hospedeiro e mapas de estado próprios.
+
+## 5. Verificação
 
 | Alvo | O que confere |
 | :--- | :--- |
