@@ -15,5 +15,6 @@ Os documentos comuns às duas descrevem o que o programa enxerga.
 | :--- | :--- |
 | [memoria.md](memoria.md) | Arquitetura de memória BOOT_ROM, FLASH e RAM |
 | [boot.md](boot.md) | Estado de boot, `crt0` da picolibc e `boot_rom.S` |
+| [contrato-de-entrada.md](contrato-de-entrada.md) | Contrato de entrada da BOOT_ROM com o firmware |
 | [runtime.md](runtime.md) | Runtime C, arquivo de plataforma, `stdout` e Spike |
 | [atualizacao-de-programa.md](atualizacao-de-programa.md) | Substituição de um programa por outro e passagem de boot entre testes |

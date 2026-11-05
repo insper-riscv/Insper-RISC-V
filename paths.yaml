@@ -40,6 +40,7 @@ references:
   - {name: template toolchain specs, file: src/simulation/template/config.yaml, yaml: toolchain.specs, base: .}
   - {name: template Spike stand-in, file: src/simulation/template/config.yaml, yaml: emulator.sources, base: .}
   - {name: bus integration tests, paths: [src/interconnect/ext_interconnect.vhd, src/interconnect/ext_axi_interconnect.vhd, src/interconnect/axi_router.vhd, src/interconnect/axi_slave_periph_bank.vhd, tests/python/unittests/integration/axi_router.py, tests/vhdl/ext_bus_system.vhd, tests/vhdl/ext_axi_bus_system.vhd, tests/python/unittests/integration/ext_bus.py, tests/python/unittests/integration/ext_axi_cache.py, tests/python/unittests/integration/jtag.py, tests/python/unittests/integration/checks.py, tests/python/unittests/integration/dut.py]}
+  - {name: boot entry contract documents, paths: [docs/pt-br/platform/contrato-de-entrada.md, docs/en/platform/contrato-de-entrada.md]}
   - {name: interconnect documents, paths: [docs/pt-br/interconnect/ext_interconnect.md, docs/en/interconnect/ext_interconnect.md, docs/pt-br/bugs/ROUTER_W_BEFORE_AW.md, docs/en/bugs/ROUTER_W_BEFORE_AW.md]}
 
 # Entities of src/ that have no entity test in tests.json or no proof in formal/, and why (changed only with a

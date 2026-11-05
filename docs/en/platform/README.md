@@ -15,5 +15,6 @@ The documents common to both describe what the program sees.
 | :--- | :--- |
 | [memoria.md](memoria.md) | BOOT_ROM, FLASH and RAM memory architecture |
 | [boot.md](boot.md) | Boot state, the picolibc `crt0` and `boot_rom.S` |
+| [contrato-de-entrada.md](contrato-de-entrada.md) | Entry contract between the BOOT_ROM and the firmware |
 | [runtime.md](runtime.md) | C runtime, platform file, `stdout` and Spike |
 | [atualizacao-de-programa.md](atualizacao-de-programa.md) | Replacing one program with another and the boot handoff between tests |
