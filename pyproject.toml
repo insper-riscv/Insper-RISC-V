@@ -1,6 +1,6 @@
 [project]
 name = "insper-riscv"
-version = "0.2.12"
+version = "0.2.13"
 description = "The RV32 SoC: the platforms (top levels, Quartus project, runtime, memory map), their testbenches and the KPI scripts."
 license = "Apache-2.0"
 # Same Python as the ci-vhdl image of Infra, which also carries riscv-tools.

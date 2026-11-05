@@ -18,3 +18,4 @@ Os documentos comuns às duas descrevem o que o programa enxerga.
 | [contrato-de-entrada.md](contrato-de-entrada.md) | Contrato de entrada da BOOT_ROM com o firmware |
 | [runtime.md](runtime.md) | Runtime C, arquivo de plataforma, `stdout` e Spike |
 | [atualizacao-de-programa.md](atualizacao-de-programa.md) | Substituição de um programa por outro e passagem de boot entre testes |
+| [timing/README.md](timing/README.md) | Linha de base de tempo (Fmax, caminhos críticos), de ciclos por instrução e dos cruzamentos de domínio da `de0-cv` |
