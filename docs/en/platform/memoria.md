@@ -4,15 +4,15 @@ This document describes the memory of the `internal-mem` platform. The one of `d
 
 ## Summary
 
-The core (`rv32im_pipeline_core`) models the memory hierarchy of a real SoC with **3 logical roles**, implemented in **4 physical memory instances**:
+The core (`rv32im_pipeline_core`) models the memory hierarchy of a real SoC with **3 logical roles**, implemented in **3 physical memory instances**:
 
-| Role | Physical instance(s) | Rewritten over JTAG? | Who accesses it |
+| Role | Physical instance | Rewritten over JTAG? | Who accesses it |
 | :--- | :--- | :--- | :--- |
 | BOOT_ROM | `BOOT_ROM` | No, only at the initial compile | Instruction fetch only (IF) |
-| FLASH | `FLASH` and `FLASH_MEM` | Yes, at each test change | `FLASH`: IF. `FLASH_MEM`: MEM |
+| FLASH | `FLASH` | Yes, at each test change, by the JTAG loader | Port A: IF. Port B: MEM and the loader |
 | RAM | `RAM` | No (JTAG only reads and writes data) | IF never. MEM always |
 
-This is called **modified Harvard**. A "true" Harvard would have fully independent instruction and data buses, with no overlap. Here, IF fetches instructions from the BOOT_ROM and the FLASH (never from the RAM), and the MEM stage (load and store) only touches the RAM, **except** for one deliberate opening. The MEM stage can also read `FLASH_MEM` (the second physical copy of the FLASH), only so the bootloader copies `.data` from the FLASH to the RAM at boot. This is the only exception to the instruction and data separation, see [the FLASH needs a second read port](#2-the-flash-needs-a-second-read-port-the-quartus-lite-limit) below.
+This is called **modified Harvard**. A "true" Harvard would have fully independent instruction and data buses, with no overlap. Here, IF fetches instructions from the BOOT_ROM and the FLASH (never from the RAM), and the MEM stage (load and store) only touches the RAM, **except** for one deliberate opening. The MEM stage can also read the FLASH through its port B, only so the bootloader copies `.data` from the FLASH to the RAM at boot. This is the only exception to the instruction and data separation, see [FLASH: the firmware of each test](#12-flash-the-firmware-of-each-test) below.
 
 ## 1. The three roles in detail
 
@@ -24,33 +24,20 @@ It is generic on purpose and knows nothing about a test. The picolibc `crt0`, in
 
 ### 1.2. FLASH: the "firmware" of each test
 
-The real program of each test (`.init`, `.text` and `.rodata`, plus the initial image of `.data`), rewritten over JTAG (In-System Memory Content Editor) every time a test changes. Physically it is a RAM-type `altsyncram` (not a real flash), but architecturally it represents the non-volatile storage. It is only rewritten explicitly between runs, never by the CPU at run time.
+The real program of each test (`.init`, `.text` and `.rodata`, plus the initial image of `.data`), rewritten by the JTAG loader (`flash_loader`, from Memory) every time a test changes. Physically it is a true dual-port `altsyncram` (not a real flash), **a single copy**, but architecturally it represents the non-volatile storage. It is only rewritten explicitly between runs, never by the CPU at run time.
+
+Port A is the instruction fetch (IF) and port B is the data read of the MEM stage, which the `.data` copy loop of `boot_rom.S` uses (`lw a0, 0(t1)`, where `t1` points into the FLASH, the LMA of `.data`). The loader halts the core (its halt output feeds `core_reset`), writes the image through port B and releases the core, which restarts from the BOOT_ROM. With the core running the write enable is forced to `'0'` in hardware, and the core only reads. The protocol is in the Memory documentation (`flash_loader`), and the host picks this path with `quartus.rom_write_method: jtag_loader`.
 
 ### 1.3. RAM: the real data
 
 `.data`, `.sdata`, `.sbss`, `.bss`, stack and heap. It is the only memory the MEM stage (load and store) always reaches for writing. `.rodata` (large constants) stays resident in the FLASH and is never copied here. The last 1056 bytes of the physical space of the IP are reserved (outside the `__ram_size` that `rv32im-fpga.specs` gives the test) for tohost and fromhost (4 words, HTIF convention, with 2 free words) and the `stdout` buffer (1032 bytes, see [runtime.md](runtime.md)).
 
-## 2. The FLASH needs a second read port: the Quartus Lite limit
-
-The MEM stage needs to read the FLASH as data specifically for the `.data` copy loop in `boot_rom.S` (`lw a0, 0(t1)`, where `t1` points into the FLASH, the LMA of `.data`).
-
-The obvious solution, giving the `FLASH` a second read port (a `DUAL_PORT` `altsyncram` IP), **does not compile in Quartus Prime Lite**. An `altsyncram` with `operation_mode => DUAL_PORT` **and** `lpm_hint => "ENABLE_RUNTIME_MOD=YES"` at the same time fails to compile in that edition (confirmed empirically by running `quartus_map` alone on that IP). `ENABLE_RUNTIME_MOD` is mandatory because it is what lets the JTAG In-System Memory Content Editor rewrite the FLASH at each test.
-
-Instead of a dual-port FLASH, there are **two identical physical instances**, single-port each:
-
-- `FLASH` (`ips/FLASH1PORT/flash1port.vhd`): the instruction fetch port (IF), `INSTANCE_NAME=FLASH`.
-- `FLASH_MEM` (`ips/FLASH_MEM1PORT/flash_mem1port.vhd`): the data read port for the MEM stage, `INSTANCE_NAME=FLASH_MEM`. Same clock as the RAM (`pll_clk_idexmem`), since the MEM stage consumes both.
-
-The different `INSTANCE_NAME` is what makes the JTAG In-System Memory Content Editor treat them as two independent taps. `riscv_tools` (tohost and rom_writer) writes the **same content** to both every time a test changes. In `config.yaml`, `quartus.rom_mem_instances: [1, 3]` is a list with both JTAG indexes, not a single one.
-
-The BOOT_ROM never needs a second port, since it has no `.data` of its own, and `boot_rom.S` only uses fixed immediates.
-
-## 3. Memory map
+## 2. Memory map
 
 | Region | Base | Size | Words | widthad |
 | :--- | :--- | :--- | :--- | :--- |
 | BOOT_ROM | `0x00000000` | 4K | 1024 | 10 |
-| FLASH and FLASH_MEM | `0x00001000` | 28K | 7168 | 13 |
+| FLASH | `0x00001000` | 28K | 7168 | 13 |
 | RAM (physical space) | `0x00008000` | 160K | 40960 | 16 |
 | RAM (usable, `rv32im-fpga.specs`) | `0x00008000` | 160K minus 24 minus 1032 bytes | N/A | N/A |
 | `stdout` (header and data) | `0x0002FBE0` | 1032 bytes | N/A | N/A |
@@ -64,21 +51,22 @@ $$0x1000 + \text{FLASH\_SIZE} \equiv 0 \pmod{4096}$$
 
 This requires `FLASH_SIZE` to be a multiple of 4096, and 28K ($7 \times 4096 = 28672$) works and ends exactly at the base of the RAM.
 
-### 3.1. The RAM block limit
+### 2.1. The RAM block limit
 
-The Cyclone V 5CEBA4F23 has 308 M10K blocks of 10 Kbit, a limit on the number of blocks as well as on total bits. The duplicated FLASH (`FLASH` and `FLASH_MEM`) counts twice, and the current map uses about 178 blocks (58 % of the ceiling).
+The Cyclone V 5CEBA4F23 has 308 M10K blocks of 10 Kbit, a limit on the number of blocks as well as on total bits. The Fitter report of the current map records the usage below, 288 blocks (94 % of the ceiling).
 
-## 4. JTAG indexes (`config.yaml: quartus:`)
+| Memory | M10K blocks |
+| :--- | ---: |
+| `BOOT_ROM` | 4 |
+| `FLASH` | 28 |
+| `RAM` | 256 |
+| **Total** | **288 of 308** |
 
-The instantiation order in `core_fpga_test.vhd` is the order the In-System Memory Content Editor uses to number the instances:
+## 3. JTAG indexes (`config.yaml: quartus:`)
 
-The `BOOT_ROM` does not declare `ENABLE_RUNTIME_MOD`, so it gets no index: it is written only at the initial compile and never rewritten at run time. The indices below are only those of the IPs that declare the rewrite.
+Only the `RAM` declares `ENABLE_RUNTIME_MOD`, so it is the only In-System Memory Content Editor instance and has index 0 (`quartus.ram_mem_instance`; `tohost` and `fromhost` live inside the RAM, so they share its index). The `BOOT_ROM` is written only at the initial compile, and the `FLASH`, rewritten by the loader, has no index (`quartus.rom_mem_instances: []`).
 
-0. `FLASH` is `quartus.rom_mem_instances[0]`.
-1. `RAM` is `quartus.ram_mem_instance` (`tohost` and `fromhost` live inside the RAM, so they share its index).
-2. `FLASH_MEM` is `quartus.rom_mem_instances[1]`. It is instantiated **after** the RAM on purpose, so index 1, which the RAM already has, does not shift.
-
-## 5. LEDs (`core_fpga_test.vhd`)
+## 4. LEDs (`core_fpga_test.vhd`)
 
 | LED | Signal | Meaning |
 | :--- | :--- | :--- |
@@ -86,7 +74,8 @@ The `BOOT_ROM` does not declare `ENABLE_RUNTIME_MOD`, so it gets no index: it is
 | LEDR(1) | `pll_locked` | Should stay **always on** after the FPGA is configured. Off means the PLL never locked |
 | LEDR(2) | `FPGA_RESET_N` | On means the physical reset button is **released**. Off means it is pressed |
 | LEDR(3) | `not core_reset` | On means the core is out of reset and running. Off means the core is in reset (PLL without lock, or button pressed) |
-| LEDR(4-9) | (unused) | Free |
+| LEDR(4) | `flash_halt` | Lit = core halted by the FLASH loader (reset held while the image is written) |
+| LEDR(5-9) | (unused) | Free |
 
 As a quick diagnostic without opening a JTAG session, if LEDR(1) or LEDR(3) is off, the problem is **before** the core (PLL or reset) and no test will run. If both are on and a test still does not pass, the problem is in the software or the core logic, not in the board configuration.
 

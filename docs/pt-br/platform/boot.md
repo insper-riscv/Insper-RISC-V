@@ -35,7 +35,7 @@ Os endereços vêm do `picolibc.ld` e de `rv32im-fpga.specs`, que o `riscv-tools
 | Seção | Região | Estado antes de `main()` |
 |---|---|---|
 | `.init` | FLASH, `0x1000` | O `_start` e o que a picolibc põe no começo |
-| `.text`, `.rodata` (inclui o `.srodata`) | FLASH | Já estão lá, carregados via JTAG; `.rodata` nunca é copiado pra RAM: um `lw` o alcança pela segunda porta de leitura da FLASH (ver [memoria.md](memoria.md)) |
+| `.text`, `.rodata` (inclui o `.srodata`) | FLASH | Já estão lá, carregados via JTAG; `.rodata` nunca é copiado pra RAM: um `lw` o alcança pela porta B da FLASH (ver [memoria.md](memoria.md)) |
 | `.data` (inclui o `.sdata`), `.tdata` | RAM, a partir de `0x8000`; LMA na FLASH | Copiados da FLASH pelo `_cstart` |
 | `.bss` (inclui o `.sbss`), `.tbss` | RAM, depois do `.data` | Zerados pelo `_cstart` |
 | heap | RAM, de `_end` até `__heap_end` | Gerenciado pelo `malloc` da picolibc, via `sbrk` |

@@ -87,32 +87,24 @@ quartus:
   # `jtagconfig` instead. jtag_device is the FPGA's own JTAG IDCODE,
   # which doesn't change:
   jtag_device: "@1: 5CE(BA4|FA4) (0x02B050DD)"
-  # Instance indices Quartus' In-System Memory Content Editor assigns
-  # to the FLASH/RAM debug taps, in declaration order in the project
-  # (see core_fpga_test.vhd: only the IPs that declare ENABLE_RUNTIME_MOD
-  # are listed, in declaration order: FLASH first (0), RAM second (1),
-  # FLASH_MEM last (2) — deliberately after RAM so it doesn't shift
-  # RAM's already-relied-on index). The
-  # tohost and fromhost words live inside RAM, so they share RAM's instance index.
-  # BOOT_ROM declares no ENABLE_RUNTIME_MOD, so it has NO instance index —
-  # build_fpga.py's per-test flow never JTAG-rewrites it, so nothing
-  # needs to address it live; it's only ever touched by the one-time
-  # full compile+program (see boot_rom_mif_target above). Verify
-  # against the real quartus_map/fitter report if this project's
-  # instantiation order in core_fpga_test.vhd ever changes.
-  #
-  # FLASH_MEM (index 2) is FLASH's own second physical copy, backing
-  # the MEM stage's data-read port (rv32im_pipeline_core.vhd
-  # flash_addr2) — needed for boot_rom.S's .data copy-loop to read
-  # FLASH as data at all (confirmed missing on real hardware: .bss/
-  # computation worked, but .data-initialized globals stayed zero).
-  # Quartus Lite can't do DUAL_PORT + ENABLE_RUNTIME_MOD on one IP
-  # (confirmed empirically), so this is a real physical duplicate,
-  # same recipe as the old ROM_MEM. Both must always carry the SAME
-  # content — rom_writer's mem_edit.write_full_multi writes both from
-  # this one list.
-  rom_mem_instances: [0, 2]
-  ram_mem_instance: 1
+  # Instance index Quartus' In-System Memory Content Editor assigns to
+  # the RAM debug tap. The RAM is the only IP that declares
+  # ENABLE_RUNTIME_MOD (see core_fpga_test.vhd), so it is instance 0;
+  # the tohost and fromhost words live inside RAM and share its index.
+  # BOOT_ROM and FLASH declare no ENABLE_RUNTIME_MOD, so they have NO
+  # instance index: BOOT_ROM is only touched by the one-time full
+  # compile+program (see boot_rom_mif_target above), and FLASH is a
+  # single true dual-port copy that the JTAG loader rewrites per test.
+  # Verify against the real quartus_map/fitter report if this
+  # project's instantiation in core_fpga_test.vhd ever changes.
+  ram_mem_instance: 0
+  # How the host rewrites FLASH per test: the JTAG loader of the Memory
+  # repository (flash_loader) holds the core in reset, writes the single
+  # FLASH copy through the second port, checks the count and the checksum
+  # and releases the core, which restarts from the BOOT_ROM by itself.
+  # There is no In-System Memory Content Editor instance for the ROM.
+  rom_write_method: jtag_loader
+  rom_mem_instances: []
   # Fallback only: build_fpga.py compiles + quartus_pgm's ONCE, then
   # per test just JTAG-writes the new ROM image + writes fromhost_addr
   # (crt0.S jumps back to _start on its own — no recompile, no

@@ -5,7 +5,7 @@ Changing the test on the board combines two distinct mechanisms. One is generic,
 ## 1. The full sequence
 
 1. **Initial programming (once)**: `quartus_sh --flow compile` and `quartus_pgm` load the whole bitstream, including the initial content of the BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`) and of the first FLASH and RAM. The BOOT_ROM is never touched again after that.
-2. **Test change (fast path)**: `riscv-tools run` rewrites the FLASH (both physical copies, `FLASH` and `FLASH_MEM`, see `quartus.rom_mem_instances`) over JTAG (In-System Memory Content Editor), without recompiling or reprogramming the FPGA. Then it writes `1` to `fromhost_addr`.
+2. **Test change (fast path)**: `riscv-tools run` rewrites the FLASH, which has a single copy, through the JTAG loader (`quartus.rom_write_method: jtag_loader`). It halts the core, writes the image, checks the count and the checksum and releases the core, which restarts from the BOOT_ROM in step 5, without recompiling or reprogramming the FPGA and without writing `fromhost`.
 3. **The core, from the inside**: between one test and the next, the core is parked in `rv32_wait_restart` (fixed address `0x100` in the BOOT_ROM), in a loop that only does `lw` from `fromhost_addr` until it reads non-zero.
 4. On seeing `fromhost` different from zero, `rv32_wait_restart` jumps to `_reset` (fixed address `0x0`). The previous test already wrote its result to `tohost` before getting there.
 5. `_reset` zeroes `tohost`, `fromhost` and the `stdout` header (so neither the result nor the output of the previous test leaks) and jumps to `FLASH_BASE` (`0x00001000`).
@@ -32,7 +32,7 @@ The only contact between the BOOT_ROM and the FLASH is the jump of step 5 (BOOT_
 
 Everything else (where `.data`, `.bss`, heap and stack live, the size of each section) is decided in the link of each test by the toolchain linker script, from the addresses in `rv32im-fpga.specs`. The BOOT_ROM knows nothing of this, because whoever copies `.data` and zeroes `.bss` is the `crt0` of the program itself. That is why the image of a test carries everything that varies in it.
 
-The MEM stage of this core does have a read path to the FLASH (the second physical port, `FLASH_MEM`, see [memoria.md](memoria.md#2-the-flash-needs-a-second-read-port-the-quartus-lite-limit)). That is how the `crt0` reads the initial `.data` from the FLASH to copy it to the RAM, and how `.rodata` can stay resident in the FLASH (never copied to the RAM, see [memoria.md](memoria.md)).
+The MEM stage of this core does have a read path to the FLASH (port B of the FLASH, see [memoria.md](memoria.md#12-flash-the-firmware-of-each-test)). That is how the `crt0` reads the initial `.data` from the FLASH to copy it to the RAM, and how `.rodata` can stay resident in the FLASH (never copied to the RAM, see [memoria.md](memoria.md)).
 
 A real difference from a true remote update (over radio, for example) is that nothing here verifies the integrity of the image before jumping to it (checksum, signature). JTAG is a local, physical, trusted link, so that verification was never needed here. A system receiving updates over an untrusted link would need it.
 
