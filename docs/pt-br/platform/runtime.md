@@ -63,7 +63,7 @@ Um programa compilado assim é hospedado: `main` pode retornar (o retorno vira `
 
 O `picolibc.ld` reserva 4 KB de pilha como uma região, e o linker para com `a seção .stack não vai caber na região "ram"` se a RAM não comportar dados, heap e pilha.
 
-O `memcpy` desta build da picolibc é byte a byte (`lbu` da FLASH, `sb` na RAM), e é ele que copia o `.data`; a segunda porta de leitura da FLASH (`FLASH_MEM`) atende leituras de byte e de meia palavra como a RAM. Os testes que exercitam isso são `c/data-init-*`, `c/bss-zero` e `c/struct-init-heap`.
+O `memcpy` desta build da picolibc é byte a byte (`lbu` da FLASH, `sb` na RAM), e é ele que copia o `.data`; a porta B da FLASH atende leituras de byte e de meia palavra como a RAM. Os testes que exercitam isso são `c/data-init-*`, `c/bss-zero` e `c/struct-init-heap`.
 
 ## 4. Os arquivos do projeto
 

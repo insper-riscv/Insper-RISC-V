@@ -1,13 +1,13 @@
 # Simulation of the hardware top
 
-`riscv-tools sim` has two profiles. The default (`config.yaml`) simulates a top made for simulation, with the memories as plain VHDL arrays. The `config.fpga-sim.yaml` profile simulates the **real hardware top** (`core_fpga_test`), with the four real Quartus memories (BOOT_ROM, FLASH, FLASH_MEM and RAM) running on Intel's own simulation models. This guide explains what the second profile covers in addition, how to run it and what stays on the hardware only.
+`riscv-tools sim` has two profiles. The default (`config.yaml`) simulates a top made for simulation, with the memories as plain VHDL arrays. The `config.fpga-sim.yaml` profile simulates the **real hardware top** (`core_fpga_test`), with the three real Quartus memories (BOOT_ROM, FLASH and RAM) running on Intel's own simulation models. This guide explains what the second profile covers in addition, how to run it and what stays on the hardware only.
 
 ## 1. What changes compared to the default sim
 
 | Piece | `config.yaml` (default) | `config.fpga-sim.yaml` |
 | :--- | :--- | :--- |
 | Top | `rv32i3stage_core_sim_test` | `core_fpga_test`, the same file as the Quartus project, unchanged |
-| Memories | `ROM_simulation` and `RAM_simulation` (VHDL arrays) | `boot_rom1port`, `flash1port`, `flash_mem1port` and `ram1port`, the Quartus wrappers over the `altsyncram` model |
+| Memories | `ROM_simulation` and `RAM_simulation` (VHDL arrays) | `boot_rom`, `flash` and `ram`, the Quartus wrappers over the `altsyncram` model, plus the FLASH loader |
 | Loaded image | `.hex`, through a VHDL generic | `.mif`, through the IP `init_file` (`init.mif` and `boot_rom_init.mif`), the same images as the hardware |
 | RAM address | Absolute bus address | Address relative to `ram_base`, as on the hardware (see `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`, pulses of a base clock three times faster | `pll_sim.vhd`, three 50 MHz clocks, 50 % duty cycle, shifted 0, 6667 and 13333 ps, like the real PLL |

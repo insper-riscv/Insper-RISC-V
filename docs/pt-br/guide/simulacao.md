@@ -1,13 +1,13 @@
 # Simulação do topo de hardware
 
-O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo feito para simulação, com as memórias como arrays VHDL simples. O perfil `config.fpga-sim.yaml` simula o **topo de hardware de verdade** (`core_fpga_test`), com as quatro memórias reais do Quartus (BOOT_ROM, FLASH, FLASH_MEM e RAM) rodando nos modelos de simulação da própria Intel. Este guia explica o que o segundo perfil cobre a mais, como rodá-lo e o que continua só no hardware.
+O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo feito para simulação, com as memórias como arrays VHDL simples. O perfil `config.fpga-sim.yaml` simula o **topo de hardware de verdade** (`core_fpga_test`), com as três memórias reais do Quartus (BOOT_ROM, FLASH e RAM) rodando nos modelos de simulação da própria Intel. Este guia explica o que o segundo perfil cobre a mais, como rodá-lo e o que continua só no hardware.
 
 ## 1. O que muda em relação ao sim padrão
 
 | Peça | `config.yaml` (padrão) | `config.fpga-sim.yaml` |
 | :--- | :--- | :--- |
 | Topo | `rv32i3stage_core_sim_test` | `core_fpga_test`, o mesmo arquivo do projeto Quartus, sem alteração |
-| Memórias | `ROM_simulation` e `RAM_simulation` (arrays VHDL) | `boot_rom1port`, `flash1port`, `flash_mem1port` e `ram1port`, os wrappers do Quartus sobre o modelo `altsyncram` |
+| Memórias | `ROM_simulation` e `RAM_simulation` (arrays VHDL) | `boot_rom`, `flash` e `ram`, os wrappers do Quartus sobre o modelo `altsyncram`, mais o carregador da FLASH |
 | Imagem carregada | `.hex`, por um generic VHDL | `.mif`, pelo `init_file` da IP (`init.mif` e `boot_rom_init.mif`), as mesmas imagens do hardware |
 | Endereço da RAM | Endereço absoluto do barramento | Endereço relativo a `ram_base`, como no hardware (veja `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`: pulsos de um clock base três vezes mais rápido | `pll_sim.vhd`: três clocks de 50 MHz, ciclo de trabalho de 50%, defasados 0, 6667 e 13333 ps, como o PLL real |

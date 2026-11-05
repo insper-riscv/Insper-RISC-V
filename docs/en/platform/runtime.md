@@ -63,7 +63,7 @@ A program compiled this way is hosted. `main` can return (the return becomes `ex
 
 `picolibc.ld` reserves 4 KB of stack as a region, and the linker stops with `section .stack will not fit in region "ram"` if the RAM cannot hold data, heap and stack.
 
-The `memcpy` of this picolibc build is byte by byte (`lbu` from the FLASH, `sb` into the RAM), and it is what copies `.data`. The second read port of the FLASH (`FLASH_MEM`) serves byte and halfword reads like the RAM. The tests that exercise this are `c/data-init-*`, `c/bss-zero` and `c/struct-init-heap`.
+The `memcpy` of this picolibc build is byte by byte (`lbu` from the FLASH, `sb` into the RAM), and it is what copies `.data`. Port B of the FLASH serves byte and halfword reads like the RAM. The tests that exercise this are `c/data-init-*`, `c/bss-zero` and `c/struct-init-heap`.
 
 ## 4. The project files
 
