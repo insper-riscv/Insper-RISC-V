@@ -24,7 +24,9 @@ set_multicycle_path -hold  -end -from [get_clocks DRAM_CLK_pin] -to [get_clocks 
 # The core clocks and the controller clock meet only in the bridge: two flip-flop synchronizers for the toggles
 # and the init flag, and request and read-data buses that hold from the edge a toggle flips until it is answered.
 # Nothing between the two sets of clocks is timed as a synchronous path: every crossing is bounded by a delay
-# shorter than the synchronizers' latency (no hold check).
+# shorter than the synchronizers' latency (no hold check). The 10 ns bound is below two periods of the
+# controller clock (2 x 7 ns = 14 ns, the shortest latency) and of the core clocks at 100 MHz (2 x 10 ns =
+# 20 ns), so it holds from 50 to 100 MHz of the core without change.
 set clk_if    {pll_inst|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk}
 set clk_core  {pll_inst|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk}
 set mem_clocks  [get_clocks $clk_mem]
@@ -34,9 +36,11 @@ set_max_delay -from $core_clocks -to $mem_clocks  10
 set_min_delay -from $mem_clocks  -to $core_clocks -10
 set_min_delay -from $core_clocks -to $mem_clocks  -10
 
-# the reset button and the LEDs are slow and asynchronous
+# The reset button, the LEDs and the seven-segment display are slow and asynchronous to the core clock: the
+# display register is written by the core and drives the HEX pins directly, with no timing requirement.
 set_false_path -from [get_ports {FPGA_RESET_N}]
 set_false_path -to   [get_ports {LEDR[*]}]
+set_false_path -to   [get_ports {HEX0[*] HEX1[*] HEX2[*] HEX3[*] HEX4[*] HEX5[*]}]
 
 # The JTAG clock of the debug port meets the controller clock only in the debug core: two flip-flop synchronizers for
 # the toggles, and command and result buses that hold from before a toggle flips until it is answered. Bounded by a
