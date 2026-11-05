@@ -40,6 +40,26 @@ A real difference from a true remote update (over radio, for example) is that no
 
 If a test does not answer within the timeout (`quartus.default_timeout_s`), the `orchestrator` of `riscv-tools` falls back to progressively more expensive tiers up to a full recompile and reprogram. The `orchestrator` module of Tools has the details of when each tier fires, and [placa.md](../guide/placa.md) gives the rule for compiling and programming without breaking the JTAG session.
 
+## 5. The FLASH banks and the image
+
+The FLASH of the `de0-cv` has two banks for the program update in the field, declared in `flash.banks` of the `platform.yaml`.
+
+| Bank | Start | Size | Program start |
+| :--- | :--- | :--- | :--- |
+| A | `0x00001000` | 124 KiB | `0x00001100` |
+| B | `0x00020000` | 128 KiB | `0x00020100` |
+
+Each bank starts with a 256-byte header page (magic, size, CRC-32 of the payload, version and header CRC; the format is in the `flash_image` module of Tools), and the program follows it. The update routine writes the payload first and the header last, so the boot ROM accepts only a bank with a valid header.
+
+`make generate` writes the files below from the banks.
+
+| File | Content |
+| :--- | :--- |
+| `runtime/rv32im-fpga-bank-a.specs` and `runtime/rv32im-fpga-bank-b.specs` | Linker flags of a program for each bank, with `__flash` at the start of the program and `__flash_size` without the header page |
+| `runtime/flash_banks.h` | Image magic, size of the header page and, for each bank, `RV32_BANK_<NAME>_BASE`, `_SIZE` and `_ENTRY`, for the boot ROM and the update routine |
+
+A program for bank B is compiled with `--specs` pointing at its specs file, and `riscv-tools flash-image pack program.bin --output image.bin --version N --platform src/cyclone-v/de0-cv/platform.yaml --bank B` builds the image and checks that it fits. `riscv-tools check-memory-map` validates the banks (aligned to the 4 KiB sector, inside the FLASH, not overlapping).
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../LICENSE).
