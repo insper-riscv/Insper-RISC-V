@@ -117,12 +117,6 @@ sim:
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
-  # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
-  parameters:
-    HAS_ZIFENCEI: true
-    HAS_ZIHPM: true
-    HAS_ZIMOP: true
-    HAS_ZICOND: true
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv
