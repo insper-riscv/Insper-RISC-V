@@ -12,7 +12,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 - [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, normas VHDL-2008, C23 e Python, regras de documentação e verificação antes de abrir Pull Request.
 - [CITATION.cff](CITATION.cff): metadados para citação do software.
 - [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, simulação, KPIs e nova arquitetura).
-- [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas, com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
+- [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas e as dez (quatro de teste, quatro na FPGA e duas de UART), com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): defeitos já diagnosticados.
 - [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md): o interconector externo, que decodifica o mapa da plataforma entre a SDRAM e os periféricos, a sua variante AXI4 e os testes de integração.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.

@@ -124,6 +124,20 @@ sim:
     - Common-Components/src/synchronizer.vhd
     - Peripherals/src/intc/soc/ext_irq_consts.vhd
     - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
+    - Peripherals/src/display/soc/hex_to_seg7.vhd
+    - Peripherals/src/display/soc/seg_display.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
+    - Peripherals/src/UART/serial/uart.vhd
     - src/simulation/modular/modular_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:

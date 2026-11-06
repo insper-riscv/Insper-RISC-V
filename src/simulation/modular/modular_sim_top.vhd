@@ -129,7 +129,31 @@ entity modular_sim_top is
     -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
     has_interrupts      : boolean := HAS_INTERRUPTS;
     -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
-    clint_tick_cycles   : positive := CLINT_TICK_CYCLES
+    clint_tick_cycles   : positive := 1;
+    -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
+    clint_id            : natural range 0 to 7 := 6;
+    -- Índice da janela de 256 MiB do controlador de interrupção externa.
+    ext_irq_id          : natural range 0 to 7 := 7;
+    -- Chaves SW da placa, num bloco GPIO de 10 pinos (plataformas da FPGA).
+    has_switches        : boolean := false;
+    -- Índice da janela das chaves.
+    switches_id         : natural range 0 to 7 := 1;
+    -- Botões KEY da placa, num bloco GPIO de 4 pinos (plataformas da FPGA).
+    has_keys            : boolean := false;
+    -- Índice da janela dos botões.
+    keys_id             : natural range 0 to 7 := 2;
+    -- Displays de 7 segmentos HEX0 a HEX5 (plataformas da FPGA).
+    has_display         : boolean := false;
+    -- Índice da janela do display.
+    display_id          : natural range 0 to 7 := 5;
+    -- UART cuja outra ponta é o hospedeiro no JTAG.
+    has_uart_jtag       : boolean := false;
+    -- Índice da janela da UART via JTAG.
+    uart_jtag_id        : natural range 0 to 7 := 4;
+    -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
+    has_uart_pins       : boolean := false;
+    -- Índice da janela da UART via pinos.
+    uart_pins_id        : natural range 0 to 7 := 3
   );
   port (
     -- Clock base; um gerador o divide por três para os estágios do núcleo.
@@ -149,7 +173,35 @@ entity modular_sim_top is
     -- Dado de escrita da RAM interna do núcleo.
     o_ram_wdata     : out std_logic_vector(31 downto 0);
     -- Habilita de bytes da escrita na RAM interna do núcleo.
-    o_ram_byteena   : out std_logic_vector(3 downto 0)
+    o_ram_byteena   : out std_logic_vector(3 downto 0);
+    -- Chaves SW (10 pinos do GPIO); o testbench as conduz.
+    io_sw           : inout std_logic_vector(9 downto 0);
+    -- Botões KEY (4 pinos do GPIO); o testbench os conduz.
+    io_key          : inout std_logic_vector(3 downto 0);
+    -- Segmentos dos displays, HEX0 nos bits 6:0 e HEX5 nos bits 41:36 (nível baixo).
+    o_display_hex   : out std_logic_vector(41 downto 0);
+    -- Valor de 24 bits do registrador do display.
+    o_display_value : out std_logic_vector(23 downto 0);
+    -- Virtual JTAG da UART via JTAG: clock da cadeia.
+    i_uart_tck      : in  std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: dado vindo do hospedeiro.
+    i_uart_tdi      : in  std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: dado para o hospedeiro.
+    o_uart_tdo      : out std_logic;
+    -- Virtual JTAG da UART via JTAG: registrador de instrução.
+    i_uart_ir_in    : in  std_logic_vector(1 downto 0) := "00";
+    -- Virtual JTAG da UART via JTAG: estado Capture-DR.
+    i_uart_state_cdr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Shift-DR.
+    i_uart_state_sdr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Update-DR.
+    i_uart_state_udr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Update-IR.
+    i_uart_state_uir : in std_logic := '0';
+    -- Linha serial de recepção da UART via pinos.
+    i_uart_rx       : in  std_logic := '1';
+    -- Linha serial de transmissão da UART via pinos.
+    o_uart_tx       : out std_logic
   );
 end entity modular_sim_top;
 
@@ -164,6 +216,10 @@ architecture behaviour of modular_sim_top is
   constant ROM_PORT : boolean := rom_external or has_icache;
   -- A RAM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de dados.
   constant RAM_PORT : boolean := ram_external or has_dcache;
+
+  -- Há algum periférico na janela de periféricos: o CLINT e o controlador externo, ou os do topo da placa.
+  constant HAS_PERIPHERALS : boolean :=
+    has_interrupts or has_switches or has_keys or has_display or has_uart_jtag or has_uart_pins;
 
   -- Escolhe entre dois valores naturais conforme a condição.
   function pick(cond : boolean; a : natural; b : natural) return natural is
@@ -568,7 +624,7 @@ begin
   -- A interconexão separa a janela de periféricos e entrega o pedido de dados à cache de dados ou,
   -- sem ela, direto ao lado da memória. Existe quando há dados via porta ou interrupções (o CLINT
   -- e o controlador externo ficam na janela); sem dados via porta, o lado da memória responde zero.
-  g_data_port : if ROM_PORT or RAM_PORT or has_interrupts generate
+  g_data_port : if ROM_PORT or RAM_PORT or HAS_PERIPHERALS generate
   begin
     u_interconnect : entity work.ext_interconnect
       port map (
@@ -614,9 +670,9 @@ begin
         i_rst          => i_rst,
         i_data_in      => p_wdata,
         i_address      => p_addr,
-        i_write        => p_we(CLINT_ID),
-        i_read         => p_re(CLINT_ID),
-        o_data_out     => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
+        i_write        => p_we(clint_id),
+        i_read         => p_re(clint_id),
+        o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
         o_irq_timer    => irq_timer,
         o_irq_software => irq_software
       );
@@ -629,12 +685,112 @@ begin
         i_irq_lines    => (others => '0'),
         i_data_in      => p_wdata,
         i_address      => p_addr(1 downto 0),
-        i_write        => p_we(EXT_IRQ_ID),
-        i_read         => p_re(EXT_IRQ_ID),
-        o_data_out     => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
+        i_write        => p_we(ext_irq_id),
+        i_read         => p_re(ext_irq_id),
+        o_data_out     => p_rdata(32 * ext_irq_id + 31 downto 32 * ext_irq_id),
         o_irq_external => irq_external
       );
   end generate g_interrupts;
+
+  -- Periféricos do topo da placa: chaves e botões (GPIO), display e as duas UART. Um periférico ausente deixa
+  -- a saída em zero e o dado lido da janela em zero, como uma janela sem dispositivo.
+  g_switches : if has_switches generate
+  begin
+    u_switches : entity work.gpio
+      generic map (data_width => 10)
+      port map (
+        i_clk        => pll_clk_idexmem,
+        i_rst        => i_rst,
+        i_data_in    => p_wdata(9 downto 0),
+        i_address    => p_addr(3 downto 0),
+        i_write      => p_we(switches_id),
+        i_read       => p_re(switches_id),
+        o_data_out   => p_rdata(32 * switches_id + 9 downto 32 * switches_id),
+        o_irq        => open,
+        io_gpio_pins => io_sw
+      );
+  end generate g_switches;
+
+  g_keys : if has_keys generate
+  begin
+    u_keys : entity work.gpio
+      generic map (data_width => 4)
+      port map (
+        i_clk        => pll_clk_idexmem,
+        i_rst        => i_rst,
+        i_data_in    => p_wdata(3 downto 0),
+        i_address    => p_addr(3 downto 0),
+        i_write      => p_we(keys_id),
+        i_read       => p_re(keys_id),
+        o_data_out   => p_rdata(32 * keys_id + 3 downto 32 * keys_id),
+        o_irq        => open,
+        io_gpio_pins => io_key
+      );
+  end generate g_keys;
+
+  g_display : if has_display generate
+  begin
+    u_display : entity work.seg_display
+      port map (
+        i_clk       => pll_clk_idexmem,
+        i_rst       => i_rst,
+        i_addr      => p_addr(7 downto 0),
+        i_wdata     => p_wdata,
+        i_we        => p_we(display_id),
+        i_re        => p_re(display_id),
+        o_rdata     => p_rdata(32 * display_id + 31 downto 32 * display_id),
+        i_tck       => '0',
+        i_tdi       => '0',
+        o_tdo       => open,
+        i_ir_in     => "00",
+        i_state_cdr => '0',
+        i_state_sdr => '0',
+        i_state_udr => '0',
+        i_state_uir => '0',
+        o_value     => o_display_value,
+        o_fail      => open,
+        o_hex       => o_display_hex
+      );
+  end generate g_display;
+
+  g_uart_jtag : if has_uart_jtag generate
+  begin
+    u_uart_jtag : entity work.jtag_uart
+      port map (
+        i_clk       => pll_clk_idexmem,
+        i_rst       => i_rst,
+        i_addr      => p_addr(7 downto 0),
+        i_wdata     => p_wdata,
+        i_we        => p_we(uart_jtag_id),
+        i_re        => p_re(uart_jtag_id),
+        o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
+        i_tck       => i_uart_tck,
+        i_tdi       => i_uart_tdi,
+        o_tdo       => o_uart_tdo,
+        i_ir_in     => i_uart_ir_in,
+        i_state_cdr => i_uart_state_cdr,
+        i_state_sdr => i_uart_state_sdr,
+        i_state_udr => i_uart_state_udr,
+        i_state_uir => i_uart_state_uir
+      );
+  end generate g_uart_jtag;
+
+  g_uart_pins : if has_uart_pins generate
+  begin
+    u_uart_pins : entity work.uart
+      port map (
+        i_clk      => pll_clk_idexmem,
+        i_rst      => i_rst,
+        i_data_in  => p_wdata,
+        i_address  => p_addr(1 downto 0),
+        i_write    => p_we(uart_pins_id),
+        i_read     => p_re(uart_pins_id),
+        o_data_out => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
+        o_irq      => open,
+        i_uart_rx  => i_uart_rx,
+        o_uart_tx  => o_uart_tx
+      );
+  end generate g_uart_pins;
 
   -- Com cache de dados, ela fica entre a interconexão e a memória.
   g_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate

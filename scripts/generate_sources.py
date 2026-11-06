@@ -73,7 +73,50 @@ YAMLS = (
         ("pll_sim", "core_fpga_test"),
     ),
     Saida("src/simulation/template/config.yaml", ("template_sim_top",)),
-    Saida("src/simulation/modular/config.yaml", ("modular_sim_top",)),
+    Saida(
+        "src/simulation/modular/config.yaml",
+        ("modular_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/simulation/test-integrated/config.yaml",
+        ("test_integrated_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/simulation/test-external-data/config.yaml",
+        ("test_external_data_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/simulation/test-external-instruction/config.yaml",
+        ("test_external_instruction_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/simulation/test-external/config.yaml",
+        ("test_external_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-integrated/config.yaml",
+        ("fpga_integrated_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-external-data/config.yaml",
+        ("fpga_external_data_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-external-instruction/config.yaml",
+        ("fpga_external_instruction_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-external/config.yaml",
+        ("fpga_external_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-uart-jtag/config.yaml",
+        ("fpga_uart_jtag_map", "modular_sim_top"),
+    ),
+    Saida(
+        "src/cyclone-v/fpga-uart-pins/config.yaml",
+        ("fpga_uart_pins_map", "modular_sim_top"),
+    ),
     Saida("src/cyclone-v/de0-cv/config.yaml", ("de0_cv_sim_top",)),
     Saida(
         "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)
@@ -100,11 +143,67 @@ TESTS_JSON = "tests/python/tests.json"
 # axi_slave_periph_bank usa a ponte de palavra, que o provides do
 # axi_interconnect não requer.
 ENTRADAS = (
-    Saida(TESTS_JSON, ("modular_sim_top",), "ModularIntegrated"),
-    Saida(TESTS_JSON, ("modular_sim_top",), "ModularInterrupts"),
-    Saida(TESTS_JSON, ("modular_sim_top",), "ModularExternalData"),
-    Saida(TESTS_JSON, ("modular_sim_top",), "ModularExternalInstruction"),
-    Saida(TESTS_JSON, ("modular_sim_top",), "ModularExternal"),
+    Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularIntegrated"),
+    Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularInterrupts"),
+    Saida(
+        TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularExternalData"
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_map", "modular_sim_top"),
+        "ModularExternalInstruction",
+    ),
+    Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularExternal"),
+    Saida(
+        TESTS_JSON,
+        ("test_integrated_map", "modular_sim_top"),
+        "PlatformTestIntegrated",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("test_external_data_map", "modular_sim_top"),
+        "PlatformTestExternalData",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("test_external_instruction_map", "modular_sim_top"),
+        "PlatformTestExternalInstruction",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("test_external_map", "modular_sim_top"),
+        "PlatformTestExternal",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_integrated_map", "modular_sim_top"),
+        "PlatformFpgaIntegrated",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_external_data_map", "modular_sim_top"),
+        "PlatformFpgaExternalData",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_external_instruction_map", "modular_sim_top"),
+        "PlatformFpgaExternalInstruction",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_external_map", "modular_sim_top"),
+        "PlatformFpgaExternal",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_uart_jtag_map", "modular_sim_top"),
+        "PlatformFpgaUartJtag",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("fpga_uart_pins_map", "modular_sim_top"),
+        "PlatformFpgaUartPins",
+    ),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),

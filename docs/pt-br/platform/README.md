@@ -1,6 +1,6 @@
 # Plataformas
 
-Uma plataforma liga o núcleo, as memórias e os periféricos em algo que executa. Este repositório tem cinco.
+Uma plataforma liga o núcleo, as memórias e os periféricos em algo que executa. Este repositório tem cinco, mais as [dez plataformas](dez-plataformas.md) (quatro de teste, quatro na FPGA e duas de UART), que rodam o mesmo topo `modular_sim_top`.
 
 | Plataforma | Caminho | Descrição |
 | :--- | :--- | :--- |

@@ -14,6 +14,12 @@ PF := src/cyclone-v/de0-cv
 PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
+# The ten platforms of the family (four for the tests, four on the board, two for the UART): one directory each, with its
+# platform.yaml, and all of them run the same modular_sim_top (the sources of one are `sources <name>_map modular_sim_top`).
+TEN := test-integrated test-external-data test-external-instruction test-external \
+  fpga-integrated fpga-external-data fpga-external-instruction fpga-external fpga-uart-jtag fpga-uart-pins
+# The directory of platform $$n of TEN, for a shell loop of a recipe.
+TEN_DIR = $$(case $$n in test-*) echo src/simulation;; *) echo src/cyclone-v;; esac)/$$n
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
@@ -59,9 +65,15 @@ check-tops:
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) template_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) modular_sim_top)
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) modular_map modular_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. modular_sim_top
 	@echo "the simulation top of the modular platform builds"
+	@for n in $(TEN); do \
+	  rm -rf $(WDIR)/ten && mkdir -p $(WDIR)/ten && \
+	  $(GHDL) -a $(STD) --work=work --workdir=$(WDIR)/ten $$($(SOURCES) $$(echo $$n | tr - _)_map modular_sim_top) && \
+	  (cd $(WDIR)/ten && $(GHDL) -e $(STD) --workdir=. modular_sim_top) || exit 1; \
+	  echo "the simulation top of the $$n platform builds"; \
+	done
 
 # Every HAS_* constant of the generated package of a platform is a generic of its tops: the generics
 # that the generate step and riscv-tools platform sync pass to GHDL must exist there.
@@ -86,6 +98,7 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
+	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
 	$(MAKE) generate-check sources-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
@@ -97,6 +110,7 @@ generate:
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
+	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
 
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
@@ -104,6 +118,7 @@ generate-check:
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
+	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml --check || exit 1; done
 
 # The source lists of the tops (the config*.yaml, tests/python/tests.json and the .qsf files) come from the
 # provides of the repositories, through `riscv-tools sources`: `make generate-sources` writes them and

@@ -50,6 +50,87 @@ references:
   - {name: modular toolchain specs, file: src/simulation/modular/config.yaml, yaml: toolchain.specs, base: .}
   - {name: modular Spike stand-in, file: src/simulation/modular/config.yaml, yaml: emulator.sources, base: .}
   - {name: template platform, paths: [src/simulation/template/platform.yaml, src/simulation/template/config.yaml, src/simulation/template/rtl/template_map_pkg.vhd, src/simulation/template/rtl/template_sim_top.vhd, src/simulation/template/runtime/boot_rom.S, src/simulation/template/runtime/boot_rom.ld, src/simulation/template/runtime/rv32im-fpga.specs, src/simulation/template/runtime/memory_map.h, src/simulation/template/runtime/_exit.c, src/simulation/template/runtime/stdio.c, src/simulation/template/runtime/spike_exit.S, tests/python/gen_template_images.py, tests/python/unittests/rtl/template_sim_top.py, tests/python/unittests/rtl/data/template/boot_to_rom.hex, tests/python/unittests/rtl/data/template/rom_program.hex, docs/pt-br/platform/template.md, docs/en/platform/template.md]}
+  - {name: platform test-integrated, paths: [src/simulation/test-integrated/platform.yaml, src/simulation/test-integrated/config.yaml, src/simulation/test-integrated/modular_map_pkg.vhd, src/simulation/test-integrated/runtime/boot_rom.S, src/simulation/test-integrated/runtime/boot_rom.ld, src/simulation/test-integrated/runtime/rv32im-fpga.specs, src/simulation/test-integrated/runtime/memory_map.h, src/simulation/test-integrated/runtime/_exit.c, src/simulation/test-integrated/runtime/stdio.c, src/simulation/test-integrated/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/test-integrated/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/test-integrated/rom_program.hex]}
+  - {name: test-integrated sim sources, file: src/simulation/test-integrated/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: test-integrated sim python_path, file: src/simulation/test-integrated/config.yaml, yaml: sim.python_path, base: .}
+  - {name: test-integrated runtime sources, file: src/simulation/test-integrated/config.yaml, yaml: paths.sources, base: .}
+  - {name: test-integrated boot ROM, file: src/simulation/test-integrated/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: test-integrated boot ROM linker script, file: src/simulation/test-integrated/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: test-integrated toolchain specs, file: src/simulation/test-integrated/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: test-integrated Spike stand-in, file: src/simulation/test-integrated/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform test-external-data, paths: [src/simulation/test-external-data/platform.yaml, src/simulation/test-external-data/config.yaml, src/simulation/test-external-data/modular_map_pkg.vhd, src/simulation/test-external-data/runtime/boot_rom.S, src/simulation/test-external-data/runtime/boot_rom.ld, src/simulation/test-external-data/runtime/rv32im-fpga.specs, src/simulation/test-external-data/runtime/memory_map.h, src/simulation/test-external-data/runtime/_exit.c, src/simulation/test-external-data/runtime/stdio.c, src/simulation/test-external-data/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/test-external-data/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/test-external-data/rom_program.hex]}
+  - {name: test-external-data sim sources, file: src/simulation/test-external-data/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: test-external-data sim python_path, file: src/simulation/test-external-data/config.yaml, yaml: sim.python_path, base: .}
+  - {name: test-external-data runtime sources, file: src/simulation/test-external-data/config.yaml, yaml: paths.sources, base: .}
+  - {name: test-external-data boot ROM, file: src/simulation/test-external-data/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: test-external-data boot ROM linker script, file: src/simulation/test-external-data/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: test-external-data toolchain specs, file: src/simulation/test-external-data/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: test-external-data Spike stand-in, file: src/simulation/test-external-data/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform test-external-instruction, paths: [src/simulation/test-external-instruction/platform.yaml, src/simulation/test-external-instruction/config.yaml, src/simulation/test-external-instruction/modular_map_pkg.vhd, src/simulation/test-external-instruction/runtime/boot_rom.S, src/simulation/test-external-instruction/runtime/boot_rom.ld, src/simulation/test-external-instruction/runtime/rv32im-fpga.specs, src/simulation/test-external-instruction/runtime/memory_map.h, src/simulation/test-external-instruction/runtime/_exit.c, src/simulation/test-external-instruction/runtime/stdio.c, src/simulation/test-external-instruction/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/test-external-instruction/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/test-external-instruction/rom_program.hex]}
+  - {name: test-external-instruction sim sources, file: src/simulation/test-external-instruction/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: test-external-instruction sim python_path, file: src/simulation/test-external-instruction/config.yaml, yaml: sim.python_path, base: .}
+  - {name: test-external-instruction runtime sources, file: src/simulation/test-external-instruction/config.yaml, yaml: paths.sources, base: .}
+  - {name: test-external-instruction boot ROM, file: src/simulation/test-external-instruction/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: test-external-instruction boot ROM linker script, file: src/simulation/test-external-instruction/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: test-external-instruction toolchain specs, file: src/simulation/test-external-instruction/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: test-external-instruction Spike stand-in, file: src/simulation/test-external-instruction/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform test-external, paths: [src/simulation/test-external/platform.yaml, src/simulation/test-external/config.yaml, src/simulation/test-external/modular_map_pkg.vhd, src/simulation/test-external/runtime/boot_rom.S, src/simulation/test-external/runtime/boot_rom.ld, src/simulation/test-external/runtime/rv32im-fpga.specs, src/simulation/test-external/runtime/memory_map.h, src/simulation/test-external/runtime/_exit.c, src/simulation/test-external/runtime/stdio.c, src/simulation/test-external/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/test-external/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/test-external/rom_program.hex]}
+  - {name: test-external sim sources, file: src/simulation/test-external/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: test-external sim python_path, file: src/simulation/test-external/config.yaml, yaml: sim.python_path, base: .}
+  - {name: test-external runtime sources, file: src/simulation/test-external/config.yaml, yaml: paths.sources, base: .}
+  - {name: test-external boot ROM, file: src/simulation/test-external/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: test-external boot ROM linker script, file: src/simulation/test-external/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: test-external toolchain specs, file: src/simulation/test-external/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: test-external Spike stand-in, file: src/simulation/test-external/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-integrated, paths: [src/cyclone-v/fpga-integrated/platform.yaml, src/cyclone-v/fpga-integrated/config.yaml, src/cyclone-v/fpga-integrated/modular_map_pkg.vhd, src/cyclone-v/fpga-integrated/runtime/boot_rom.S, src/cyclone-v/fpga-integrated/runtime/boot_rom.ld, src/cyclone-v/fpga-integrated/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-integrated/runtime/memory_map.h, src/cyclone-v/fpga-integrated/runtime/_exit.c, src/cyclone-v/fpga-integrated/runtime/stdio.c, src/cyclone-v/fpga-integrated/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-integrated/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-integrated/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-integrated/board_program.hex]}
+  - {name: fpga-integrated sim sources, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-integrated sim python_path, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-integrated runtime sources, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-integrated boot ROM, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-integrated boot ROM linker script, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-integrated toolchain specs, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-integrated Spike stand-in, file: src/cyclone-v/fpga-integrated/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-external-data, paths: [src/cyclone-v/fpga-external-data/platform.yaml, src/cyclone-v/fpga-external-data/config.yaml, src/cyclone-v/fpga-external-data/modular_map_pkg.vhd, src/cyclone-v/fpga-external-data/runtime/boot_rom.S, src/cyclone-v/fpga-external-data/runtime/boot_rom.ld, src/cyclone-v/fpga-external-data/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-external-data/runtime/memory_map.h, src/cyclone-v/fpga-external-data/runtime/_exit.c, src/cyclone-v/fpga-external-data/runtime/stdio.c, src/cyclone-v/fpga-external-data/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-external-data/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-external-data/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-external-data/board_program.hex]}
+  - {name: fpga-external-data sim sources, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-external-data sim python_path, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-external-data runtime sources, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-external-data boot ROM, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-external-data boot ROM linker script, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-external-data toolchain specs, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-external-data Spike stand-in, file: src/cyclone-v/fpga-external-data/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-external-instruction, paths: [src/cyclone-v/fpga-external-instruction/platform.yaml, src/cyclone-v/fpga-external-instruction/config.yaml, src/cyclone-v/fpga-external-instruction/modular_map_pkg.vhd, src/cyclone-v/fpga-external-instruction/runtime/boot_rom.S, src/cyclone-v/fpga-external-instruction/runtime/boot_rom.ld, src/cyclone-v/fpga-external-instruction/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-external-instruction/runtime/memory_map.h, src/cyclone-v/fpga-external-instruction/runtime/_exit.c, src/cyclone-v/fpga-external-instruction/runtime/stdio.c, src/cyclone-v/fpga-external-instruction/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-external-instruction/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-external-instruction/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-external-instruction/board_program.hex]}
+  - {name: fpga-external-instruction sim sources, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-external-instruction sim python_path, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-external-instruction runtime sources, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-external-instruction boot ROM, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-external-instruction boot ROM linker script, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-external-instruction toolchain specs, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-external-instruction Spike stand-in, file: src/cyclone-v/fpga-external-instruction/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-external, paths: [src/cyclone-v/fpga-external/platform.yaml, src/cyclone-v/fpga-external/config.yaml, src/cyclone-v/fpga-external/modular_map_pkg.vhd, src/cyclone-v/fpga-external/runtime/boot_rom.S, src/cyclone-v/fpga-external/runtime/boot_rom.ld, src/cyclone-v/fpga-external/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-external/runtime/memory_map.h, src/cyclone-v/fpga-external/runtime/_exit.c, src/cyclone-v/fpga-external/runtime/stdio.c, src/cyclone-v/fpga-external/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-external/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-external/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-external/board_program.hex]}
+  - {name: fpga-external sim sources, file: src/cyclone-v/fpga-external/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-external sim python_path, file: src/cyclone-v/fpga-external/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-external runtime sources, file: src/cyclone-v/fpga-external/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-external boot ROM, file: src/cyclone-v/fpga-external/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-external boot ROM linker script, file: src/cyclone-v/fpga-external/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-external toolchain specs, file: src/cyclone-v/fpga-external/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-external Spike stand-in, file: src/cyclone-v/fpga-external/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-uart-jtag, paths: [src/cyclone-v/fpga-uart-jtag/platform.yaml, src/cyclone-v/fpga-uart-jtag/config.yaml, src/cyclone-v/fpga-uart-jtag/modular_map_pkg.vhd, src/cyclone-v/fpga-uart-jtag/runtime/boot_rom.S, src/cyclone-v/fpga-uart-jtag/runtime/boot_rom.ld, src/cyclone-v/fpga-uart-jtag/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-uart-jtag/runtime/memory_map.h, src/cyclone-v/fpga-uart-jtag/runtime/_exit.c, src/cyclone-v/fpga-uart-jtag/runtime/stdio.c, src/cyclone-v/fpga-uart-jtag/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/uart_program.hex]}
+  - {name: fpga-uart-jtag sim sources, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-uart-jtag sim python_path, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-uart-jtag runtime sources, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-uart-jtag boot ROM, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-uart-jtag boot ROM linker script, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-uart-jtag toolchain specs, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-uart-jtag Spike stand-in, file: src/cyclone-v/fpga-uart-jtag/config.yaml, yaml: emulator.sources, base: .}
+  - {name: platform fpga-uart-pins, paths: [src/cyclone-v/fpga-uart-pins/platform.yaml, src/cyclone-v/fpga-uart-pins/config.yaml, src/cyclone-v/fpga-uart-pins/modular_map_pkg.vhd, src/cyclone-v/fpga-uart-pins/runtime/boot_rom.S, src/cyclone-v/fpga-uart-pins/runtime/boot_rom.ld, src/cyclone-v/fpga-uart-pins/runtime/rv32im-fpga.specs, src/cyclone-v/fpga-uart-pins/runtime/memory_map.h, src/cyclone-v/fpga-uart-pins/runtime/_exit.c, src/cyclone-v/fpga-uart-pins/runtime/stdio.c, src/cyclone-v/fpga-uart-pins/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/fpga-uart-pins/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/fpga-uart-pins/rom_program.hex, tests/python/unittests/rtl/data/platforms/fpga-uart-pins/uart_program.hex]}
+  - {name: fpga-uart-pins sim sources, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: fpga-uart-pins sim python_path, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: sim.python_path, base: .}
+  - {name: fpga-uart-pins runtime sources, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: paths.sources, base: .}
+  - {name: fpga-uart-pins boot ROM, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: paths.boot_rom, base: .}
+  - {name: fpga-uart-pins boot ROM linker script, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
+  - {name: fpga-uart-pins toolchain specs, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: fpga-uart-pins Spike stand-in, file: src/cyclone-v/fpga-uart-pins/config.yaml, yaml: emulator.sources, base: .}
+  - {name: ten platforms tests and docs, paths: [tests/python/gen_platform_images.py, tests/python/unittests/rtl/platform_common.py, tests/python/unittests/rtl/platform_minimal.py, tests/python/unittests/rtl/platform_board.py, tests/python/unittests/rtl/platform_uart_pins.py, tests/python/unittests/rtl/platform_uart_jtag.py, docs/pt-br/platform/dez-plataformas.md, docs/en/platform/dez-plataformas.md]}
   - {name: template sim sources, file: src/simulation/template/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: template sim python_path, file: src/simulation/template/config.yaml, yaml: sim.python_path, base: .}
   - {name: template runtime sources, file: src/simulation/template/config.yaml, yaml: paths.sources, base: .}
@@ -151,10 +232,51 @@ provides:
     requires: []
     sources:
       - src/simulation/modular/modular_map_pkg.vhd
+  # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).
   modular_sim_top:
-    requires: [modular_map, ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/intc]
+    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/intc, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
     sources:
       - src/simulation/modular/modular_sim_top.vhd
+  test_integrated_map:
+    requires: []
+    sources:
+      - src/simulation/test-integrated/modular_map_pkg.vhd
+  test_external_data_map:
+    requires: []
+    sources:
+      - src/simulation/test-external-data/modular_map_pkg.vhd
+  test_external_instruction_map:
+    requires: []
+    sources:
+      - src/simulation/test-external-instruction/modular_map_pkg.vhd
+  test_external_map:
+    requires: []
+    sources:
+      - src/simulation/test-external/modular_map_pkg.vhd
+  fpga_integrated_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-integrated/modular_map_pkg.vhd
+  fpga_external_data_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-external-data/modular_map_pkg.vhd
+  fpga_external_instruction_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-external-instruction/modular_map_pkg.vhd
+  fpga_external_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-external/modular_map_pkg.vhd
+  fpga_uart_jtag_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-uart-jtag/modular_map_pkg.vhd
+  fpga_uart_pins_map:
+    requires: []
+    sources:
+      - src/cyclone-v/fpga-uart-pins/modular_map_pkg.vhd
   template_map:
     requires: []
     sources:

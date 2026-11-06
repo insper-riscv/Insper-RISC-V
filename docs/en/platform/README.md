@@ -1,6 +1,6 @@
 # Platforms
 
-A platform wires the core, the memories and the peripherals into something that runs. This repository has five.
+A platform wires the core, the memories and the peripherals into something that runs. This repository has five, plus the [ten platforms](dez-plataformas.md) (four for tests, four on the FPGA and two for the UART), which run the same `modular_sim_top` top.
 
 | Platform | Path | Description |
 | :--- | :--- | :--- |
