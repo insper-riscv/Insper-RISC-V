@@ -35,6 +35,10 @@ entity core_fpga_test is
 		HAS_ZIMOP    : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
 		-- Extensao Zicond no core (czero.eqz e czero.nez).
 		HAS_ZICOND   : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
+		-- Dicas ntl.* da extensao Zihintntl no core (executam como nop).
+		HAS_ZIHINTNTL    : boolean := work.internal_mem_map_pkg.HAS_ZIHINTNTL;
+		-- Dica pause da extensao Zihintpause no core (executa como nop).
+		HAS_ZIHINTPAUSE    : boolean := work.internal_mem_map_pkg.HAS_ZIHINTPAUSE;
 		-- Zifencei no core (FENCE.I).
 		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
 		-- Acesso desalinhado executado em hardware (Zicclsm).
@@ -238,6 +242,8 @@ begin
 			hpm_width       => HPM_WIDTH,
 			has_zimop       => HAS_ZIMOP,
 			has_zicond      => HAS_ZICOND,
+			has_zihintntl   => HAS_ZIHINTNTL,
+			has_zihintpause => HAS_ZIHINTPAUSE,
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
 			has_e           => HAS_E,
