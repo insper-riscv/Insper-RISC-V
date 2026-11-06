@@ -11,7 +11,7 @@
 --                com o programa (tohost, fromhost,
 --                stdout) moram ali, e o hospedeiro as lê e escreve pela porta de
 --                debug da SDRAM
---   bit 31 = 1   uma janela de periféricos (bits 30:28 o periférico, 9:2 a
+--   bit 31 = 1   uma janela de periféricos (bits 30:28 o periférico, 15:2 a
 --                palavra), sem cache
 --
 -- O periférico 7 é o controle da própria cache, não um externo: uma escrita na
@@ -92,7 +92,7 @@ entity ext_axi_interconnect is
     i_m0_rdata   : in  std_logic_vector(31 downto 0); i_m0_rresp : in std_logic_vector(1 downto 0); i_m0_rlast : in std_logic;
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico.
-    o_p_addr      : out std_logic_vector(7 downto 0);
+    o_p_addr      : out std_logic_vector(13 downto 0);
     -- Janela de periféricos: dado de escrita.
     o_p_wdata     : out std_logic_vector(31 downto 0);
     -- Janela de periféricos: habilita de bytes da escrita.

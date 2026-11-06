@@ -8,8 +8,12 @@
 # written here.
 extends: ../../simulation/internal-mem/config.yaml
 
+# The tests are linked for bank A (from the end of its header page) and packed as its image: the boot ROM
+# only runs a bank whose header (magic, size and CRC-32s) is valid.
 toolchain:
-  specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs
+  specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs
+
+flash_image: {bank: A, version: 1}
 
 # The addresses and the sizes come from the map of the platform (platform.yaml), as in internal-mem: the SDRAM is
 # the RAM and the FLASH sits right after the BOOT_ROM.
@@ -28,7 +32,11 @@ emulator:
 
 sim:
   toplevel: rv32im_sdram_flash_sim_test
+  # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
   vhdl_sources:
+    - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+    - src/interconnect/ext_interconnect.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
     - Core/src/shared/opcode_consts.vhd
@@ -40,98 +48,108 @@ sim:
     - Core/src/shared/wb_sel_consts.vhd
     - Core/src/shared/pc_src_consts.vhd
     - Core/src/shared/mem_map_consts.vhd
-    - Core/src/shared/fwd_consts.vhd
     - Core/src/shared/word_consts.vhd
-    - Core/src/M/muldiv_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
     - Core/src/Zicond/zicond_consts.vhd
-    - Core/src/Zicsr/irq_consts.vhd
-    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
     - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
     - Core/src/Zimop/zimop_consts.vhd
-    - Common-Components/src/generic_register.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
     - Common-Components/src/adder.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/clearable_register.vhd
+    - Common-Components/src/utils_pkg.vhd
     - Common-Components/src/mux_2x1.vhd
     - Common-Components/src/mux_4x1.vhd
-    - Common-Components/src/flip_flop.vhd
-    - Common-Components/src/utils_pkg.vhd
-    - Core/src/I-E/alu.vhd
-    - Common-Components/src/onehot_decoder.vhd
+    - Common-Components/src/mux_8x1.vhd
     - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/onehot_decoder.vhd
     - Core/src/shared/reg_file.vhd
-    - Core/src/I-E/extender_imm.vhd
-    - Core/src/I-E/extender_ram.vhd
-    - Core/src/I-E/store_manager.vhd
-    - Core/src/Zicclsm/misaligned_unit.vhd
     - Core/src/shared/control_unit.vhd
     - Core/src/shared/bubble_mux.vhd
     - Core/src/shared/forwarding_match.vhd
     - Core/src/shared/forwarding_unit.vhd
     - Core/src/shared/hazard_detection_unit.vhd
-    - Core/src/M/m_decode.vhd
-    - Core/src/M/booth_multiplier_rv32.vhd
-    - Core/src/M/non_restoring_divider_rv32.vhd
-    - Core/src/M/muldiv_fusion.vhd
-    - Core/src/M/multdiv.vhd
-    - Core/src/Zicond/zicond_decode.vhd
-    - Core/src/Zicond/zicond_unit.vhd
-    - Core/src/Zicsr/csr_decode.vhd
-    - Core/src/Zihintntl/zihintntl_consts.vhd
-    - Core/src/Zihintpause/zihintpause_consts.vhd
-    - Core/src/Zihintntl/zihintntl_decode.vhd
-    - Core/src/Zihintpause/zihintpause_decode.vhd
-    - Core/src/Zimop/zimop_decode.vhd
-    - Core/src/Zicsr/csr_addr_consts.vhd
-    - Core/src/Zicsr/csr_event_consts.vhd
-    - Core/src/Zicntr/counter64.vhd
-    - Core/src/Zicntr/tick_divider.vhd
-    - Core/src/Zihpm/hpm_counter_bank.vhd
-    - Core/src/Zicsr/csr_file.vhd
-    - Core/src/Zicsr/trap_unit.vhd
-    - Core/src/Zifencei/fencei_unit.vhd
     - Core/src/shared/pc_fetch.vhd
     - Core/src/shared/reg_if_id.vhd
     - Core/src/shared/reg_id_ex.vhd
     - Core/src/shared/reg_ex_mem.vhd
     - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/I-E/alu.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
+    - Core/src/Zicntr/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/Zimop/zimop_decode.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
     - Core/src/core/stage_if.vhd
     - Core/src/core/stage_id.vhd
     - Core/src/core/stage_ex.vhd
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
-    - Memory/src/RAM/SoC/ram_simulation.vhd
     - Memory/src/ROM/SoC/rom_simulation.vhd
-    - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
+    - Memory/src/ROM/SoC/flash_simulation.vhd
+    - Memory/src/cache/SoC/flash_cmd_port.vhd
     - Common-Components/src/synchronizer.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
     - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
     - Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
     - Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
-    - Memory/src/cache/SoC/icache.vhd
-    - Memory/src/cache/SoC/dcache.vhd
-    - Memory/src/cache/SoC/flash_chip.vhd
-    - Memory/src/cache/SoC/flash_arbiter.vhd
-    - Memory/src/cache/SoC/mem_region_router.vhd
     - Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
     - Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
     - Memory/src/RAM/SoC/sim/sdram_model.vhd
     - Memory/src/RAM/SoC/sim/sdram_system.vhd
+    - Memory/src/cache/SoC/dcache.vhd
+    - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/cache/SoC/flash_chip.vhd
+    - Memory/src/cache/SoC/flash_arbiter.vhd
+    - Memory/src/cache/SoC/mem_region_router.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
-    - src/interconnect/ext_interconnect.vhd
-    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
-    - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+    - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
+    - Peripherals/src/CLINT/soc/clint_consts.vhd
+    - Peripherals/src/CLINT/soc/clint_mtime.vhd
+    - Peripherals/src/CLINT/soc/clint.vhd
+    - Peripherals/src/intc/soc/ext_irq_consts.vhd
+    - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv
   # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
   # power-up wait (200 us) comes before the first access: ticks of CLK are counted for the timeout,
-  # so it is longer than internal-mem's.
+  # so it is longer than internal-mem's. The boot ROM also checks the CRC-32 of the image before the
+  # jump, about 850 ticks of CLK for each word of the program (a program of 8 KiB takes 1.7 million).
   env:
     SIM_EXTRA_CLOCKS: "CLK_MEM:7"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
-    SIM_TIMEOUT_CYCLES: "2000000"
+    SIM_TIMEOUT_CYCLES: "12000000"
+    UART_START_ON_ACCESS: "1"
+    UART_SLOT: "4"
 
 quartus:
   project_dir: src/cyclone-v/de0-cv

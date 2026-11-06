@@ -1,31 +1,50 @@
 -- =============================================================================
--- Topo de simulação modular: os quatro modelos base do núcleo
+-- Topo de simulação modular: as memórias e as caches do núcleo em qualquer combinação
 --
--- Um único topo, configurado por genéricos, monta o núcleo com a ROM e a RAM cada uma dentro ou
--- fora do chip. O que está fora fica atrás de uma cache e de um modelo de chip simulado (flash_chip
--- para a ROM, ram_chip para a RAM), de tamanho configurável.
+-- Um único topo, configurado por genéricos, monta o núcleo com quatro escolhas independentes: a ROM
+-- e a RAM dentro ou fora do chip (rom_external e ram_external) e a cache de instruções e a de dados
+-- (has_icache e has_dcache). Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de
+-- uma cache) fica num modelo de chip simulado (flash_chip para a ROM, ram_chip para a RAM), de tamanho
+-- configurável; a que não é alcançada pela porta é o vetor do próprio núcleo.
 --
---   | Modelo               | ROM     | RAM     | Caches                  | rom_external | ram_external |
---   | integrated           | interna | interna | nenhuma                 | false        | false        |
---   | external-data        | interna | externa | cache de dados          | false        | true         |
---   | external-instruction | externa | interna | cache de instruções     | true         | false        |
---   | external             | externa | externa | de instruções e de dados | true         | true         |
+--   rom_via_port = rom_external ou has_icache
+--   ram_via_port = ram_external ou has_dcache
+--
+-- O núcleo recebe rom_via_port e ram_via_port nos seus genéricos rom_external e ram_external, porque
+-- uma cache só existe do lado do protocolo da porta. A posição física (interna ou externa) não muda a
+-- simulação além disso: o chip simulado faz o papel da memória em qualquer das duas.
+--
+--   | Lado da ROM                  | Busca de instrução                | Dado da ROM                   |
+--   | interna, sem cache           | FLASH interna do núcleo           | segunda porta da FLASH interna |
+--   | via porta, sem cache         | ponte de busca (ifetch_bridge)    | roteador, árbitro e chip      |
+--   | via porta, com cache         | cache de instruções               | roteador, árbitro e chip      |
+--
+--   | Lado da RAM                  | Acesso a dados                    |
+--   | interna, sem cache           | RAM interna do núcleo             |
+--   | via porta, sem cache         | interconexão direto ao chip       |
+--   | via porta, com cache         | interconexão, cache de dados e chip |
+--
+-- Os quatro modelos originais continuam valendo: sem has_icache e has_dcache informados, a cache
+-- existe quando a memória é externa (o padrão de has_icache é rom_external ou HAS_ICACHE do pacote, o de
+-- has_dcache é ram_external ou HAS_DCACHE).
 --
 -- O mapa vem dos genéricos, cujo valor padrão é o do pacote modular_map_pkg, gerado do platform.yaml da
 -- plataforma, e é o mesmo do núcleo: a BOOT_ROM em [0, tamanho), a ROM logo depois
 -- dela até rom_end_kib, a RAM em [ram_base_kib, ram_end_kib) e a janela externa a partir de
--- ext_base_kib. O que o projeto escolhe fica no config.yml da plataforma.
+-- ext_base_kib. O que o projeto escolhe fica no platform.yaml da plataforma.
 --
--- Com as duas memórias externas, um roteador por cache separa a ROM da RAM, e a ROM tem um árbitro
--- entre as duas caches. Com uma só externa, a cache fala direto com o chip.
+-- Com a ROM e a RAM via porta, um roteador por mestre separa a ROM da RAM, e a ROM tem um árbitro entre
+-- a busca e os dados. Com só a ROM via porta, o roteador dos dados leva o pedido à FLASH e responde zero
+-- fora dela. Com só a RAM via porta, a cache de dados (ou a interconexão, sem ela) fala direto com o chip.
 --
 -- Todos os tamanhos são genéricos em potência de dois (bytes para as memórias, bits para as
 -- caches), verificados pelo log2_exact. Os valores padrão são os da simulação do ACT4: ROM e RAM
 -- de 1 MB e caches de 4 kbit.
 --
--- A porta de depuração lê uma palavra do chip de RAM externo, pelo índice a partir do seu início, sem
+-- A porta de depuração lê uma palavra do chip de RAM, pelo índice a partir do seu início, sem
 -- passar pelas caches: é como o testbench vê o HTIF tohost quando ele está no chip. Quando a RAM é
--- interna, o testbench observa as saídas o_ram_*, que são o barramento de dados da RAM do núcleo.
+-- do núcleo, o testbench observa as saídas o_ram_*, que são o barramento de dados da RAM do núcleo; quando
+-- é via porta, observa o barramento externo do núcleo (sdram_*).
 -- =============================================================================
 
 library ieee;
@@ -42,9 +61,9 @@ entity modular_sim_top is
     rom_file            : string  := "default.hex";
     -- Imagem inicial da RAM (interna, ou o chip de RAM externo); vazio deixa tudo em zero.
     ram_file            : string  := "";
-    -- A ROM é externa, atrás da cache de instruções.
+    -- A ROM é externa (um chip fora do núcleo, alcançado pela porta).
     rom_external        : boolean := ROM_EXTERNAL;
-    -- A RAM é externa, atrás da cache de dados.
+    -- A RAM é externa (um chip fora do núcleo, alcançado pela porta).
     ram_external        : boolean := RAM_EXTERNAL;
     -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
     boot_rom_size_bytes : positive := BOOT_ROM_SIZE_BYTES;
@@ -64,6 +83,12 @@ entity modular_sim_top is
     ext_base_kib        : natural  := EXT_BASE_KIB;
     -- Base, em KiB, da janela de periféricos.
     periph_base_kib     : natural  := PERIPH_BASE_KIB;
+    -- Existe cache de instruções; sem ela, a ROM via porta é lida pela ponte de busca. Por padrão, a
+    -- cache existe quando a ROM é externa ou o pacote a liga.
+    has_icache          : boolean := rom_external or HAS_ICACHE;
+    -- Existe cache de dados; sem ela, a RAM via porta é acessada direto, palavra a palavra. Por
+    -- padrão, a cache existe quando a RAM é externa ou o pacote a liga.
+    has_dcache          : boolean := ram_external or HAS_DCACHE;
     -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
     icache_size_bits    : positive := 4096;
     -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
@@ -99,7 +124,36 @@ entity modular_sim_top is
     -- Zifencei no núcleo (FENCE.I invalida a cache de instruções); falso mantém o NOP.
     has_zifencei        : boolean := HAS_ZIFENCEI;
     -- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-    has_zicclsm         : boolean := HAS_ZICCLSM
+    has_zicclsm         : boolean := HAS_ZICCLSM;
+    -- Interrupções de máquina: o CLINT e o controlador externo ficam na janela de periféricos e as
+    -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
+    has_interrupts      : boolean := HAS_INTERRUPTS;
+    -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
+    clint_tick_cycles   : positive := 1;
+    -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
+    clint_id            : natural range 0 to 7 := 6;
+    -- Índice da janela de 256 MiB do controlador de interrupção externa.
+    ext_irq_id          : natural range 0 to 7 := 7;
+    -- Chaves SW da placa, num bloco GPIO de 10 pinos (plataformas da FPGA).
+    has_switches        : boolean := false;
+    -- Índice da janela das chaves.
+    switches_id         : natural range 0 to 7 := 1;
+    -- Botões KEY da placa, num bloco GPIO de 4 pinos (plataformas da FPGA).
+    has_keys            : boolean := false;
+    -- Índice da janela dos botões.
+    keys_id             : natural range 0 to 7 := 2;
+    -- Displays de 7 segmentos HEX0 a HEX5 (plataformas da FPGA).
+    has_display         : boolean := false;
+    -- Índice da janela do display.
+    display_id          : natural range 0 to 7 := 5;
+    -- UART cuja outra ponta é o hospedeiro no JTAG.
+    has_uart_jtag       : boolean := false;
+    -- Índice da janela da UART via JTAG.
+    uart_jtag_id        : natural range 0 to 7 := 4;
+    -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
+    has_uart_pins       : boolean := false;
+    -- Índice da janela da UART via pinos.
+    uart_pins_id        : natural range 0 to 7 := 3
   );
   port (
     -- Clock base; um gerador o divide por três para os estágios do núcleo.
@@ -119,7 +173,35 @@ entity modular_sim_top is
     -- Dado de escrita da RAM interna do núcleo.
     o_ram_wdata     : out std_logic_vector(31 downto 0);
     -- Habilita de bytes da escrita na RAM interna do núcleo.
-    o_ram_byteena   : out std_logic_vector(3 downto 0)
+    o_ram_byteena   : out std_logic_vector(3 downto 0);
+    -- Chaves SW (10 pinos do GPIO); o testbench as conduz.
+    io_sw           : inout std_logic_vector(9 downto 0);
+    -- Botões KEY (4 pinos do GPIO); o testbench os conduz.
+    io_key          : inout std_logic_vector(3 downto 0);
+    -- Segmentos dos displays, HEX0 nos bits 6:0 e HEX5 nos bits 41:36 (nível baixo).
+    o_display_hex   : out std_logic_vector(41 downto 0);
+    -- Valor de 24 bits do registrador do display.
+    o_display_value : out std_logic_vector(23 downto 0);
+    -- Virtual JTAG da UART via JTAG: clock da cadeia.
+    i_uart_tck      : in  std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: dado vindo do hospedeiro.
+    i_uart_tdi      : in  std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: dado para o hospedeiro.
+    o_uart_tdo      : out std_logic;
+    -- Virtual JTAG da UART via JTAG: registrador de instrução.
+    i_uart_ir_in    : in  std_logic_vector(1 downto 0) := "00";
+    -- Virtual JTAG da UART via JTAG: estado Capture-DR.
+    i_uart_state_cdr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Shift-DR.
+    i_uart_state_sdr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Update-DR.
+    i_uart_state_udr : in std_logic := '0';
+    -- Virtual JTAG da UART via JTAG: estado Update-IR.
+    i_uart_state_uir : in std_logic := '0';
+    -- Linha serial de recepção da UART via pinos.
+    i_uart_rx       : in  std_logic := '1';
+    -- Linha serial de transmissão da UART via pinos.
+    o_uart_tx       : out std_logic
   );
 end entity modular_sim_top;
 
@@ -129,6 +211,30 @@ architecture behaviour of modular_sim_top is
 
   -- Tamanho da BOOT_ROM em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
   constant BOOT_KIB : natural := boot_rom_size_bytes / 1024;
+
+  -- A ROM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de instruções.
+  constant ROM_PORT : boolean := rom_external or has_icache;
+  -- A RAM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de dados.
+  constant RAM_PORT : boolean := ram_external or has_dcache;
+
+  -- Há algum periférico na janela de periféricos: o CLINT e o controlador externo, ou os do topo da placa.
+  constant HAS_PERIPHERALS : boolean :=
+    has_interrupts or has_switches or has_keys or has_display or has_uart_jtag or has_uart_pins;
+
+  -- Escolhe entre dois valores naturais conforme a condição.
+  function pick(cond : boolean; a : natural; b : natural) return natural is
+  begin
+    if cond then
+      return a;
+    end if;
+    return b;
+  end function pick;
+
+  -- Base da região da ROM, em KiB, nos endereços que o roteador dos dados vê: a cache de dados os
+  -- troca pelos da região da FLASH (0x20000000), e sem ela chegam os do mapa.
+  constant D_ROM_BASE_KIB : natural := pick(has_dcache, 524288, BOOT_KIB);
+  -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
+  constant D_ROM_END_KIB  : natural := pick(has_dcache, 1048576, rom_end_kib);
 
   -- Clocks dos estágios do núcleo.
   signal pll_clk_if      : std_logic;
@@ -171,6 +277,26 @@ architecture behaviour of modular_sim_top is
   -- Escrita na RAM habilitada pelo núcleo e pelo enable geral ('1' = escreve).
   signal ram_we_gated  : std_logic;
 
+  -- Interrupções de máquina do núcleo: timer (MTIP) e software (MSIP) do CLINT, externa (MEIP) do controlador.
+  signal irq_timer     : std_logic := '0';
+  -- Interrupção de software de máquina (MSIP), saída do CLINT.
+  signal irq_software  : std_logic := '0';
+  -- Interrupção externa de máquina (MEIP), saída do controlador de interrupção externa.
+  signal irq_external  : std_logic := '0';
+
+  -- Janela de periféricos: deslocamento de palavra dentro do periférico (64 KiB por janela).
+  signal p_addr        : std_logic_vector(13 downto 0);
+  -- Janela de periféricos: dado de escrita.
+  signal p_wdata       : std_logic_vector(31 downto 0);
+  -- Janela de periféricos: habilita de bytes da escrita.
+  signal p_byteena     : std_logic_vector(3 downto 0);
+  -- Janela de periféricos: pulso de escrita, um bit por periférico.
+  signal p_we          : std_logic_vector(7 downto 0);
+  -- Janela de periféricos: pulso de leitura, um bit por periférico.
+  signal p_re          : std_logic_vector(7 downto 0);
+  -- Janela de periféricos: dados lidos, 32 bits por periférico.
+  signal p_rdata       : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+
   -- Sinais do núcleo: barramento externo de dados.
   signal sdram_addr    : std_logic_vector(31 downto 0);
   -- Dado de escrita do barramento externo do núcleo.
@@ -196,6 +322,9 @@ architecture behaviour of modular_sim_top is
   signal ic_sel        : std_logic;
   -- Invalidação da cache de instruções pelo FENCE.I ('1' = invalida).
   signal ic_inval      : std_logic;
+
+  -- Pulso de retirada de instrução do núcleo, que o testbench conta para o CPI.
+  signal core_retire   : std_logic;
 
   -- Eventos das caches e da FLASH para o Zihpm.
   signal ic_miss       : std_logic := '0';
@@ -395,10 +524,10 @@ begin
       has_e         => has_e,
       boot_rom_bits => log2_exact(boot_rom_size_bytes),
       rom_end_kib   => rom_end_kib,
-      rom_external  => rom_external,
+      rom_external  => ROM_PORT,
       ram_base_kib  => ram_base_kib,
       ram_end_kib   => ram_end_kib,
-      ram_external  => ram_external,
+      ram_external  => RAM_PORT,
       ext_base_kib  => ext_base_kib,
       periph_base_kib => periph_base_kib,
       has_zihpm    => has_zihpm,
@@ -407,11 +536,12 @@ begin
       has_zimop    => has_zimop,
       has_zicond   => has_zicond,
       has_zihintntl   => has_zihintntl,
-      has_zihintpause => has_zihintpause
+      has_zihintpause => has_zihintpause,
+      has_interrupts  => has_interrupts and has_zicsr
     )
     port map (
       o_trap           => open,
-      o_retire         => open,
+      o_retire         => core_retire,
       o_trap_cause     => open,
       o_trap_pc        => open,
       i_clk            => pll_clk_idexmem,
@@ -439,6 +569,9 @@ begin
       i_sdram_ready    => sdram_ready,
       o_mem_advance    => mem_advance,
       i_hpm_ext_events => hpm_ext_events,
+      i_irq_software   => irq_software,
+      i_irq_timer      => irq_timer,
+      i_irq_external   => irq_external,
       i_ic_data        => ic_data,
       i_ic_ready       => ic_ready,
       o_ic_sel         => ic_sel,
@@ -454,8 +587,8 @@ begin
       o_data => boot_rom_data
     );
 
-  -- ROM interna: a FLASH com duas portas, uma para instruções e outra para dados.
-  g_rom_internal : if not rom_external generate
+  -- ROM do núcleo: a FLASH com duas portas, uma para instruções e outra para dados.
+  g_rom_internal : if not ROM_PORT generate
   begin
     u_flash : entity work.rom_simulation
       generic map (rom_file => rom_file, size_bytes => rom_size_bytes)
@@ -471,8 +604,8 @@ begin
       );
   end generate g_rom_internal;
 
-  -- RAM interna do núcleo.
-  g_ram_internal : if not ram_external generate
+  -- RAM do núcleo.
+  g_ram_internal : if not RAM_PORT generate
   begin
     u_ram : entity work.ram_simulation
       generic map (size_bytes => ram_size_bytes, ram_file => ram_file)
@@ -488,9 +621,10 @@ begin
       );
   end generate g_ram_internal;
 
-  -- Dados externos: a interconexão separa a janela de periféricos, a cache de dados fica entre o
-  -- núcleo e a memória.
-  g_data_external : if ram_external generate
+  -- A interconexão separa a janela de periféricos e entrega o pedido de dados à cache de dados ou,
+  -- sem ela, direto ao lado da memória. Existe quando há dados via porta ou interrupções (o CLINT
+  -- e o controlador externo ficam na janela); sem dados via porta, o lado da memória responde zero.
+  g_data_port : if ROM_PORT or RAM_PORT or HAS_PERIPHERALS generate
   begin
     u_interconnect : entity work.ext_interconnect
       port map (
@@ -511,14 +645,156 @@ begin
         o_m_wren      => m_wren,
         i_m_ready     => m_ready,
         i_m_rdata     => m_rdata,
-        o_p_addr      => open,
-        o_p_wdata     => open,
-        o_p_byteena   => open,
-        o_p_we        => open,
-        o_p_re        => open,
-        i_p_rdata     => (others => '0')
+        o_p_addr      => p_addr,
+        o_p_wdata     => p_wdata,
+        o_p_byteena   => p_byteena,
+        o_p_we        => p_we,
+        o_p_re        => p_re,
+        i_p_rdata     => p_rdata
+      );
+  end generate g_data_port;
+
+  g_no_data_port : if not (ROM_PORT or RAM_PORT) generate
+  begin
+    m_ready <= '1';
+    m_rdata <= (others => '0');
+  end generate g_no_data_port;
+
+  -- CLINT e controlador de interrupção externa, no domínio de clock do núcleo (sem sincronizador).
+  g_interrupts : if has_interrupts generate
+  begin
+    u_clint : entity work.clint
+      generic map (tick_cycles => clint_tick_cycles)
+      port map (
+        i_clk          => pll_clk_idexmem,
+        i_rst          => i_rst,
+        i_data_in      => p_wdata,
+        i_address      => p_addr,
+        i_write        => p_we(clint_id),
+        i_read         => p_re(clint_id),
+        o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
+        o_irq_timer    => irq_timer,
+        o_irq_software => irq_software
       );
 
+    -- Nenhum periférico do topo gera linha de interrupção ainda: as linhas ficam em zero.
+    u_ext_irq : entity work.ext_irq_controller
+      port map (
+        i_clk          => pll_clk_idexmem,
+        i_rst          => i_rst,
+        i_irq_lines    => (others => '0'),
+        i_data_in      => p_wdata,
+        i_address      => p_addr(1 downto 0),
+        i_write        => p_we(ext_irq_id),
+        i_read         => p_re(ext_irq_id),
+        o_data_out     => p_rdata(32 * ext_irq_id + 31 downto 32 * ext_irq_id),
+        o_irq_external => irq_external
+      );
+  end generate g_interrupts;
+
+  -- Periféricos do topo da placa: chaves e botões (GPIO), display e as duas UART. Um periférico ausente deixa
+  -- a saída em zero e o dado lido da janela em zero, como uma janela sem dispositivo.
+  g_switches : if has_switches generate
+  begin
+    u_switches : entity work.gpio
+      generic map (data_width => 10)
+      port map (
+        i_clk        => pll_clk_idexmem,
+        i_rst        => i_rst,
+        i_data_in    => p_wdata(9 downto 0),
+        i_address    => p_addr(3 downto 0),
+        i_write      => p_we(switches_id),
+        i_read       => p_re(switches_id),
+        o_data_out   => p_rdata(32 * switches_id + 9 downto 32 * switches_id),
+        o_irq        => open,
+        io_gpio_pins => io_sw
+      );
+  end generate g_switches;
+
+  g_keys : if has_keys generate
+  begin
+    u_keys : entity work.gpio
+      generic map (data_width => 4)
+      port map (
+        i_clk        => pll_clk_idexmem,
+        i_rst        => i_rst,
+        i_data_in    => p_wdata(3 downto 0),
+        i_address    => p_addr(3 downto 0),
+        i_write      => p_we(keys_id),
+        i_read       => p_re(keys_id),
+        o_data_out   => p_rdata(32 * keys_id + 3 downto 32 * keys_id),
+        o_irq        => open,
+        io_gpio_pins => io_key
+      );
+  end generate g_keys;
+
+  g_display : if has_display generate
+  begin
+    u_display : entity work.seg_display
+      port map (
+        i_clk       => pll_clk_idexmem,
+        i_rst       => i_rst,
+        i_addr      => p_addr(7 downto 0),
+        i_wdata     => p_wdata,
+        i_we        => p_we(display_id),
+        i_re        => p_re(display_id),
+        o_rdata     => p_rdata(32 * display_id + 31 downto 32 * display_id),
+        i_tck       => '0',
+        i_tdi       => '0',
+        o_tdo       => open,
+        i_ir_in     => "00",
+        i_state_cdr => '0',
+        i_state_sdr => '0',
+        i_state_udr => '0',
+        i_state_uir => '0',
+        o_value     => o_display_value,
+        o_fail      => open,
+        o_hex       => o_display_hex
+      );
+  end generate g_display;
+
+  g_uart_jtag : if has_uart_jtag generate
+  begin
+    u_uart_jtag : entity work.jtag_uart
+      port map (
+        i_clk       => pll_clk_idexmem,
+        i_rst       => i_rst,
+        i_addr      => p_addr(7 downto 0),
+        i_wdata     => p_wdata,
+        i_we        => p_we(uart_jtag_id),
+        i_re        => p_re(uart_jtag_id),
+        o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
+        i_tck       => i_uart_tck,
+        i_tdi       => i_uart_tdi,
+        o_tdo       => o_uart_tdo,
+        i_ir_in     => i_uart_ir_in,
+        i_state_cdr => i_uart_state_cdr,
+        i_state_sdr => i_uart_state_sdr,
+        i_state_udr => i_uart_state_udr,
+        i_state_uir => i_uart_state_uir
+      );
+  end generate g_uart_jtag;
+
+  g_uart_pins : if has_uart_pins generate
+  begin
+    u_uart_pins : entity work.uart
+      port map (
+        i_clk      => pll_clk_idexmem,
+        i_rst      => i_rst,
+        i_data_in  => p_wdata,
+        i_address  => p_addr(1 downto 0),
+        i_write    => p_we(uart_pins_id),
+        i_read     => p_re(uart_pins_id),
+        o_data_out => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
+        o_irq      => open,
+        i_uart_rx  => i_uart_rx,
+        o_uart_tx  => o_uart_tx
+      );
+  end generate g_uart_pins;
+
+  -- Com cache de dados, ela fica entre a interconexão e a memória.
+  g_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate
+  begin
     u_dcache : entity work.dcache
       generic map (
         size_bits     => dcache_size_bits,
@@ -555,10 +831,25 @@ begin
         o_d_wdata_x   => dd_wdx,
         i_d_rdata_x   => dd_rdx
       );
-  end generate g_data_external;
+  end generate g_dcache;
 
-  -- Instruções externas: a cache de instruções entre o núcleo e a memória.
-  g_instr_external : if rom_external generate
+  -- Sem cache de dados, o pedido da interconexão segue palavra a palavra, com os endereços do mapa.
+  g_no_dcache : if (ROM_PORT or RAM_PORT) and not has_dcache generate
+  begin
+    dd_addr  <= m_addr;
+    dd_wdata <= m_wdata;
+    dd_be    <= m_byteena;
+    dd_rden  <= m_rden;
+    dd_wren  <= m_wren;
+    dd_line  <= '0';
+    dd_adv   <= mem_advance;
+    dd_wdx   <= (others => '0');
+    m_ready  <= dd_ready;
+    m_rdata  <= dd_rdata;
+  end generate g_no_dcache;
+
+  -- Instruções via porta, com cache: a cache de instruções entre o núcleo e a memória.
+  g_icache : if ROM_PORT and has_icache generate
   begin
     u_icache : entity work.icache
       generic map (
@@ -584,10 +875,38 @@ begin
         o_d_line     => id_line,
         i_d_rdata_x  => id_rdx
       );
-  end generate g_instr_external;
+  end generate g_icache;
 
-  -- A RAM externa sozinha: a cache de dados fala direto com o chip de RAM.
-  g_direct_data : if ram_external and not rom_external generate
+  -- Instruções via porta, sem cache: a ponte de busca, que guarda só a linha corrente.
+  g_ifetch : if ROM_PORT and not has_icache generate
+  begin
+    u_ifetch : entity work.ifetch_bridge
+      generic map (
+        fetch_line   => true,
+        rom_base_kib => BOOT_KIB,
+        rom_end_kib  => rom_end_kib
+      )
+      port map (
+        i_clk        => pll_clk_idexmem,
+        i_rst        => i_rst,
+        i_addr       => if_addr,
+        i_sel        => ic_sel,
+        o_ready      => ic_ready,
+        o_data       => ic_data,
+        i_invalidate => ic_inval,
+        o_miss       => ic_miss,
+        o_d_addr     => id_addr,
+        o_d_rden     => id_rden,
+        o_d_advance  => id_adv,
+        i_d_ready    => id_ready,
+        i_d_rdata    => id_rdata,
+        o_d_line     => id_line,
+        i_d_rdata_x  => id_rdx
+      );
+  end generate g_ifetch;
+
+  -- Só a RAM via porta: o lado da memória dos dados fala direto com o chip de RAM.
+  g_direct_data : if RAM_PORT and not ROM_PORT generate
   begin
     rc_d_addr  <= dd_addr;
     rc_d_wdata <= dd_wdata;
@@ -602,36 +921,30 @@ begin
     dd_rdx     <= rc_d_rdx;
   end generate g_direct_data;
 
-  -- A ROM externa sozinha: a cache de instruções fala direto com o chip de FLASH.
-  g_direct_instr : if rom_external and not ram_external generate
+  -- Só a ROM via porta: o roteador leva os dados da ROM à FLASH, e o que cai fora dela responde zero.
+  g_rom_only : if ROM_PORT and not RAM_PORT generate
   begin
-    fc_addr  <= id_addr;
-    fc_rden  <= id_rden;
-    fc_line  <= id_line;
-    fc_adv   <= id_adv;
-    id_ready <= fc_ready;
-    id_rdata <= fc_rdata;
-    id_rdx   <= fc_rdx;
-  end generate g_direct_instr;
+    sd_ready <= '1';
+    sd_rdata <= (others => '0');
+    sd_rdx   <= (others => '0');
+    fa_addr  <= id_addr;
+    fa_rden  <= id_rden;
+    fa_line  <= id_line;
+    fa_adv   <= id_adv;
+    id_ready <= fa_ready;
+    id_rdata <= fa_rdata;
+    id_rdx   <= fa_rdx;
+  end generate g_rom_only;
 
-  -- As duas memórias externas: um roteador por cache separa a ROM do chip de RAM, e a ROM tem um
-  -- árbitro entre as duas.
-  g_routed : if rom_external and ram_external generate
+  -- A ROM via porta: o roteador dos dados e o árbitro entre a busca e os dados na FLASH.
+  g_rom_path : if ROM_PORT generate
   begin
-    u_router_i : entity work.mem_region_router
-      port map (
-        i_clk => pll_clk_idexmem, i_rst => i_rst,
-        i_addr => id_addr, i_wdata => (others => '0'), i_byteena => (others => '0'),
-        i_rden => id_rden, i_wren => '0', i_line => id_line, i_advance => id_adv,
-        o_ready => id_ready, o_rdata => id_rdata, o_rdata_x => id_rdx,
-        o_s_addr => si_addr, o_s_wdata => si_wdata, o_s_byteena => si_be, o_s_rden => si_rden,
-        o_s_wren => si_wren, o_s_line => si_line, o_s_wdata_x => si_wdx, o_s_advance => si_adv,
-        i_s_ready => si_ready, i_s_rdata => si_rdata, i_s_rdata_x => si_rdx,
-        o_f_addr => fa_addr, o_f_rden => fa_rden, o_f_line => fa_line, o_f_advance => fa_adv,
-        i_f_ready => fa_ready, i_f_rdata => fa_rdata, i_f_rdata_x => fa_rdx
-      );
-
     u_router_d : entity work.mem_region_router
+      generic map (
+        rom_base_kib => D_ROM_BASE_KIB,
+        rom_end_kib  => D_ROM_END_KIB,
+        hold_rdata   => not has_dcache
+      )
       port map (
         i_clk => pll_clk_idexmem, i_rst => i_rst,
         i_addr => dd_addr, i_wdata => dd_wdata, i_byteena => dd_be,
@@ -653,6 +966,24 @@ begin
         o_b_ready => fb_ready, o_b_rdata => fb_rdata, o_b_rdata_x => fb_rdx,
         o_addr => fc_addr, o_rden => fc_rden, o_line => fc_line, o_advance => fc_adv,
         i_ready => fc_ready, i_rdata => fc_rdata, i_rdata_x => fc_rdx
+      );
+  end generate g_rom_path;
+
+  -- As duas memórias via porta: o roteador da busca separa a FLASH do chip de RAM, e o dos dados
+  -- entrega o que não é da FLASH ao chip.
+  g_routed : if ROM_PORT and RAM_PORT generate
+  begin
+    u_router_i : entity work.mem_region_router
+      port map (
+        i_clk => pll_clk_idexmem, i_rst => i_rst,
+        i_addr => id_addr, i_wdata => (others => '0'), i_byteena => (others => '0'),
+        i_rden => id_rden, i_wren => '0', i_line => id_line, i_advance => id_adv,
+        o_ready => id_ready, o_rdata => id_rdata, o_rdata_x => id_rdx,
+        o_s_addr => si_addr, o_s_wdata => si_wdata, o_s_byteena => si_be, o_s_rden => si_rden,
+        o_s_wren => si_wren, o_s_line => si_line, o_s_wdata_x => si_wdx, o_s_advance => si_adv,
+        i_s_ready => si_ready, i_s_rdata => si_rdata, i_s_rdata_x => si_rdx,
+        o_f_addr => fa_addr, o_f_rden => fa_rden, o_f_line => fa_line, o_f_advance => fa_adv,
+        i_f_ready => fa_ready, i_f_rdata => fa_rdata, i_f_rdata_x => fa_rdx
       );
 
     rc_d_addr  <= sd_addr;
@@ -676,8 +1007,8 @@ begin
     si_rdx    <= rc_i_rdx;
   end generate g_routed;
 
-  -- O chip de FLASH externo e o seu armazenamento, quando a ROM é externa.
-  g_rom_chip : if rom_external generate
+  -- O chip de FLASH e o seu armazenamento, quando a ROM é alcançada pela porta.
+  g_rom_chip : if ROM_PORT generate
   begin
     u_flash_chip : entity work.flash_chip
       generic map (
@@ -702,8 +1033,8 @@ begin
       );
   end generate g_rom_chip;
 
-  -- O chip de RAM externo, quando algum lado é externo.
-  g_ext_ram : if ram_external generate
+  -- O chip de RAM, quando a RAM é alcançada pela porta.
+  g_ext_ram : if RAM_PORT generate
   begin
     u_ext_ram : entity work.ram_chip
       generic map (
@@ -740,7 +1071,7 @@ begin
       );
   end generate g_ext_ram;
 
-  g_no_ext_ram : if not ram_external generate
+  g_no_ext_ram : if not RAM_PORT generate
   begin
     o_dbg_word_data <= (others => '0');
   end generate g_no_ext_ram;

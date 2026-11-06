@@ -40,11 +40,23 @@ flash:
     - {name: A, base: 0x00001000, size: 124K}
     - {name: B, base: 0x00020000, size: 128K}
 
-# The slots of the external interconnect (bits 30:28 of the address): the JTAG UART and the seven-segment
-# display of the board top.
+# The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update
+# (commands of the FLASH chip; wired in the simulation top with HAS_FLASH_CONTROLLER, not yet in the board top), the
+# JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the
+# controller of the external interrupt lines (EXT_IRQ), whose output is the MEIP of the core.
 peripherals:
+  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
   - {name: UART,    base: 0xC0000000, id: 4}
   - {name: DISPLAY, base: 0xD0000000, id: 5}
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: EXT_IRQ, base: 0xF0000000, id: 7}
+
+# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from EXT_IRQ, all in the clock domain of the core
+# (50 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (50 cycles per tick) and is
+# independent of the CSR time of Zicntr, which the core serves.
+interrupts:
+  clock_hz: 50000000
+  mtime_hz: 1000000
 
 # The memory model: the FLASH and the SDRAM outside the core, behind the instruction and the data caches (32768 bits,
 # 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL, RAM_EXTERNAL and the caches from here.
@@ -54,8 +66,8 @@ memory:
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 
-# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
-extras: [Zimop, Zicond]
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the package).
+extras: [Zimop, Zicond, Interrupts]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
@@ -82,6 +94,7 @@ config:
 
 checks:
   # --- config.yaml ---------------------------------------------------------
+  - {name: config.yaml UART_SLOT, file: src/cyclone-v/de0-cv/config.yaml, pattern: 'UART_SLOT: "(\d+)"', expect: UART.id}
 
   # --- boot ROM (boot_rom.S; its linker script is generated) --------------
 
@@ -95,3 +108,9 @@ checks:
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
   - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+  - {name: Tests header RV32_UART_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_UART_BASE\s+(0x[0-9A-Fa-f]+)', expect: UART.base}
+  - {name: Tests header RV32_FLASH_CTRL_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_FLASH_CTRL_BASE\s+(0x[0-9A-Fa-f]+)', expect: FLASH_CTRL.base}
+  - {name: Tests header RV32_BANK_A_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.base}
+  - {name: Tests header RV32_BANK_A_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.size}
+  - {name: Tests header RV32_BANK_B_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.base}
+  - {name: Tests header RV32_BANK_B_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.size}

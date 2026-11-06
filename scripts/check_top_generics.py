@@ -19,16 +19,48 @@ PLATFORMS: dict[str, list[str]] = {
     "src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd": [
         "src/cyclone-v/de0-cv/de0-cv_sim_top.vhd",
     ],
+    "src/cyclone-v/external-data/external_data_map_pkg.vhd": [
+        "src/cyclone-v/external-data/external-data_sim_top.vhd",
+    ],
     "src/simulation/modular/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/simulation/test-integrated/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/simulation/test-external-data/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/simulation/test-external-instruction/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/simulation/test-external/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-integrated/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-external-data/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-external-instruction/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-external/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-uart-jtag/modular_map_pkg.vhd": [
+        "src/simulation/modular/modular_sim_top.vhd",
+    ],
+    "src/cyclone-v/fpga-uart-pins/modular_map_pkg.vhd": [
         "src/simulation/modular/modular_sim_top.vhd",
     ],
 }
 
-# Tops sem cache: os generics de cache só existem no top da placa.
+# Tops sem cache: os generics de cache só existem nos tops com cache.
 CACHE = {"HAS_ICACHE", "HAS_DCACHE"}
 NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
-    "src/simulation/modular/modular_sim_top.vhd",
 }
 
 CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)

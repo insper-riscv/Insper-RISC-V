@@ -15,12 +15,27 @@ Todo acesso de dados do core em `0x40000000` ou acima sai por uma porta externa 
 | Faixa | Escravo |
 | :--- | :--- |
 | Bit 31 = 0 (a partir de `0x40000000`) | A ponte da SDRAM |
-| Bit 31 = 1 | Uma janela de periféricos: os bits 30:28 são o id e os bits 9:2 o deslocamento de palavra dentro da janela |
+| Bit 31 = 1 | Uma janela de periféricos: os bits 30:28 são o id e os bits 15:2 (janela de 64 KiB) o deslocamento de palavra dentro da janela |
 
 | Id | Janela | Periférico |
 | ---: | :--- | :--- |
 | 4 | `0xC0000000` | UART sobre JTAG |
-| 0 a 3, 5 a 7 | | Nenhum: uma leitura dá 0, uma escrita não tem efeito e o acesso termina |
+| 5 | `0xD0000000` | Display de 7 segmentos |
+| 6 | `0xE0000000` | CLINT (`msip`, `mtimecmp` e `mtime`; janela de 64 KiB) |
+| 7 | `0xF0000000` | Controlador de interrupção externa (`EXT_IRQ`, 4 registradores) |
+| 0 a 3 | | Nenhum: uma leitura dá 0, uma escrita não tem efeito e o acesso termina |
+
+## 2.1. Interrupções de máquina
+
+O CLINT (id 6) e o controlador de interrupção externa `EXT_IRQ` (id 7) entram como escravos pelo mesmo caminho dos outros periféricos, no domínio de clock do núcleo, sem sincronizador. As três saídas chegam às portas do núcleo.
+
+| Saída | Porta do núcleo | Bit do `mip` |
+| :--- | :--- | :--- |
+| `o_irq_software` do CLINT (`msip`) | `i_irq_software` | MSIP, bit 3 |
+| `o_irq_timer` do CLINT (`mtime >= mtimecmp`) | `i_irq_timer` | MTIP, bit 7 |
+| `o_irq_external` do `EXT_IRQ` | `i_irq_external` | MEIP, bit 11 |
+
+O `mtime` do CLINT é um contador próprio, que soma 1 a cada $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ ciclos do núcleo e é independente do CSR `time` da Zicntr, que o núcleo atende. A base do CLINT, o `mtime_hz` e o `clock_hz` saem da seção `interrupts` do `platform.yaml`, e nenhum endereço do CLINT é escrito à mão no topo nem no runtime. O núcleo só habilita as interrupções com `has_interrupts` e Zicsr, e as linhas do `EXT_IRQ` ficam em zero enquanto nenhum periférico do topo gera uma.
 
 ## 3. O handshake
 
@@ -32,7 +47,7 @@ O core segura o acesso na porta até o `ready`, que fica alto como nível até `
 
 ## 4. A variante AXI4
 
-O `ext_axi_interconnect.vhd` faz a mesma decodificação sobre AXI4: a cache de dados e a ponte mestre do Memory na frente, depois o `axi_router.vhd` e, atrás dele, a ponte escrava da SDRAM do Memory e o `axi_slave_periph_bank.vhd`. O roteador envia `0x40000000` a `0x43FFFFFF` à SDRAM e `0x80000000` em diante aos periféricos, e responde DECERR em qualquer outro lugar. O banco de periféricos atende oito janelas de 256 palavras, escolhidas pelos bits 30:28. A cadeia inteira está descrita em [dcache_axi.md](https://github.com/insper-riscv/Memory/blob/main/docs/pt-br/barramento/dcache_axi.md) no Memory.
+O `ext_axi_interconnect.vhd` faz a mesma decodificação sobre AXI4: a cache de dados e a ponte mestre do Memory na frente, depois o `axi_router.vhd` e, atrás dele, a ponte escrava da SDRAM do Memory e o `axi_slave_periph_bank.vhd`. O roteador envia `0x40000000` a `0x43FFFFFF` à SDRAM e `0x80000000` em diante aos periféricos, e responde DECERR em qualquer outro lugar. O banco de periféricos atende oito janelas de 16384 palavras (64 KiB), escolhidas pelos bits 30:28. A cadeia inteira está descrita em [dcache_axi.md](https://github.com/insper-riscv/Memory/blob/main/docs/pt-br/barramento/dcache_axi.md) no Memory.
 
 ## 5. Verificação
 

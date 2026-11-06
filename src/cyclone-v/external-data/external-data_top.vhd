@@ -215,7 +215,7 @@ architecture behaviour of core_fpga_external_data is
 	-- Atrás do interconector: pedido concluído.
 	signal m_ready   : std_logic;
 	-- Janela de periféricos: endereço de registrador.
-	signal p_addr    : std_logic_vector(7 downto 0);
+	signal p_addr    : std_logic_vector(13 downto 0);
 	-- Janela de periféricos: dado de escrita.
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	-- Janela de periféricos: máscara de bytes.
@@ -245,7 +245,7 @@ architecture behaviour of core_fpga_external_data is
 	-- Reset do núcleo: PLL destravado, botão ou carregador da FLASH.
 	signal core_reset : std_logic;
 
-	-- Pulso de um ciclo de o_trap do núcleo (só existe sem Zicsr) e a bandeira que o segura até o próximo reset.
+	-- Pulso de um ciclo de o_trap_take do núcleo (exceção tomada, com ou sem Zicsr) e a bandeira que o segura até o próximo reset.
 	signal core_trap : std_logic;
 	signal trap_seen : std_logic := '0';
 
@@ -303,7 +303,7 @@ begin
 
 	-- LEDR9 a LEDR4 mostram as extensões do perfil do núcleo ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga o LEDR6);
 	-- LEDR0 acende quando algum programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende quando o
-	-- núcleo sinaliza uma exceção em o_trap (só sem Zicsr) e fica aceso até o próximo reset; LEDR2 acende com o núcleo
+	-- núcleo toma uma exceção, sinalizada em o_trap_take (com ou sem Zicsr), e fica aceso até o próximo reset; LEDR2 acende com o núcleo
 	-- parado pelo carregador da FLASH; LEDR3 fica apagado.
 	LEDR(9) <= '1' when HAS_ZICCLSM else '0';
 	LEDR(8) <= '1' when HAS_ZIFENCEI else '0';
@@ -316,7 +316,7 @@ begin
 	LEDR(1) <= trap_seen;
 	LEDR(0) <= display_fail;
 
-	-- o_trap dura um ciclo de clock do núcleo, invisível a olho nu: a bandeira o segura até o reset.
+	-- o_trap_take dura um ciclo de clock do núcleo, invisível a olho nu: a bandeira o segura até o reset.
 	process (pll_clk_idexmem)
 	begin
 		if rising_edge(pll_clk_idexmem) then
@@ -384,7 +384,7 @@ begin
 			i_sdram_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
-			o_trap          => core_trap,
+			o_trap_take     => core_trap,
 
 			i_hpm_ext_events => hpm_ext_events,
 			o_ic_inval      => ic_inval
@@ -490,7 +490,7 @@ begin
 	u_jtag_uart : entity work.jtag_uart_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
 		);
 
@@ -498,7 +498,7 @@ begin
 	u_display : entity work.seg_display_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			o_hex => display_hex, o_value => display_value, o_fail => display_fail
 		);

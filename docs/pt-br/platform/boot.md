@@ -7,7 +7,7 @@ Este documento descreve, registrador por registrador e seção por seção, exat
 
 ## A sequência de boot
 
-1. O reset entra em `_reset` (`0x0`, na BOOT_ROM): limpa `tohost`, `fromhost` e o cabeçalho do `stdout`, e salta para `0x1000` (`RV32_BOOT_ENTRY`). Não inicializa `sp`, `gp` nem copia nada.
+1. O reset entra em `_reset` (`0x0`, na BOOT_ROM): limpa `tohost`, `fromhost` e o cabeçalho do `stdout`, e salta para `0x1000` (`RV32_BOOT_ENTRY`), ou, na `de0-cv`, para o início do programa da banca válida de maior versão (`0x1100` ou `0x20100`). Entrega `a0` e `a1` em `0`. Não inicializa `sp`, `gp` nem copia nada.
 2. Em `0x1000` está o `_start` do `crt0-hosted` da picolibc: ajusta `sp` (de `__stack`) e `gp` (de `__global_pointer$`) e chama o `_cstart`.
 3. O `_cstart` copia `.data` e `.tdata` da FLASH para a RAM (com `memcpy`), zera `.bss` (com `memset`), prepara o TLS (`_set_tls`) e roda os construtores (`__libc_init_array`).
 4. Chama `main(0, 0)` com `jal`, e o que `main` retornar vai para `exit`, que chama o `_exit` do projeto (`src/simulation/internal-mem/runtime/_exit.c`). Um teste que termina por `RV32_PASS()` ou `RV32_FAIL()` escreve o `tohost` e salta direto para o `rv32_wait_restart`, sem passar por `_exit`.

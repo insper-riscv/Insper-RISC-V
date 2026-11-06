@@ -1,0 +1,58 @@
+# The memory map of the test-external-data platform: Test platform, ROM inside the core and the RAM outside, behind the data cache; no peripheral.
+#
+#   riscv-tools --root . generate-memory-map --platform src/simulation/test-external-data/platform.yaml
+#
+# The source of truth of the generics of modular_sim_top and of the linker script of the programs. The
+# `memory` section is the combination of this platform; a test replaces it for one run (`--memory`).
+platform: test-external-data
+profile: rv32im_zicclsm
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_ROM, base: 0x00000000, size: 4K, kind: rom, exec: true}
+  - {name: ROM, base: 0x00001000, size: 1M-4K, kind: rom, exec: true}
+  - {name: RAM, base: 0x00100000, size: 1M, kind: ram}
+
+reserved:
+  stdout:   {base: 0x001FFBE0, size: 1K+8}
+  tohost:   {base: 0x001FFFE8, size: 8}
+  fromhost: {base: 0x001FFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# The window of the peripherals (0x80000000 and above) has no device: a read answers zero and a write
+# has no effect.
+peripherals: []
+
+memory:
+  rom:    {external: false}
+  ram:    {external: true}
+  icache: {enabled: false}
+  dcache: {enabled: true, size_bits: 4096}
+
+extras: [Zimop, Zicond]
+
+generate:
+  specs: {path: src/simulation/test-external-data/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  boot_ld: {path: src/simulation/test-external-data/runtime/boot_rom.ld}
+  runtime: {path: src/simulation/test-external-data/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/simulation/test-external-data/modular_map_pkg.vhd
+    package: modular_map_pkg
+    rom: ROM
+    ram: RAM
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
+config:
+  rom: ROM
+  ram: RAM
+  addr_widths: []
+
+checks:
+  - {name: modular_common RAM_BASE, file: tests/python/unittests/rtl/modular_common.py, pattern: '^RAM_BASE = (0x[0-9A-Fa-f]+)', expect: RAM.base}
+  - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
+  - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
+  - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+  - {name: Tests header RV32_TOHOST, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_TOHOST\s+(0x[0-9A-Fa-f]+)', expect: tohost.base}

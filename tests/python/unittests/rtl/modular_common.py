@@ -8,8 +8,6 @@ certo.
 
 from typing import Any
 
-import cocotb
-from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, RisingEdge
 
 FIRST = 0x5A
@@ -19,21 +17,6 @@ TIMEOUT_CYCLES = 200_000
 RAM_BASE = 0x100000
 # A RAM externa tem 1 MB, então a base do mapa cai no índice 0 do chip.
 EXTERNAL_DATA_INDEX = 0
-
-
-async def start(dut: Any) -> None:
-    """Start the clock and release the reset.
-
-    Parameters
-    ----------
-    dut : Any
-        The device under test.
-    """
-    cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
-    dut.i_rst.value = 1
-    dut.i_dbg_word_addr.value = 0
-    await ClockCycles(dut.i_clk, 5)
-    dut.i_rst.value = 0
 
 
 async def watch_internal_ram(dut: Any, writes: dict[int, int]) -> None:

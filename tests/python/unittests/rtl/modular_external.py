@@ -7,9 +7,9 @@ import cocotb
 from tests.python.unittests.rtl.modular_common import (
     FIRST,
     SECOND,
-    start,
     wait_for_external_result,
 )
+from tests.python.unittests.rtl.platform_common import start
 from tests.python.utils.checks import check
 
 

@@ -231,11 +231,14 @@ Qualquer alteração em código, configuração ou documentação deve passar se
 git submodule update --init --recursive  # Inicializa todos os submódulos nas versões fixadas
 make all                                 # Executa paths, verificação de integração, testes e provas formais próprios deste repositório
 make generate-check                      # Confere que os arquivos gerados a partir de cada platform.yaml estão em dia
+make sources-check                       # Confere que as listas de fontes dos topos são as que o provides gera
 ```
 
 Cada repositório roda só as próprias verificações, os próprios testes cocotb e as próprias provas formais, no CI de cada um. O Insper-RISC-V roda só o que é dele ou de integração: os caminhos do `paths.yaml`, a construção dos topos de simulação com os submódulos fixados, a unicidade dos nomes entre repositórios, o mapa de memória, os testes cocotb das plataformas e a prova formal do interconector. Uma alteração em um submódulo é validada no repositório dele, não aqui.
 
 Quando um `platform.yaml` muda, rode `make generate` e versione os arquivos que ele gera.
+
+As listas de fontes dos topos (os `config*.yaml`, o `tests/python/tests.json` e os `.qsf`) não se editam à mão: `make generate-sources` as escreve a partir do `provides` do `paths.yaml` de cada repositório, pelo `riscv-tools sources`, e `make sources-check` (parte do `make check` e do `make unit-tests`) falha quando a lista versionada difere da gerada. Um arquivo novo de um submódulo entra nos topos ao ser registrado no `provides` do próprio submódulo; depois de atualizar o ponteiro do submódulo, rode `make generate-sources` e versione o resultado.
 
 O job `formal` do CI roda as provas uma vez por engine (`formal - yices`, `formal - bitwuzla`, `formal - boolector` e `formal - abc-bmc3`) e o job agregador `formal` decide a partir dos resultados: cada prova precisa ter uma resposta e os engines que responderam precisam concordar entre si e com o esperado. O nome `formal` é o check que o ruleset da branch padrão exige, então não o renomeie; os jobs `formal - <engine>` não são exigidos.
 

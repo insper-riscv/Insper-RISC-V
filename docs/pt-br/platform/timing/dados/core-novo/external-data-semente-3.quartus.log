@@ -1,0 +1,1230 @@
+Info: *******************************************************************
+Info: Running Quartus Prime Shell
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Fri Nov  6 01:14:37 2026
+Info: Command: quartus_sh -t external-data_synth.tcl 3
+Info: Quartus(args): 3
+Info: *******************************************************************
+Info: Running Quartus Prime Analysis & Synthesis
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Fri Nov  6 01:14:39 2026
+Info: Command: quartus_map --read_settings_files=on --write_settings_files=off external-data -c external-data
+Info (16303): High Performance Effort optimization mode selected -- timing performance will be prioritized at the potential cost of increased compilation time
+Info (20030): Parallel compilation is enabled and will use 16 of the 16 processors detected
+Info (12021): Found 1 design units, including 1 entities, in source file <caminho-local>
+    Info (12023): Found entity 1: sdram_platform_pll File: <caminho-local> Line: 10
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: pipeline_types File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: byte_mask_consts File: <caminho-local> Line: 15
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: opcode_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: funct3_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: funct7_consts File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: alu_consts File: <caminho-local> Line: 23
+    Info (12022): Found design unit 2: alu_consts-body File: <caminho-local> Line: 100
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: ext_imm_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: ext_ram_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: wb_sel_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: pc_src_consts File: <caminho-local> Line: 12
+Info (12021): Found 2 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: mem_map_consts File: <caminho-local> Line: 14
+    Info (12022): Found design unit 2: mem_map_consts-body File: <caminho-local> Line: 52
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: fwd_consts File: <caminho-local> Line: 11
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: word_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: muldiv_consts File: <caminho-local> Line: 11
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zicond_consts File: <caminho-local> Line: 15
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: irq_consts File: <caminho-local> Line: 14
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: csr_value_consts File: <caminho-local> Line: 13
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: trap_consts File: <caminho-local> Line: 15
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zimop_consts File: <caminho-local> Line: 14
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: generic_register-rtl File: <caminho-local> Line: 38
+    Info (12023): Found entity 1: generic_register File: <caminho-local> Line: 16
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: adder-rtl File: <caminho-local> Line: 31
+    Info (12023): Found entity 1: adder File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: mux_2x1-rtl File: <caminho-local> Line: 34
+    Info (12023): Found entity 1: mux_2x1 File: <caminho-local> Line: 14
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: mux_4x1-rtl File: <caminho-local> Line: 40
+    Info (12023): Found entity 1: mux_4x1 File: <caminho-local> Line: 16
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: flip_flop-rtl File: <caminho-local> Line: 32
+    Info (12023): Found entity 1: flip_flop File: <caminho-local> Line: 15
+Info (12021): Found 2 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: utils_pkg File: <caminho-local> Line: 16
+    Info (12022): Found design unit 2: utils_pkg-body File: <caminho-local> Line: 51
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: alu-rtl File: <caminho-local> Line: 59
+    Info (12023): Found entity 1: alu File: <caminho-local> Line: 35
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: onehot_decoder-rtl File: <caminho-local> Line: 28
+    Info (12023): Found entity 1: onehot_decoder File: <caminho-local> Line: 12
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: mux_tree-rtl File: <caminho-local> Line: 33
+    Info (12023): Found entity 1: mux_tree File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: reg_file-rtl File: <caminho-local> Line: 53
+    Info (12023): Found entity 1: reg_file File: <caminho-local> Line: 24
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: extender_imm-rtl File: <caminho-local> Line: 31
+    Info (12023): Found entity 1: extender_imm File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: extender_ram-rtl File: <caminho-local> Line: 30
+    Info (12023): Found entity 1: extender_ram File: <caminho-local> Line: 17
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: store_manager-rtl File: <caminho-local> Line: 36
+    Info (12023): Found entity 1: store_manager File: <caminho-local> Line: 19
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: misaligned_unit-rtl File: <caminho-local> Line: 98
+    Info (12023): Found entity 1: misaligned_unit File: <caminho-local> Line: 35
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: control_unit-rtl File: <caminho-local> Line: 69
+    Info (12023): Found entity 1: control_unit File: <caminho-local> Line: 32
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: bubble_mux-rtl File: <caminho-local> Line: 42
+    Info (12023): Found entity 1: bubble_mux File: <caminho-local> Line: 17
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: forwarding_match-rtl File: <caminho-local> Line: 51
+    Info (12023): Found entity 1: forwarding_match File: <caminho-local> Line: 24
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: forwarding_unit-rtl File: <caminho-local> Line: 46
+    Info (12023): Found entity 1: forwarding_unit File: <caminho-local> Line: 25
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: hazard_detection_unit-rtl File: <caminho-local> Line: 56
+    Info (12023): Found entity 1: hazard_detection_unit File: <caminho-local> Line: 25
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: m_decode-rtl File: <caminho-local> Line: 37
+    Info (12023): Found entity 1: m_decode File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: booth_multiplier_rv32-rtl File: <caminho-local> Line: 43
+    Info (12023): Found entity 1: booth_multiplier_rv32 File: <caminho-local> Line: 18
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: non_restoring_divider_rv32-rtl File: <caminho-local> Line: 53
+    Info (12023): Found entity 1: non_restoring_divider_rv32 File: <caminho-local> Line: 22
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: muldiv_fusion-rtl File: <caminho-local> Line: 58
+    Info (12023): Found entity 1: muldiv_fusion File: <caminho-local> Line: 25
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: multdiv-rtl File: <caminho-local> Line: 75
+    Info (12023): Found entity 1: multdiv File: <caminho-local> Line: 42
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zicond_decode-rtl File: <caminho-local> Line: 37
+    Info (12023): Found entity 1: zicond_decode File: <caminho-local> Line: 22
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zicond_unit-rtl File: <caminho-local> Line: 35
+    Info (12023): Found entity 1: zicond_unit File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: csr_decode-rtl File: <caminho-local> Line: 31
+    Info (12023): Found entity 1: csr_decode File: <caminho-local> Line: 18
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zihintntl_consts File: <caminho-local> Line: 12
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zihintpause_consts File: <caminho-local> Line: 11
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zihintntl_decode-rtl File: <caminho-local> Line: 29
+    Info (12023): Found entity 1: zihintntl_decode File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zihintpause_decode-rtl File: <caminho-local> Line: 26
+    Info (12023): Found entity 1: zihintpause_decode File: <caminho-local> Line: 17
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: zimop_decode-rtl File: <caminho-local> Line: 40
+    Info (12023): Found entity 1: zimop_decode File: <caminho-local> Line: 25
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: csr_addr_consts File: <caminho-local> Line: 23
+Info (12021): Found 1 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: csr_event_consts File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: counter64-rtl File: <caminho-local> Line: 53
+    Info (12023): Found entity 1: counter64 File: <caminho-local> Line: 28
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: tick_divider-rtl File: <caminho-local> Line: 28
+    Info (12023): Found entity 1: tick_divider File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: hpm_counter_bank-rtl File: <caminho-local> Line: 63
+    Info (12023): Found entity 1: hpm_counter_bank File: <caminho-local> Line: 30
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: csr_file-rtl File: <caminho-local> Line: 132
+    Info (12023): Found entity 1: csr_file File: <caminho-local> Line: 63
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: trap_unit-rtl File: <caminho-local> Line: 91
+    Info (12023): Found entity 1: trap_unit File: <caminho-local> Line: 32
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: fencei_unit-rtl File: <caminho-local> Line: 57
+    Info (12023): Found entity 1: fencei_unit File: <caminho-local> Line: 28
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: pc_fetch-rtl File: <caminho-local> Line: 45
+    Info (12023): Found entity 1: pc_fetch File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: reg_if_id-rtl File: <caminho-local> Line: 50
+    Info (12023): Found entity 1: reg_if_id File: <caminho-local> Line: 19
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: reg_id_ex-rtl File: <caminho-local> Line: 140
+    Info (12023): Found entity 1: reg_id_ex File: <caminho-local> Line: 21
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: reg_ex_mem-rtl File: <caminho-local> Line: 89
+    Info (12023): Found entity 1: reg_ex_mem File: <caminho-local> Line: 20
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: reg_mem_wb-rtl File: <caminho-local> Line: 83
+    Info (12023): Found entity 1: reg_mem_wb File: <caminho-local> Line: 23
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: stage_if-rtl File: <caminho-local> Line: 93
+    Info (12023): Found entity 1: stage_if File: <caminho-local> Line: 22
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: stage_id-rtl File: <caminho-local> Line: 135
+    Info (12023): Found entity 1: stage_id File: <caminho-local> Line: 24
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: stage_ex-rtl File: <caminho-local> Line: 193
+    Info (12023): Found entity 1: stage_ex File: <caminho-local> Line: 22
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: stage_mem-rtl File: <caminho-local> Line: 106
+    Info (12023): Found entity 1: stage_mem File: <caminho-local> Line: 25
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: stage_wb-rtl File: <caminho-local> Line: 56
+    Info (12023): Found entity 1: stage_wb File: <caminho-local> Line: 19
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: core-rtl File: <caminho-local> Line: 156
+    Info (12023): Found entity 1: core File: <caminho-local> Line: 15
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: boot_rom-rtl File: <caminho-local> Line: 42
+    Info (12023): Found entity 1: boot_rom File: <caminho-local> Line: 21
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: flash-rtl File: <caminho-local> Line: 61
+    Info (12023): Found entity 1: flash File: <caminho-local> Line: 32
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: flash_jtag_core-rtl File: <caminho-local> Line: 83
+    Info (12023): Found entity 1: flash_jtag_core File: <caminho-local> Line: 45
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: flash_loader-rtl File: <caminho-local> Line: 86
+    Info (12023): Found entity 1: flash_loader File: <caminho-local> Line: 37
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: flash_jtag_shell-rtl File: <caminho-local> Line: 38
+    Info (12023): Found entity 1: flash_jtag_shell File: <caminho-local> Line: 17
+Info (12021): Found 1 design units, including 0 entities, in source file external_data_map_pkg.vhd
+    Info (12022): Found design unit 1: external_data_map_pkg File: <caminho-local> Line: 13
+Info (12021): Found 2 design units, including 1 entities, in source file external-data_top.vhd
+    Info (12022): Found design unit 1: core_fpga_external_data-behaviour File: <caminho-local> Line: 75
+    Info (12023): Found entity 1: core_fpga_external_data File: <caminho-local> Line: 23
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: dcache-rtl File: <caminho-local> Line: 146
+    Info (12023): Found entity 1: dcache File: <caminho-local> Line: 62
+Info (12021): Found 2 design units, including 0 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_pkg File: <caminho-local> Line: 15
+    Info (12022): Found design unit 2: sdram_pkg-body File: <caminho-local> Line: 65
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: synchronizer-rtl File: <caminho-local> Line: 52
+    Info (12023): Found entity 1: synchronizer File: <caminho-local> Line: 33
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_ctrl-rtl File: <caminho-local> Line: 100
+    Info (12023): Found entity 1: sdram_ctrl File: <caminho-local> Line: 31
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_cpu_bridge-rtl File: <caminho-local> Line: 88
+    Info (12023): Found entity 1: sdram_cpu_bridge File: <caminho-local> Line: 29
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_arbiter-rtl File: <caminho-local> Line: 115
+    Info (12023): Found entity 1: sdram_arbiter File: <caminho-local> Line: 22
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_dbg_master-rtl File: <caminho-local> Line: 80
+    Info (12023): Found entity 1: sdram_dbg_master File: <caminho-local> Line: 30
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_jtag_core-rtl File: <caminho-local> Line: 74
+    Info (12023): Found entity 1: sdram_jtag_core File: <caminho-local> Line: 34
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: sdram_jtag_shell-rtl File: <caminho-local> Line: 45
+    Info (12023): Found entity 1: sdram_jtag_shell File: <caminho-local> Line: 16
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: jtag_uart-rtl File: <caminho-local> Line: 88
+    Info (12023): Found entity 1: jtag_uart File: <caminho-local> Line: 47
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: ext_interconnect-rtl File: <caminho-local> Line: 82
+    Info (12023): Found entity 1: ext_interconnect File: <caminho-local> Line: 28
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: jtag_uart_shell-rtl File: <caminho-local> Line: 35
+    Info (12023): Found entity 1: jtag_uart_shell File: <caminho-local> Line: 16
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: hex_to_seg7-rtl File: <caminho-local> Line: 21
+    Info (12023): Found entity 1: hex_to_seg7 File: <caminho-local> Line: 12
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: seg_display-rtl File: <caminho-local> Line: 72
+    Info (12023): Found entity 1: seg_display File: <caminho-local> Line: 31
+Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
+    Info (12022): Found design unit 1: seg_display_shell-rtl File: <caminho-local> Line: 42
+    Info (12023): Found entity 1: seg_display_shell File: <caminho-local> Line: 17
+Info (12127): Elaborating entity "core_fpga_external_data" for the top level hierarchy
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(137): object "ram_addr" assigned a value but never read File: <caminho-local> Line: 137
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(139): object "ram_wdata" assigned a value but never read File: <caminho-local> Line: 139
+Warning (10540): VHDL Signal Declaration warning at external-data_top.vhd(141): used explicit default value for signal "ram_rdata" because signal was never assigned a value File: <caminho-local> Line: 141
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(143): object "ram_en" assigned a value but never read File: <caminho-local> Line: 143
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(145): object "ram_wren" assigned a value but never read File: <caminho-local> Line: 145
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(147): object "ram_rden" assigned a value but never read File: <caminho-local> Line: 147
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(149): object "ram_byteena" assigned a value but never read File: <caminho-local> Line: 149
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(182): object "dc_done" assigned a value but never read File: <caminho-local> Line: 182
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(184): object "dc_busy" assigned a value but never read File: <caminho-local> Line: 184
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(222): object "p_byteena" assigned a value but never read File: <caminho-local> Line: 222
+Warning (10036): Verilog HDL or VHDL warning at external-data_top.vhd(230): object "display_value" assigned a value but never read File: <caminho-local> Line: 230
+Info (12128): Elaborating entity "sdram_platform_pll" for hierarchy "sdram_platform_pll:u_pll" File: <caminho-local> Line: 291
+Info (12128): Elaborating entity "altera_pll" for hierarchy "sdram_platform_pll:u_pll|altera_pll:altera_pll_i" File: <caminho-local> Line: 46
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "wire_to_nowhere_64" into its bus
+Info (12130): Elaborated megafunction instantiation "sdram_platform_pll:u_pll|altera_pll:altera_pll_i" File: <caminho-local> Line: 46
+Info (12133): Instantiated megafunction "sdram_platform_pll:u_pll|altera_pll:altera_pll_i" with the following parameter: File: <caminho-local> Line: 46
+    Info (12134): Parameter "fractional_vco_multiplier" = "false"
+    Info (12134): Parameter "reference_clock_frequency" = "50.0 MHz"
+    Info (12134): Parameter "operation_mode" = "direct"
+    Info (12134): Parameter "number_of_clocks" = "4"
+    Info (12134): Parameter "output_clock_frequency0" = "142.857143 MHz"
+    Info (12134): Parameter "phase_shift0" = "0 ps"
+    Info (12134): Parameter "duty_cycle0" = "50"
+    Info (12134): Parameter "output_clock_frequency1" = "142.857143 MHz"
+    Info (12134): Parameter "phase_shift1" = "2750 ps"
+    Info (12134): Parameter "duty_cycle1" = "50"
+    Info (12134): Parameter "output_clock_frequency2" = "50.000000 MHz"
+    Info (12134): Parameter "phase_shift2" = "0 ps"
+    Info (12134): Parameter "duty_cycle2" = "50"
+    Info (12134): Parameter "output_clock_frequency3" = "50.000000 MHz"
+    Info (12134): Parameter "phase_shift3" = "6625 ps"
+    Info (12134): Parameter "duty_cycle3" = "50"
+    Info (12134): Parameter "pll_type" = "General"
+    Info (12134): Parameter "pll_subtype" = "General"
+Info (12128): Elaborating entity "core" for hierarchy "core:u_core" File: <caminho-local> Line: 331
+Warning (10036): Verilog HDL or VHDL warning at core.vhd(253): object "id_rs2_idx" assigned a value but never read File: <caminho-local> Line: 253
+Info (12128): Elaborating entity "stage_if" for hierarchy "core:u_core|stage_if:u_stage_if" File: <caminho-local> Line: 529
+Info (12128): Elaborating entity "pc_fetch" for hierarchy "core:u_core|stage_if:u_stage_if|pc_fetch:u_pc_fetch" File: <caminho-local> Line: 121
+Info (12128): Elaborating entity "adder" for hierarchy "core:u_core|stage_if:u_stage_if|pc_fetch:u_pc_fetch|adder:u_pc4_adder" File: <caminho-local> Line: 59
+Info (12128): Elaborating entity "mux_4x1" for hierarchy "core:u_core|stage_if:u_stage_if|pc_fetch:u_pc_fetch|mux_4x1:u_pc_mux" File: <caminho-local> Line: 70
+Info (12128): Elaborating entity "generic_register" for hierarchy "core:u_core|stage_if:u_stage_if|pc_fetch:u_pc_fetch|generic_register:u_pc_reg" File: <caminho-local> Line: 86
+Info (12128): Elaborating entity "reg_if_id" for hierarchy "core:u_core|reg_if_id:u_reg_if_id" File: <caminho-local> Line: 567
+Info (12128): Elaborating entity "stage_id" for hierarchy "core:u_core|stage_id:u_stage_id" File: <caminho-local> Line: 586
+Info (12128): Elaborating entity "control_unit" for hierarchy "core:u_core|stage_id:u_stage_id|control_unit:u_control_unit" File: <caminho-local> Line: 233
+Info (12128): Elaborating entity "m_decode" for hierarchy "core:u_core|stage_id:u_stage_id|m_decode:\gen_m_decode:u_m_decode" File: <caminho-local> Line: 253
+Info (12128): Elaborating entity "zicond_decode" for hierarchy "core:u_core|stage_id:u_stage_id|zicond_decode:\gen_zicond_decode:u_zicond_decode" File: <caminho-local> Line: 270
+Info (12128): Elaborating entity "zimop_decode" for hierarchy "core:u_core|stage_id:u_stage_id|zimop_decode:\gen_zimop_decode:u_zimop_decode" File: <caminho-local> Line: 286
+Info (12128): Elaborating entity "csr_decode" for hierarchy "core:u_core|stage_id:u_stage_id|csr_decode:\gen_csr_decode:u_csr_decode" File: <caminho-local> Line: 324
+Info (12128): Elaborating entity "extender_imm" for hierarchy "core:u_core|stage_id:u_stage_id|extender_imm:u_extender_imm" File: <caminho-local> Line: 361
+Info (12128): Elaborating entity "forwarding_match" for hierarchy "core:u_core|stage_id:u_stage_id|forwarding_match:u_forwarding_match" File: <caminho-local> Line: 368
+Info (12128): Elaborating entity "reg_file" for hierarchy "core:u_core|stage_id:u_stage_id|reg_file:u_regfile" File: <caminho-local> Line: 387
+Info (12128): Elaborating entity "onehot_decoder" for hierarchy "core:u_core|stage_id:u_stage_id|reg_file:u_regfile|onehot_decoder:u_write_decoder" File: <caminho-local> Line: 81
+Info (12128): Elaborating entity "mux_tree" for hierarchy "core:u_core|stage_id:u_stage_id|reg_file:u_regfile|mux_tree:u_d_mux_rs1" File: <caminho-local> Line: 112
+Info (10008): Verilog HDL or VHDL information: EDA Netlist Writer cannot regroup multidimensional array "mux_levels" into its bus
+Info (12128): Elaborating entity "mux_2x1" for hierarchy "core:u_core|stage_id:u_stage_id|reg_file:u_regfile|mux_2x1:u_rs1_bypass" File: <caminho-local> Line: 138
+Info (12128): Elaborating entity "hazard_detection_unit" for hierarchy "core:u_core|stage_id:u_stage_id|hazard_detection_unit:u_hdu" File: <caminho-local> Line: 403
+Info (12128): Elaborating entity "bubble_mux" for hierarchy "core:u_core|stage_id:u_stage_id|bubble_mux:u_bubble_mux" File: <caminho-local> Line: 419
+Info (12128): Elaborating entity "reg_id_ex" for hierarchy "core:u_core|reg_id_ex:u_reg_id_ex" File: <caminho-local> Line: 644
+Info (12128): Elaborating entity "stage_ex" for hierarchy "core:u_core|stage_ex:u_stage_ex" File: <caminho-local> Line: 707
+Warning (10036): Verilog HDL or VHDL warning at stage_ex.vhd(239): object "sig_tval" assigned a value but never read File: <caminho-local> Line: 239
+Warning (10036): Verilog HDL or VHDL warning at stage_ex.vhd(241): object "sig_mret" assigned a value but never read File: <caminho-local> Line: 241
+Info (12128): Elaborating entity "forwarding_unit" for hierarchy "core:u_core|stage_ex:u_stage_ex|forwarding_unit:u_forwarding_unit" File: <caminho-local> Line: 289
+Info (12128): Elaborating entity "alu" for hierarchy "core:u_core|stage_ex:u_stage_ex|alu:u_alu" File: <caminho-local> Line: 351
+Info (12128): Elaborating entity "multdiv" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv" File: <caminho-local> Line: 365
+Info (12128): Elaborating entity "flip_flop" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv|flip_flop:u_started_ff" File: <caminho-local> Line: 179
+Info (12128): Elaborating entity "generic_register" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv|generic_register:u_funct3_reg" File: <caminho-local> Line: 196
+Info (12128): Elaborating entity "booth_multiplier_rv32" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv|booth_multiplier_rv32:u_booth_multiplier" File: <caminho-local> Line: 245
+Info (12128): Elaborating entity "non_restoring_divider_rv32" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv|non_restoring_divider_rv32:\gen_divider:u_divider" File: <caminho-local> Line: 261
+Info (12128): Elaborating entity "muldiv_fusion" for hierarchy "core:u_core|stage_ex:u_stage_ex|multdiv:\gen_m:u_muldiv|muldiv_fusion:u_fusion" File: <caminho-local> Line: 383
+Info (12128): Elaborating entity "zicond_unit" for hierarchy "core:u_core|stage_ex:u_stage_ex|zicond_unit:\gen_zicond:u_zicond" File: <caminho-local> Line: 393
+Info (12128): Elaborating entity "fencei_unit" for hierarchy "core:u_core|stage_ex:u_stage_ex|fencei_unit:\gen_fencei:u_fencei" File: <caminho-local> Line: 410
+Info (12128): Elaborating entity "csr_file" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file" File: <caminho-local> Line: 459
+Warning (10036): Verilog HDL or VHDL warning at csr_file.vhd(259): object "irq_en_nxt" assigned a value but never read File: <caminho-local> Line: 259
+Warning (10036): Verilog HDL or VHDL warning at csr_file.vhd(261): object "irq_en_we" assigned a value but never read File: <caminho-local> Line: 261
+Info (12128): Elaborating entity "counter64" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|counter64:\gen_zicntr:u_mcycle" File: <caminho-local> Line: 435
+Info (12128): Elaborating entity "tick_divider" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|tick_divider:\gen_zicntr:u_time_tick" File: <caminho-local> Line: 481
+Info (12128): Elaborating entity "hpm_counter_bank" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|hpm_counter_bank:\gen_zihpm:u_hpm_bank" File: <caminho-local> Line: 553
+Warning (10445): VHDL Subtype or Type Declaration warning at hpm_counter_bank.vhd(110): subtype or type has null range File: <caminho-local> Line: 110
+Warning (10296): VHDL warning at hpm_counter_bank.vhd(110): ignored assignment of value to null range File: <caminho-local> Line: 110
+Info (12128): Elaborating entity "generic_register" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|hpm_counter_bank:\gen_zihpm:u_hpm_bank|generic_register:\gen_inhibit:u_inhibit" File: <caminho-local> Line: 113
+Info (12128): Elaborating entity "generic_register" for hierarchy "core:u_core|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|hpm_counter_bank:\gen_zihpm:u_hpm_bank|generic_register:\gen_index:3:gen_present:u_event_code" File: <caminho-local> Line: 161
+Info (12128): Elaborating entity "trap_unit" for hierarchy "core:u_core|stage_ex:u_stage_ex|trap_unit:\gen_csr:u_trap_unit" File: <caminho-local> Line: 511
+Info (12128): Elaborating entity "store_manager" for hierarchy "core:u_core|stage_ex:u_stage_ex|store_manager:u_store_manager" File: <caminho-local> Line: 634
+Info (12128): Elaborating entity "reg_ex_mem" for hierarchy "core:u_core|reg_ex_mem:u_reg_ex_mem" File: <caminho-local> Line: 795
+Info (12128): Elaborating entity "misaligned_unit" for hierarchy "core:u_core|misaligned_unit:u_misaligned_unit" File: <caminho-local> Line: 833
+Info (12128): Elaborating entity "stage_mem" for hierarchy "core:u_core|stage_mem:u_stage_mem" File: <caminho-local> Line: 871
+Info (12128): Elaborating entity "trap_unit" for hierarchy "core:u_core|stage_mem:u_stage_mem|trap_unit:u_ea_trap" File: <caminho-local> Line: 129
+Info (12128): Elaborating entity "reg_mem_wb" for hierarchy "core:u_core|reg_mem_wb:u_reg_mem_wb" File: <caminho-local> Line: 914
+Info (12128): Elaborating entity "stage_wb" for hierarchy "core:u_core|stage_wb:u_stage_wb" File: <caminho-local> Line: 949
+Info (12128): Elaborating entity "extender_ram" for hierarchy "core:u_core|stage_wb:u_stage_wb|extender_ram:u_extender_ram" File: <caminho-local> Line: 84
+Info (12128): Elaborating entity "generic_register" for hierarchy "core:u_core|generic_register:u_wb2_rd_reg" File: <caminho-local> Line: 1009
+Info (12128): Elaborating entity "boot_rom" for hierarchy "boot_rom:u_boot_rom" File: <caminho-local> Line: 396
+Info (12128): Elaborating entity "altsyncram" for hierarchy "boot_rom:u_boot_rom|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
+Info (12130): Elaborated megafunction instantiation "boot_rom:u_boot_rom|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
+Info (12133): Instantiated megafunction "boot_rom:u_boot_rom|altsyncram:u_altsyncram" with the following parameter: File: <caminho-local> Line: 45
+    Info (12134): Parameter "address_aclr_a" = "NONE"
+    Info (12134): Parameter "address_aclr_b" = "NONE"
+    Info (12134): Parameter "address_reg_b" = "CLOCK1"
+    Info (12134): Parameter "byte_size" = "8"
+    Info (12134): Parameter "byteena_aclr_a" = "UNUSED"
+    Info (12134): Parameter "byteena_aclr_b" = "NONE"
+    Info (12134): Parameter "byteena_reg_b" = "CLOCK1"
+    Info (12134): Parameter "clock_enable_core_a" = "USE_INPUT_CLKEN"
+    Info (12134): Parameter "clock_enable_core_b" = "USE_INPUT_CLKEN"
+    Info (12134): Parameter "clock_enable_input_a" = "BYPASS"
+    Info (12134): Parameter "clock_enable_input_b" = "NORMAL"
+    Info (12134): Parameter "clock_enable_output_a" = "BYPASS"
+    Info (12134): Parameter "clock_enable_output_b" = "NORMAL"
+    Info (12134): Parameter "intended_device_family" = "Cyclone V"
+    Info (12134): Parameter "ecc_pipeline_stage_enabled" = "FALSE"
+    Info (12134): Parameter "enable_ecc" = "FALSE"
+    Info (12134): Parameter "implement_in_les" = "OFF"
+    Info (12134): Parameter "indata_aclr_a" = "UNUSED"
+    Info (12134): Parameter "indata_aclr_b" = "NONE"
+    Info (12134): Parameter "indata_reg_b" = "CLOCK1"
+    Info (12134): Parameter "init_file" = "./boot_rom_init.mif"
+    Info (12134): Parameter "init_file_layout" = "PORT_A"
+    Info (12134): Parameter "maximum_depth" = "0"
+    Info (12134): Parameter "numwords_a" = "1024"
+    Info (12134): Parameter "numwords_b" = "0"
+    Info (12134): Parameter "operation_mode" = "SINGLE_PORT"
+    Info (12134): Parameter "outdata_aclr_a" = "NONE"
+    Info (12134): Parameter "outdata_aclr_b" = "NONE"
+    Info (12134): Parameter "outdata_reg_a" = "UNREGISTERED"
+    Info (12134): Parameter "outdata_reg_b" = "UNREGISTERED"
+    Info (12134): Parameter "power_up_uninitialized" = "FALSE"
+    Info (12134): Parameter "ram_block_type" = "AUTO"
+    Info (12134): Parameter "rdcontrol_aclr_b" = "NONE"
+    Info (12134): Parameter "rdcontrol_reg_b" = "CLOCK1"
+    Info (12134): Parameter "read_during_write_mode_mixed_ports" = "DONT_CARE"
+    Info (12134): Parameter "read_during_write_mode_port_a" = "NEW_DATA_NO_NBE_READ"
+    Info (12134): Parameter "read_during_write_mode_port_b" = "NEW_DATA_NO_NBE_READ"
+    Info (12134): Parameter "stratixiv_m144k_allow_dual_clocks" = "ON"
+    Info (12134): Parameter "width_a" = "32"
+    Info (12134): Parameter "width_b" = "1"
+    Info (12134): Parameter "width_byteena_a" = "1"
+    Info (12134): Parameter "width_byteena_b" = "1"
+    Info (12134): Parameter "width_eccstatus" = "3"
+    Info (12134): Parameter "widthad_a" = "10"
+    Info (12134): Parameter "widthad_b" = "1"
+    Info (12134): Parameter "wrcontrol_aclr_a" = "UNUSED"
+    Info (12134): Parameter "wrcontrol_aclr_b" = "NONE"
+    Info (12134): Parameter "wrcontrol_wraddress_reg_b" = "CLOCK1"
+    Info (12134): Parameter "lpm_hint" = "UNUSED"
+    Info (12134): Parameter "lpm_type" = "altsyncram"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_pi34.tdf
+    Info (12023): Found entity 1: altsyncram_pi34 File: <caminho-local> Line: 28
+Info (12128): Elaborating entity "altsyncram_pi34" for hierarchy "boot_rom:u_boot_rom|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
+Info (12128): Elaborating entity "flash" for hierarchy "flash:u_flash" File: <caminho-local> Line: 408
+Info (12128): Elaborating entity "altsyncram" for hierarchy "flash:u_flash|altsyncram:u_altsyncram" File: <caminho-local> Line: 68
+Info (12130): Elaborated megafunction instantiation "flash:u_flash|altsyncram:u_altsyncram" File: <caminho-local> Line: 68
+Info (12133): Instantiated megafunction "flash:u_flash|altsyncram:u_altsyncram" with the following parameter: File: <caminho-local> Line: 68
+    Info (12134): Parameter "address_aclr_a" = "UNUSED"
+    Info (12134): Parameter "address_aclr_b" = "NONE"
+    Info (12134): Parameter "address_reg_b" = "CLOCK1"
+    Info (12134): Parameter "byte_size" = "8"
+    Info (12134): Parameter "byteena_aclr_a" = "UNUSED"
+    Info (12134): Parameter "byteena_aclr_b" = "NONE"
+    Info (12134): Parameter "byteena_reg_b" = "CLOCK1"
+    Info (12134): Parameter "clock_enable_core_a" = "USE_INPUT_CLKEN"
+    Info (12134): Parameter "clock_enable_core_b" = "USE_INPUT_CLKEN"
+    Info (12134): Parameter "clock_enable_input_a" = "BYPASS"
+    Info (12134): Parameter "clock_enable_input_b" = "BYPASS"
+    Info (12134): Parameter "clock_enable_output_a" = "BYPASS"
+    Info (12134): Parameter "clock_enable_output_b" = "BYPASS"
+    Info (12134): Parameter "intended_device_family" = "Cyclone V"
+    Info (12134): Parameter "ecc_pipeline_stage_enabled" = "FALSE"
+    Info (12134): Parameter "enable_ecc" = "FALSE"
+    Info (12134): Parameter "implement_in_les" = "OFF"
+    Info (12134): Parameter "indata_aclr_a" = "UNUSED"
+    Info (12134): Parameter "indata_aclr_b" = "NONE"
+    Info (12134): Parameter "indata_reg_b" = "CLOCK1"
+    Info (12134): Parameter "init_file" = "./init.mif"
+    Info (12134): Parameter "init_file_layout" = "PORT_A"
+    Info (12134): Parameter "maximum_depth" = "2048"
+    Info (12134): Parameter "numwords_a" = "65536"
+    Info (12134): Parameter "numwords_b" = "65536"
+    Info (12134): Parameter "operation_mode" = "BIDIR_DUAL_PORT"
+    Info (12134): Parameter "outdata_aclr_a" = "NONE"
+    Info (12134): Parameter "outdata_aclr_b" = "NONE"
+    Info (12134): Parameter "outdata_reg_a" = "UNREGISTERED"
+    Info (12134): Parameter "outdata_reg_b" = "UNREGISTERED"
+    Info (12134): Parameter "power_up_uninitialized" = "FALSE"
+    Info (12134): Parameter "ram_block_type" = "AUTO"
+    Info (12134): Parameter "rdcontrol_aclr_b" = "NONE"
+    Info (12134): Parameter "rdcontrol_reg_b" = "CLOCK1"
+    Info (12134): Parameter "read_during_write_mode_mixed_ports" = "DONT_CARE"
+    Info (12134): Parameter "read_during_write_mode_port_a" = "NEW_DATA_NO_NBE_READ"
+    Info (12134): Parameter "read_during_write_mode_port_b" = "NEW_DATA_NO_NBE_READ"
+    Info (12134): Parameter "stratixiv_m144k_allow_dual_clocks" = "ON"
+    Info (12134): Parameter "width_a" = "32"
+    Info (12134): Parameter "width_b" = "32"
+    Info (12134): Parameter "width_byteena_a" = "1"
+    Info (12134): Parameter "width_byteena_b" = "1"
+    Info (12134): Parameter "width_eccstatus" = "3"
+    Info (12134): Parameter "widthad_a" = "16"
+    Info (12134): Parameter "widthad_b" = "16"
+    Info (12134): Parameter "wrcontrol_aclr_a" = "UNUSED"
+    Info (12134): Parameter "wrcontrol_aclr_b" = "NONE"
+    Info (12134): Parameter "wrcontrol_wraddress_reg_b" = "CLOCK1"
+    Info (12134): Parameter "lpm_hint" = "UNUSED"
+    Info (12134): Parameter "lpm_type" = "altsyncram"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_5n44.tdf
+    Info (12023): Found entity 1: altsyncram_5n44 File: <caminho-local> Line: 32
+Info (12128): Elaborating entity "altsyncram_5n44" for hierarchy "flash:u_flash|altsyncram:u_altsyncram|altsyncram_5n44:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
+Info (12021): Found 1 design units, including 1 entities, in source file db/decode_sma.tdf
+    Info (12023): Found entity 1: decode_sma File: <caminho-local> Line: 23
+Info (12128): Elaborating entity "decode_sma" for hierarchy "flash:u_flash|altsyncram:u_altsyncram|altsyncram_5n44:auto_generated|decode_sma:decode2" File: <caminho-local> Line: 49
+Info (12021): Found 1 design units, including 1 entities, in source file db/mux_pib.tdf
+    Info (12023): Found entity 1: mux_pib File: <caminho-local> Line: 23
+Info (12128): Elaborating entity "mux_pib" for hierarchy "flash:u_flash|altsyncram:u_altsyncram|altsyncram_5n44:auto_generated|mux_pib:mux4" File: <caminho-local> Line: 53
+Info (12128): Elaborating entity "flash_loader" for hierarchy "flash_loader:u_flash_loader" File: <caminho-local> Line: 424
+Info (12128): Elaborating entity "flash_jtag_shell" for hierarchy "flash_jtag_shell:u_flash_jtag" File: <caminho-local> Line: 447
+Warning (10036): Verilog HDL or VHDL warning at flash_jtag_shell.vhd(57): object "unused_e1dr" assigned a value but never read File: <caminho-local> Line: 57
+Warning (10036): Verilog HDL or VHDL warning at flash_jtag_shell.vhd(59): object "unused_pdr" assigned a value but never read File: <caminho-local> Line: 59
+Warning (10036): Verilog HDL or VHDL warning at flash_jtag_shell.vhd(61): object "unused_e2dr" assigned a value but never read File: <caminho-local> Line: 61
+Warning (10036): Verilog HDL or VHDL warning at flash_jtag_shell.vhd(63): object "unused_cir" assigned a value but never read File: <caminho-local> Line: 63
+Warning (10296): VHDL warning at flash_jtag_shell.vhd(76): ignored assignment of value to null range File: <caminho-local> Line: 76
+Info (12128): Elaborating entity "sld_virtual_jtag" for hierarchy "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 67
+Info (12130): Elaborated megafunction instantiation "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 67
+Info (12133): Instantiated megafunction "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag" with the following parameter: File: <caminho-local> Line: 67
+    Info (12134): Parameter "lpm_hint" = "sld_instance_index=0"
+    Info (12134): Parameter "lpm_type" = "sld_virtual_jtag"
+    Info (12134): Parameter "sld_auto_instance_index" = "YES"
+    Info (12134): Parameter "sld_instance_index" = "0"
+    Info (12134): Parameter "sld_ir_width" = "2"
+    Info (12134): Parameter "sld_sim_action" = ""
+    Info (12134): Parameter "sld_sim_n_scan" = "0"
+    Info (12134): Parameter "sld_sim_total_length" = "0"
+Info (12128): Elaborating entity "sld_virtual_jtag_basic" for hierarchy "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12131): Elaborated megafunction instantiation "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst", which is child of megafunction instantiation "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12128): Elaborating entity "sld_virtual_jtag_impl" for hierarchy "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12131): Elaborated megafunction instantiation "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst", which is child of megafunction instantiation "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter" for hierarchy "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 415
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter_impl" for hierarchy "flash_jtag_shell:u_flash_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter|sld_jtag_endpoint_adapter_impl:sld_jtag_endpoint_adapter_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_jtag_endpoint_adapter.vhd Line: 232
+Info (12128): Elaborating entity "flash_jtag_core" for hierarchy "flash_jtag_shell:u_flash_jtag|flash_jtag_core:u_core" File: <caminho-local> Line: 87
+Info (12128): Elaborating entity "dcache" for hierarchy "dcache:u_dcache" File: <caminho-local> Line: 462
+Info (19000): Inferred 4 megafunctions from design logic
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "dcache:u_dcache|altsyncram:gen_lane:0:lane[0][7]__1" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 8
+        Info (286033): Parameter WIDTHAD_A set to 10
+        Info (286033): Parameter NUMWORDS_A set to 1024
+        Info (286033): Parameter WIDTH_B set to 8
+        Info (286033): Parameter WIDTHAD_B set to 10
+        Info (286033): Parameter NUMWORDS_B set to 1024
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "dcache:u_dcache|altsyncram:gen_lane:1:lane[0][7]__2" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 8
+        Info (286033): Parameter WIDTHAD_A set to 10
+        Info (286033): Parameter NUMWORDS_A set to 1024
+        Info (286033): Parameter WIDTH_B set to 8
+        Info (286033): Parameter WIDTHAD_B set to 10
+        Info (286033): Parameter NUMWORDS_B set to 1024
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "dcache:u_dcache|altsyncram:gen_lane:2:lane[0][7]__3" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 8
+        Info (286033): Parameter WIDTHAD_A set to 10
+        Info (286033): Parameter NUMWORDS_A set to 1024
+        Info (286033): Parameter WIDTH_B set to 8
+        Info (286033): Parameter WIDTHAD_B set to 10
+        Info (286033): Parameter NUMWORDS_B set to 1024
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "dcache:u_dcache|altsyncram:gen_lane:3:lane[0][7]__4" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 8
+        Info (286033): Parameter WIDTHAD_A set to 10
+        Info (286033): Parameter NUMWORDS_A set to 1024
+        Info (286033): Parameter WIDTH_B set to 8
+        Info (286033): Parameter WIDTHAD_B set to 10
+        Info (286033): Parameter NUMWORDS_B set to 1024
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+Info (12128): Elaborating entity "altsyncram" for hierarchy "dcache:u_dcache|altsyncram:\gen_lane:0:lane[0][7]__1"
+Info (12130): Elaborated megafunction instantiation "dcache:u_dcache|altsyncram:\gen_lane:0:lane[0][7]__1"
+Info (12133): Instantiated megafunction "dcache:u_dcache|altsyncram:\gen_lane:0:lane[0][7]__1" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "8"
+    Info (12134): Parameter "WIDTHAD_A" = "10"
+    Info (12134): Parameter "NUMWORDS_A" = "1024"
+    Info (12134): Parameter "WIDTH_B" = "8"
+    Info (12134): Parameter "WIDTHAD_B" = "10"
+    Info (12134): Parameter "NUMWORDS_B" = "1024"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_09n1.tdf
+    Info (12023): Found entity 1: altsyncram_09n1 File: <caminho-local> Line: 28
+Info (12128): Elaborating entity "altsyncram_09n1" for hierarchy "dcache:u_dcache|altsyncram:\gen_lane:0:lane[0][7]__1|altsyncram_09n1:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
+Info (12128): Elaborating entity "ext_interconnect" for hierarchy "ext_interconnect:u_interconnect" File: <caminho-local> Line: 477
+Info (12128): Elaborating entity "jtag_uart_shell" for hierarchy "jtag_uart_shell:u_jtag_uart" File: <caminho-local> Line: 490
+Warning (10036): Verilog HDL or VHDL warning at jtag_uart_shell.vhd(54): object "unused_e1dr" assigned a value but never read File: <caminho-local> Line: 54
+Warning (10036): Verilog HDL or VHDL warning at jtag_uart_shell.vhd(56): object "unused_pdr" assigned a value but never read File: <caminho-local> Line: 56
+Warning (10036): Verilog HDL or VHDL warning at jtag_uart_shell.vhd(58): object "unused_e2dr" assigned a value but never read File: <caminho-local> Line: 58
+Warning (10036): Verilog HDL or VHDL warning at jtag_uart_shell.vhd(60): object "unused_cir" assigned a value but never read File: <caminho-local> Line: 60
+Warning (10296): VHDL warning at jtag_uart_shell.vhd(73): ignored assignment of value to null range File: <caminho-local> Line: 73
+Info (12128): Elaborating entity "sld_virtual_jtag" for hierarchy "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 64
+Info (12130): Elaborated megafunction instantiation "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 64
+Info (12133): Instantiated megafunction "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag" with the following parameter: File: <caminho-local> Line: 64
+    Info (12134): Parameter "lpm_hint" = "sld_instance_index=1"
+    Info (12134): Parameter "lpm_type" = "sld_virtual_jtag"
+    Info (12134): Parameter "sld_auto_instance_index" = "NO"
+    Info (12134): Parameter "sld_instance_index" = "1"
+    Info (12134): Parameter "sld_ir_width" = "2"
+    Info (12134): Parameter "sld_sim_action" = ""
+    Info (12134): Parameter "sld_sim_n_scan" = "0"
+    Info (12134): Parameter "sld_sim_total_length" = "0"
+Info (12128): Elaborating entity "sld_virtual_jtag_basic" for hierarchy "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12131): Elaborated megafunction instantiation "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst", which is child of megafunction instantiation "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12128): Elaborating entity "sld_virtual_jtag_impl" for hierarchy "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12131): Elaborated megafunction instantiation "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst", which is child of megafunction instantiation "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter" for hierarchy "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 415
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter_impl" for hierarchy "jtag_uart_shell:u_jtag_uart|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter|sld_jtag_endpoint_adapter_impl:sld_jtag_endpoint_adapter_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_jtag_endpoint_adapter.vhd Line: 232
+Info (12128): Elaborating entity "jtag_uart" for hierarchy "jtag_uart_shell:u_jtag_uart|jtag_uart:u_uart" File: <caminho-local> Line: 84
+Info (12128): Elaborating entity "seg_display_shell" for hierarchy "seg_display_shell:u_display" File: <caminho-local> Line: 498
+Warning (10036): Verilog HDL or VHDL warning at seg_display_shell.vhd(61): object "unused_e1dr" assigned a value but never read File: <caminho-local> Line: 61
+Warning (10036): Verilog HDL or VHDL warning at seg_display_shell.vhd(63): object "unused_pdr" assigned a value but never read File: <caminho-local> Line: 63
+Warning (10036): Verilog HDL or VHDL warning at seg_display_shell.vhd(65): object "unused_e2dr" assigned a value but never read File: <caminho-local> Line: 65
+Warning (10036): Verilog HDL or VHDL warning at seg_display_shell.vhd(67): object "unused_cir" assigned a value but never read File: <caminho-local> Line: 67
+Warning (10296): VHDL warning at seg_display_shell.vhd(80): ignored assignment of value to null range File: <caminho-local> Line: 80
+Info (12128): Elaborating entity "sld_virtual_jtag" for hierarchy "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 71
+Info (12130): Elaborated megafunction instantiation "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 71
+Info (12133): Instantiated megafunction "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag" with the following parameter: File: <caminho-local> Line: 71
+    Info (12134): Parameter "lpm_hint" = "sld_instance_index=2"
+    Info (12134): Parameter "lpm_type" = "sld_virtual_jtag"
+    Info (12134): Parameter "sld_auto_instance_index" = "NO"
+    Info (12134): Parameter "sld_instance_index" = "2"
+    Info (12134): Parameter "sld_ir_width" = "2"
+    Info (12134): Parameter "sld_sim_action" = ""
+    Info (12134): Parameter "sld_sim_n_scan" = "0"
+    Info (12134): Parameter "sld_sim_total_length" = "0"
+Info (12128): Elaborating entity "sld_virtual_jtag_basic" for hierarchy "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12131): Elaborated megafunction instantiation "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst", which is child of megafunction instantiation "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12128): Elaborating entity "sld_virtual_jtag_impl" for hierarchy "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12131): Elaborated megafunction instantiation "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst", which is child of megafunction instantiation "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter" for hierarchy "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 415
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter_impl" for hierarchy "seg_display_shell:u_display|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter|sld_jtag_endpoint_adapter_impl:sld_jtag_endpoint_adapter_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_jtag_endpoint_adapter.vhd Line: 232
+Info (12128): Elaborating entity "seg_display" for hierarchy "seg_display_shell:u_display|seg_display:u_display" File: <caminho-local> Line: 91
+Info (12128): Elaborating entity "synchronizer" for hierarchy "seg_display_shell:u_display|seg_display:u_display|synchronizer:u_sync_tog" File: <caminho-local> Line: 99
+Info (12128): Elaborating entity "hex_to_seg7" for hierarchy "seg_display_shell:u_display|seg_display:u_display|hex_to_seg7:\gen_digits:0:u_digit" File: <caminho-local> Line: 163
+Info (12128): Elaborating entity "sdram_cpu_bridge" for hierarchy "sdram_cpu_bridge:u_sdram_bridge" File: <caminho-local> Line: 515
+Info (12128): Elaborating entity "sdram_arbiter" for hierarchy "sdram_arbiter:u_sdram_arbiter" File: <caminho-local> Line: 527
+Info (12128): Elaborating entity "sdram_dbg_master" for hierarchy "sdram_dbg_master:u_sdram_debug" File: <caminho-local> Line: 540
+Warning (10036): Verilog HDL or VHDL warning at sdram_dbg_master.vhd(99): object "be_l" assigned a value but never read File: <caminho-local> Line: 99
+Info (12128): Elaborating entity "sdram_jtag_shell" for hierarchy "sdram_jtag_shell:u_sdram_jtag" File: <caminho-local> Line: 552
+Warning (10036): Verilog HDL or VHDL warning at sdram_jtag_shell.vhd(64): object "unused_e1dr" assigned a value but never read File: <caminho-local> Line: 64
+Warning (10036): Verilog HDL or VHDL warning at sdram_jtag_shell.vhd(66): object "unused_pdr" assigned a value but never read File: <caminho-local> Line: 66
+Warning (10036): Verilog HDL or VHDL warning at sdram_jtag_shell.vhd(68): object "unused_e2dr" assigned a value but never read File: <caminho-local> Line: 68
+Warning (10036): Verilog HDL or VHDL warning at sdram_jtag_shell.vhd(70): object "unused_cir" assigned a value but never read File: <caminho-local> Line: 70
+Warning (10296): VHDL warning at sdram_jtag_shell.vhd(83): ignored assignment of value to null range File: <caminho-local> Line: 83
+Info (12128): Elaborating entity "sld_virtual_jtag" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 74
+Info (12130): Elaborated megafunction instantiation "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag" File: <caminho-local> Line: 74
+Info (12133): Instantiated megafunction "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag" with the following parameter: File: <caminho-local> Line: 74
+    Info (12134): Parameter "lpm_hint" = "sld_instance_index=3"
+    Info (12134): Parameter "lpm_type" = "sld_virtual_jtag"
+    Info (12134): Parameter "sld_auto_instance_index" = "NO"
+    Info (12134): Parameter "sld_instance_index" = "3"
+    Info (12134): Parameter "sld_ir_width" = "2"
+    Info (12134): Parameter "sld_sim_action" = ""
+    Info (12134): Parameter "sld_sim_n_scan" = "0"
+    Info (12134): Parameter "sld_sim_total_length" = "0"
+Info (12128): Elaborating entity "sld_virtual_jtag_basic" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12131): Elaborated megafunction instantiation "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst", which is child of megafunction instantiation "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag.v Line: 152
+Info (12128): Elaborating entity "sld_virtual_jtag_impl" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12131): Elaborated megafunction instantiation "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst", which is child of megafunction instantiation "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 152
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_virtual_jtag_basic.v Line: 415
+Info (12128): Elaborating entity "sld_jtag_endpoint_adapter_impl" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sld_virtual_jtag:u_vjtag|sld_virtual_jtag_basic:sld_virtual_jtag_basic_inst|sld_virtual_jtag_impl:sld_virtual_jtag_impl_inst|sld_jtag_endpoint_adapter:jtag_signal_adapter|sld_jtag_endpoint_adapter_impl:sld_jtag_endpoint_adapter_impl_inst" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/sld_jtag_endpoint_adapter.vhd Line: 232
+Info (12128): Elaborating entity "sdram_jtag_core" for hierarchy "sdram_jtag_shell:u_sdram_jtag|sdram_jtag_core:u_core" File: <caminho-local> Line: 94
+Info (12128): Elaborating entity "sdram_ctrl" for hierarchy "sdram_ctrl:u_sdram_ctrl" File: <caminho-local> Line: 571
+Info (11170): Starting IP generation for the debug fabric: alt_sld_fab.
+Info (11172): 2026.11.06.01:15:17 Progress: Loading sld24a43a80/alt_sld_fab_wrapper_hw.tcl
+Info (11172): Alt_sld_fab.alt_sld_fab: SLD fabric agents which did not specify prefer_host were connected to JTAG
+Info (11172): Alt_sld_fab: Generating "alt_sld_fab" for QUARTUS_SYNTH
+Info (11172): Alt_sld_fab: "alt_sld_fab" instantiated alt_sld_fab "alt_sld_fab"
+Info (11172): Presplit: "alt_sld_fab" instantiated altera_super_splitter "presplit"
+Info (11172): Splitter: "alt_sld_fab" instantiated altera_sld_splitter "splitter"
+Info (11172): Sldfabric: "alt_sld_fab" instantiated altera_sld_jtag_hub "sldfabric"
+Info (11172): Ident: "alt_sld_fab" instantiated altera_connection_identification_hub "ident"
+Info (11172): Alt_sld_fab: Done "alt_sld_fab" with 6 modules, 6 files
+Info (11171): Finished IP generation for the debug fabric: alt_sld_fab.
+Info (12021): Found 1 design units, including 1 entities, in source file db/ip/sld24a43a80/alt_sld_fab.v
+    Info (12023): Found entity 1: alt_sld_fab File: <caminho-local> Line: 9
+Info (12021): Found 1 design units, including 1 entities, in source file db/ip/sld24a43a80/submodules/alt_sld_fab_alt_sld_fab.v
+    Info (12023): Found entity 1: alt_sld_fab_alt_sld_fab File: <caminho-local> Line: 9
+Info (12021): Found 1 design units, including 1 entities, in source file db/ip/sld24a43a80/submodules/alt_sld_fab_alt_sld_fab_ident.sv
+    Info (12023): Found entity 1: alt_sld_fab_alt_sld_fab_ident File: <caminho-local> Line: 33
+Info (12021): Found 1 design units, including 1 entities, in source file db/ip/sld24a43a80/submodules/alt_sld_fab_alt_sld_fab_presplit.sv
+    Info (12023): Found entity 1: alt_sld_fab_alt_sld_fab_presplit File: <caminho-local> Line: 3
+Info (12021): Found 2 design units, including 1 entities, in source file db/ip/sld24a43a80/submodules/alt_sld_fab_alt_sld_fab_sldfabric.vhd
+    Info (12022): Found design unit 1: alt_sld_fab_alt_sld_fab_sldfabric-rtl File: <caminho-local> Line: 222
+    Info (12023): Found entity 1: alt_sld_fab_alt_sld_fab_sldfabric File: <caminho-local> Line: 11
+Info (12021): Found 1 design units, including 1 entities, in source file db/ip/sld24a43a80/submodules/alt_sld_fab_alt_sld_fab_splitter.sv
+    Info (12023): Found entity 1: alt_sld_fab_alt_sld_fab_splitter File: <caminho-local> Line: 3
+Warning (276020): Inferred RAM node "jtag_uart_shell:u_jtag_uart|jtag_uart:u_uart|rx_mem_rtl_0" from synchronous design logic.  Pass-through logic has been added to match the read-during-write behavior of the original design.
+Info (19000): Inferred 2 megafunctions from design logic
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "jtag_uart_shell:u_jtag_uart|jtag_uart:u_uart|rx_mem_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 8
+        Info (286033): Parameter WIDTHAD_A set to 6
+        Info (286033): Parameter NUMWORDS_A set to 64
+        Info (286033): Parameter WIDTH_B set to 8
+        Info (286033): Parameter WIDTHAD_B set to 6
+        Info (286033): Parameter NUMWORDS_B set to 64
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/external-data.ram0_jtag_uart_f821b931.hdl.mif
+    Info (276029): Inferred altsyncram megafunction from the following design logic: "dcache:u_dcache|tag_ram_rtl_0" 
+        Info (286033): Parameter OPERATION_MODE set to DUAL_PORT
+        Info (286033): Parameter WIDTH_A set to 15
+        Info (286033): Parameter WIDTHAD_A set to 8
+        Info (286033): Parameter NUMWORDS_A set to 256
+        Info (286033): Parameter WIDTH_B set to 15
+        Info (286033): Parameter WIDTHAD_B set to 8
+        Info (286033): Parameter NUMWORDS_B set to 256
+        Info (286033): Parameter ADDRESS_ACLR_A set to NONE
+        Info (286033): Parameter OUTDATA_REG_B set to UNREGISTERED
+        Info (286033): Parameter ADDRESS_ACLR_B set to NONE
+        Info (286033): Parameter OUTDATA_ACLR_B set to NONE
+        Info (286033): Parameter ADDRESS_REG_B set to CLOCK0
+        Info (286033): Parameter INDATA_ACLR_A set to NONE
+        Info (286033): Parameter WRCONTROL_ACLR_A set to NONE
+        Info (286033): Parameter INIT_FILE set to db/external-data.ram0_dcache_5a90c03a.hdl.mif
+        Info (286033): Parameter READ_DURING_WRITE_MODE_MIXED_PORTS set to OLD_DATA
+Info (12130): Elaborated megafunction instantiation "dcache:u_dcache|altsyncram:tag_ram_rtl_0"
+Info (12133): Instantiated megafunction "dcache:u_dcache|altsyncram:tag_ram_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "15"
+    Info (12134): Parameter "WIDTHAD_A" = "8"
+    Info (12134): Parameter "NUMWORDS_A" = "256"
+    Info (12134): Parameter "WIDTH_B" = "15"
+    Info (12134): Parameter "WIDTHAD_B" = "8"
+    Info (12134): Parameter "NUMWORDS_B" = "256"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "INIT_FILE" = "db/external-data.ram0_dcache_5a90c03a.hdl.mif"
+    Info (12134): Parameter "READ_DURING_WRITE_MODE_MIXED_PORTS" = "OLD_DATA"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_j7s1.tdf
+    Info (12023): Found entity 1: altsyncram_j7s1 File: <caminho-local> Line: 28
+Info (12130): Elaborated megafunction instantiation "jtag_uart_shell:u_jtag_uart|jtag_uart:u_uart|altsyncram:rx_mem_rtl_0"
+Info (12133): Instantiated megafunction "jtag_uart_shell:u_jtag_uart|jtag_uart:u_uart|altsyncram:rx_mem_rtl_0" with the following parameter:
+    Info (12134): Parameter "OPERATION_MODE" = "DUAL_PORT"
+    Info (12134): Parameter "WIDTH_A" = "8"
+    Info (12134): Parameter "WIDTHAD_A" = "6"
+    Info (12134): Parameter "NUMWORDS_A" = "64"
+    Info (12134): Parameter "WIDTH_B" = "8"
+    Info (12134): Parameter "WIDTHAD_B" = "6"
+    Info (12134): Parameter "NUMWORDS_B" = "64"
+    Info (12134): Parameter "ADDRESS_ACLR_A" = "NONE"
+    Info (12134): Parameter "OUTDATA_REG_B" = "UNREGISTERED"
+    Info (12134): Parameter "ADDRESS_ACLR_B" = "NONE"
+    Info (12134): Parameter "OUTDATA_ACLR_B" = "NONE"
+    Info (12134): Parameter "ADDRESS_REG_B" = "CLOCK0"
+    Info (12134): Parameter "INDATA_ACLR_A" = "NONE"
+    Info (12134): Parameter "WRCONTROL_ACLR_A" = "NONE"
+    Info (12134): Parameter "INIT_FILE" = "db/external-data.ram0_jtag_uart_f821b931.hdl.mif"
+Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_orn1.tdf
+    Info (12023): Found entity 1: altsyncram_orn1 File: <caminho-local> Line: 28
+Warning (12241): 1 hierarchies have connectivity warnings - see the Connectivity Checks report folder
+Warning (13024): Output pins are stuck at VCC or GND
+    Warning (13410): Pin "LEDR[1]" is stuck at GND File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[3]" is stuck at GND File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[4]" is stuck at VCC File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[5]" is stuck at VCC File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[6]" is stuck at GND File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[7]" is stuck at GND File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[8]" is stuck at VCC File: <caminho-local> Line: 36
+    Warning (13410): Pin "LEDR[9]" is stuck at VCC File: <caminho-local> Line: 36
+    Warning (13410): Pin "DRAM_CKE" is stuck at VCC File: <caminho-local> Line: 57
+    Warning (13410): Pin "DRAM_CS_N" is stuck at GND File: <caminho-local> Line: 61
+Info (286031): Timing-Driven Synthesis is running on partition "Top"
+Info (17049): 18 registers lost all their fanouts during netlist optimizations.
+Info (286031): Timing-Driven Synthesis is running on partition "sld_hub:auto_hub"
+Info (16010): Generating hard_block partition "hard_block:auto_generated_inst"
+    Info (16011): Adding 19 node(s), including 0 DDIO, 4 PLL, 0 transceiver and 0 LCELL
+Info (21057): Implemented 17099 device resources after synthesis - the final resource count might be different
+    Info (21058): Implemented 5 input pins
+    Info (21059): Implemented 76 output pins
+    Info (21060): Implemented 16 bidirectional pins
+    Info (21061): Implemented 15886 logic cells
+    Info (21064): Implemented 1111 RAM segments
+    Info (21065): Implemented 4 PLLs
+Info: Quartus Prime Analysis & Synthesis was successful. 0 errors, 52 warnings
+    Info: Peak virtual memory: 916 megabytes
+    Info: Processing ended: Fri Nov  6 01:16:12 2026
+    Info: Elapsed time: 00:01:33
+    Info: Total CPU time (on all processors): 00:02:09
+Info: *******************************************************************
+Info: Running Quartus Prime Fitter
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Fri Nov  6 01:16:14 2026
+Info: Command: quartus_fit --read_settings_files=off --write_settings_files=off external-data -c external-data
+Info: qfit2_default_script.tcl version: #1
+Info: Project  = external-data
+Info: Revision = external-data
+Info (16303): High Performance Effort optimization mode selected -- timing performance will be prioritized at the potential cost of increased compilation time
+Info (20030): Parallel compilation is enabled and will use 16 of the 16 processors detected
+Info (119006): Selected device 5CEBA4F23C7 for design "external-data"
+Info (21077): Low junction temperature is 0 degrees C
+Info (21077): High junction temperature is 85 degrees C
+Warning (18550): Found RAM instances implemented as ROM because the write logic is disabled. One instance is listed below as an example.
+    Info (119043): Atom "boot_rom:u_boot_rom|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated|ram_block1a5" is instantiated as RAM, but it is actually implemented as ROM function because the write logic is always disabled
+Info (171004): Fitter is performing a Standard Fit compilation using maximum Fitter effort to optimize design performance
+Warning (292013): Feature LogicLock is only available with a valid subscription license. You can purchase a software subscription to gain full access to this feature.
+Warning (15714): Some pins have incomplete I/O assignments. Refer to the I/O Assignment Warnings report for details
+Info (176045): Design uses memory blocks. Violating setup or hold times of memory block address registers for either read or write operations could cause memory contents to be corrupted. Make sure that all memory block address registers meet the setup and hold time requirements.
+Info (184020): Starting Fitter periphery placement operations
+Info (11178): Promoted 4 clocks (4 global)
+    Info (11162): sdram_platform_pll:u_pll|altera_pll:altera_pll_i|outclk_wire[0]~CLKENA0 with 953 fanout uses global clock CLKCTRL_G1
+    Info (11162): sdram_platform_pll:u_pll|altera_pll:altera_pll_i|outclk_wire[1]~CLKENA0 with 1 fanout uses global clock CLKCTRL_G4
+    Info (11162): sdram_platform_pll:u_pll|altera_pll:altera_pll_i|outclk_wire[3]~CLKENA0 with 7380 fanout uses global clock CLKCTRL_G5
+    Info (11162): sdram_platform_pll:u_pll|altera_pll:altera_pll_i|outclk_wire[2]~CLKENA0 with 1061 fanout uses global clock CLKCTRL_G0
+Info (11191): Automatically promoted 1 clock (1 global)
+    Info (11162): core_reset~0CLKENA0 with 3685 fanout uses global clock CLKCTRL_G3
+        Info (12525): This signal is driven by core routing -- it may be moved during placement to reduce routing delays
+Info (184021): Fitter periphery placement operations ending: elapsed time is 00:00:00
+Info (332164): Evaluating HDL-embedded SDC commands
+    Info (332165): Entity sld_hub
+        Info (332166): create_clock -name altera_reserved_tck [get_ports {altera_reserved_tck}] -period 30MHz   
+        Info (332166): if { [string equal quartus_fit $::TimeQuestInfo(nameofexecutable)] } { set_max_delay -to [get_ports { altera_reserved_tdo } ] 0 }
+        Info (332166): set_clock_groups -asynchronous -group {altera_reserved_tck}
+Info (332104): Reading SDC File: 'external-data.sdc'
+Info (332110): Deriving PLL clocks
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|refclkin} -multiply_by 20 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0]} {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0]}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 7 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 7 -phase 141.45 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 20 -phase 119.25 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 20 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk}
+Info (332151): Clock uncertainty is not calculated until you update the timing netlist.
+Info (332097): The following timing edges are non-unate.  The Timing Analyzer will assume pos-unate behavior for these edges in the clock network.
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL  from: refclkin  to: fbclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_REFCLK_SELECT  from: clkin[0]  to: clkout
+    Info (332098): Cell: u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+Info (332129): Detected timing requirements -- optimizing circuit to achieve only the specified requirements
+Info (332111): Found 8 clocks
+    Info (332111):   Period   Clock Name
+    Info (332111): ======== ============
+    Info (332111):   33.333 altera_reserved_tck
+    Info (332111):   20.000     CLOCK_50
+    Info (332111):    7.000 DRAM_CLK_pin
+    Info (332111):    1.000 u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0]
+    Info (332111):    7.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk
+    Info (332111):    7.000 u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk
+    Info (332111):   20.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk
+    Info (332111):   20.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk
+Info (176233): Starting register packing
+Warning (176250): Ignoring invalid fast I/O register assignments. See the Ignored Assignments panel in the Fitter Compilation Report for more information.
+Info (176235): Finished register packing
+    Extra Info (176218): Packed 16 registers into blocks of type I/O input buffer
+    Extra Info (176218): Packed 52 registers into blocks of type I/O output buffer
+    Extra Info (176220): Created 15 register duplicates
+Info (128000): Starting physical synthesis optimizations for speed
+Info (128002): Starting physical synthesis algorithm register retiming
+Info (128003): Physical synthesis algorithm register retiming complete: estimated slack improvement of 0 ps
+Info (128002): Starting physical synthesis algorithm combinational resynthesis using boolean division
+Info (128003): Physical synthesis algorithm combinational resynthesis using boolean division complete: estimated slack improvement of 0 ps
+Info (128002): Starting physical synthesis algorithm register retiming
+Info (128003): Physical synthesis algorithm register retiming complete: estimated slack improvement of 0 ps
+Info (128002): Starting physical synthesis algorithm combinational resynthesis using boolean division
+Info (128003): Physical synthesis algorithm combinational resynthesis using boolean division complete: estimated slack improvement of 0 ps
+Info (128001): Physical synthesis optimizations for speed complete: elapsed time is 00:00:17
+Info (176233): Starting register packing
+Info (176235): Finished register packing
+    Extra Info (176219): No registers were packed into other blocks
+Warning (15705): Ignored locations or region assignments to the following nodes
+    Warning (15706): Node "KEY[0]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "KEY[1]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "KEY[2]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "KEY[3]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[0]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[1]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[2]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[3]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[4]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[5]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[6]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[7]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[8]" is assigned to location or region, but does not exist in design
+    Warning (15706): Node "SW[9]" is assigned to location or region, but does not exist in design
+Info (11798): Fitter preparation operations ending: elapsed time is 00:00:45
+Info (170189): Fitter placement preparation operations beginning
+Info (14951): The Fitter is using Advanced Physical Optimization.
+Info (170190): Fitter placement preparation operations ending: elapsed time is 00:12:09
+Info (170191): Fitter placement operations beginning
+Info (170137): Fitter placement was successful
+Info (170192): Fitter placement operations ending: elapsed time is 00:00:33
+Info (170193): Fitter routing operations beginning
+Info (170195): Router estimated average interconnect usage is 20% of the available device resources
+    Info (170196): Router estimated peak interconnect usage is 38% of the available device resources in the region that extends from location X33_Y11 to location X43_Y22
+Info (170194): Fitter routing operations ending: elapsed time is 00:01:13
+Info (11888): Total time spent on timing analysis during the Fitter is 57.76 seconds.
+Info (334003): Started post-fitting delay annotation
+Info (334004): Delay annotation completed successfully
+Info (334003): Started post-fitting delay annotation
+Info (334004): Delay annotation completed successfully
+Info (11801): Fitter post-fit operations ending: elapsed time is 00:00:24
+Warning (171167): Found invalid Fitter assignments. See the Ignored Assignments panel in the Fitter Compilation Report for more information.
+Info (144001): Generated suppressed messages file <caminho-local>
+Info: Quartus Prime Fitter was successful. 0 errors, 20 warnings
+    Info: Peak virtual memory: 3304 megabytes
+    Info: Processing ended: Fri Nov  6 01:43:00 2026
+    Info: Elapsed time: 00:26:46
+    Info: Total CPU time (on all processors): 01:23:19
+Info: *******************************************************************
+Info: Running Quartus Prime Assembler
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Fri Nov  6 01:43:01 2026
+Info: Command: quartus_asm --read_settings_files=off --write_settings_files=off external-data -c external-data
+Info (115030): Assembler is generating device programming files
+Info: Quartus Prime Assembler was successful. 0 errors, 0 warnings
+    Info: Peak virtual memory: 646 megabytes
+    Info: Processing ended: Fri Nov  6 01:43:07 2026
+    Info: Elapsed time: 00:00:06
+    Info: Total CPU time (on all processors): 00:00:06
+Info (293026): Skipped module Power Analyzer due to the assignment FLOW_ENABLE_POWER_ANALYZER
+Info: *******************************************************************
+Info: Running Quartus Prime Timing Analyzer
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Fri Nov  6 01:43:08 2026
+Info: Command: quartus_sta external-data -c external-data
+Info: qsta_default_script.tcl version: #1
+Info (20030): Parallel compilation is enabled and will use 16 of the 16 processors detected
+Info (21077): Low junction temperature is 0 degrees C
+Info (21077): High junction temperature is 85 degrees C
+Info (332164): Evaluating HDL-embedded SDC commands
+    Info (332165): Entity sld_hub
+        Info (332166): create_clock -name altera_reserved_tck [get_ports {altera_reserved_tck}] -period 30MHz   
+        Info (332166): if { [string equal quartus_fit $::TimeQuestInfo(nameofexecutable)] } { set_max_delay -to [get_ports { altera_reserved_tdo } ] 0 }
+        Info (332166): set_clock_groups -asynchronous -group {altera_reserved_tck}
+Info (332104): Reading SDC File: 'external-data.sdc'
+Info (332110): Deriving PLL clocks
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|refclkin} -divide_by 2 -multiply_by 40 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0]} {u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0]}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 7 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 7 -phase 141.45 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 20 -phase 119.25 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk}
+    Info (332110): create_generated_clock -source {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|vco0ph[0]} -divide_by 20 -duty_cycle 50.00 -name {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk} {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk}
+Info (332151): Clock uncertainty is not calculated until you update the timing netlist.
+Info (332097): The following timing edges are non-unate.  The Timing Analyzer will assume pos-unate behavior for these edges in the clock network.
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL  from: refclkin  to: fbclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_REFCLK_SELECT  from: clkin[0]  to: clkout
+    Info (332098): Cell: u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+Info: Found TIMING_ANALYZER_REPORT_SCRIPT_INCLUDE_DEFAULT_ANALYSIS = ON
+Info: Analyzing Slow 1100mV 85C Model
+Critical Warning (332148): Timing requirements not met
+    Info (11105): For recommendations on closing timing, run Report Timing Closure Recommendations in the Timing Analyzer.
+Info (332146): Worst-case setup slack is -0.730
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    -0.730             -10.011 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.308               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.413               0.000 DRAM_CLK_pin 
+    Info (332119):     4.210               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.335               0.000 altera_reserved_tck 
+Info (332146): Worst-case hold slack is 0.253
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.253               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.330               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.458               0.000 altera_reserved_tck 
+    Info (332119):     2.444               0.000 DRAM_CLK_pin 
+    Info (332119):     7.189               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case recovery slack is 10.829
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    10.829               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    29.183               0.000 altera_reserved_tck 
+Info (332146): Worst-case removal slack is 0.935
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.935               0.000 altera_reserved_tck 
+    Info (332119):     5.767               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case minimum pulse width slack is 0.500
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.500               0.000 u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0] 
+    Info (332119):     2.637               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     3.342               0.000 u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.580               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.581               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.731               0.000 CLOCK_50 
+    Info (332119):    15.425               0.000 altera_reserved_tck 
+Info (332114): Report Metastability: Found 58 synchronizer chains.
+    Info (332114): Worst-Case MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+    Info (332114): Typical MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+
+    Info (332114): Number of Synchronizer Chains Found: 58
+    Info (332114): Shortest Synchronizer Chain: 1 Registers
+    Info (332114): Fraction of Chains for which MTBFs Could Not be Calculated: 0.897
+    Info (332114): Worst Case Available Settling Time: 8.142 ns
+    Info (332114): Worst-Case MTBF values are calculated based on the worst-case silicon characteristics, with worst-case operating conditions.
+    Info (332114):   - Under worst-case conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 7.8
+    Info (332114): Typical MTBF values are calculated based on the nominal silicon characteristics, at nominal operating conditions.
+    Info (332114):   - Under typical conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 17.8
+Info: Analyzing Slow 1100mV 0C Model
+Info (334003): Started post-fitting delay annotation
+Info (334004): Delay annotation completed successfully
+Info (332097): The following timing edges are non-unate.  The Timing Analyzer will assume pos-unate behavior for these edges in the clock network.
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL  from: refclkin  to: fbclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_REFCLK_SELECT  from: clkin[0]  to: clkout
+    Info (332098): Cell: u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+Critical Warning (332148): Timing requirements not met
+    Info (11105): For recommendations on closing timing, run Report Timing Closure Recommendations in the Timing Analyzer.
+Info (332146): Worst-case setup slack is -0.479
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    -0.479              -5.748 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.287               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.446               0.000 DRAM_CLK_pin 
+    Info (332119):     4.582               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.638               0.000 altera_reserved_tck 
+Info (332146): Worst-case hold slack is 0.243
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.243               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.312               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.442               0.000 altera_reserved_tck 
+    Info (332119):     2.533               0.000 DRAM_CLK_pin 
+    Info (332119):     7.204               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case recovery slack is 10.970
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    10.970               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    29.334               0.000 altera_reserved_tck 
+Info (332146): Worst-case removal slack is 0.849
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.849               0.000 altera_reserved_tck 
+    Info (332119):     5.602               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case minimum pulse width slack is 0.500
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.500               0.000 u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0] 
+    Info (332119):     2.560               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     3.271               0.000 u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.543               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.550               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.741               0.000 CLOCK_50 
+    Info (332119):    15.390               0.000 altera_reserved_tck 
+Info (332114): Report Metastability: Found 58 synchronizer chains.
+    Info (332114): Worst-Case MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+    Info (332114): Typical MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+
+    Info (332114): Number of Synchronizer Chains Found: 58
+    Info (332114): Shortest Synchronizer Chain: 1 Registers
+    Info (332114): Fraction of Chains for which MTBFs Could Not be Calculated: 0.897
+    Info (332114): Worst Case Available Settling Time: 8.225 ns
+    Info (332114): Worst-Case MTBF values are calculated based on the worst-case silicon characteristics, with worst-case operating conditions.
+    Info (332114):   - Under worst-case conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 2.4
+    Info (332114): Typical MTBF values are calculated based on the nominal silicon characteristics, at nominal operating conditions.
+    Info (332114):   - Under typical conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 17.8
+Info: Analyzing Fast 1100mV 85C Model
+Info (334003): Started post-fitting delay annotation
+Info (334004): Delay annotation completed successfully
+Info (332097): The following timing edges are non-unate.  The Timing Analyzer will assume pos-unate behavior for these edges in the clock network.
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL  from: refclkin  to: fbclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_REFCLK_SELECT  from: clkin[0]  to: clkout
+    Info (332098): Cell: u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+Info (332146): Worst-case setup slack is 0.732
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.732               0.000 DRAM_CLK_pin 
+    Info (332119):     1.722               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     2.909               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     7.651               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    12.861               0.000 altera_reserved_tck 
+Info (332146): Worst-case hold slack is 0.113
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.113               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.149               0.000 altera_reserved_tck 
+    Info (332119):     0.165               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     2.878               0.000 DRAM_CLK_pin 
+    Info (332119):     6.754               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case recovery slack is 14.852
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    14.852               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    30.716               0.000 altera_reserved_tck 
+Info (332146): Worst-case removal slack is 0.430
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.430               0.000 altera_reserved_tck 
+    Info (332119):     3.524               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case minimum pulse width slack is 0.500
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.500               0.000 u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0] 
+    Info (332119):     3.045               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     3.413               0.000 u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.878               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.881               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.336               0.000 CLOCK_50 
+    Info (332119):    15.385               0.000 altera_reserved_tck 
+Info (332114): Report Metastability: Found 58 synchronizer chains.
+    Info (332114): Worst-Case MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+    Info (332114): Typical MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+
+    Info (332114): Number of Synchronizer Chains Found: 58
+    Info (332114): Shortest Synchronizer Chain: 1 Registers
+    Info (332114): Fraction of Chains for which MTBFs Could Not be Calculated: 0.897
+    Info (332114): Worst Case Available Settling Time: 10.868 ns
+    Info (332114): Worst-Case MTBF values are calculated based on the worst-case silicon characteristics, with worst-case operating conditions.
+    Info (332114):   - Under worst-case conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 7.8
+    Info (332114): Typical MTBF values are calculated based on the nominal silicon characteristics, at nominal operating conditions.
+    Info (332114):   - Under typical conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 17.8
+Info: Analyzing Fast 1100mV 0C Model
+Info (332097): The following timing edges are non-unate.  The Timing Analyzer will assume pos-unate behavior for these edges in the clock network.
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL  from: refclkin  to: fbclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[0].gpll~PLL_REFCLK_SELECT  from: clkin[0]  to: clkout
+    Info (332098): Cell: u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+    Info (332098): Cell: u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER  from: vco0ph[0]  to: divclk
+Info (332123): Deriving Clock Uncertainty. Please refer to report_sdc in the Timing Analyzer to see clock uncertainties.
+Info (332146): Worst-case setup slack is 0.781
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.781               0.000 DRAM_CLK_pin 
+    Info (332119):     1.934               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     3.104               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.350               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    13.402               0.000 altera_reserved_tck 
+Info (332146): Worst-case hold slack is 0.039
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.039               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     0.124               0.000 altera_reserved_tck 
+    Info (332119):     0.154               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     2.869               0.000 DRAM_CLK_pin 
+    Info (332119):     6.687               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case recovery slack is 15.206
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):    15.206               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):    30.999               0.000 altera_reserved_tck 
+Info (332146): Worst-case removal slack is 0.385
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.385               0.000 altera_reserved_tck 
+    Info (332119):     3.223               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+Info (332146): Worst-case minimum pulse width slack is 0.500
+    Info (332119):     Slack       End Point TNS Clock 
+    Info (332119): ========= =================== =====================
+    Info (332119):     0.500               0.000 u_pll|altera_pll_i|general[0].gpll~FRACTIONAL_PLL|vcoph[0] 
+    Info (332119):     3.039               0.000 u_pll|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     3.406               0.000 u_pll|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.880               0.000 u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     8.884               0.000 u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk 
+    Info (332119):     9.286               0.000 CLOCK_50 
+    Info (332119):    15.375               0.000 altera_reserved_tck 
+Info (332114): Report Metastability: Found 58 synchronizer chains.
+    Info (332114): Worst-Case MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+    Info (332114): Typical MTBF of Design is 1e+09 years or 3.15e+16 seconds.
+
+    Info (332114): Number of Synchronizer Chains Found: 58
+    Info (332114): Shortest Synchronizer Chain: 1 Registers
+    Info (332114): Fraction of Chains for which MTBFs Could Not be Calculated: 0.897
+    Info (332114): Worst Case Available Settling Time: 11.174 ns
+    Info (332114): Worst-Case MTBF values are calculated based on the worst-case silicon characteristics, with worst-case operating conditions.
+    Info (332114):   - Under worst-case conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 2.4
+    Info (332114): Typical MTBF values are calculated based on the nominal silicon characteristics, at nominal operating conditions.
+    Info (332114):   - Under typical conditions, an increase of 100ps in available settling time will increase MTBF values by a factor of 17.8
+Info (332102): Design is not fully constrained for setup requirements
+Info (332102): Design is not fully constrained for hold requirements
+Info: Quartus Prime Timing Analyzer was successful. 0 errors, 2 warnings
+    Info: Peak virtual memory: 1378 megabytes
+    Info: Processing ended: Fri Nov  6 01:43:24 2026
+    Info: Elapsed time: 00:00:16
+    Info: Total CPU time (on all processors): 00:01:12
+Info: *******************************************************************
+Info: Running Quartus Prime EDA Netlist Writer
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Processing started: Fri Nov  6 01:43:25 2026
+Info: Command: quartus_eda --read_settings_files=off --write_settings_files=off external-data -c external-data
+Info (204019): Generated file external-data.vo in folder "<caminho-local>" for EDA simulation tool
+Info: Quartus Prime EDA Netlist Writer was successful. 0 errors, 0 warnings
+    Info: Peak virtual memory: 879 megabytes
+    Info: Processing ended: Fri Nov  6 01:43:28 2026
+    Info: Elapsed time: 00:00:03
+    Info: Total CPU time (on all processors): 00:00:04
+Info (293000): Quartus Prime Full Compilation was successful. 0 errors, 74 warnings
+Info (23030): Evaluation of Tcl script external-data_synth.tcl was successful
+Info: Quartus Prime Shell was successful. 0 errors, 74 warnings
+    Info: Peak virtual memory: 462 megabytes
+    Info: Processing ended: Fri Nov  6 01:43:29 2026
+    Info: Elapsed time: 00:28:52
+    Info: Total CPU time (on all processors): 01:26:53
