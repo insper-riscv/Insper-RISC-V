@@ -47,7 +47,7 @@ BOARD_VHDL := $(shell find src/interconnect Memory/src/RAM/SoC Memory/src/RAM/FP
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-unique memory-map generate generate-check test unit-tests formal clean
+.PHONY: all sync paths check check-tops check-generics check-unique memory-map generate generate-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -64,7 +64,7 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: check-tops check-unique
+check: check-tops check-unique check-generics
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -80,6 +80,11 @@ check-tops:
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(TEMPLATE_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
+
+# Every HAS_* constant of the generated package of a platform is a generic of its tops: the generics
+# that the generate step and riscv-tools platform sync pass to GHDL must exist there.
+check-generics:
+	python3 scripts/check_top_generics.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
