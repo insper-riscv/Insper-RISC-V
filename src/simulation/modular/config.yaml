@@ -121,10 +121,16 @@ sim:
     - Peripherals/src/CLINT/soc/clint_consts.vhd
     - Peripherals/src/CLINT/soc/clint_mtime.vhd
     - Peripherals/src/CLINT/soc/clint.vhd
-    - Common-Components/src/synchronizer.vhd
-    - Peripherals/src/intc/soc/ext_irq_consts.vhd
-    - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Peripherals/src/PLIC/soc/plic_consts.vhd
+    - Peripherals/src/PLIC/soc/plic_gateway.vhd
+    - Peripherals/src/PLIC/soc/plic_arbiter.vhd
+    - Peripherals/src/PLIC/soc/plic.vhd
     - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/TIMER/soc/counter_overflow.vhd
+    - Peripherals/src/TIMER/soc/clock_prescaler.vhd
+    - Peripherals/src/TIMER/soc/timer_operation_decoder.vhd
+    - Peripherals/src/TIMER/soc/timer.vhd
+    - Common-Components/src/synchronizer.vhd
     - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
     - Peripherals/src/GPIO/soc/gpio_cell.vhd
     - Peripherals/src/GPIO/soc/gpio.vhd
@@ -153,6 +159,13 @@ sim:
   parameters:
     BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
     ROM_FILE: "{hex_path}"
+    # Os periféricos da janela (o PLIC e o CLINT sempre estão): os programas de asm-plic/ do repositório Tests
+    # levantam a interrupção de cada um.
+    HAS_TIMER: "true"
+    HAS_SWITCHES: "true"
+    HAS_KEYS: "true"
+    HAS_UART_PINS: "true"
+    HAS_UART_JTAG: "true"
 
 # O Spike executa a imagem de cada programa, que termina no rv32_wait_restart de spike_exit.S.
 emulator:

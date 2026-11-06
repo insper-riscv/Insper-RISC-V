@@ -101,10 +101,10 @@ package de0_cv_map_pkg is
 	-- Índice da janela de 256 MiB do periférico CLINT (bits 30:28 do endereço).
 	constant CLINT_ID   : natural := 6;
 
-	-- Endereço base do periférico EXT_IRQ.
-	constant EXT_IRQ_BASE : std_logic_vector(31 downto 0) := x"F0000000";
-	-- Índice da janela de 256 MiB do periférico EXT_IRQ (bits 30:28 do endereço).
-	constant EXT_IRQ_ID   : natural := 7;
+	-- Endereço base do periférico PLIC.
+	constant PLIC_BASE : std_logic_vector(31 downto 0) := x"F0000000";
+	-- Índice da janela de 256 MiB do periférico PLIC (bits 30:28 do endereço).
+	constant PLIC_ID   : natural := 7;
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
 	constant CLOCK_HZ          : positive := 50000000;
@@ -112,6 +112,17 @@ package de0_cv_map_pkg is
 	constant MTIME_HZ          : positive := 1000000;
 	-- Ciclos de clock por incremento do mtime (tick_cycles do CLINT).
 	constant CLINT_TICK_CYCLES : positive := 50;
+
+	-- Número de fontes do PLIC (o maior identificador de fonte).
+	constant PLIC_N_SOURCES     : positive := 6;
+	-- Largura da prioridade e do limiar do PLIC, em bits.
+	constant PLIC_PRIORITY_BITS : positive := 3;
+	-- Largura do endereço de palavra da janela do PLIC.
+	constant PLIC_ADDR_WIDTH    : positive := 20;
+	-- Identificador da fonte UART_JTAG no PLIC.
+	constant IRQ_UART_JTAG : positive := 2;
+	-- Identificador da fonte FLASH no PLIC.
+	constant IRQ_FLASH : positive := 6;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;

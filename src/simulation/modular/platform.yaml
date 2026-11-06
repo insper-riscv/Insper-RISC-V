@@ -33,18 +33,35 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# The window of the peripherals (0x80000000 and above): the CLINT (64 KiB slot) and the controller of the external
-# interrupt lines, in the four models. Their outputs are the MTIP, MSIP and MEIP of the core, which only takes them
-# with Zicsr; the default profile has none, so a test that runs the interrupts turns has_zicsr on.
+# The window of the peripherals (0x80000000 and above), in the four models: the general-purpose timer, the slide
+# switches and the push buttons (GPIO), the UART on two pins, the UART on the JTAG cable, the display, the CLINT (64 KiB
+# slot) and the PLIC (4 MiB window). The outputs of the CLINT and the PLIC are the MTIP, MSIP and MEIP of the core, which
+# only takes them with Zicsr; the default profile has none, so a test that runs the interrupts turns has_zicsr on.
 peripherals:
-  - {name: CLINT,   base: 0xE0000000, id: 6}
-  - {name: EXT_IRQ, base: 0xF0000000, id: 7}
+  - {name: TIMER,     base: 0x80000000, id: 0}
+  - {name: SWITCHES,  base: 0x90000000, id: 1}
+  - {name: KEYS,      base: 0xA0000000, id: 2}
+  - {name: UART,      base: 0xB0000000, id: 3}
+  - {name: UART_JTAG, base: 0xC0000000, id: 4}
+  - {name: DISPLAY,   base: 0xD0000000, id: 5}
+  - {name: CLINT,     base: 0xE0000000, id: 6}
+  - {name: PLIC,      base: 0xF0000000, id: 7, size: 4M}
 
 # The mtime of the CLINT counts at mtime_hz, one tick per clock cycle of the core in the simulation, and is
 # independent of the CSR time of Zicntr.
 interrupts:
   clock_hz: 10000000
   mtime_hz: 10000000
+  # The PLIC: three-bit priorities, and the line of each peripheral (the numbers of the LINE_* constants of
+  # modular_sim_top, which `make check-irq-sources` compares).
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART,      id: 1}
+    - {name: UART_JTAG, id: 2}
+    - {name: SWITCHES,  id: 3}
+    - {name: KEYS,      id: 4}
+    - {name: TIMER,     id: 5}
+    - {name: FLASH,     id: 6}
 
 # The default memory choice: both memories inside the chip, no cache. The sizes of the caches are in bits.
 memory:
@@ -81,3 +98,5 @@ checks:
   - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
   - {name: Tests header RV32_TOHOST, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_TOHOST\s+(0x[0-9A-Fa-f]+)', expect: tohost.base}
+  - {name: Tests header RV32_PLIC_BASE, file: ../Tests/tools/riscv_build/include-plic/rv32_platform.h, optional: true, pattern: '#define RV32_PLIC_BASE\s+(0x[0-9A-Fa-f]+)', expect: PLIC.base}
+  - {name: Tests header RV32_RAM_BASE (PLIC), file: ../Tests/tools/riscv_build/include-plic/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}

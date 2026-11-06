@@ -123,7 +123,9 @@ architecture behaviour of core_fpga_sdram_flash is
 	signal m_rden    : std_logic;
 	signal m_wren    : std_logic;
 	signal m_ready   : std_logic;
-	signal p_addr    : std_logic_vector(13 downto 0);
+	signal p_addr    : std_logic_vector(PLIC_ADDR_WIDTH - 1 downto 0);
+	-- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
+	signal irq_lines : std_logic_vector(PLIC_N_SOURCES downto 1) := (others => '0');
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	signal p_byteena : std_logic_vector(3 downto 0);
 	signal p_we, p_re : std_logic_vector(7 downto 0);
@@ -315,7 +317,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
-		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -428,6 +430,7 @@ begin
 	-- SDRAM: the bridge (core clock), the arbiter and the controller (SDRAM clock), and the debug port
 	-- the core's external port: bit 31 = 0 is the SDRAM, bit 31 = 1 a peripheral window
 	INTERCONNECT : entity work.ext_interconnect
+		generic map (periph_addr_width => PLIC_ADDR_WIDTH)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => sdram_addr, i_wdata => sdram_wdata, i_byteena => sdram_byteena,
@@ -444,29 +447,31 @@ begin
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
-			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
+			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID),
+			o_irq => irq_lines(IRQ_UART_JTAG)
 		);
 
-	-- The CLINT (msip, mtimecmp, mtime) and the controller of the external interrupt lines, in the clock domain of
-	-- the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. No peripheral of this
-	-- top raises an interrupt line yet, so the lines of EXT_IRQ stay at zero.
+	-- The CLINT (msip, mtimecmp, mtime) and the PLIC (the controller of the external interrupt lines), in the clock
+	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
+	-- raises its line (IRQ_UART_JTAG); the other lines of the PLIC stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_data_in => p_wdata, i_address => p_addr, i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
+			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
 			o_irq_timer => irq_timer, o_irq_software => irq_software
 		);
 
-	EXT_IRQ : entity work.ext_irq_controller
+	PLIC : entity work.plic
+		generic map (n_sources => PLIC_N_SOURCES, priority_bits => PLIC_PRIORITY_BITS, addr_width => PLIC_ADDR_WIDTH)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_irq_lines => (others => '0'), i_data_in => p_wdata, i_address => p_addr(1 downto 0),
-			i_write => p_we(EXT_IRQ_ID), i_read => p_re(EXT_IRQ_ID),
-			o_data_out => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
-			o_irq_external => irq_external
+			i_sources => irq_lines, i_data_in => p_wdata, i_address => p_addr,
+			i_write => p_we(PLIC_ID), i_read => p_re(PLIC_ID),
+			o_data_out => p_rdata(32 * PLIC_ID + 31 downto 32 * PLIC_ID),
+			o_meip => irq_external
 		);
 	end generate g_irq;
 
