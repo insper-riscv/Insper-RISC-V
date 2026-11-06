@@ -35,6 +35,24 @@ CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)
 GENERIC = re.compile(r"^\s*(HAS_\w+)\s*:", re.IGNORECASE | re.MULTILINE)
 
 
+def names(pattern: re.Pattern[str], path: Path) -> set[str]:
+    """Devolve os nomes ``HAS_*`` que o padrão acha no arquivo.
+
+    Parameters
+    ----------
+    pattern : re.Pattern
+        Expressão com o nome no primeiro grupo.
+    path : Path
+        Arquivo VHDL.
+
+    Returns
+    -------
+    set of str
+        Os nomes, em maiúsculas.
+    """
+    return {n.upper() for n in pattern.findall(path.read_text("utf-8"))}
+
+
 def missing(root: Path) -> list[str]:
     """Lista os ``HAS_*`` do pacote que o top não declara.
 
@@ -50,19 +68,11 @@ def missing(root: Path) -> list[str]:
     """
     problems: list[str] = []
     for package, tops in PLATFORMS.items():
-        wanted = {
-            name.upper()
-            for name in CONSTANT.findall((root / package).read_text("utf-8"))
-        }
+        wanted = names(CONSTANT, root / package)
         for top in tops:
-            text = (root / top).read_text("utf-8")
-            declared = {name.upper() for name in GENERIC.findall(text)}
-            if top in NO_CACHE:
-                declared |= CACHE
-            problems += [
-                f"{top}: falta o generic {name}"
-                for name in sorted(wanted - declared)
-            ]
+            exempt: set[str] = CACHE if top in NO_CACHE else set()
+            absent = wanted - names(GENERIC, root / top) - exempt
+            problems += [f"{top}: falta o generic {n}" for n in sorted(absent)]
     return problems
 
 
