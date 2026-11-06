@@ -1,0 +1,37 @@
+--- a/src/cyclone-v/de0-cv/de0-cv_top.vhd
++++ a/src/cyclone-v/de0-cv/de0-cv_top.vhd
+@@ -199,7 +199,14 @@
+ 	signal dq_oe     : std_logic;
+ 	signal dqm       : std_logic_vector(1 downto 0);
+ 
++	signal irq_q : std_logic_vector(2 downto 0) := (others => '0');
+ begin
++	process (pll_clk_idexmem)
++	begin
++		if rising_edge(pll_clk_idexmem) then
++			irq_q <= sdram_rdata(2 downto 0);
++		end if;
++	end process;
+ 
+ 	pll_inst : sdram_platform_pll
+     port map (
+@@ -265,7 +272,8 @@
+ 			has_zimop    => HAS_ZIMOP,
+ 			has_zicond   => HAS_ZICOND,
+ 			has_zihintntl   => HAS_ZIHINTNTL,
+-			has_zihintpause => HAS_ZIHINTPAUSE
++			has_zihintpause => HAS_ZIHINTPAUSE,
++			has_interrupts => true
+ 		)
+ 		port map (
+ 			i_clk          => pll_clk_idexmem,
+@@ -298,6 +306,9 @@
+ 			o_mem_advance   => mem_advance,
+ 
+ 			o_trap => core_trap,
++			i_irq_software => irq_q(0),
++			i_irq_timer => irq_q(1),
++			i_irq_external => irq_q(2),
+ 
+ 			i_hpm_ext_events => hpm_ext_events,
+ 			i_ic_data  => ic_data,
