@@ -39,7 +39,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 3. **FLASH.** The chip serves line or word requests with two latency parameters, edges up to the first word and edges between the following words. Outside the chip window a read returns zero.
 4. **Restart.** The boot ROM executes `fence.i` before jumping to the FLASH. The instruction invalidates the instruction cache and the data cache, so the new program the host wrote does not find lines of the previous one.
 5. **Host.** The host writes the FLASH image through the Quartus in-system memory (instance 0) and the data through the SDRAM debug port, with the core parked in the boot ROM restart loop. It restarts the core by writing a non-zero value to `fromhost`.
-6. **Trap.** The `LEDR1` of the top lights when the core pulses `o_trap` and stays lit until the next reset. Only a core without Zicsr pulses `o_trap`; with Zicsr the core handles the exception at `mtvec` and the LED stays off.
+6. **Trap.** The `LEDR1` of the top lights when the core pulses `o_trap` and stays lit until the next reset, including the one of the `KEY4` button (`FPGA_RESET_N`), which clears it even with the clock stopped. The program stays in memory, so on releasing the button it may trap again and relight the LED. Only a core without Zicsr pulses `o_trap`; with Zicsr the core handles the exception at `mtvec` and the LED stays off.
 
 ## 4. Sizes and latencies
 
