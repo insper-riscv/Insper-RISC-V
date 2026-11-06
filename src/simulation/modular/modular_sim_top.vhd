@@ -134,7 +134,7 @@ entity modular_sim_top is
     clint_id            : natural range 0 to 7 := 6;
     -- Índice da janela de 256 MiB do PLIC, o controlador das interrupções externas.
     plic_id             : natural range 0 to 7 := 7;
-    -- Número de fontes do PLIC; as linhas são as IRQ_* abaixo, a partir da 1.
+    -- Número de fontes do PLIC; as linhas são as LINE_* abaixo, a partir da 1.
     plic_n_sources      : positive range 6 to 1023 := 6;
     -- Largura da prioridade e do limiar do PLIC, em bits.
     plic_priority_bits  : positive range 1 to 32 := 3;
@@ -234,17 +234,17 @@ architecture behaviour of modular_sim_top is
   -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
   -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
   -- UART serial pelos pinos.
-  constant IRQ_UART      : positive := 1;
+  constant LINE_UART      : positive := 1;
   -- UART sobre JTAG.
-  constant IRQ_UART_JTAG : positive := 2;
+  constant LINE_UART_JTAG : positive := 2;
   -- Chaves SW (GPIO).
-  constant IRQ_SWITCHES  : positive := 3;
+  constant LINE_SWITCHES  : positive := 3;
   -- Botões KEY (GPIO).
-  constant IRQ_KEYS      : positive := 4;
+  constant LINE_KEYS      : positive := 4;
   -- Temporizador de uso geral.
-  constant IRQ_TIMER     : positive := 5;
+  constant LINE_TIMER     : positive := 5;
   -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
-  constant IRQ_FLASH     : positive := 6;
+  constant LINE_FLASH     : positive := 6;
 
   -- Escolhe entre dois valores naturais conforme a condição.
   function pick(cond : boolean; a : natural; b : natural) return natural is
@@ -738,7 +738,7 @@ begin
         i_write      => p_we(switches_id),
         i_read       => p_re(switches_id),
         o_data_out   => p_rdata(32 * switches_id + 9 downto 32 * switches_id),
-        o_irq        => irq_lines(IRQ_SWITCHES),
+        o_irq        => irq_lines(LINE_SWITCHES),
         io_gpio_pins => io_sw
       );
   end generate g_switches;
@@ -755,7 +755,7 @@ begin
         i_write      => p_we(keys_id),
         i_read       => p_re(keys_id),
         o_data_out   => p_rdata(32 * keys_id + 3 downto 32 * keys_id),
-        o_irq        => irq_lines(IRQ_KEYS),
+        o_irq        => irq_lines(LINE_KEYS),
         io_gpio_pins => io_key
       );
   end generate g_keys;
@@ -796,7 +796,7 @@ begin
         i_we        => p_we(uart_jtag_id),
         i_re        => p_re(uart_jtag_id),
         o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
-        o_irq       => irq_lines(IRQ_UART_JTAG),
+        o_irq       => irq_lines(LINE_UART_JTAG),
         i_tck       => i_uart_tck,
         i_tdi       => i_uart_tdi,
         o_tdo       => o_uart_tdo,
@@ -819,7 +819,7 @@ begin
         i_write    => p_we(timer_id),
         i_read     => p_re(timer_id),
         o_data_out => p_rdata(32 * timer_id + 31 downto 32 * timer_id),
-        o_irq      => irq_lines(IRQ_TIMER),
+        o_irq      => irq_lines(LINE_TIMER),
         o_pwm      => open
       );
   end generate g_timer;
@@ -835,7 +835,7 @@ begin
         i_write    => p_we(uart_pins_id),
         i_read     => p_re(uart_pins_id),
         o_data_out => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
-        o_irq      => irq_lines(IRQ_UART),
+        o_irq      => irq_lines(LINE_UART),
         i_uart_rx  => i_uart_rx,
         o_uart_tx  => o_uart_tx
       );

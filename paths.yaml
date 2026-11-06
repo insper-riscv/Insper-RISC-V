@@ -235,7 +235,7 @@ provides:
       - src/simulation/modular/modular_map_pkg.vhd
   # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).
   modular_sim_top:
-    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
+    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
     sources:
       - src/simulation/modular/modular_sim_top.vhd
   test_integrated_map:

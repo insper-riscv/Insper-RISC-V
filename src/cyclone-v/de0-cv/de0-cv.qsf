@@ -158,8 +158,10 @@ set_global_assignment -name VHDL_FILE ../../../Peripherals/src/TIMER/soc/alu_ge_
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint_mtime.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint.vhd
-set_global_assignment -name VHDL_FILE ../../../Peripherals/src/intc/soc/ext_irq_consts.vhd
-set_global_assignment -name VHDL_FILE ../../../Peripherals/src/intc/soc/ext_irq_controller.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_gateway.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_arbiter.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic.vhd
 set_global_assignment -name VHDL_FILE de0-cv_top.vhd
 
 #============================================================
