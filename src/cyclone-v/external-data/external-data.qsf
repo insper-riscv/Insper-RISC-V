@@ -145,6 +145,7 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ar
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/jtag_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/cyclone-v/jtag_uart_shell.vhd

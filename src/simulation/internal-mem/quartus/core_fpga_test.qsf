@@ -139,6 +139,7 @@ set_global_assignment -name QIP_FILE ../../../../Memory/src/RAM/FPGA/Cyclone-V/r
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd

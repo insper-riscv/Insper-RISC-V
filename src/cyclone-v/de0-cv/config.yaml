@@ -123,6 +123,7 @@ sim:
     - Memory/src/RAM/SoC/sim/sdram_system.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/cache/SoC/flash_chip.vhd
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
