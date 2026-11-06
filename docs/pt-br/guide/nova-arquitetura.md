@@ -1127,7 +1127,7 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | :--- | :--- |
 | `reserved stdout ... is not inside a RAM region` | As palavras reservadas ficaram fora da RAM depois de mudar o tamanho ou a base |
 | `generated files are out of date` | O `platform.yaml` mudou sem rodar `generate-memory-map` |
-| `cannot find in top entity generic 'has_e'` | O topo simulado não declara os doze genéricos `has_*` |
+| `cannot find in top entity generic 'has_e'` | O topo simulado não declara os treze genéricos `has_*` |
 | `timed out after ... cycles without a result` | O cabeçalho `rv32_platform.h` do projeto de testes tem o `tohost` de outra plataforma, ou a BOOT_MEMORY não salta para o início da ROM |
 | `rv32_test.h: No such file or directory` | O `generate-header` não rodou para a configuração da plataforma |
 | `unit "..." not found` | Falta uma fonte na lista do `ghdl`, ou a lista está fora de ordem |

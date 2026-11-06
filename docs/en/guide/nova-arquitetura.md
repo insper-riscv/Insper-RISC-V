@@ -191,29 +191,53 @@ EOF
 
 The test reads the RAM base in `RAM_BASE`, at the start of `exemplo_sim_top.py`, and this value changes together with the RAM region of the `platform.yaml`.
 
-The `Makefile` gets the lines below, each one next to its equivalent of the model platform.
-
-| Where | What to add |
-| :--- | :--- |
-| Variables at the top, after `PT :=` | `PX := src/simulation/exemplo` |
-| After the definition of `TEMPLATE_VHDL` | `EXEMPLO_VHDL := $(subst template,exemplo,$(TEMPLATE_VHDL))` |
-| Rule `check-tops`, after the lines of `template_sim_top` | Three lines, one analysis line with `$(EXEMPLO_VHDL)`, one elaboration line of `exemplo_sim_top` and an `echo` |
-| Rules `memory-map`, `generate` and `generate-check` | The same line of each one, replacing `$(PT)` with `$(PX)` |
-
-The documentation gets one document per language and the line in the table of the `README.md` of the folder.
+`paths.yaml` still has to declare the top and the map package as components (`provides`), which is where `make generate-sources` takes the source list of `config.yaml` and `tests.json` from.
 
 ```bash
-for l in pt-br en; do sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md; done
+python3 - <<'EOF2'
+texto = open("paths.yaml").read()
+inicio = texto.index("  template_map:")
+fim = texto.index("\n", texto.index("template_sim_top.vhd", inicio))
+bloco = texto[inicio:fim]
+texto = texto[:fim] + "\n" + bloco.replace("template", "exemplo") + texto[fim:]
+open("paths.yaml", "w").write(texto)
+EOF2
 ```
 
-| File | What to add |
-| :--- | :--- |
-| `paths.yaml` | The platform files in the `references` list and the path fields of `config.yaml` |
-| `Makefile` | The variable `P<x> := src/simulation/example`, the lines of `memory-map`, `generate` and `generate-check` and the top elaboration in `check-tops`, which reads the sources from `riscv-tools sources` |
-| `paths.yaml` (`provides`) | The component of the top, with its sources and what it requires; `scripts/generate_sources.py` gains the list file of the platform |
-| `docs/pt-br/platform/` | An `example.md` document and the row in the folder `README.md` table, with the mirror in `docs/en/` |
+`scripts/generate_sources.py` and `scripts/check_top_generics.py` gain one line each, next to those of `template`.
 
 ```bash
+sed -i 's#^    Saida("src/simulation/template/config.yaml", ("template_sim_top",)),#&\n    Saida("src/simulation/exemplo/config.yaml", ("exemplo_sim_top",)),#' scripts/generate_sources.py
+sed -i 's#^    Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),#&\n    Saida(TESTS_JSON, ("exemplo_sim_top",), "ExemploSimTop"),#' scripts/generate_sources.py
+sed -i 's#^    "src/simulation/template/rtl/template_map_pkg.vhd": \[#    "src/simulation/exemplo/rtl/exemplo_map_pkg.vhd": [\n        "src/simulation/exemplo/rtl/exemplo_sim_top.vhd",\n    ],\n&#' scripts/check_top_generics.py
+```
+
+The `Makefile` gets a variable and a copy of every line that mentions the model platform.
+
+```bash
+sed -i 's#^PT := src/simulation/template$#&\nPX := src/simulation/exemplo#' Makefile
+sed -i -E 's#^(\t.*)\$\(PT\)(.*)$#\1$(PT)\2\n\1$(PX)\2#' Makefile
+python3 - <<'EOF2'
+texto = open("Makefile").read()
+linhas = [l for l in texto.split("\n") if "template" in l and l.startswith("\t@")]
+texto = texto.replace(linhas[-1], linhas[-1] + "\n" + "\n".join(l.replace("template", "exemplo") for l in linhas), 1)
+open("Makefile", "w").write(texto)
+EOF2
+```
+
+The documentation gets one document per language and the row in the table of the `README.md` of the folder.
+
+```bash
+for l in pt-br en; do
+    sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md
+    sed -i '/^| \[template\]/{p;s/template/exemplo/g}' docs/$l/platform/README.md
+done
+```
+
+Generate the source lists and check.
+
+```bash
+make generate-sources
 make paths
 make memory-map
 ```
@@ -281,9 +305,9 @@ The memory sizes are power-of-two generics whose default value comes from the ge
 
 ### 6.3. Profile and map in the `core`
 
-The top declares one `has_*` generic per extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` and `has_zicclsm`), each with the `HAS_*` constant of the package as default value. In the `generic map` of the `core`, each `has_*` of the core receives the generic of the same name of the top, and the region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
+The top declares one `has_*` generic per extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei`, `has_zicclsm` and `has_interrupts`), each with the `HAS_*` constant of the package as default value. In the `generic map` of the `core`, each `has_*` of the core receives the generic of the same name of the top, and the `has_interrupts` of the core receives `has_interrupts and has_zicsr`. The region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
 
-`riscv-tools` passes the simulator one `-g has_*` per extension of the profile. Every top it simulates must declare the twelve generics, and a top that does not declare one of them fails at elaboration with `cannot find in top entity generic`.
+`riscv-tools` passes the simulator one `-g has_*` per extension of the profile. Every top it simulates must declare the thirteen generics, and a top that does not declare one of them fails at elaboration with `cannot find in top entity generic`.
 
 ### 6.4. Window of each peripheral
 
@@ -404,7 +428,7 @@ The programs live in the `Tests` repository (`asm/` and `c/`). `Tests` carries `
 First, the platform must be in a commit of the clone, and the submodule of `Tests` starts pointing to it.
 
 ```bash
-git add src/simulation/exemplo paths.yaml Makefile tests docs
+git add src/simulation/exemplo paths.yaml Makefile tests docs scripts
 git commit -m "feat: plataforma exemplo"
 cd ..
 git clone --recurse-submodules git@github.com:insper-riscv/Tests.git
@@ -414,7 +438,7 @@ git -C Insper-RISC-V checkout FETCH_HEAD
 git -C Insper-RISC-V submodule update --init --recursive
 ```
 
-Then `platform sync` writes the platform configuration already resolved against the `platform.yaml`, with the paths preceded by the submodule folder.
+The `Tests` clone sits next to the `Insper-RISC-V` one, in `../Tests`, which is where `check-memory-map` looks for it. Then `platform sync` writes the platform configuration already resolved against the `platform.yaml`, with the paths preceded by the submodule folder.
 
 ```bash
 riscv-tools platform sync --prefix Insper-RISC-V \
@@ -472,7 +496,7 @@ riscv-tools --config tools/riscv_build/config.exemplo.yaml sim
 | Expected output | Common error and cause |
 | :--- | :--- |
 | `arithmetic-add: PASS`, `multiply: PASS` and `stdout-printf: PASS`, with the label `(rv32im)` on the last two | `timed out after ... cycles without a result`, when `rv32_platform.h` kept the addresses of another platform and the program writes `tohost` where the testbench does not look |
-| `compile` generates `manifest.json` with the programs | `cannot find in top entity generic 'has_e'`, when the top does not declare the `has_*` generics of step 6.3 |
+| `compile` generates `manifest.json` with the programs | `cannot find in top entity generic 'has_interrupts'`, when the top does not declare the `has_*` generics of step 6.3 (the name changes with the missing generic) |
 | | `rv32_test.h: No such file or directory`, from skipping `generate-header` |
 | | `region ... overflowed` at link time, when the program does not fit in the 28 KiB ROM |
 
@@ -531,7 +555,99 @@ grep -rl "external[-_]data" . | xargs sed -i 's/external-data/minhaplaca/g;s/ext
 cd ../../..
 ```
 
-After the copy, register the platform as in step 4.4, using the `external-data` lines of `paths.yaml`, of the `Makefile` and of `tests/python/tests.json` as the model in place of those of the model platform.
+After the copy, the platform goes into the same lists as in step 4.4, copying what `external-data` has in each one. The script below does the copies and can be saved as `registrar.py` outside the repository.
+
+```python
+import json
+import os
+import re
+
+NOVO = "minhaplaca"
+
+
+def troca(texto):
+    return texto.replace("external-data", NOVO).replace("external_data", NOVO)
+
+
+linhas = open("paths.yaml").read().split("\n")
+saida = []
+for i, linha in enumerate(linhas):
+    saida.append(linha)
+    if linha.startswith("  - {name: external-data ") and not linhas[i + 1].startswith("  - {name: external-data "):
+        j = i
+        while linhas[j].startswith("  - {name: external-data "):
+            j -= 1
+        saida += [troca(x) for x in linhas[j + 1:i + 1]]
+    if linha.startswith("      - src/cyclone-v/external-data/external-data_top.vhd"):
+        j = i
+        while not linhas[j].startswith("  external_data_map:"):
+            j -= 1
+        saida += [troca(x) for x in linhas[j:i + 1]]
+texto = "\n".join(saida).replace(
+    "src/cyclone-v/external-data/platform.yaml,",
+    f"src/cyclone-v/external-data/platform.yaml, src/cyclone-v/{NOVO}/platform.yaml,", 1)
+open("paths.yaml", "w").write(texto)
+
+make = open("Makefile").read()
+make = make.replace("PE := src/cyclone-v/external-data\n",
+                    f"PE := src/cyclone-v/external-data\nPB := src/cyclone-v/{NOVO}\n", 1)
+make = re.sub(r"(\triscv-tools[^\n]*\$\(PE\)[^\n]*\n)",
+              lambda m: m.group(1) + m.group(1).replace("$(PE)", "$(PB)"), make)
+copiar = [l for l in make.split("\n") if "external_data_sim_top)" in l
+          or "rv32im_external_data_sim_test" in l
+          or 'echo "the simulation top of the external-data' in l]
+make = make.replace(copiar[-1], copiar[-1] + "\n" + "\n".join(troca(l) for l in copiar), 1)
+open("Makefile", "w").write(make)
+
+gerador = open("scripts/generate_sources.py").read()
+gerador = gerador.replace(
+    '    Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),\n',
+    '    Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),\n'
+    f'    Saida(TESTS_JSON, ("{NOVO}_sim_top",), "MinhaplacaSimTop"),\n')
+gerador = gerador.replace(
+    '    Saida(\n        "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)\n    ),\n',
+    '    Saida(\n        "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)\n    ),\n'
+    f'    Saida("src/cyclone-v/{NOVO}/config.yaml", ("{NOVO}_sim_top",)),\n')
+gerador = gerador.replace(
+    '    Saida(\n        "src/cyclone-v/external-data/external-data.qsf",\n        ("external_data_top",),\n    ),\n',
+    '    Saida(\n        "src/cyclone-v/external-data/external-data.qsf",\n        ("external_data_top",),\n    ),\n'
+    f'    Saida("src/cyclone-v/{NOVO}/{NOVO}.qsf", ("{NOVO}_top",)),\n')
+open("scripts/generate_sources.py", "w").write(gerador)
+
+conf = open("scripts/check_top_generics.py").read()
+conf = conf.replace(
+    '    "src/simulation/modular/modular_map_pkg.vhd": [',
+    f'    "src/cyclone-v/{NOVO}/{NOVO}_map_pkg.vhd": [\n        "src/cyclone-v/{NOVO}/{NOVO}_sim_top.vhd",\n    ],\n'
+    '    "src/simulation/modular/modular_map_pkg.vhd": [', 1)
+open("scripts/check_top_generics.py", "w").write(conf)
+
+for velho in ("tests/python/gen_external_data_images.py",
+              "tests/python/unittests/rtl/external_data_sim_top.py",
+              "tests/python/unittests/rtl/external_data_flash_update.py"):
+    open(troca(velho), "w").write(troca(open(velho).read()))
+os.makedirs(f"tests/python/unittests/rtl/data/{NOVO}", exist_ok=True)
+dados = json.load(open("tests/python/tests.json"))
+dados["MinhaplacaSimTop"] = json.loads(troca(json.dumps(dados["ExternalDataSimTop"])))
+json.dump(dados, open("tests/python/tests.json", "w"), indent=4)
+open("tests/python/tests.json", "a").write("\n")
+for idioma in ("pt-br", "en"):
+    open(f"docs/{idioma}/platform/{NOVO}.md", "w").write(
+        troca(open(f"docs/{idioma}/platform/external-data.md").read()))
+```
+
+Run the script at the root of the clone, generate the images of the simulation top test and the source lists, and check.
+
+```bash
+python3 registrar.py
+PYTHONPATH=. /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_minhaplaca_images.py
+make generate-sources
+make paths
+make memory-map
+```
+
+| Expected output | Common error and cause |
+| :--- | :--- |
+| `paths OK`, `tree OK` and `generated files OK` | `missing tests/python/unittests/rtl/data/minhaplaca/flash.hex`, from skipping `gen_minhaplaca_images.py` |
 
 ### 10.2. Quartus project files
 
@@ -575,25 +691,61 @@ The first command only synthesizes and checks that the paths and entities resolv
 
 | Expected output | Common error and cause |
 | :--- | :--- |
-| `Analysis & Synthesis was successful. 0 errors` | `design library "work" does not contain primary unit ...`, from a file missing in the `.qsf` (a `sdram_jtag_shell.vhd` from `../de0-cv/`, for example) |
-| `output_files/minhaplaca.sof` after the complete compilation | `Can't scan JTAG chain` in the programmer, from compiling and programming in different shells |
+| `Quartus Prime Analysis & Synthesis was successful. 0 errors` from the first command, and `Quartus Prime Shell was successful. 0 errors` at the end of the second | `design library "work" does not contain primary unit ...`, from a file missing in the `.qsf` (a `sdram_jtag_shell.vhd` from `../de0-cv/`, for example) |
+| `output_files/minhaplaca.sof` after the complete compilation (about 5 minutes on a free machine) and `Configuration succeeded -- 1 device(s) configured` from the programmer | `Can't scan JTAG chain` in the programmer, from compiling and programming in different shells |
 
-### 10.5. Programs and certification on the board
+### 10.5. Programs on the board
 
-With the bitstream programmed, `Tests` writes each program to the BOOT_MEMORY and the FLASH through JTAG and checks the result, without recompiling the FPGA. The board configuration in `Tests` is generated as in step 8.3, from the `config.yaml` of the board platform.
+With the bitstream programmed, `Tests` writes each program to the FLASH over JTAG and checks the result, without recompiling the FPGA. In the `Tests` clone, the `Insper-RISC-V` submodule points to the commit that has the platform (step 8.3). The header of the programs comes from the copied `include-sdram` folder, because `minhaplaca` inherits the map of `external-data`, with the RAM in the SDRAM at `0x40000000`.
 
 ```bash
+cp -r tools/riscv_build/include-sdram tools/riscv_build/include-minhaplaca
+echo "tools/riscv_build/include-minhaplaca/rv32_test.h" >> .gitignore
 riscv-tools platform sync --prefix Insper-RISC-V \
     --source Insper-RISC-V/src/cyclone-v/minhaplaca/config.yaml \
     --output tools/riscv_build/config.platform-minhaplaca.yaml
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add
 ```
 
-The `config.minhaplaca.yaml` extends the generated file, as in step 8.3, with the `include_dir` of the platform. `certify-board` runs the ACT4 of the chosen profile on the board, with the `config.flash-board-<profile>.yaml` configuration of the `Certification` repository.
+Create `tools/riscv_build/config.minhaplaca.yaml` with the content below.
+
+```yaml
+extends: config.platform-minhaplaca.yaml
+paths:
+  include_dir: tools/riscv_build/include-minhaplaca
+  build_dir: build-minhaplaca
+  c_dir: c-sdram
+  asm_dir: asm
+```
+
+Compile the programs to the FLASH format (inside the `dev_tools` image), and run them on the host, which has Quartus and the board cable. The `riscv-tools` of the host comes from `Tools`, and `flock` stops another person from using the board in the middle of the test.
+
+```bash
+riscv-tools --config tools/riscv_build/config.minhaplaca.yaml generate-header
+riscv-tools --config tools/riscv_build/config.minhaplaca.yaml compile --emit mif --only arithmetic-add,hello
+flock /tmp/de0cv.lock \
+    uvx --from git+https://github.com/insper-riscv/Tools riscv-tools \
+    --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add,hello
+```
+
+| Expected output | Common error and cause |
+| :--- | :--- |
+| `arithmetic-add: PASS` and `hello: PASS`, with the `PASS` summary of both | `no tohost result after 15.0s` followed by `soft restart` and `plain reprogram`, when the `.sof` was not programmed first (`minhaplaca_program.sh`) or when the board has the bitstream of another platform |
+| | `no tohost result` with the right board, when the `config.yaml` of the platform inherits `flash_image` from `de0-cv`: the program goes to the FLASH with the bank header (first word `0x52564946`) and the boot, which jumps straight to `0x1000`, does not run it. `external-data` already carries `flash_image: null` |
+| | `Can't scan JTAG chain`, from compiling and programming in different shells (guide [placa.md](placa.md)) |
 
 ### 10.6. Timing report
 
-After the compilation, the Timing Analyzer report is at `output_files/<platform>.sta.rpt`. The numbers of interest are the Fmax of each clock and the worst setup and hold slack. A negative setup slack indicates a path longer than the clock period. To list the critical paths, use `riscv-tools timing-paths` in the folder of the compiled project.
+After the compilation, the Timing Analyzer report is in `output_files/<platform>.sta.rpt`, and the summary in `output_files/<platform>.sta.summary`. The numbers of interest are the worst setup and hold slack of each clock. To list the critical paths of each domain, run `timing-paths` at the root of the clone, with the `config.yaml` of the platform and the project already compiled.
+
+```bash
+riscv-tools --config src/cyclone-v/minhaplaca/config.yaml timing-paths --npaths 2
+```
+
+| Expected output | Common error and cause |
+| :--- | :--- |
+| A Markdown table with one path per row: clock, source, destination, width, slack and delay. In `external-data` the core clock (`general[3]`, 50 MHz) has positive slack and the SDRAM clock (`general[0]`, 143 MHz) has the small known violation of about -0.74 ns on the `DRAM_DQ` path, described in [timing/core-novo.md](../platform/timing/core-novo.md) | `quartus_sta failed` with `Fitter (quartus_fit) failed or was not run`, from running before the complete compilation |
+
+A negative setup slack indicates a path longer than the clock period. The result changes from seed to seed, and the argument of `<platform>_synth.tcl` chooses the seed.
 
 ## 11. Add a new peripheral
 
@@ -975,7 +1127,7 @@ In a pull request from someone outside the project, the CI only starts after a m
 | :--- | :--- |
 | `reserved stdout ... is not inside a RAM region` | The reserved words ended up outside the RAM after changing the size or the base |
 | `generated files are out of date` | The `platform.yaml` changed without running `generate-memory-map` |
-| `cannot find in top entity generic 'has_e'` | The simulated top does not declare the twelve `has_*` generics |
+| `cannot find in top entity generic 'has_e'` | The simulated top does not declare the thirteen `has_*` generics |
 | `timed out after ... cycles without a result` | The `rv32_platform.h` header of the test project has the `tohost` of another platform, or the BOOT_MEMORY does not jump to the start of the ROM |
 | `rv32_test.h: No such file or directory` | `generate-header` did not run for the platform configuration |
 | `unit "..." not found` | A source is missing in the `ghdl` list, or the list is out of order |
