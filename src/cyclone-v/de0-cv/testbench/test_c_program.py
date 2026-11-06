@@ -137,6 +137,8 @@ SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
 # (UART_SLOT), the moment the program is ready to read.
 UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
 UART_SLOT = int(os.environ.get("UART_SLOT", "4"))
+# the entry of the program of bank A (RV32_BANK_A_ENTRY of flash_banks.h)
+PROGRAM_ENTRY = 0x1100
 
 
 def script_path(variable: str, name: str) -> Path | None:
@@ -193,7 +195,7 @@ async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
 
 
 async def wait_for_program(dut: Any, stop: list[bool]) -> None:
-    """Wait until the core first accesses the UART slot.
+    """Wait until the core first accesses the UART slot or enters a program.
 
     Returns at once without UART_START_ON_ACCESS, and when told to stop.
     """
@@ -201,6 +203,10 @@ async def wait_for_program(dut: Any, stop: list[bool]) -> None:
     while UART_START_ON_ACCESS and not stop[0]:
         try:
             if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_SLOT & 1:
+                return
+            # a program that writes first would lose that byte to the
+            # console still starting: start when the boot ROM jumps in
+            if int(dut.if_addr.value) >= PROGRAM_ENTRY:
                 return
         except ValueError:
             pass  # undefined before the first access
