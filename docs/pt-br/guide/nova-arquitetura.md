@@ -691,25 +691,61 @@ O primeiro comando só sintetiza e confere que os caminhos e as entidades resolv
 
 | Saída esperada | Erro comum e causa |
 | :--- | :--- |
-| `Analysis & Synthesis was successful. 0 errors` | `design library "work" does not contain primary unit ...`, por faltar um arquivo no `.qsf` (um `sdram_jtag_shell.vhd` de `../de0-cv/`, por exemplo) |
-| `output_files/minhaplaca.sof` depois da compilação completa | `Can't scan JTAG chain` no programador, por compilar e programar em shells diferentes |
+| `Quartus Prime Analysis & Synthesis was successful. 0 errors` no primeiro comando, e `Quartus Prime Shell was successful. 0 errors` ao fim do segundo | `design library "work" does not contain primary unit ...`, por faltar um arquivo no `.qsf` (um `sdram_jtag_shell.vhd` de `../de0-cv/`, por exemplo) |
+| `output_files/minhaplaca.sof` depois da compilação completa (cerca de 5 minutos em máquina livre) e `Configuration succeeded -- 1 device(s) configured` do programador | `Can't scan JTAG chain` no programador, por compilar e programar em shells diferentes |
 
-### 10.5. Programas e certificação na placa
+### 10.5. Programas na placa
 
-Com o bitstream programado, o `Tests` escreve cada programa na BOOT_MEMORY e na FLASH por JTAG e confere o resultado, sem recompilar a FPGA. A configuração da placa no `Tests` é gerada como no passo 8.3, a partir do `config.yaml` da plataforma de placa.
+Com o bitstream programado, o `Tests` escreve cada programa na FLASH por JTAG e confere o resultado, sem recompilar a FPGA. No clone do `Tests`, o submódulo `Insper-RISC-V` aponta para o commit que tem a plataforma (passo 8.3). O cabeçalho dos programas vem da pasta `include-sdram` copiada, porque a `minhaplaca` herda o mapa da `external-data`, com a RAM na SDRAM em `0x40000000`.
 
 ```bash
+cp -r tools/riscv_build/include-sdram tools/riscv_build/include-minhaplaca
+echo "tools/riscv_build/include-minhaplaca/rv32_test.h" >> .gitignore
 riscv-tools platform sync --prefix Insper-RISC-V \
     --source Insper-RISC-V/src/cyclone-v/minhaplaca/config.yaml \
     --output tools/riscv_build/config.platform-minhaplaca.yaml
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add
 ```
 
-O `config.minhaplaca.yaml` estende o arquivo gerado, como no passo 8.3, com o `include_dir` da plataforma. O `certify-board` roda o ACT4 do perfil escolhido na placa, com a configuração `config.flash-board-<perfil>.yaml` do repositório `Certification`.
+Crie `tools/riscv_build/config.minhaplaca.yaml` com o conteúdo abaixo.
+
+```yaml
+extends: config.platform-minhaplaca.yaml
+paths:
+  include_dir: tools/riscv_build/include-minhaplaca
+  build_dir: build-minhaplaca
+  c_dir: c-sdram
+  asm_dir: asm
+```
+
+Compile os programas para o formato da FLASH (dentro da imagem `dev_tools`), e rode-os no host, que tem o Quartus e cabo da placa. O `riscv-tools` do host vem do `Tools` e o `flock` impede que outra pessoa use a placa no meio do teste.
+
+```bash
+riscv-tools --config tools/riscv_build/config.minhaplaca.yaml generate-header
+riscv-tools --config tools/riscv_build/config.minhaplaca.yaml compile --emit mif --only arithmetic-add,hello
+flock /tmp/de0cv.lock \
+    uvx --from git+https://github.com/insper-riscv/Tools riscv-tools \
+    --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add,hello
+```
+
+| Saída esperada | Erro comum e causa |
+| :--- | :--- |
+| `arithmetic-add: PASS` e `hello: PASS`, com o resumo `PASS` dos dois | `no tohost result after 15.0s` seguido de `soft restart` e `plain reprogram`, quando o `.sof` não foi programado antes (`minhaplaca_program.sh`) ou quando a placa tem o bitstream de outra plataforma |
+| | `no tohost result` com a placa certa, quando o `config.yaml` da plataforma herda `flash_image` da `de0-cv`: o programa vai à FLASH com o cabeçalho de banco (primeira palavra `0x52564946`) e o boot, que salta direto para `0x1000`, não o executa. A `external-data` já traz `flash_image: null` |
+| | `Can't scan JTAG chain`, por compilar e programar em shells diferentes (guia [placa.md](placa.md)) |
 
 ### 10.6. Relatório de tempo
 
-Depois da compilação, o relatório do Timing Analyzer fica em `output_files/<plataforma>.sta.rpt`. Os números de interesse são o Fmax de cada clock e o pior slack de setup e de hold. Um slack negativo de setup indica um caminho mais longo que o período do clock. Para listar os caminhos críticos, use o `riscv-tools timing-paths` na pasta do projeto compilado.
+Depois da compilação, o relatório do Timing Analyzer fica em `output_files/<plataforma>.sta.rpt`, e o resumo em `output_files/<plataforma>.sta.summary`. Os números de interesse são o pior slack de setup e de hold de cada clock. Para listar os caminhos críticos de cada domínio, rode o `timing-paths` na raiz do clone, com o `config.yaml` da plataforma e o projeto já compilado.
+
+```bash
+riscv-tools --config src/cyclone-v/minhaplaca/config.yaml timing-paths --npaths 2
+```
+
+| Saída esperada | Erro comum e causa |
+| :--- | :--- |
+| Uma tabela Markdown com um caminho por linha: clock, origem, destino, largura, slack e atraso. Na `external-data` o clock do núcleo (`general[3]`, 50 MHz) tem slack positivo e o clock da SDRAM (`general[0]`, 143 MHz) tem a violação pequena e conhecida de cerca de -0,74 ns no caminho `DRAM_DQ`, descrita em [timing/core-novo.md](../platform/timing/core-novo.md) | `quartus_sta failed` com `Fitter (quartus_fit) failed or was not run`, por rodar antes da compilação completa |
+
+Um slack negativo de setup indica um caminho mais longo que o período do clock. O resultado muda de semente para semente, e o argumento do `<plataforma>_synth.tcl` escolhe a semente.
 
 ## 11. Adicionar um periférico novo
 
