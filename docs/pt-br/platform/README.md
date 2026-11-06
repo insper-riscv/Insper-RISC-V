@@ -1,10 +1,11 @@
 # Plataformas
 
-Uma plataforma liga o núcleo, as memórias e os periféricos em algo que executa. Este repositório tem quatro.
+Uma plataforma liga o núcleo, as memórias e os periféricos em algo que executa. Este repositório tem cinco.
 
 | Plataforma | Caminho | Descrição |
 | :--- | :--- | :--- |
 | [de0-cv](de0-cv.md) | `src/cyclone-v/de0-cv/` | A placa DE0-CV (Cyclone V), com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches |
+| [external-data](external-data.md) | `src/cyclone-v/external-data/` | A placa DE0-CV, com a BOOT_ROM e a FLASH de duas portas dentro da FPGA e a SDRAM atrás da cache de dados |
 | [internal-mem](internal-mem.md) | `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_ROM, FLASH e RAM dentro da FPGA |
 | [modular](modular.md) | `src/simulation/modular/` | Topo de simulação configurável que cobre os modelos `integrated`, `external-data`, `external-instruction` e `external`, com memórias e caches de tamanho em potência de dois |
 | [template](template.md) | `src/simulation/template/` | Plataforma modelo mínima (RAM e ROM internas, UART sobre JTAG opcional, perfil `rv32i`) que o guia de nova arquitetura copia |
