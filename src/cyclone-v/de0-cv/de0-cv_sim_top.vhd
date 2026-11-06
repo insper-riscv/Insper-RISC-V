@@ -43,6 +43,8 @@ entity rv32im_sdram_flash_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Interrupcoes de maquina: o CLINT e o controlador externo na janela de periféricos, e as tres linhas no core.
 	  HAS_INTERRUPTS : boolean := true;
+	  -- Interrupcao de estouro de contador (Sscofpmf): exige Zihpm e as interrupcoes.
+	  HAS_SSCOFPMF : boolean := work.de0_cv_map_pkg.HAS_SSCOFPMF;
 	  -- Ciclos de clock do core por incremento do mtime do CLINT.
 	  CLINT_TICK_CYCLES : positive := work.de0_cv_map_pkg.CLINT_TICK_CYCLES;
 	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
@@ -242,7 +244,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), has_sscofpmf => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

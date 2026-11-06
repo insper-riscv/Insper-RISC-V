@@ -296,7 +296,8 @@ begin
 			has_zicond   => HAS_ZICOND,
 			has_zihintntl   => HAS_ZIHINTNTL,
 			has_zihintpause => HAS_ZIHINTPAUSE,
-			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM)
+			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
+			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,

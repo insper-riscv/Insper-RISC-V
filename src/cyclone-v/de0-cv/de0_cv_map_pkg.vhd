@@ -38,6 +38,8 @@ package de0_cv_map_pkg is
 	constant HAS_ZICCLSM         : boolean  := true;
 	-- A extensão Interrupts está no perfil.
 	constant HAS_INTERRUPTS      : boolean  := true;
+	-- A extensão Sscofpmf está no perfil.
+	constant HAS_SSCOFPMF        : boolean  := true;
 	-- Expoente do tamanho da BOOT_MEMORY, em [0, 2**BOOT_MEMORY_BITS).
 	constant BOOT_MEMORY_BITS       : natural  := 12;
 	-- Tamanho da BOOT_MEMORY, em bytes.

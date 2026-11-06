@@ -4,7 +4,7 @@
 
 ## 1. Visão geral
 
-O núcleo recebe três linhas de interrupção de máquina, em nível, no domínio de clock do núcleo e sem sincronizador.
+O núcleo recebe três linhas de interrupção de máquina, em nível, no domínio de clock do núcleo e sem sincronizador. Com a extensão Sscofpmf (`extras: [Sscofpmf]`, ligada na `de0-cv`) o núcleo ainda gera, por dentro, a interrupção 13 de estouro de contador (`LCOFIP` no bit 13 do `mip`), que não tem linha externa.
 
 | Linha | Origem | Bit do `mip` |
 | :--- | :--- | :--- |
