@@ -21,18 +21,21 @@ RAM_BASE = 0x100000
 EXTERNAL_DATA_INDEX = 0
 
 
-async def start(dut: Any) -> None:
+async def start(dut: Any, reset_cycles: int = 5) -> None:
     """Start the clock and release the reset.
 
     Parameters
     ----------
     dut : Any
         The device under test.
+    reset_cycles : int, optional
+        Cycles of the base clock with the reset held; the core runs at a
+        third of it.
     """
     cocotb.start_soon(Clock(dut.i_clk, 10, unit="ns").start())
     dut.i_rst.value = 1
     dut.i_dbg_word_addr.value = 0
-    await ClockCycles(dut.i_clk, 5)
+    await ClockCycles(dut.i_clk, reset_cycles)
     dut.i_rst.value = 0
 
 

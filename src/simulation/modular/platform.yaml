@@ -29,9 +29,21 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# The window of the peripherals (0x80000000 and above) exists, but no device is wired: the models only
-# differ in where the ROM and the RAM sit.
-peripherals: []
+# The window of the peripherals (0x80000000 and above): the CLINT (64 KiB slot) and the controller of the external
+# interrupt lines, in the four models. Their outputs are the MTIP, MSIP and MEIP of the core, which only takes them
+# with Zicsr; the default profile has none, so a test that runs the interrupts turns has_zicsr on.
+peripherals:
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: EXT_IRQ, base: 0xF0000000, id: 7}
+
+# The mtime of the CLINT counts at mtime_hz, one tick per clock cycle of the core in the simulation, and is
+# independent of the CSR time of Zicntr.
+interrupts:
+  clock_hz: 10000000
+  mtime_hz: 10000000
+
+# Extensions outside the matrix of the Core that the platform turns on (HAS_INTERRUPTS of the package).
+extras: [Interrupts]
 
 # The default memory model: both memories inside the chip, no cache.
 memory:

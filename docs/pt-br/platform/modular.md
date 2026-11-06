@@ -28,6 +28,8 @@ O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | Janela externa e periféricos | `0x40000000` | | `ext_base_kib`, `periph_base_kib` |
 
+Nos quatro modelos a janela de periféricos tem o CLINT (id 6, `0xE0000000`) e o controlador de interrupção externa (id 7, `0xF0000000`), cujas saídas são as linhas MTIP, MSIP e MEIP do núcleo, que as habilita com `has_zicsr` (o perfil padrão não o tem). O `mtime` do CLINT conta um tick por ciclo do núcleo (`interrupts` do `platform.yaml`) e é independente do CSR `time`.
+
 Os limites estão em KiB. A BOOT_ROM de cada modelo salta para o início da ROM. O `config.yml` da plataforma que usa o topo é quem escolhe esses valores.
 
 ## 4. Tamanhos
@@ -59,3 +61,5 @@ O GHDL aloca os arrays das memórias na pilha, então a simulação de memórias
 ## 6. Verificação
 
 `tests/python/runner.py` roda um programa mínimo em cada modelo (`ModularIntegrated`, `ModularExternalData`, `ModularExternalInstruction` e `ModularExternal`). O programa guarda `0x5A` na base da RAM, lê de volta, soma 1 e guarda o resultado na palavra seguinte, e o teste confere as duas palavras na RAM interna ou no chip externo, conforme o modelo. Os quatro modelos usam as mesmas duas imagens, `boot_to_rom.hex` e `rom_program.hex`, geradas por `tests/python/gen_modular_images.py`.
+
+O `ModularInterrupts` roda o modelo `integrated` com `has_zicsr` ligado e a imagem `rom_irq_program.hex`: o programa escreve o maior valor no `mtimecmp`, lê o `mip` (MTIP baixo), arma o `mtimecmp` poucos ticks à frente do `mtime` e espera o bit MTIP do `mip`. O `mtimecmp` do CLINT é limpo de forma síncrona e o gerador de clock para os clocks durante o reset, então o programa o escreve antes de ler o `mip`.

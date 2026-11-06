@@ -70,7 +70,7 @@ end entity ext_bus_system;
 
 architecture rtl of ext_bus_system is
   -- Deslocamento de palavra dentro do periférico.
-  signal p_addr   : std_logic_vector(7 downto 0);
+  signal p_addr   : std_logic_vector(13 downto 0);
   -- Dado de escrita aos periféricos.
   signal p_wdata  : std_logic_vector(31 downto 0);
   -- Habilita de bytes da escrita aos periféricos.
@@ -96,7 +96,7 @@ begin
 
   u_uart : entity work.jtag_uart
     port map (
-      i_clk => i_clk, i_rst => i_rst, i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
+      i_clk => i_clk, i_rst => i_rst, i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
       o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4),
       i_tck => i_jtag_tck, i_tdi => i_jtag_tdi, o_tdo => o_jtag_tdo, i_ir_in => i_jtag_ir_in,
       i_state_cdr => i_jtag_state_cdr, i_state_sdr => i_jtag_state_sdr,

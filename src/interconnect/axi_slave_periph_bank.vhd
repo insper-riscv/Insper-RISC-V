@@ -1,8 +1,8 @@
 -- =============================================================================
 -- Escravo AXI4 na frente da janela de periféricos do ext_interconnect
 --
--- Oito periféricos, cada um com uma janela de 256 palavras, selecionados pelos
--- bits 30:28 do endereço, a palavra dentro dele pelos bits 9:2. O lado do
+-- Oito periféricos, cada um com uma janela de 16384 palavras, selecionados pelos
+-- bits 30:28 do endereço, a palavra dentro dele pelos bits 15:2 (janela de 64 KiB). O lado do
 -- periférico é o que o ext_interconnect dá: p_we ou p_re do periférico
 -- selecionado é um pulso de um clock por acesso, com p_addr, p_wdata e p_byteena
 -- ao lado, e o dado lido do periférico (p_rdata, 32 bits por slot, o slot i nos
@@ -82,7 +82,7 @@ entity axi_slave_periph_bank is
     o_s_rlast     : out std_logic;
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico.
-    o_p_addr      : out std_logic_vector(7 downto 0);
+    o_p_addr      : out std_logic_vector(13 downto 0);
     -- Janela de periféricos: dado de escrita.
     o_p_wdata     : out std_logic_vector(31 downto 0);
     -- Janela de periféricos: habilita de bytes da escrita.
@@ -137,7 +137,7 @@ begin
   o_s_wready  <= '1' when st = ST_WBEAT else '0';
 
   id        <= to_integer(unsigned(addr_l(30 downto 28)));
-  o_p_addr    <= addr_l(9 downto 2);
+  o_p_addr    <= addr_l(15 downto 2);
   o_p_wdata   <= wdata_l;
   o_p_byteena <= strb_l;
 

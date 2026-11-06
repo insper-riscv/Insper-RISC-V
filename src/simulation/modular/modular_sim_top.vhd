@@ -99,7 +99,12 @@ entity modular_sim_top is
     -- Zifencei no núcleo (FENCE.I invalida a cache de instruções); falso mantém o NOP.
     has_zifencei        : boolean := HAS_ZIFENCEI;
     -- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-    has_zicclsm         : boolean := HAS_ZICCLSM
+    has_zicclsm         : boolean := HAS_ZICCLSM;
+    -- Interrupções de máquina: o CLINT e o controlador externo ficam na janela de periféricos e as
+    -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
+    has_interrupts      : boolean := HAS_INTERRUPTS;
+    -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
+    clint_tick_cycles   : positive := CLINT_TICK_CYCLES
   );
   port (
     -- Clock base; um gerador o divide por três para os estágios do núcleo.
@@ -170,6 +175,26 @@ architecture behaviour of modular_sim_top is
   signal ram_re_gated  : std_logic;
   -- Escrita na RAM habilitada pelo núcleo e pelo enable geral ('1' = escreve).
   signal ram_we_gated  : std_logic;
+
+  -- Interrupções de máquina do núcleo: timer (MTIP) e software (MSIP) do CLINT, externa (MEIP) do controlador.
+  signal irq_timer     : std_logic := '0';
+  -- Interrupção de software de máquina (MSIP), saída do CLINT.
+  signal irq_software  : std_logic := '0';
+  -- Interrupção externa de máquina (MEIP), saída do controlador de interrupção externa.
+  signal irq_external  : std_logic := '0';
+
+  -- Janela de periféricos: deslocamento de palavra dentro do periférico (64 KiB por janela).
+  signal p_addr        : std_logic_vector(13 downto 0);
+  -- Janela de periféricos: dado de escrita.
+  signal p_wdata       : std_logic_vector(31 downto 0);
+  -- Janela de periféricos: habilita de bytes da escrita.
+  signal p_byteena     : std_logic_vector(3 downto 0);
+  -- Janela de periféricos: pulso de escrita, um bit por periférico.
+  signal p_we          : std_logic_vector(7 downto 0);
+  -- Janela de periféricos: pulso de leitura, um bit por periférico.
+  signal p_re          : std_logic_vector(7 downto 0);
+  -- Janela de periféricos: dados lidos, 32 bits por periférico.
+  signal p_rdata       : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 
   -- Sinais do núcleo: barramento externo de dados.
   signal sdram_addr    : std_logic_vector(31 downto 0);
@@ -407,7 +432,8 @@ begin
       has_zimop    => has_zimop,
       has_zicond   => has_zicond,
       has_zihintntl   => has_zihintntl,
-      has_zihintpause => has_zihintpause
+      has_zihintpause => has_zihintpause,
+      has_interrupts  => has_interrupts and has_zicsr
     )
     port map (
       o_trap           => open,
@@ -439,6 +465,9 @@ begin
       i_sdram_ready    => sdram_ready,
       o_mem_advance    => mem_advance,
       i_hpm_ext_events => hpm_ext_events,
+      i_irq_software   => irq_software,
+      i_irq_timer      => irq_timer,
+      i_irq_external   => irq_external,
       i_ic_data        => ic_data,
       i_ic_ready       => ic_ready,
       o_ic_sel         => ic_sel,
@@ -488,37 +517,76 @@ begin
       );
   end generate g_ram_internal;
 
-  -- Dados externos: a interconexão separa a janela de periféricos, a cache de dados fica entre o
-  -- núcleo e a memória.
-  g_data_external : if ram_external generate
+  -- Janela de periféricos: a interconexão separa o que é periférico (bit 31) do que é memória. Ela existe nos
+  -- quatro modelos; com a RAM interna, o lado da memória não tem dispositivo e responde pronto com zero.
+  u_interconnect : entity work.ext_interconnect
+    port map (
+      i_clk         => pll_clk_idexmem,
+      i_rst         => i_rst,
+      i_addr        => sdram_addr,
+      i_wdata       => sdram_wdata,
+      i_byteena     => sdram_byteena,
+      i_rden        => sdram_rden,
+      i_wren        => sdram_wren,
+      i_mem_advance => mem_advance,
+      o_ready       => sdram_ready,
+      o_rdata       => sdram_rdata,
+      o_m_addr      => m_addr,
+      o_m_wdata     => m_wdata,
+      o_m_byteena   => m_byteena,
+      o_m_rden      => m_rden,
+      o_m_wren      => m_wren,
+      i_m_ready     => m_ready,
+      i_m_rdata     => m_rdata,
+      o_p_addr      => p_addr,
+      o_p_wdata     => p_wdata,
+      o_p_byteena   => p_byteena,
+      o_p_we        => p_we,
+      o_p_re        => p_re,
+      i_p_rdata     => p_rdata
+    );
+
+  g_no_data_port : if not ram_external generate
   begin
-    u_interconnect : entity work.ext_interconnect
+    m_ready <= '1';
+    m_rdata <= (others => '0');
+  end generate g_no_data_port;
+
+  -- CLINT e controlador de interrupção externa, no domínio de clock do núcleo (sem sincronizador).
+  g_interrupts : if has_interrupts generate
+  begin
+    u_clint : entity work.clint
+      generic map (tick_cycles => clint_tick_cycles)
       port map (
-        i_clk         => pll_clk_idexmem,
-        i_rst         => i_rst,
-        i_addr        => sdram_addr,
-        i_wdata       => sdram_wdata,
-        i_byteena     => sdram_byteena,
-        i_rden        => sdram_rden,
-        i_wren        => sdram_wren,
-        i_mem_advance => mem_advance,
-        o_ready       => sdram_ready,
-        o_rdata       => sdram_rdata,
-        o_m_addr      => m_addr,
-        o_m_wdata     => m_wdata,
-        o_m_byteena   => m_byteena,
-        o_m_rden      => m_rden,
-        o_m_wren      => m_wren,
-        i_m_ready     => m_ready,
-        i_m_rdata     => m_rdata,
-        o_p_addr      => open,
-        o_p_wdata     => open,
-        o_p_byteena   => open,
-        o_p_we        => open,
-        o_p_re        => open,
-        i_p_rdata     => (others => '0')
+        i_clk          => pll_clk_idexmem,
+        i_rst          => i_rst,
+        i_data_in      => p_wdata,
+        i_address      => p_addr,
+        i_write        => p_we(CLINT_ID),
+        i_read         => p_re(CLINT_ID),
+        o_data_out     => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
+        o_irq_timer    => irq_timer,
+        o_irq_software => irq_software
       );
 
+    -- Nenhum periférico do topo gera linha de interrupção ainda: as linhas ficam em zero.
+    u_ext_irq : entity work.ext_irq_controller
+      port map (
+        i_clk          => pll_clk_idexmem,
+        i_rst          => i_rst,
+        i_irq_lines    => (others => '0'),
+        i_data_in      => p_wdata,
+        i_address      => p_addr(1 downto 0),
+        i_write        => p_we(EXT_IRQ_ID),
+        i_read         => p_re(EXT_IRQ_ID),
+        o_data_out     => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
+        o_irq_external => irq_external
+      );
+  end generate g_interrupts;
+
+  -- Dados externos: a cache de dados fica entre o núcleo e a memória.
+  g_data_external : if ram_external generate
+  begin
     u_dcache : entity work.dcache
       generic map (
         size_bits     => dcache_size_bits,

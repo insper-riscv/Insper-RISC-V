@@ -22,8 +22,13 @@ from tests.python.utils.rv32_asm import (
     T0,
     T1,
     T2,
+    T3,
+    T4,
     X0,
     addi,
+    andi,
+    beq,
+    csrrs,
     hex_lines,
     jal,
     lui,
@@ -39,6 +44,12 @@ RAM_BASE = MAP["RAM.base"]
 ROM_BASE_WORDS = ROM_BASE // 4
 RAM_HI20 = RAM_BASE >> 12
 FIRST = 0x5A
+CLINT_BASE = MAP["CLINT.base"]
+MTIMECMP = CLINT_BASE + 0x4000  # mtimecmp do CLINT (metade baixa)
+MTIME = CLINT_BASE + 0xBFF8  # mtime do CLINT (metade baixa)
+CSR_MIP = 0x344
+MTIP = 0x80  # bit 7 do mip
+IRQ_DELAY = 40  # ciclos do mtime até o MTIP
 
 
 def body(base_hi20: int, base_low: int) -> list[int]:
@@ -70,6 +81,54 @@ def body(base_hi20: int, base_low: int) -> list[int]:
     return words
 
 
+def irq_body(base_hi20: int) -> list[int]:
+    """Return the program that raises MTIP in the CLINT and reads it in mip.
+
+    The mtimecmp of the CLINT is not cleared by the reset of this top (its
+    clear is synchronous and the clocks stop in reset), so the program
+    first writes the largest value to it, reads mip at RAM+8 (MTIP low),
+    arms mtimecmp to IRQ_DELAY ticks after the current mtime, polls mip
+    until MTIP shows up and stores the masked bit at RAM+0 and 0x5B at
+    RAM+4.
+
+    Parameters
+    ----------
+    base_hi20 : int
+        Upper 20 bits of the data base address.
+
+    Returns
+    -------
+    list of int
+        The instructions, ending in a loop on itself.
+    """
+    nop = addi(X0, X0, 0)
+    return [
+        lui(T0, MTIMECMP >> 12),
+        lui(T4, base_hi20),
+        lui(T1, (MTIME + 0x800) >> 12),
+        addi(T2, X0, -1),
+        sw(T2, T0, 0),
+        sw(T2, T0, 4),
+        nop,
+        nop,
+        nop,
+        nop,
+        csrrs(T3, CSR_MIP, X0),
+        sw(T3, T4, 8),
+        lw(T2, T1, MTIME - (((MTIME + 0x800) >> 12) << 12)),
+        addi(T2, T2, IRQ_DELAY),
+        sw(X0, T0, 4),
+        sw(T2, T0, 0),
+        csrrs(T3, CSR_MIP, X0),
+        andi(T3, T3, MTIP),
+        beq(T3, X0, -8),
+        sw(T3, T4, 0),
+        addi(T1, X0, FIRST + 1),
+        sw(T1, T4, 4),
+        jal(X0, 0),
+    ]
+
+
 def write(name: str, words: list[int]) -> None:
     """Write one image.
 
@@ -92,6 +151,7 @@ def main() -> None:
     """
     write("boot_to_rom.hex", [jal(X0, ROM_BASE_WORDS * 4)])
     write("rom_program.hex", [0] * ROM_BASE_WORDS + body(RAM_HI20, 0))
+    write("rom_irq_program.hex", [0] * ROM_BASE_WORDS + irq_body(RAM_HI20))
 
 
 if __name__ == "__main__":

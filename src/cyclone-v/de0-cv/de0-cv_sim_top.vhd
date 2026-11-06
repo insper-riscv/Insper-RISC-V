@@ -41,6 +41,10 @@ entity rv32im_sdram_flash_sim_test is
 	  HAS_ZIFENCEI : boolean := false;
 	  -- Acesso desalinhado a memoria principal executado em hardware (Zicclsm).
 	  HAS_ZICCLSM : boolean := true;
+	  -- Interrupcoes de maquina: o CLINT e o controlador externo na janela de periféricos, e as tres linhas no core.
+	  HAS_INTERRUPTS : boolean := true;
+	  -- Ciclos de clock do core por incremento do mtime do CLINT.
+	  CLINT_TICK_CYCLES : positive := work.de0_cv_map_pkg.CLINT_TICK_CYCLES;
 	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
 	  HAS_ZIHPM : boolean := false;
 	  -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
@@ -140,11 +144,13 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal m_rden    : std_logic;
 	signal m_wren    : std_logic;
 	signal m_ready   : std_logic;
-	signal p_addr    : std_logic_vector(7 downto 0);
+	signal p_addr    : std_logic_vector(13 downto 0);
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	signal p_byteena : std_logic_vector(3 downto 0);
 	signal p_we, p_re : std_logic_vector(7 downto 0);
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+	-- the three machine interrupt lines of the core
+	signal irq_timer, irq_software, irq_external : std_logic := '0';
 
 	signal pll_clk_if     : std_logic;
 	signal pll_clk_idexmem: std_logic;
@@ -213,7 +219,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE)
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM))
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -250,6 +256,9 @@ begin
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
+			i_irq_software => irq_software,
+			i_irq_timer    => irq_timer,
+			i_irq_external => irq_external,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -357,17 +366,40 @@ begin
 	UART : entity work.jtag_uart
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
 			o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4),
 			i_tck => UART_TCK, i_tdi => UART_TDI, o_tdo => UART_TDO, i_ir_in => UART_IR_IN,
 			i_state_cdr => UART_STATE_CDR, i_state_sdr => UART_STATE_SDR,
 			i_state_udr => UART_STATE_UDR, i_state_uir => UART_STATE_UIR
 		);
 
+	-- The CLINT (msip, mtimecmp, mtime) and the controller of the external interrupt lines, in the clock domain of
+	-- the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. No peripheral of this
+	-- top raises an interrupt line yet, so the lines of EXT_IRQ stay at zero.
+	g_irq : if HAS_INTERRUPTS generate
+	CLINT : entity work.clint
+		generic map (tick_cycles => CLINT_TICK_CYCLES)
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_data_in => p_wdata, i_address => p_addr, i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
+			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
+			o_irq_timer => irq_timer, o_irq_software => irq_software
+		);
+
+	EXT_IRQ : entity work.ext_irq_controller
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_irq_lines => (others => '0'), i_data_in => p_wdata, i_address => p_addr(1 downto 0),
+			i_write => p_we(EXT_IRQ_ID), i_read => p_re(EXT_IRQ_ID),
+			o_data_out => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
+			o_irq_external => irq_external
+		);
+	end generate g_irq;
+
 	DISPLAY : entity work.seg_display
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(5), i_re => p_re(5),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(5), i_re => p_re(5),
 			o_rdata => p_rdata(32 * 5 + 31 downto 32 * 5),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
 			i_state_cdr => '0', i_state_sdr => '0', i_state_udr => '0', i_state_uir => '0',
