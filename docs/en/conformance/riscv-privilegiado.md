@@ -269,7 +269,7 @@ The manual strongly recommends that PMA violations be precise exceptions, "where
 | Load to an address outside the map | 5 | Effective address | Bit registered in EX/MEM, checked in the MEM stage |
 | Store to an address outside the map or into the ROM | 7 | Effective address | The same write bit, registered in EX/MEM |
 
-The validity of the data address leaves EX with the classification `reg_ex_mem` already registers, and the MEM stage only checks the bit, so the path the F front shortened gains no comparator. The access fault beats misalignment, and the fetch fault beats the illegal instruction (Table 17). On platforms without the extra the Core raises no causes 1, 5 and 7, and the validity bit is constant and not synthesized.
+The validity of the data address leaves EX with the classification `reg_ex_mem` already registers, and the MEM stage only checks the bit, so the path the F front shortened gains no comparator. The misalignment the hardware does not execute beats the access fault (the optional order of Table 17), and the fetch fault beats the illegal instruction. On platforms without the extra the Core raises no causes 1, 5 and 7, and the validity bit is constant and not synthesized.
 
 ## 15. Out of scope
 

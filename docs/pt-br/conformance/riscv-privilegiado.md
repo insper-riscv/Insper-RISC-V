@@ -269,7 +269,7 @@ O manual recomenda com ênfase que as violações de PMA sejam exceções precis
 | Load para endereço fora do mapa | 5 | Endereço efetivo | Bit registrado em EX/MEM, conferido no estágio MEM |
 | Store para endereço fora do mapa ou na ROM | 7 | Endereço efetivo | O mesmo bit de escrita, registrado em EX/MEM |
 
-A validade do endereço de dados sai de EX junto da classificação que o `reg_ex_mem` já registra, e o estágio MEM só confere o bit, de modo que o caminho que a frente F encurtou não ganha comparador. A falha de acesso vence o desalinhamento, e a busca vence a instrução ilegal (Tabela 17). Nas plataformas sem o extra o Core não gera as causas 1, 5 e 7, e o bit de validade é constante e não é sintetizado.
+A validade do endereço de dados sai de EX junto da classificação que o `reg_ex_mem` já registra, e o estágio MEM só confere o bit, de modo que o caminho que a frente F encurtou não ganha comparador. O desalinhamento que o hardware não executa vence a falha de acesso (a ordem opcional da Tabela 17), e a busca vence a instrução ilegal. Nas plataformas sem o extra o Core não gera as causas 1, 5 e 7, e o bit de validade é constante e não é sintetizado.
 
 ## 15. Fora do escopo
 
