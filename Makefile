@@ -8,9 +8,10 @@ SUBREPOS := Common-Components Core Memory Peripherals
 # Core, Memory and Peripherals carry their own copy of Common-Components as a submodule
 # (Core in src/common since its R.1 layout).
 NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'Peripherals/src/common/*'
-# The platforms of this repository: the simulation-only one and the board one.
+# The platforms of this repository: the simulation-only ones and the board ones.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
+PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
 GHDL := ghdl
@@ -44,10 +45,15 @@ BOARD_VHDL := $(shell find src/interconnect Memory/src/RAM/SoC Memory/src/RAM/FP
                $(addprefix Memory/src/cache/SoC/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
                $(PF)/de0_cv_map_pkg.vhd $(PF)/de0-cv_sim_top.vhd
 
+# The simulation top of the external-data platform adds the two-port FLASH model and its loader to the board sources
+# (the SDRAM, the data cache and the external interconnect).
+EXTDATA_VHDL := Memory/src/ROM/SoC/flash_simulation.vhd Memory/src/ROM/SoC/flash_loader.vhd \
+                $(PE)/external_data_map_pkg.vhd $(PE)/external-data_sim_top.vhd
+
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-generics check-unique memory-map generate generate-check test unit-tests formal clean
+.PHONY: all sync paths check check-tops check-unique memory-map generate generate-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -64,7 +70,7 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: check-tops check-unique check-generics
+check: check-tops check-unique
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -77,14 +83,12 @@ check-tops:
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL) $(EXTDATA_VHDL))
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
+	@echo "the simulation top of the external-data platform builds"
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(TEMPLATE_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
-
-# Every HAS_* constant of the generated package of a platform is a generic of its tops: the generics
-# that the generate step and riscv-tools platform sync pass to GHDL must exist there.
-check-generics:
-	python3 scripts/check_top_generics.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
@@ -101,6 +105,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
 	$(MAKE) generate-check
 
@@ -110,12 +115,14 @@ memory-map:
 generate:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
 
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
 

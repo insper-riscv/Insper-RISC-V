@@ -14,6 +14,12 @@ library altera_mf;
 use altera_mf.altera_mf_components.all;
 
 entity sdram_jtag_shell is
+  generic (
+    -- Índice da instância do Virtual JTAG que o hospedeiro usa para alcançar a porta de depuração.
+    instance_index      : natural := 0;
+    -- "YES" deixa o Quartus escolher o índice livre mais baixo; "NO" fixa o índice em instance_index.
+    auto_instance_index : string  := "YES"
+  );
   port (
     -- Alternância que pede um comando ao mestre de debug.
     o_cmd_tog    : out std_logic;
@@ -68,9 +74,9 @@ begin
   u_vjtag : sld_virtual_jtag
     generic map (
       lpm_type => "sld_virtual_jtag",
-      lpm_hint => "sld_instance_index=0",
-      sld_auto_instance_index => "YES",
-      sld_instance_index => 0,
+      lpm_hint => "sld_instance_index=" & integer'image(instance_index),
+      sld_auto_instance_index => auto_instance_index,
+      sld_instance_index => instance_index,
       sld_ir_width => 2,
       sld_sim_n_scan => 0,
       sld_sim_total_length => 0,
