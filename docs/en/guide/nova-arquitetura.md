@@ -208,7 +208,10 @@ for l in pt-br en; do sed 's/template/exemplo/g' docs/$l/platform/template.md > 
 
 | File | What to add |
 | :--- | :--- |
-| `docs/pt-br/platform/README.md` and `docs/en/platform/README.md` | One line in the table of platforms, with the path and the description |
+| `paths.yaml` | The platform files in the `references` list and the path fields of `config.yaml` |
+| `Makefile` | The variable `P<x> := src/simulation/example`, the lines of `memory-map`, `generate` and `generate-check` and the top elaboration in `check-tops`, which reads the sources from `riscv-tools sources` |
+| `paths.yaml` (`provides`) | The component of the top, with its sources and what it requires; `scripts/generate_sources.py` gains the list file of the platform |
+| `docs/pt-br/platform/` | An `example.md` document and the row in the folder `README.md` table, with the mirror in `docs/en/` |
 
 ```bash
 make paths
@@ -377,12 +380,14 @@ It gathers, for `riscv-tools`, what belongs to the platform. No address or memor
 | `memory_map` | The `platform.yaml`, where the bases, `tohost`, `fromhost` and the profile come from |
 | `paths` | Runtime sources (`_exit.c`, `stdio.c`), `boot_rom.S` and `boot_rom.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
-| `sim.vhdl_sources` | All sources, in dependency order |
+| `sim.vhdl_sources` | All sources, in dependency order, written by `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | The cocotb testbench, `testbench.test_c_program` of the `internal-mem` platform |
 | `sim.parameters` | `BOOT_ROM_FILE` and `ROM_FILE` with the images of each program |
 | `emulator.sources` | `spike_exit.S` |
 
-The `sim.vhdl_sources` list follows the VHDL files of the top. If the top gains a peripheral, its source enters the list before the top. The sources of the core, in dependency order, come from:
+The `sim.vhdl_sources` list is not edited by hand. It comes from the component of the top in the `provides` of the platform `paths.yaml`, which declares the components the top requires, and `make generate-sources` writes it in analysis order. If the top gains a peripheral, its component enters the `requires` of the top and the list is regenerated.
+
+The sources of the core, in dependency order, come from:
 
 ```bash
 riscv-tools --root . sources Core/core
@@ -533,7 +538,7 @@ After the copy, register the platform as in step 4.4, using the `external-data` 
 | File | Content |
 | :--- | :--- |
 | `<platform>.qpf` | The project, with the revision |
-| `<platform>.qsf` | Device, pins, top entity and the list of VHDL, Verilog, IP and SDC sources |
+| `<platform>.qsf` | Device, pins and the list of VHDL and IP sources, written by `make generate-sources` and checked against the disk by `check-paths` |
 | `<platform>.sdc` | The clocks and the input, output and clock domain crossing constraints |
 | `<platform>_assignment_defaults.qdf` | Default assignments of the project |
 | `../de0-cv/pll/` | The PLL IP that generates the core and SDRAM clocks, shared among the DE0-CV platforms |
@@ -545,7 +550,7 @@ After the copy, register the platform as in step 4.4, using the `external-data` 
 
 ### 10.3. Edit the `.qsf` and the `.sdc`
 
-The `.qsf` has a hand-written source list, with paths relative to the platform folder (`../../../Core/src/...`). The sources of the core, in dependency order, come from:
+The `.qsf` has a source list written by `make generate-sources`, with paths relative to the platform folder (`../../../Core/src/...`). The sources of the core, in dependency order, come from:
 
 ```bash
 riscv-tools --root . sources Core/core

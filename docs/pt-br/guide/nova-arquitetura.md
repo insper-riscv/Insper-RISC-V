@@ -208,7 +208,10 @@ for l in pt-br en; do sed 's/template/exemplo/g' docs/$l/platform/template.md > 
 
 | Arquivo | O que acrescentar |
 | :--- | :--- |
-| `docs/pt-br/platform/README.md` e `docs/en/platform/README.md` | Uma linha na tabela de plataformas, com o caminho e a descrição |
+| `paths.yaml` | Os arquivos da plataforma na lista `references` e os campos de caminho do `config.yaml` |
+| `Makefile` | A variável `P<x> := src/simulation/exemplo`, as linhas de `memory-map`, `generate` e `generate-check` e a elaboração do topo em `check-tops`, que lê as fontes do `riscv-tools sources` |
+| `paths.yaml` (`provides`) | O componente do topo, com as fontes e o que ele requer; o `scripts/generate_sources.py` ganha o arquivo de lista da plataforma |
+| `docs/pt-br/platform/` | Um documento `exemplo.md` e a linha na tabela do `README.md` da pasta, com o espelho em `docs/en/` |
 
 ```bash
 make paths
@@ -377,12 +380,14 @@ Ele reúne, para o `riscv-tools`, o que é da plataforma. Nenhum endereço nem t
 | `memory_map` | O `platform.yaml`, de onde vêm as bases, o `tohost`, o `fromhost` e o perfil |
 | `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_rom.S` e `boot_rom.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
-| `sim.vhdl_sources` | Todas as fontes, em ordem de dependência |
+| `sim.vhdl_sources` | Todas as fontes, em ordem de dependência, escritas pelo `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | O testbench cocotb, `testbench.test_c_program` da plataforma `internal-mem` |
 | `sim.parameters` | `BOOT_ROM_FILE` e `ROM_FILE` com as imagens de cada programa |
 | `emulator.sources` | `spike_exit.S` |
 
-A lista `sim.vhdl_sources` acompanha os arquivos de VHDL do topo. Se o topo ganhar um periférico, a fonte dele entra na lista antes do topo. As fontes do núcleo, em ordem de dependência, saem de:
+A lista `sim.vhdl_sources` não se edita à mão. Ela vem do componente do topo no `provides` do `paths.yaml` da plataforma, que declara os componentes que o topo requer, e o `make generate-sources` a escreve na ordem de análise. Se o topo ganhar um periférico, o componente dele entra no `requires` do topo e a lista é regenerada.
+
+As fontes do núcleo, em ordem de dependência, saem de:
 
 ```bash
 riscv-tools --root . sources Core/core
@@ -533,7 +538,7 @@ Depois da cópia, registre a plataforma como no passo 4.4, usando as linhas `ext
 | Arquivo | Conteúdo |
 | :--- | :--- |
 | `<plataforma>.qpf` | O projeto, com a revisão |
-| `<plataforma>.qsf` | Dispositivo, pinos, entidade de topo e a lista de fontes VHDL, Verilog, IP e SDC |
+| `<plataforma>.qsf` | Dispositivo, pinos e a lista de fontes VHDL e IP, escrita pelo `make generate-sources` e conferida contra o disco pelo `check-paths` |
 | `<plataforma>.sdc` | Os clocks e as restrições de entrada, saída e cruzamento de domínio |
 | `<plataforma>_assignment_defaults.qdf` | Atribuições padrão do projeto |
 | `../de0-cv/pll/` | A IP do PLL que gera os clocks do núcleo e da SDRAM, compartilhada entre as plataformas da DE0-CV |
@@ -545,7 +550,7 @@ Depois da cópia, registre a plataforma como no passo 4.4, usando as linhas `ext
 
 ### 10.3. Editar o `.qsf` e o `.sdc`
 
-O `.qsf` tem a lista de fontes escrita à mão, com caminhos relativos à pasta da plataforma (`../../../Core/src/...`). As fontes do núcleo, em ordem de dependência, saem de:
+O `.qsf` tem a lista de fontes escrita pelo `make generate-sources`, com caminhos relativos à pasta da plataforma (`../../../Core/src/...`). As fontes do núcleo, em ordem de dependência, saem de:
 
 ```bash
 riscv-tools --root . sources Core/core

@@ -3,7 +3,7 @@
 # and by `make paths`. Run it before and after moving any file.
 repository: Insper-RISC-V
 references:
-  - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py]}
+  - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py, scripts/generate_sources.py]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
   - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
@@ -127,11 +127,11 @@ provides:
     sources:
       - src/cyclone-v/de0-cv/sdram_jtag_shell.vhd
   de0_cv_sim_top:
-    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display]
+    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/intc]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   de0_cv_top:
-    requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash_store, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell]
+    requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash_store, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell, Peripherals/CLINT, Peripherals/intc]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_top.vhd
   external_data_map:
@@ -151,7 +151,7 @@ provides:
     sources:
       - src/simulation/modular/modular_map_pkg.vhd
   modular_sim_top:
-    requires: [modular_map, ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router]
+    requires: [modular_map, ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/intc]
     sources:
       - src/simulation/modular/modular_sim_top.vhd
   template_map:

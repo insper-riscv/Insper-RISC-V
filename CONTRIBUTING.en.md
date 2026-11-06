@@ -231,11 +231,14 @@ Any change to code, configuration, or documentation must pass the commands below
 git submodule update --init --recursive  # Initialize all submodules at the pinned versions
 make all                                 # Run paths, integration checks, tests, and formal proofs specific to this repository
 make generate-check                      # Verify that the files generated from each platform.yaml are up to date
+make sources-check                       # Verify that the source lists of the tops are the ones the provides generates
 ```
 
 Each repository runs only its own checks, its own cocotb tests, and its own formal proofs, in its own CI. Insper-RISC-V runs only what belongs to it or is integration: the `paths.yaml` paths, the build of the simulation tops with the pinned submodules, name uniqueness across repositories, the memory map, the platform cocotb tests, and the formal proof of the interconnect. A change to a submodule is validated in its own repository, not here.
 
 When a `platform.yaml` changes, run `make generate` and commit the files it generates.
+
+The source lists of the tops (the `config*.yaml`, `tests/python/tests.json` and the `.qsf` files) are not edited by hand: `make generate-sources` writes them from the `provides` of the `paths.yaml` of each repository, through `riscv-tools sources`, and `make sources-check` (part of `make check` and `make unit-tests`) fails when the committed list differs from the generated one. A new file of a submodule enters the tops by being registered in the `provides` of that submodule; after updating the submodule pointer, run `make generate-sources` and commit the result.
 
 The `formal` CI job runs the proofs once per engine (`formal - yices`, `formal - bitwuzla`, `formal - boolector`, and `formal - abc-bmc3`) and the aggregator job `formal` decides from the results: every proof must have an answer, and the engines that answered must agree with each other and with the expected result. The name `formal` is the check the default-branch ruleset requires, so do not rename it; the `formal - <engine>` jobs are not required.
 
