@@ -73,6 +73,13 @@ entity rv32im_sdram_flash_sim_test is
 	  DCACHE_SIZE_BITS : positive := work.de0_cv_map_pkg.DCACHE_SIZE_BITS;
 	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
 	  HAS_E : boolean := work.de0_cv_map_pkg.HAS_E;
+	  -- Controlador de FLASH na janela de periferico 3 (0xB0000000), com a FLASH de duas portas e o chip de comandos
+	  -- (apagar, gravar, proteger) atras dele: a atualizacao de programa em campo. Desligado, a FLASH e so de leitura.
+	  HAS_FLASH_CONTROLLER : boolean := false;
+	  -- Bordas de espera de um apagar de setor do chip de FLASH, antes da varredura do setor.
+	  FLASH_ERASE_LATENCY   : natural := 2000;
+	  -- Bordas de espera de uma gravacao de pagina do chip de FLASH, antes da varredura da pagina.
+	  FLASH_PROGRAM_LATENCY : natural := 200;
 	  -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 	  -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
 	  SDRAM_FILE : string := ""
@@ -207,6 +214,18 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal fa_rdx, fb_rdx, fc_rdx : std_logic_vector(95 downto 0);
 	signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
 
+	-- Controlador de FLASH e chip de comandos (so com HAS_FLASH_CONTROLLER): comando, estado, buffer de pagina,
+	-- porta B do armazenamento e invalidacao por regiao das duas caches.
+	signal fl_cmd_valid, fl_busy, fl_wel, fl_refused : std_logic := '0';
+	signal fl_cmd_op       : std_logic_vector(2 downto 0);
+	signal fl_cmd_addr     : std_logic_vector(31 downto 0);
+	signal fl_buf_idx      : std_logic_vector(5 downto 0);
+	signal fl_buf_data     : std_logic_vector(31 downto 0);
+	signal fl_b_addr, fl_b_wdata, fl_b_data : std_logic_vector(31 downto 0) := (others => '0');
+	signal fl_b_we         : std_logic := '0';
+	signal fl_inval_valid  : std_logic := '0';
+	signal fl_inval_first, fl_inval_last : std_logic_vector(31 downto 0) := (others => '0');
+
 begin
 
 	pll_inst : entity work.clk_gen_3way
@@ -271,6 +290,7 @@ begin
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
 			i_invalidate => ic_inval, o_miss => ic_miss,
+			i_inval_region => fl_inval_valid, i_inval_first => fl_inval_first, i_inval_last => fl_inval_last,
 			o_d_addr => id_addr, o_d_rden => id_rden, o_d_advance => id_adv, i_d_ready => id_ready,
 			i_d_rdata => id_rdata, o_d_line => id_line, i_d_rdata_x => id_rdx
 	);
@@ -300,6 +320,7 @@ begin
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
 			i_flush => ic_inval, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
+			i_inval_region => fl_inval_valid, i_inval_first => fl_inval_first, i_inval_last => fl_inval_last,
 			i_bypass => dc_bypass,
 			o_d_addr => dd_addr, o_d_wdata => dd_wdata, o_d_byteena => dd_be,
 			o_d_rden => dd_rden, o_d_wren => dd_wren, o_d_advance => dd_adv, i_d_ready => dd_ready,
@@ -341,6 +362,7 @@ begin
 			o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
 	);
 
+	g_plain : if not HAS_FLASH_CONTROLLER generate
 	-- the storage behind the chip: a read-registered array loaded from the program image
 	FLASH_STORAGE : entity work.ROM_simulation
 		generic map (rom_file => ROM_FILE, size_bytes => 4 * 2 ** rom_addr_width)
@@ -350,6 +372,45 @@ begin
 			i_re   => '1',
 			o_data => flash_mem_data
 	);
+	end generate g_plain;
+
+	-- With the controller the storage has two ports: A is read by the chip behind the caches and B is the one the
+	-- command port of the chip writes (erase, program), as in the two-port FLASH of the board.
+	g_update : if HAS_FLASH_CONTROLLER generate
+	FLASH_STORAGE : entity work.flash_simulation
+		generic map (size_bytes => 4 * 2 ** rom_addr_width, rom_file => ROM_FILE)
+		port map (
+			i_clk_a => pll_clk_idexmem, i_address_a => flash_mem_addr(rom_addr_width + 1 downto 2),
+			i_rden_a => '1', o_q_a => flash_mem_data,
+			i_clk_b => pll_clk_idexmem, i_address_b => fl_b_addr(rom_addr_width + 1 downto 2),
+			i_rden_b => '1', i_wren_b => fl_b_we, i_data_b => fl_b_wdata, o_q_b => fl_b_data
+	);
+
+	FLASH_CMD : entity work.flash_cmd_port
+		generic map (
+			size_bytes => 4 * 2 ** rom_addr_width, base_addr => (others => '0'),
+			erase_latency => FLASH_ERASE_LATENCY, program_latency => FLASH_PROGRAM_LATENCY
+		)
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_cmd_valid => fl_cmd_valid, i_cmd_op => fl_cmd_op, i_cmd_addr => fl_cmd_addr,
+			o_busy => fl_busy, o_wel => fl_wel, o_refused => fl_refused,
+			o_buf_idx => fl_buf_idx, i_buf_data => fl_buf_data,
+			o_mem_addr => fl_b_addr, o_mem_we => fl_b_we, o_mem_wdata => fl_b_wdata, i_mem_data => fl_b_data,
+			o_inval_valid => fl_inval_valid, o_inval_first => fl_inval_first, o_inval_last => fl_inval_last
+	);
+
+	FLASH_CTRL : entity work.flash_controller
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_data_in => p_wdata, i_address => p_addr(2 downto 0),
+			i_write => p_we(FLASH_CTRL_ID), i_read => p_re(FLASH_CTRL_ID),
+			o_data_out => p_rdata(32 * FLASH_CTRL_ID + 31 downto 32 * FLASH_CTRL_ID),
+			o_cmd_valid => fl_cmd_valid, o_cmd_op => fl_cmd_op, o_cmd_addr => fl_cmd_addr,
+			i_busy => fl_busy, i_wel => fl_wel, i_refused => fl_refused,
+			i_buf_idx => fl_buf_idx, o_buf_data => fl_buf_data
+	);
+	end generate g_update;
 
 	INTERCONNECT : entity work.ext_interconnect
 		port map (

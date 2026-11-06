@@ -8,8 +8,12 @@
 # written here.
 extends: ../../simulation/internal-mem/config.yaml
 
+# The tests are linked for bank A (from the end of its header page) and packed as its image: the boot ROM
+# only runs a bank whose header (magic, size and CRC-32s) is valid.
 toolchain:
-  specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs
+  specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs
+
+flash_image: {bank: A, version: 1}
 
 # The addresses and the sizes come from the map of the platform (platform.yaml), as in internal-mem: the SDRAM is
 # the RAM and the FLASH sits right after the BOOT_ROM.
@@ -106,6 +110,8 @@ sim:
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
     - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/ROM/SoC/flash_simulation.vhd
+    - Memory/src/cache/SoC/flash_cmd_port.vhd
     - Common-Components/src/synchronizer.vhd
     - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
     - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
@@ -129,17 +135,21 @@ sim:
     - Peripherals/src/CLINT/soc/clint.vhd
     - Peripherals/src/intc/soc/ext_irq_consts.vhd
     - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv
   # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
   # power-up wait (200 us) comes before the first access: ticks of CLK are counted for the timeout,
-  # so it is longer than internal-mem's.
+  # so it is longer than internal-mem's. The boot ROM also checks the CRC-32 of the image before the
+  # jump, about 850 ticks of CLK for each word of the program (a program of 8 KiB takes 1.7 million).
   env:
     SIM_EXTRA_CLOCKS: "CLK_MEM:7"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
-    SIM_TIMEOUT_CYCLES: "2000000"
+    SIM_TIMEOUT_CYCLES: "12000000"
+    UART_START_ON_ACCESS: "1"
+    UART_SLOT: "4"
 
 quartus:
   project_dir: src/cyclone-v/de0-cv

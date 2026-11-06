@@ -882,6 +882,8 @@
             "Core/src/core/stage_wb.vhd",
             "Core/src/core/core.vhd",
             "Memory/src/ROM/SoC/rom_simulation.vhd",
+            "Memory/src/ROM/SoC/flash_simulation.vhd",
+            "Memory/src/cache/SoC/flash_cmd_port.vhd",
             "Common-Components/src/synchronizer.vhd",
             "Memory/src/RAM/SoC/sdram/sdram_pkg.vhd",
             "Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd",
@@ -905,6 +907,7 @@
             "Peripherals/src/CLINT/soc/clint.vhd",
             "Peripherals/src/intc/soc/ext_irq_consts.vhd",
             "Peripherals/src/intc/soc/ext_irq_controller.vhd",
+            "Peripherals/src/flash-controller/soc/flash_controller.vhd",
             "src/cyclone-v/de0-cv/de0-cv_sim_top.vhd"
         ],
         "test_module": "tests.python.unittests.rtl.de0_cv_sim_top",
@@ -923,6 +926,14 @@
             "--std=08",
             "-fsynopsys"
         ]
+    },
+    "De0CvBootBanks": {
+        "extends": "De0CvSimTop",
+        "test_module": "tests.python.unittests.rtl.de0_cv_boot_banks",
+        "parameters": {
+            "HAS_ZIFENCEI": true
+        },
+        "cases": "tests.python.unittests.rtl.de0_cv_boot_banks:cases"
     },
     "ExternalDataSimTop": {
         "toplevel": "rv32im_external_data_sim_test",
@@ -1037,6 +1048,15 @@
             "--std=08",
             "-fsynopsys"
         ]
+    },
+    "ExternalDataFlashUpdate": {
+        "extends": "ExternalDataSimTop",
+        "test_module": "tests.python.unittests.rtl.external_data_flash_update",
+        "parameters": {
+            "BOOT_ROM_FILE": "tests/python/unittests/rtl/data/external_data/boot_rom_real.hex",
+            "ROM_FILE": "tests/python/unittests/rtl/data/external_data/loader_flash.hex",
+            "HAS_ZIFENCEI": true
+        }
     },
     "TemplateSimTop": {
         "toplevel": "template_sim_top",

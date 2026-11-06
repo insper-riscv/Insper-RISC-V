@@ -1,6 +1,7 @@
 """Runner dos testes cocotb do projeto RV32I (tests.json)."""
 
 import argparse
+import importlib
 import json
 import os
 import resource
@@ -75,8 +76,9 @@ def run_cocotb_test(config: dict[str, Any]) -> None:
     ----------
     config : dict of {str: Any}
         Entry with ``toplevel``, ``sources`` and ``test_module`` and,
-        optionally, ``parameters``, ``build_args``, ``test_args`` and
-        ``plusargs`` (simulation options, placed after the top unit).
+        optionally, ``parameters``, ``build_args``, ``test_args``,
+        ``plusargs`` (simulation options, placed after the top unit) and
+        ``cases`` (see `_runs`).
 
     Raises
     ------
@@ -104,23 +106,104 @@ def run_cocotb_test(config: dict[str, Any]) -> None:
         build_args=config.get("build_args") or [],
     )
 
-    wave_file = build_dir / "waves.ghw"
+    failed_runs = [
+        failure
+        for run in _runs(config, build_dir)
+        if (failure := _simulate(runner, config, build_dir, parameters, run))
+    ]
+    if failed_runs:
+        message = f"cocotb tests failed ({'; '.join(failed_runs)})"
+        raise RuntimeError(message)
+
+
+def _simulate(
+    runner: Any,
+    config: dict[str, Any],
+    build_dir: Path,
+    parameters: dict[str, str],
+    run: dict[str, Any],
+) -> str | None:
+    """Run the cocotb tests of one simulation of an entry.
+
+    Parameters
+    ----------
+    runner : Any
+        The cocotb runner that built the design.
+    config : dict of {str: Any}
+        The tests.json entry.
+    build_dir : Path
+        Where the simulator build is.
+    parameters : dict of {str: str}
+        The generics of the build.
+    run : dict of {str: Any}
+        The simulation (see `_runs`); empty for an entry without cases.
+
+    Returns
+    -------
+    str or None
+        A description of the failure, or None when every test passed.
+    """
+    toplevel = config["toplevel"]
+    label = run.get("name", "")
+    suffix = f"-{label}" if label else ""
+    wave_file = build_dir / f"waves{suffix}.ghw"
+    waves = [f"--wave={wave_file}"] if run.get("wave", True) else []
+    case_parameters: dict[str, object] = run.get("parameters") or {}
     results_xml = runner.test(
         hdl_toplevel=toplevel,
         hdl_toplevel_lang="vhdl",
-        test_module=test_module,
+        test_module=config["test_module"],
         build_dir=build_dir,
-        plusargs=[f"--wave={wave_file}", *(config.get("plusargs") or [])],
+        plusargs=[*waves, *(config.get("plusargs") or [])],
         test_args=config.get("test_args") or [],
+        parameters={
+            **parameters,
+            **{
+                key: _resolve_parameter(value)
+                for key, value in case_parameters.items()
+            },
+        },
+        extra_env=run.get("env") or {},
+        results_xml=f"results{suffix}.xml",
     )
-    print(f"Waves: {wave_file} (gerado)")
+    if waves:
+        print(f"Waves: {wave_file} (gerado)")
 
     # runner.test() returns normally when a cocotb test fails; the
     # failures are only in results.xml.
     total, failed = get_results(results_xml)
-    if failed:
-        message = f"{failed} of {total} cocotb tests failed"
-        raise RuntimeError(message)
+    return f"{label or toplevel}: {failed} of {total}" if failed else None
+
+
+def _runs(config: dict[str, Any], build_dir: Path) -> list[dict[str, Any]]:
+    """List the simulations a tests.json entry runs after one build.
+
+    An entry with ``cases`` names a function ``module:function`` that
+    receives the build directory and returns one dict per simulation,
+    with a ``name``, extra ``parameters`` (generics set when the
+    simulation starts, such as the image of a ROM), ``env``
+    (environment variables of the test module) and, optionally,
+    ``wave`` set to false to skip the waveform file. The files the
+    cases need are written by that function. An entry without ``cases``
+    runs once.
+
+    Parameters
+    ----------
+    config : dict of {str: Any}
+        The tests.json entry.
+    build_dir : Path
+        Where the simulator build is.
+
+    Returns
+    -------
+    list of dict of {str: Any}
+        The simulations, at least one.
+    """
+    hook = config.get("cases")
+    if not hook:
+        return [{}]
+    module, _, function = str(hook).partition(":")
+    return getattr(importlib.import_module(module), function)(build_dir)
 
 
 def _run_entry(config: dict[str, Any]) -> None:

@@ -122,10 +122,21 @@ async def model_bytes(dut: Any, golden: dict[int, int]) -> dict[int, int]:
 
 
 HALF_TCK_NS = 40
-# the console sends a byte every few scans: the program reads and echoes
-# one in about that time, and a byte that finds the 64-place receive
-# queue full is lost (the answer to the scan says so)
-SCANS_PER_INPUT_BYTE = 12
+# the console sends a byte every few scans: the program reads and
+# echoes one in about that time, and a byte that finds the 64-place
+# receive queue full is lost (the answer to the scan says so). A program
+# that only stores what it receives, such as the image of a program
+# update, takes the bytes faster: UART_SCANS_PER_BYTE sets the scans
+# between two bytes.
+SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
+# The boot ROM checks the images before it jumps to the program, and the
+# startup of the program clears its .bss through the SDRAM, which
+# together take much longer than the 64-place receive queue holds the
+# bytes of a console that is already sending. With UART_START_ON_ACCESS
+# the console starts at the first access of the core to the UART slot
+# (UART_SLOT), the moment the program is ready to read.
+UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
+UART_SLOT = int(os.environ.get("UART_SLOT", "4"))
 
 
 def script_path(variable: str, name: str) -> Path | None:
@@ -181,6 +192,21 @@ async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
     return [(out >> (8 * i)) & 0xFF for i in range(count)]
 
 
+async def wait_for_program(dut: Any, stop: list[bool]) -> None:
+    """Wait until the core first accesses the UART slot.
+
+    Returns at once without UART_START_ON_ACCESS, and when told to stop.
+    """
+    clock = getattr(dut, SIM_CLOCK)
+    while UART_START_ON_ACCESS and not stop[0]:
+        try:
+            if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_SLOT & 1:
+                return
+        except ValueError:
+            pass  # undefined before the first access
+        await RisingEdge(clock)
+
+
 async def uart_console(
     dut: Any, received: list[int], stop: list[bool]
 ) -> None:
@@ -188,6 +214,7 @@ async def uart_console(
 
     The bytes of an interrupted scan are lost.
     """
+    await wait_for_program(dut, stop)
     dut.UART_IR_IN.value = 1
     await uart_tck(dut, uir=True)
     source = script_path("UART_INPUT_PATH", "uart_input.txt")

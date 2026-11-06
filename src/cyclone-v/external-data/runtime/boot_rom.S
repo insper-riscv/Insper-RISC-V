@@ -42,6 +42,8 @@ _reset:
     sw   x0, 4(t0)               // truncated
     .word 0x0000100F             // fence.i (the boot ROM is assembled for rv32i): drop the lines of the previous program
     li   t0, RV32_BOOT_ENTRY     // the crt0's _start
+    li   a0, 0                   // the hart (entry contract: a0 = 0, a1 = 0)
+    li   a1, 0
     jr   t0
 
     /* The test has already written tohost (1 = pass, (code << 1) | 1 = fail,

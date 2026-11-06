@@ -18,16 +18,18 @@ The firmware starts executing at the `boot.entry` address of `platform.yaml`, wi
 
 | Item | State at entry |
 | :--- | :--- |
-| Program counter | `boot.entry` |
+| Program counter | `boot.entry`; on `de0-cv`, the start of the program of the chosen bank (section 6.6) |
 | Interrupts | Off, because the BOOT_ROM writes no CSR and the reset value of `mstatus`, `mie` and `mip` holds |
 | CSRs | All at their reset value |
 | Instruction cache | Free of lines from the previous program, through the `fence.i` executed before the jump |
 | Shared words at the top of the RAM (`stdout`, `tohost` and `fromhost`) | Zeroed |
 | Rest of the RAM | Undefined |
 | `x0` | `0`, always |
-| Other registers (`x1` to `x31`) | Undefined, including `sp`, `gp`, `tp`, `a0` and `a1` |
+| `a0` | `0`, the hart identifier |
+| `a1` | `0` |
+| Other registers (`x1` to `x31`) | Undefined, including `sp`, `gp` and `tp` |
 
-No entry register is defined, so the firmware receives neither the hart identifier nor a pointer to the platform description. The core has a single hart, and the description is obtained at build time (section 4).
+The entry registers follow the RISC-V convention. `a0` carries the hart identifier, always `0` because the core has a single hart, and `a1` carries `0` in place of the pointer to the platform description, which the firmware obtains at build time (section 4). A firmware that does not need them ignores them, and `sp`, `gp` and `tp` remain its own business.
 
 ## 3. What the firmware does on its own
 
@@ -55,11 +57,11 @@ There is no description table in the BOOT_ROM, because the memory map is fixed p
 
 ## 5. Shared entry point
 
-`boot.entry` is the only value that the BOOT_ROM and the firmware linker both repeat. The BOOT_ROM reads it from `RV32_BOOT_ENTRY` and the linker receives it from `rv32im-fpga.specs`, both generated from the same `platform.yaml`, and `riscv-tools check-memory-map` checks that the hand-written copies match it.
+`boot.entry` is the only value that the BOOT_ROM and the firmware linker both repeat. The BOOT_ROM reads it from `RV32_BOOT_ENTRY` and the linker receives it from `rv32im-fpga.specs`, both generated from the same `platform.yaml`, and `riscv-tools check-memory-map` checks that the hand-written copies match it. On `de0-cv` the BOOT_ROM reads instead the base, the size and the program start of each bank in `flash_banks.h`, and the linker of each bank receives `rv32im-fpga-bank-a.specs` or `rv32im-fpga-bank-b.specs`, all generated from the same `flash.banks`.
 
 ## 6. How the core reaches the FLASH
 
-The core does not decide whether it may jump to the FLASH. The `_reset` of the BOOT_ROM always jumps to `boot.entry`, and the guarantee that the FLASH is complete at that moment comes from the hardware that writes it and from the order in which the host uses it. There are two mechanisms, depending on the FLASH of the platform.
+There are two jump policies, depending on whether the platform has banks in the FLASH. On platforms without banks the `_reset` of the BOOT_ROM always jumps to `boot.entry`, and the guarantee that the FLASH is complete at that moment comes from the hardware that writes it and from the order in which the host uses it. On `de0-cv`, which declares `flash.banks`, the BOOT_ROM checks both banks and jumps only to a valid image (section 6.6). As for writing the FLASH, there are two mechanisms.
 
 | Mechanism | Platforms | Who keeps the core out of the FLASH during the write |
 | :--- | :--- | :--- |
@@ -72,9 +74,9 @@ The core does not decide whether it may jump to the FLASH. The `_reset` of the B
 2. When the PLL locks, the core reset is released. The core reset combines the unlocked PLL, the board button and, where there is a loader, its halt output.
 3. The loader leaves reset with the halt off, so the core is not held.
 4. The core fetches address `0x0`, runs `_reset`, zeroes `fromhost`, `tohost` and the `stdout` header, runs `fence.i` where there are caches and jumps to `boot.entry`.
-5. What the core finds at `boot.entry` is the initial image of the `.sof`. On `internal-mem` it is a test program. On `de0-cv` it is a two-instruction stub that jumps to `rv32_wait_restart`, so the core waits for the host.
+5. What the core finds at `boot.entry` is the initial image of the `.sof`. On `internal-mem` it is a test program. On `de0-cv` the initial FLASH has no valid image header, so the BOOT_ROM jumps to no bank and parks the core in `rv32_wait_restart` until the host writes an image.
 
-No step of the cold start checks the FLASH before the jump.
+On platforms without banks no step of the cold start checks the FLASH before the jump. On `de0-cv` step 4 includes the choice of the bank.
 
 ### 6.2. Test change with the FLASH loader
 
@@ -92,7 +94,7 @@ The host does not write `fromhost` on this path. The restart comes from releasin
 1. The host zeroes `tohost` through the SDRAM debug port.
 2. It writes the FLASH image through the Quartus in-system memory. The core is in the `rv32_wait_restart` loop, which sits in the BOOT_ROM, uncached, so it executes nothing from the FLASH being rewritten.
 3. It writes a nonzero value to `fromhost`.
-4. The loop reads `fromhost`, exits and jumps to `_reset`, which zeroes the shared words, runs `fence.i` to drop the lines of the previous program and jumps to `boot.entry`.
+4. The loop reads `fromhost`, exits and jumps to `_reset`, which zeroes the shared words, runs `fence.i` to drop the lines of the previous program and jumps to `boot.entry`, or, on `de0-cv`, to the bank that section 6.6 chooses.
 
 ### 6.4. End of a test
 
@@ -107,14 +109,32 @@ The host does not write `fromhost` on this path. The restart comes from releasin
 | :--- | :--- | :--- |
 | Write to the FLASH while the core runs | Impossible: the write enable of port B is the loader pulse combined with the halt state, and a write or read request outside the halt is refused and flagged in the status | Not prevented by the hardware, the parked-core protocol holds |
 | Core executing the FLASH while it is written | No, the core is in reset | No, as long as it is in `rv32_wait_restart`, so the host must wait for the end of the previous test |
-| Image checked before execution | Count and checksum read from the loader before the release, by the host | The hardware does not check |
+| Image checked before execution | Count and checksum read from the loader before the release, by the host | The BOOT_ROM checks the CRC-32 of each bank before the jump (section 6.6) |
 | Cache lines of the previous program | The platform has no instruction cache, and the core reset restarts whatever caches exist | The `fence.i` of `_reset` drops them |
 | State of the rest of the platform on a change | RAM and peripherals keep their content, and only the shared words are zeroed by `_reset` | The same |
 | Effect of the reset button | Restarts the core through `_reset` with whatever FLASH is written. The button does not reset the loader, so a halt in progress continues | Restarts the core through `_reset` with whatever FLASH is written |
 
-### 6.6. Validity of the FLASH
+### 6.6. Choice of the bank on `de0-cv`
 
-The BOOT_ROM jumps to `boot.entry` without reading the FLASH. It checks no magic, size or CRC, so an empty FLASH, one interrupted in the middle of a write or a corrupted one runs as if it were a program. The 256-byte header described in [atualizacao-de-programa.md](atualizacao-de-programa.md) carries the fields that would allow that check, but no BOOT_ROM code reads them. Today the integrity of the image depends on the count and checksum check the host performs with the loader, or on the parked-core protocol.
+The BOOT_ROM reads the 256-byte header at the start of each bank, in the format of the `flash_image` module of Tools.
+
+| Offset | Field | Content |
+| ---: | :--- | :--- |
+| 0 | Magic | `0x52564946` |
+| 4 | Size | Bytes of the payload, a multiple of 4 and inside the bank |
+| 8 | Payload CRC | CRC-32 (IEEE 802.3) of the payload |
+| 12 | Version | The newest image has the larger version |
+| 16 | Header CRC | CRC-32 of the first 16 bytes of the header |
+
+A bank is valid when the magic matches, the header CRC matches, the size is a nonzero multiple of 4 that fits in the bank and the CRC-32 of the payload read from the FLASH matches. The choice follows three rules.
+
+1. It jumps to the valid bank with the larger version, and bank A wins a tie.
+2. A bank that is not valid is ignored, so an update that failed leaves the system on the other bank.
+3. With no valid bank, the BOOT_ROM parks the core in `rv32_wait_restart`, where the host can write an image and write `fromhost` to start over.
+
+The jump hands the firmware the state of section 2, with `a0` and `a1` at `0`, and the address is the start of the program of the bank, `base + 0x100`. The update writes the header last, so a bank interrupted in the middle of the write is never valid, and the CRC-32 of the payload also refuses a bank corrupted after it was written.
+
+The check is a bitwise CRC-32, with no table and no stack, one 32-bit word at a time. The BOOT_ROM executes about 232 instructions per word of the payload, which is about 0.19 s for a full 128 KiB bank at 50 MHz, and the whole code, together with `_reset` and `rv32_wait_restart`, is 332 bytes of instructions that end at address `0x220` of the 4 KiB.
 
 ## 7. Restart by the test environment
 
@@ -122,7 +142,7 @@ The BOOT_ROM jumps to `boot.entry` without reading the FLASH. It checks no magic
 
 ## 8. Platforms
 
-The same contract holds on the three platforms, and only the values that come from `platform.yaml` change.
+The same state and register contract holds on every platform, and only the values that come from `platform.yaml` change. The choice of the bank of section 6.6 exists where `platform.yaml` declares `flash.banks`.
 
 | Platform | `boot.entry` | Firmware region |
 | :--- | :--- | :--- |

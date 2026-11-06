@@ -16,8 +16,10 @@ partir da SDRAM, porque a plataforma não tem cache de instruções.
 As imagens ficam em tests/python/unittests/rtl/data/external_data/.
 """
 
+import tempfile
 from pathlib import Path
 
+from riscv_tools import boot_rom
 from riscv_tools.memory_map import load_platform, symbols
 
 from tests.python.gen_de0_cv_images import load_address, store_value
@@ -25,6 +27,7 @@ from tests.python.utils.rv32_asm import (
     T0,
     T1,
     X0,
+    addi,
     hex_lines,
     jal,
     lw,
@@ -46,10 +49,61 @@ DISPLAY_VALUE = 0x123
 # A palavra que a FLASH guarda para si e o deslocamento dela.
 FLASH_DATA = 0x5A5AF1A5
 FLASH_DATA_OFFSET = 0x400
+# O programa que o teste do carregador deixa na FLASH: uma marca,
+# `tohost` em 1 e um contador que não para de subir.
+LOADER_MARK = 0x1A
+LOADER_MARK_WORD = 4
+LOADER_COUNTER_WORD = 7
+TOOLCHAIN = {
+    "gcc": "riscv32-unknown-elf-gcc",
+    "objcopy": "riscv32-unknown-elf-objcopy",
+}
+BOOT_PATHS = {
+    "boot_rom": "src/cyclone-v/external-data/runtime/boot_rom.S",
+    "boot_rom_linker_script": (
+        "src/cyclone-v/external-data/runtime/boot_rom.ld"
+    ),
+}
+
+
+def loader_program() -> list[int]:
+    """Build the program the loader test replaces.
+
+    Returns
+    -------
+    list of int
+        It stores a mark, writes `tohost` and then increments a counter
+        in the SDRAM without stopping, so a halted core is one whose
+        counter stands still.
+    """
+    return [
+        *store_value(RAM_BASE + 4 * LOADER_MARK_WORD, LOADER_MARK),
+        *store_value(TOHOST, 1),
+        *load_address(T0, RAM_BASE + 4 * LOADER_COUNTER_WORD),
+        lw(T1, T0, 0),
+        addi(T1, T1, 1),
+        sw(T1, T0, 0),
+        jal(X0, -12),
+    ]
+
+
+def real_boot_rom() -> list[int]:
+    """Assemble the boot ROM of the platform from its source.
+
+    Returns
+    -------
+    list of int
+        The words of `runtime/boot_rom.S`, as `build_boot_rom` links it.
+    """
+    with tempfile.TemporaryDirectory() as directory:
+        hex_path = boot_rom.build_boot_rom(
+            TOOLCHAIN, BOOT_PATHS, ROOT, Path(directory)
+        )
+        return [int(line, 16) for line in hex_path.read_text().split()]
 
 
 def main() -> None:
-    """Write the two images."""
+    """Write the images."""
     boot = store_value(RAM_BASE, BOOT_MARK)
     boot.append(jal(X0, FLASH_BASE - 4 * len(boot)))
     flash = [
@@ -69,6 +123,9 @@ def main() -> None:
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "boot_rom.hex").write_text(hex_lines(boot))
     (DATA / "flash.hex").write_text(hex_lines(image))
+    loader = [0] * (FLASH_BASE // 4) + loader_program()
+    (DATA / "loader_flash.hex").write_text(hex_lines(loader))
+    (DATA / "boot_rom_real.hex").write_text(hex_lines(real_boot_rom()))
 
 
 if __name__ == "__main__":

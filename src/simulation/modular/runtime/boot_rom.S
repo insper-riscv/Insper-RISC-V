@@ -30,6 +30,8 @@ _reset:
     sw   x0, 0(t0)               // tamanho
     sw   x0, 4(t0)               // truncado
     li   t0, RV32_BOOT_ENTRY     // o _start do crt0
+    li   a0, 0                   // o hart (o contrato de entrada: a0 = 0, a1 = 0)
+    li   a1, 0
     jr   t0
 
     /* O programa já escreveu tohost (1 = passou, (código << 1) | 1 = falhou). O núcleo espera

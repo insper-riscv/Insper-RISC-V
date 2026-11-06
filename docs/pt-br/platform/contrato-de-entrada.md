@@ -18,16 +18,18 @@ O firmware começa a executar no endereço `boot.entry` do `platform.yaml`, com 
 
 | Item | Estado na entrada |
 | :--- | :--- |
-| Contador de programa | `boot.entry` |
+| Contador de programa | `boot.entry`; na `de0-cv`, o início do programa da banca escolhida (seção 6.6) |
 | Interrupções | Desligadas, porque a BOOT_ROM não escreve nenhum CSR e vale o valor de reset de `mstatus`, `mie` e `mip` |
 | CSRs | Todos com o valor de reset |
 | Cache de instruções | Sem linhas do programa anterior, pelo `fence.i` executado antes do salto |
 | Palavras compartilhadas no topo da RAM (`stdout`, `tohost` e `fromhost`) | Zeradas |
 | Restante da RAM | Indefinido |
 | `x0` | `0`, sempre |
-| Demais registradores (`x1` a `x31`) | Indefinidos, inclusive `sp`, `gp`, `tp`, `a0` e `a1` |
+| `a0` | `0`, o identificador do hart |
+| `a1` | `0` |
+| Demais registradores (`x1` a `x31`) | Indefinidos, inclusive `sp`, `gp` e `tp` |
 
-Nenhum registrador de entrada é definido: o firmware não recebe o identificador do hart nem o ponteiro para a descrição da plataforma, pois o núcleo tem um único hart e a descrição é obtida em tempo de compilação (seção 4).
+Os registradores de entrada seguem a convenção de RISC-V. `a0` leva o identificador do hart, sempre `0` porque o núcleo tem um único hart, e `a1` leva `0` no lugar do ponteiro para a descrição da plataforma, que o firmware obtém em tempo de compilação (seção 4). Um firmware que não precisa deles os ignora, e `sp`, `gp` e `tp` continuam por conta dele.
 
 ## 3. O que o firmware faz por conta própria
 
@@ -55,11 +57,11 @@ Não há tabela de descrição na BOOT_ROM: o mapa de memória é fixo por plata
 
 ## 5. Ponto de entrada compartilhado
 
-`boot.entry` é o único valor que a BOOT_ROM e o linker do firmware repetem. A BOOT_ROM o lê de `RV32_BOOT_ENTRY` e o linker o recebe do `rv32im-fpga.specs`, ambos gerados do mesmo `platform.yaml`, e o `riscv-tools check-memory-map` confere que as cópias escritas à mão coincidem com ele.
+`boot.entry` é o único valor que a BOOT_ROM e o linker do firmware repetem. A BOOT_ROM o lê de `RV32_BOOT_ENTRY` e o linker o recebe do `rv32im-fpga.specs`, ambos gerados do mesmo `platform.yaml`, e o `riscv-tools check-memory-map` confere que as cópias escritas à mão coincidem com ele. Na `de0-cv` a BOOT_ROM lê, no lugar dele, a base, o tamanho e o início do programa de cada banca em `flash_banks.h`, e o linker de cada banca recebe o `rv32im-fpga-bank-a.specs` ou o `rv32im-fpga-bank-b.specs`, todos gerados das mesmas `flash.banks`.
 
 ## 6. Como o núcleo chega à FLASH
 
-O núcleo não decide se pode saltar para a FLASH. O `_reset` da BOOT_ROM salta para `boot.entry` sempre, e a garantia de que a FLASH está completa nesse instante vem do hardware que a escreve e da ordem em que o hospedeiro o usa. Existem dois mecanismos, conforme a FLASH da plataforma.
+Há duas políticas de salto, conforme a plataforma tenha ou não bancas na FLASH. Nas plataformas sem bancas o `_reset` da BOOT_ROM salta para `boot.entry` sempre, e a garantia de que a FLASH está completa nesse instante vem do hardware que a escreve e da ordem em que o hospedeiro o usa. Na `de0-cv`, que declara `flash.banks`, a BOOT_ROM confere as duas bancas e só salta para uma imagem válida (seção 6.6). Quanto à escrita da FLASH, existem dois mecanismos.
 
 | Mecanismo | Plataformas | Quem mantém o núcleo fora da FLASH durante a escrita |
 | :--- | :--- | :--- |
@@ -72,9 +74,9 @@ O núcleo não decide se pode saltar para a FLASH. O `_reset` da BOOT_ROM salta 
 2. Com o PLL travado, o reset do núcleo é solto. O reset do núcleo é a combinação do PLL destravado, do botão da placa e, onde há carregador, da saída de parada dele.
 3. O carregador sai do reset com a parada desligada, então o núcleo não fica retido.
 4. O núcleo busca o endereço `0x0`, executa o `_reset`, zera `fromhost`, `tohost` e o cabeçalho do `stdout`, executa `fence.i` onde há caches e salta para `boot.entry`.
-5. O que o núcleo encontra em `boot.entry` é a imagem inicial do `.sof`. Na `internal-mem` é um programa de teste. Na `de0-cv` é um trecho de duas instruções que salta para o `rv32_wait_restart`, de modo que o núcleo espera o hospedeiro.
+5. O que o núcleo encontra em `boot.entry` é a imagem inicial do `.sof`. Na `internal-mem` é um programa de teste. Na `de0-cv` a FLASH inicial não tem cabeçalho de imagem válido, então a BOOT_ROM não salta para banca nenhuma e estaciona o núcleo no `rv32_wait_restart` até o hospedeiro gravar uma imagem.
 
-Nenhuma etapa da partida a frio confere a FLASH antes do salto.
+Nas plataformas sem bancas nenhuma etapa da partida a frio confere a FLASH antes do salto. Na `de0-cv` a etapa 4 inclui a escolha da banca.
 
 ### 6.2. Troca de teste com o carregador da FLASH
 
@@ -92,7 +94,7 @@ O hospedeiro não escreve `fromhost` nesse caminho. O reinício vem da liberaç�
 1. O hospedeiro zera `tohost` pela porta de depuração da SDRAM.
 2. Escreve a imagem da FLASH pela memória interna do Quartus. O núcleo está no laço do `rv32_wait_restart`, que fica na BOOT_ROM, sem cache, e por isso não executa nada da FLASH que está sendo reescrita.
 3. Escreve um valor diferente de zero em `fromhost`.
-4. O laço lê `fromhost`, sai e salta para o `_reset`, que zera as palavras compartilhadas, executa `fence.i` para descartar as linhas do programa anterior e salta para `boot.entry`.
+4. O laço lê `fromhost`, sai e salta para o `_reset`, que zera as palavras compartilhadas, executa `fence.i` para descartar as linhas do programa anterior e salta para `boot.entry`, ou, na `de0-cv`, para a banca que a seção 6.6 escolhe.
 
 ### 6.4. Fim de teste
 
@@ -107,14 +109,32 @@ O hospedeiro não escreve `fromhost` nesse caminho. O reinício vem da liberaç�
 | :--- | :--- | :--- |
 | Escrita na FLASH com o núcleo executando | Impossível: a habilitação de escrita da porta B é o pulso do carregador combinado com o estado de parada, e um pedido de escrita ou de leitura fora da parada é recusado e sinalizado no status | Não é impedida pelo hardware; vale o protocolo do núcleo estacionado |
 | Núcleo executando a FLASH enquanto ela é escrita | Não: o núcleo está em reset | Não, desde que esteja no `rv32_wait_restart`; o hospedeiro precisa esperar o fim do teste anterior |
-| Imagem conferida antes da execução | Contagem e soma de verificação lidas do carregador antes da liberação, a cargo do hospedeiro | Não há conferência pelo hardware |
+| Imagem conferida antes da execução | Contagem e soma de verificação lidas do carregador antes da liberação, a cargo do hospedeiro | A BOOT_ROM confere o CRC-32 de cada banca antes do salto (seção 6.6) |
 | Linhas de cache do programa anterior | A plataforma não tem cache de instruções, e o reset do núcleo reinicia as caches que houver | O `fence.i` do `_reset` as descarta |
 | Estado do restante da plataforma na troca | A RAM e os periféricos mantêm o conteúdo, e só as palavras compartilhadas são zeradas pelo `_reset` | O mesmo |
 | Efeito do botão de reset | Reinicia o núcleo pelo `_reset` com a FLASH que estiver gravada. O carregador não é reiniciado pelo botão, então uma parada em curso continua | Reinicia o núcleo pelo `_reset` com a FLASH que estiver gravada |
 
-### 6.6. Validade da FLASH
+### 6.6. Escolha da banca na `de0-cv`
 
-A BOOT_ROM salta para `boot.entry` sem ler a FLASH. Ela não confere magia, tamanho nem CRC, de modo que uma FLASH vazia, interrompida no meio da escrita ou corrompida é executada como se fosse um programa. O cabeçalho de 256 bytes descrito em [atualizacao-de-programa.md](atualizacao-de-programa.md) carrega os campos que permitiriam essa conferência, mas nenhum código da BOOT_ROM os lê. Hoje a integridade da imagem depende da conferência de contagem e soma feita pelo hospedeiro com o carregador, ou do protocolo do núcleo estacionado.
+A BOOT_ROM lê o cabeçalho de 256 bytes no início de cada banca, no formato do módulo `flash_image` do Tools.
+
+| Deslocamento | Campo | Conteúdo |
+| ---: | :--- | :--- |
+| 0 | Magia | `0x52564946` |
+| 4 | Tamanho | Bytes da carga, múltiplo de 4 e dentro da banca |
+| 8 | CRC da carga | CRC-32 (IEEE 802.3) da carga |
+| 12 | Versão | A imagem mais nova tem a versão maior |
+| 16 | CRC do cabeçalho | CRC-32 dos primeiros 16 bytes do cabeçalho |
+
+Uma banca vale quando a magia confere, o CRC do cabeçalho confere, o tamanho é um múltiplo de 4 diferente de zero que cabe na banca e o CRC-32 da carga lida da FLASH confere. A escolha segue três regras.
+
+1. Salta para a banca válida de maior versão, e a banca A vence um empate.
+2. Uma banca que não vale é ignorada, então uma atualização que falhou deixa o sistema na outra banca.
+3. Sem banca válida, a BOOT_ROM estaciona o núcleo no `rv32_wait_restart`, onde o hospedeiro pode gravar uma imagem e escrever `fromhost` para recomeçar.
+
+O salto entrega ao firmware o estado da seção 2, com `a0` e `a1` em `0`, e o endereço é o início do programa da banca, `base + 0x100`. A atualização grava o cabeçalho por último, de modo que uma banca interrompida no meio da gravação nunca vale, e o CRC-32 da carga também recusa uma banca corrompida depois de gravada.
+
+A conferência é um CRC-32 bit a bit, sem tabela e sem pilha, sobre uma palavra de 32 bits por vez. A BOOT_ROM executa cerca de 232 instruções por palavra da carga, o que dá cerca de 0,19 s para uma banca de 128 KiB cheia a 50 MHz, e o código inteiro, junto do `_reset` e do `rv32_wait_restart`, são 332 bytes de instruções que terminam no endereço `0x220` dos 4 KiB.
 
 ## 7. Recomeço pelo ambiente de teste
 
@@ -122,7 +142,7 @@ O `rv32_wait_restart`, fixo em `boot.wait_restart` (`0x100`), é a rotina em que
 
 ## 8. Plataformas
 
-O mesmo contrato vale nas três plataformas, e só mudam os valores que vêm do `platform.yaml`.
+O mesmo contrato de estado e de registradores vale em todas as plataformas, e só mudam os valores que vêm do `platform.yaml`. A escolha da banca da seção 6.6 existe onde o `platform.yaml` declara `flash.banks`.
 
 | Plataforma | `boot.entry` | Região do firmware |
 | :--- | :--- | :--- |

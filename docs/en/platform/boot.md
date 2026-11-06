@@ -6,7 +6,7 @@ This document describes, register by register and section by section, exactly wh
 
 ## 1. The boot sequence
 
-1. Reset enters `_reset` (`0x0`, in the BOOT_ROM). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x1000` (`RV32_BOOT_ENTRY`). It does not initialize `sp` or `gp` and copies nothing.
+1. Reset enters `_reset` (`0x0`, in the BOOT_ROM). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x1000` (`RV32_BOOT_ENTRY`) or, on `de0-cv`, to the program start of the valid bank with the larger version (`0x1100` or `0x20100`). It hands over `a0` and `a1` at `0`. It does not initialize `sp` or `gp` and copies nothing.
 2. At `0x1000` is the `_start` of the picolibc `crt0-hosted`. It sets `sp` (from `__stack`) and `gp` (from `__global_pointer$`) and calls `_cstart`.
 3. `_cstart` copies `.data` and `.tdata` from the FLASH to the RAM (with `memcpy`), zeroes `.bss` (with `memset`), prepares TLS (`_set_tls`) and runs the constructors (`__libc_init_array`).
 4. It calls `main(0, 0)` with `jal`, and whatever `main` returns goes to `exit`, which calls the project `_exit` (`src/simulation/internal-mem/runtime/_exit.c`). A test that ends with `RV32_PASS()` or `RV32_FAIL()` writes `tohost` and jumps straight to `rv32_wait_restart`, without going through `_exit`.

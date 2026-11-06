@@ -4,8 +4,10 @@
 -- O núcleo, a BOOT_ROM e a FLASH (vetores VHDL) dentro do chip e a SDRAM fora
 -- dele, atrás da cache de dados. A FLASH é uma só cópia de duas portas, como na
 -- placa: a porta A é lida pela busca de instrução e a porta B pelo estágio MEM,
--- por meio do carregador de FLASH, que aqui fica ocioso (o hospedeiro da
--- simulação grava a imagem na elaboração, pelo arquivo de ROM). A SDRAM, com a
+-- por meio do carregador de FLASH. O hospedeiro da simulação grava a imagem na
+-- elaboração, pelo arquivo de ROM, ou depois, pelos sinais FLASH_*, que são os da
+-- instância do Virtual JTAG do carregador: com eles o testbench para o núcleo,
+-- grava uma imagem nova e o libera, como o hospedeiro da placa. A SDRAM, com a
 -- ponte, o árbitro, o controlador e o modelo de chip do repositório Memory, roda
 -- em clock próprio. A FLASH começa logo depois da BOOT_ROM e termina em 256 KiB,
 -- e a SDRAM fica em 0x40000000.
@@ -114,6 +116,22 @@ entity rv32im_external_data_sim_test is
 		UART_STATE_UDR : in  std_logic := '0';
 		-- Estado Update-IR da cadeia da UART.
 		UART_STATE_UIR : in  std_logic := '0';
+		-- Clock da cadeia JTAG do carregador da FLASH.
+		FLASH_TCK       : in  std_logic := '0';
+		-- Dado serial vindo do hospedeiro para o carregador.
+		FLASH_TDI       : in  std_logic := '0';
+		-- Dado serial para o hospedeiro vindo do carregador.
+		FLASH_TDO       : out std_logic;
+		-- Registrador de instrução do Virtual JTAG do carregador.
+		FLASH_IR_IN     : in  std_logic_vector(1 downto 0) := "00";
+		-- Estado Capture-DR da cadeia do carregador.
+		FLASH_STATE_CDR : in  std_logic := '0';
+		-- Estado Shift-DR da cadeia do carregador.
+		FLASH_STATE_SDR : in  std_logic := '0';
+		-- Estado Update-DR da cadeia do carregador.
+		FLASH_STATE_UDR : in  std_logic := '0';
+		-- Estado Update-IR da cadeia do carregador.
+		FLASH_STATE_UIR : in  std_logic := '0';
 		-- Valor do registrador do display (periférico 5, 0xD0000000), cuja porta do hospedeiro fica ociosa aqui.
 		DISPLAY_VALUE  : out std_logic_vector(23 downto 0);
 		-- Segmentos dos seis displays.
@@ -159,9 +177,16 @@ architecture behaviour of rv32im_external_data_sim_test is
 	signal flash_wren_b : std_logic;
 	-- Dado de escrita da porta B da FLASH.
 	signal flash_data_b : std_logic_vector(31 downto 0);
-	-- Núcleo parado pelo carregador da FLASH, sempre em '0' aqui.
+	-- Núcleo parado pelo carregador da FLASH, em '0' enquanto o hospedeiro não manda o comando de parada.
 	signal flash_halt : std_logic;
-	-- Resposta do carregador, sem uso aqui.
+	-- Reset do núcleo e do que ele usa: o reset do topo ou a parada do carregador, como na placa.
+	signal core_reset : std_logic;
+	-- Comando da porta JTAG ao carregador: alternância, operação, endereço de palavra e dado.
+	signal flash_cmd_tog : std_logic;
+	signal flash_op : std_logic_vector(3 downto 0);
+	signal flash_cmd_addr : std_logic_vector(23 downto 0);
+	signal flash_cmd_data : std_logic_vector(31 downto 0);
+	-- Resposta do carregador à porta JTAG.
 	signal flash_done_tog : std_logic;
 	signal flash_rsp_addr : std_logic_vector(23 downto 0);
 	signal flash_rsp_data : std_logic_vector(31 downto 0);
@@ -257,6 +282,8 @@ architecture behaviour of rv32im_external_data_sim_test is
 
 begin
 
+	core_reset <= reset or flash_halt;
+
 	u_pll : entity work.clk_gen_3way
     port map (
       i_clk  => CLK,
@@ -297,7 +324,7 @@ begin
 			o_trap_cause    => core_trap_cause,
 			o_trap_pc       => core_trap_pc,
 			i_clk           => pll_clk_idexmem,
-			i_rst           => reset,
+			i_rst           => core_reset,
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
@@ -357,17 +384,18 @@ begin
 			o_q_b       => flash_data2
 		);
 
-	-- O carregador da FLASH sem comandos: repassa a leitura do estágio MEM e nunca escreve.
+	-- O carregador da FLASH: repassa a leitura do estágio MEM e, com o núcleo parado por um comando da porta JTAG,
+	-- escreve a imagem que o hospedeiro manda.
 	u_flash_loader : entity work.flash_loader
 		generic map (addr_width => rom_addr_width)
 		port map (
 			i_clk         => pll_clk_idexmem,
 			i_rst         => reset,
-			i_cmd_tog     => '0',
+			i_cmd_tog     => flash_cmd_tog,
 			o_done_tog    => flash_done_tog,
-			i_op          => (others => '0'),
-			i_addr        => (others => '0'),
-			i_data        => (others => '0'),
+			i_op          => flash_op,
+			i_addr        => flash_cmd_addr,
+			i_data        => flash_cmd_data,
 			o_rsp_addr    => flash_rsp_addr,
 			o_rsp_data    => flash_rsp_data,
 			o_rsp_status  => flash_rsp_status,
@@ -381,6 +409,17 @@ begin
 			i_q_b         => flash_data2
 		);
 
+	-- A porta JTAG do carregador, a do Virtual JTAG que na placa é o flash_jtag_shell.
+	u_flash_jtag : entity work.flash_jtag_core
+		port map (
+			i_tck => FLASH_TCK, i_tdi => FLASH_TDI, o_tdo => FLASH_TDO, i_ir_in => FLASH_IR_IN,
+			i_state_cdr => FLASH_STATE_CDR, i_state_sdr => FLASH_STATE_SDR,
+			i_state_udr => FLASH_STATE_UDR, i_state_uir => FLASH_STATE_UIR,
+			o_cmd_tog => flash_cmd_tog, o_op => flash_op, o_addr => flash_cmd_addr, o_data => flash_cmd_data,
+			i_done_tog => flash_done_tog, i_rsp_addr => flash_rsp_addr, i_rsp_data => flash_rsp_data,
+			i_rsp_status => flash_rsp_status
+		);
+
 	-- As últimas 4 KB da SDRAM guardam as palavras que o hospedeiro divide com o programa (tohost, fromhost,
 	-- stdout): o hospedeiro as escreve por trás da cache, então nunca ficam nela.
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
@@ -388,7 +427,7 @@ begin
 	u_dcache : entity work.dcache
 		generic map (size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
-			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
@@ -401,7 +440,7 @@ begin
 
 	u_interconnect : entity work.ext_interconnect
 		port map (
-			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => sdram_addr, i_wdata => sdram_wdata, i_byteena => sdram_byteena,
 			i_rden => sdram_rden, i_wren => sdram_wren, i_mem_advance => mem_advance,
 			o_ready => sdram_ready, o_rdata => sdram_rdata,
@@ -413,7 +452,7 @@ begin
 
 	u_uart : entity work.jtag_uart
 		port map (
-			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID),
 			i_tck => UART_TCK, i_tdi => UART_TDI, o_tdo => UART_TDO, i_ir_in => UART_IR_IN,
@@ -423,7 +462,7 @@ begin
 
 	u_display : entity work.seg_display
 		port map (
-			i_clk => pll_clk_idexmem, i_rst => reset,
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
@@ -436,7 +475,7 @@ begin
 		generic map (init_file => SDRAM_FILE)
 		port map (
 			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
-			i_rst_mem => reset,   i_rst_cpu => reset,
+			i_rst_mem => reset,   i_rst_cpu => core_reset,
 			i_addr => dd_addr, i_wdata => dd_wdata, i_byteena => dd_be,
 			i_rden => dd_rden, i_wren => dd_wren, i_mem_advance => dd_adv,
 			o_ready => dd_ready, o_rdata => dd_rdata,

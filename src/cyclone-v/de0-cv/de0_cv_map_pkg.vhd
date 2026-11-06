@@ -81,6 +81,11 @@ package de0_cv_map_pkg is
 	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).
 	constant RAM_VIA_PORT        : boolean  := RAM_EXTERNAL or HAS_DCACHE;
 
+	-- Endereço base do periférico FLASH_CTRL.
+	constant FLASH_CTRL_BASE : std_logic_vector(31 downto 0) := x"B0000000";
+	-- Índice da janela de 256 MiB do periférico FLASH_CTRL (bits 30:28 do endereço).
+	constant FLASH_CTRL_ID   : natural := 3;
+
 	-- Endereço base do periférico UART.
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";
 	-- Índice da janela de 256 MiB do periférico UART (bits 30:28 do endereço).
