@@ -134,7 +134,7 @@ A bank is valid when the magic matches, the header CRC matches, the size is a no
 
 The jump hands the firmware the state of section 2, with `a0` and `a1` at `0`, and the address is the start of the program of the bank, `base + 0x100`. The update writes the header last, so a bank interrupted in the middle of the write is never valid, and the CRC-32 of the payload also refuses a bank corrupted after it was written.
 
-The check is a bitwise CRC-32, with no table and no stack, one 32-bit word at a time. The BOOT_MEMORY executes about 232 instructions per word of the payload, which is about 0.19 s for a full 128 KiB bank at 50 MHz, and the whole code, together with `_reset` and `rv32_wait_restart`, is 332 bytes of instructions that end at address `0x220` of the 4 KiB.
+The check is a bitwise CRC-32, with no table and no stack, one 32-bit word at a time, with the 32 bit steps unrolled in sequence (the BOOT_MEMORY only fetches instructions, so there is no table to read). The BOOT_MEMORY executes about 166 instructions per word of the payload, with a single taken branch per word, which is about 0.11 s for a full 128 KiB bank at 50 MHz, and the whole code, together with `_reset` and `rv32_wait_restart`, is 940 bytes of instructions that end at address `0x480` of the 4 KiB. It uses only the registers of RV32E, and `sp`, `gp` and `tp` are scratch because the `_start` of the program sets them.
 
 ## 7. Restart by the test environment
 

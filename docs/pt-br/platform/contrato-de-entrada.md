@@ -134,7 +134,7 @@ Uma banca vale quando a magia confere, o CRC do cabeçalho confere, o tamanho é
 
 O salto entrega ao firmware o estado da seção 2, com `a0` e `a1` em `0`, e o endereço é o início do programa da banca, `base + 0x100`. A atualização grava o cabeçalho por último, de modo que uma banca interrompida no meio da gravação nunca vale, e o CRC-32 da carga também recusa uma banca corrompida depois de gravada.
 
-A conferência é um CRC-32 bit a bit, sem tabela e sem pilha, sobre uma palavra de 32 bits por vez. A BOOT_MEMORY executa cerca de 232 instruções por palavra da carga, o que dá cerca de 0,19 s para uma banca de 128 KiB cheia a 50 MHz, e o código inteiro, junto do `_reset` e do `rv32_wait_restart`, são 332 bytes de instruções que terminam no endereço `0x220` dos 4 KiB.
+A conferência é um CRC-32 bit a bit, sem tabela e sem pilha, sobre uma palavra de 32 bits por vez, com os 32 passos de bit desenrolados em sequência (a BOOT_MEMORY só busca instrução, então não há tabela a ler). A BOOT_MEMORY executa cerca de 166 instruções por palavra da carga, com um único desvio tomado por palavra, o que dá cerca de 0,11 s para uma banca de 128 KiB cheia a 50 MHz, e o código inteiro, junto do `_reset` e do `rv32_wait_restart`, são 940 bytes de instruções que terminam no endereço `0x480` dos 4 KiB. Ela usa só os registradores do RV32E, e `sp`, `gp` e `tp` servem de rascunho porque o `_start` do programa os inicializa.
 
 ## 7. Recomeço pelo ambiente de teste
 
