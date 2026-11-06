@@ -2,7 +2,7 @@
 
 ## 1. O que ela é
 
-Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), monta o núcleo com quatro escolhas independentes: a ROM e a RAM dentro ou fora do chip, e a cache de instruções e a de dados presentes ou não. Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de uma cache) fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
+Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), instancia o [SoC](../soc/soc.md) e lhe acrescenta o relógio de três fases e os modelos de chip. O SoC monta o núcleo com quatro escolhas independentes: a ROM e a RAM dentro ou fora do chip, e a cache de instruções e a de dados presentes ou não. Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de uma cache) fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
 
 O topo liga também, por genéricos, periféricos opcionais da placa (chaves, botões, displays e as duas UART) que as [dez plataformas](dez-plataformas.md) usam; sem eles a janela de periféricos tem só o CLINT e o controlador externo, quando as interrupções estão ligadas.
 

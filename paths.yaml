@@ -4,6 +4,7 @@
 repository: Insper-RISC-V
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py, scripts/generate_sources.py]}
+  - {name: board packages, paths: [boards/de0-cv/board.yaml, boards/de0-cv/pins.yaml, boards/de2-115/board.yaml, boards/de2-115/pins.yaml, boards/de0-nano/board.yaml, boards/de0-nano/pins.yaml, boards/de10-lite/board.yaml, boards/de10-lite/pins.yaml, boards/de10-nano/board.yaml, boards/de10-nano/pins.yaml, boards/mkr-vidor-4000/board.yaml, boards/mkr-vidor-4000/pins.yaml, docs/pt-br/boards/formato.md, docs/pt-br/boards/placas.md, docs/en/boards/formato.md, docs/en/boards/placas.md]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
   - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
@@ -238,7 +239,7 @@ provides:
   # family name and no memory chip. The tops (the simulation ones and the board ones) instantiate it and add the clocks
   # and the memory backends.
   soc:
-    requires: [ext_interconnect, Common-Components/utils, Core/core, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
+    requires: [ext_interconnect, Common-Components/utils, Core/core, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/console]
     sources:
       - src/soc/soc.vhd
   # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).

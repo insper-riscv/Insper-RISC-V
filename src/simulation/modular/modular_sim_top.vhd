@@ -169,7 +169,11 @@ entity modular_sim_top is
     -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
     has_uart_pins       : boolean := false;
     -- Índice da janela da UART via pinos.
-    uart_pins_id        : natural range 0 to 7 := 3
+    uart_pins_id        : natural range 0 to 7 := 3;
+    -- Polaridade do pino de transmissão do console em pinos.
+    uart_tx_invert      : boolean := false;
+    -- Polaridade do pino de recepção do console em pinos.
+    uart_rx_invert      : boolean := false
   );
   port (
     -- Clock base; um gerador o divide por três para os estágios do núcleo.
@@ -392,7 +396,9 @@ begin
       has_uart_jtag       => has_uart_jtag,
       uart_jtag_id        => uart_jtag_id,
       has_uart_pins       => has_uart_pins,
-      uart_pins_id        => uart_pins_id
+      uart_pins_id        => uart_pins_id,
+      uart_tx_invert      => uart_tx_invert,
+      uart_rx_invert      => uart_rx_invert
     )
     port map (
       i_clk_core       => pll_clk_idexmem,

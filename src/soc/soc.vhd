@@ -155,7 +155,11 @@ entity soc is
     -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
     has_uart_pins       : boolean := false;
     -- Índice da janela da UART via pinos.
-    uart_pins_id        : natural range 0 to 7 := 3
+    uart_pins_id        : natural range 0 to 7 := 3;
+    -- Polaridade do pino de transmissão do console em pinos: verdadeiro inverte o nível de o_uart_tx.
+    uart_tx_invert      : boolean := false;
+    -- Polaridade do pino de recepção do console em pinos: verdadeiro inverte o nível de i_uart_rx.
+    uart_rx_invert      : boolean := false
   );
   port (
     -- Relógio do núcleo e das memórias de dados (estágios ID, EX e MEM).
@@ -817,9 +821,13 @@ begin
       );
   end generate g_display;
 
+  -- O console é um só bloco de periférico; o backend ("jtag" ou "pinos") é a escolha da instância.
   g_uart_jtag : if has_uart_jtag generate
   begin
-    u_uart_jtag : entity work.jtag_uart
+    u_uart_jtag : entity work.console
+      generic map (
+        backend => "jtag"
+      )
       port map (
         i_clk       => i_clk_core,
         i_rst       => i_rst,
@@ -829,6 +837,7 @@ begin
         i_re        => p_re(uart_jtag_id),
         o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
         o_irq       => irq_lines(LINE_UART_JTAG),
+        o_tx        => open,
         i_tck       => i_uart_tck,
         i_tdi       => i_uart_tdi,
         o_tdo       => o_uart_tdo,
@@ -858,18 +867,24 @@ begin
 
   g_uart_pins : if has_uart_pins generate
   begin
-    u_uart_pins : entity work.uart
+    u_uart_pins : entity work.console
+      generic map (
+        backend   => "pinos",
+        tx_invert => uart_tx_invert,
+        rx_invert => uart_rx_invert
+      )
       port map (
-        i_clk      => i_clk_core,
-        i_rst      => i_rst,
-        i_data_in  => p_wdata,
-        i_address  => p_addr(1 downto 0),
-        i_write    => p_we(uart_pins_id),
-        i_read     => p_re(uart_pins_id),
-        o_data_out => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
-        o_irq      => irq_lines(LINE_UART),
-        i_uart_rx  => i_uart_rx,
-        o_uart_tx  => o_uart_tx
+        i_clk   => i_clk_core,
+        i_rst   => i_rst,
+        i_addr  => p_addr(7 downto 0),
+        i_wdata => p_wdata,
+        i_we    => p_we(uart_pins_id),
+        i_re    => p_re(uart_pins_id),
+        o_rdata => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
+        o_irq   => irq_lines(LINE_UART),
+        i_rx    => i_uart_rx,
+        o_tx    => o_uart_tx,
+        o_tdo   => open
       );
   end generate g_uart_pins;
 
