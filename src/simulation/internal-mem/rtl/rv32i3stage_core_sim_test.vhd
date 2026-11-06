@@ -52,6 +52,10 @@ entity rv32i3stage_core_sim_test is
 	  HAS_ZIMOP : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
 	  -- Extensao Zicond no core (czero.eqz e czero.nez).
 	  HAS_ZICOND : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
+	  -- Dicas ntl.* da extensao Zihintntl no core (executam como nop).
+	  HAS_ZIHINTNTL : boolean := work.internal_mem_map_pkg.HAS_ZIHINTNTL;
+	  -- Dica pause da extensao Zihintpause no core (executa como nop).
+	  HAS_ZIHINTPAUSE : boolean := work.internal_mem_map_pkg.HAS_ZIHINTPAUSE;
 	  -- Extensao M completa no core.
 	  HAS_M : boolean := true;
 	  -- Multiplicacao sem divisao (Zmmul) no core.
@@ -199,7 +203,7 @@ begin
     );
 
 	u_core : entity work.core
-		generic map (has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
+		generic map (has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,

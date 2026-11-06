@@ -88,6 +88,10 @@ entity modular_sim_top is
     has_zimop           : boolean := HAS_ZIMOP;
     -- Extensão Zicond no núcleo (czero.eqz e czero.nez).
     has_zicond          : boolean := HAS_ZICOND;
+    -- Dicas ntl.* da extensão Zihintntl no núcleo (executam como nop).
+    has_zihintntl       : boolean := HAS_ZIHINTNTL;
+    -- Dica pause da extensão Zihintpause no núcleo (executa como nop).
+    has_zihintpause     : boolean := HAS_ZIHINTPAUSE;
     -- Extensão M completa no núcleo.
     has_m               : boolean := HAS_M;
     -- Multiplicação sem divisão (Zmmul) no núcleo.
@@ -401,7 +405,9 @@ begin
       hpm_counters => hpm_counters,
       hpm_width    => hpm_width,
       has_zimop    => has_zimop,
-      has_zicond   => has_zicond
+      has_zicond   => has_zicond,
+      has_zihintntl   => has_zihintntl,
+      has_zihintpause => has_zihintpause
     )
     port map (
       o_trap           => open,

@@ -262,7 +262,9 @@ begin
 			hpm_counters => HPM_COUNTERS,
 			hpm_width    => HPM_WIDTH,
 			has_zimop    => HAS_ZIMOP,
-			has_zicond   => HAS_ZICOND
+			has_zicond   => HAS_ZICOND,
+			has_zihintntl   => HAS_ZIHINTNTL,
+			has_zihintpause => HAS_ZIHINTPAUSE
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
