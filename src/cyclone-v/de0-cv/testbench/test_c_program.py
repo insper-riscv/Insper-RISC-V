@@ -137,7 +137,7 @@ SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
 # (UART_SLOT), the moment the program is ready to read.
 UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
 UART_SLOT = int(os.environ.get("UART_SLOT", "4"))
-# the entry of the program of bank A (RV32_BANK_A_ENTRY of flash_banks.h)
+# entry of the program of bank A (RV32_BANK_A_ENTRY, flash_banks.h)
 PROGRAM_ENTRY = 0x1100
 
 
@@ -195,7 +195,7 @@ async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
 
 
 async def wait_for_program(dut: Any, stop: list[bool]) -> None:
-    """Wait until the core first accesses the UART slot or enters a program.
+    """Wait until the core accesses the UART slot or enters a program.
 
     Returns at once without UART_START_ON_ACCESS, and when told to stop.
     """
