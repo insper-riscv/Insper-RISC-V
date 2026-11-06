@@ -4,7 +4,7 @@
 
 ## 1. Escopo
 
-Este documento registra a medição da plataforma `de0-cv` com o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` (29 contadores de eventos de 64 bits) antes de qualquer passo estrutural da frente de 100 MHz. Ele traz a Fmax e os caminhos críticos do bitstream (seção 3), os ciclos por instrução dos programas de referência em simulação (seção 4) e a revisão dos cruzamentos de domínio e do `.sdc` (seção 5). A referência para o critério de fechamento a 100 MHz é o pior cenário do Quartus (modelo lento a 85 °C no setup, modelo rápido a 0 °C no hold), registrado como o pior das sementes 1 a 5.
+Este documento registra a medição da plataforma `de0-cv` com o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` (29 contadores de eventos de 64 bits) antes de qualquer passo estrutural da frente de 100 MHz. Ele traz a Fmax e os caminhos críticos do bitstream (seção 3), os ciclos por instrução dos programas de referência em simulação (seção 4) e a revisão dos cruzamentos de domínio e do `.sdc` (seção 5). A referência para o critério de fechamento a 100 MHz é o pior cenário do Quartus (modelo lento a 85 °C no setup, modelo rápido a 0 °C no hold), registrado como o pior das sementes 1 a 5. A compilação completa do Core novo nos três topos e o custo das interrupções estão em [core-novo.md](core-novo.md).
 
 ## 2. Condições da medição
 

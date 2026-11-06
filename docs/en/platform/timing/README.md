@@ -4,7 +4,7 @@
 
 ## 1. Scope
 
-This document records the measurement of the `de0-cv` platform with the `rv32im_zicclsm_zicntr_zihpm_zifencei` profile (29 event counters of 64 bits) before any structural step of the 100 MHz front. It gives the Fmax and the critical paths of the bitstream (section 3), the cycles per instruction of the reference programs in simulation (section 4), and the review of the clock domain crossings and of the `.sdc` (section 5). The reference for the 100 MHz closure criterion is the Quartus worst case (slow model at 85 °C for setup, fast model at 0 °C for hold), recorded as the worst of seeds 1 to 5.
+This document records the measurement of the `de0-cv` platform with the `rv32im_zicclsm_zicntr_zihpm_zifencei` profile (29 event counters of 64 bits) before any structural step of the 100 MHz front. It gives the Fmax and the critical paths of the bitstream (section 3), the cycles per instruction of the reference programs in simulation (section 4), and the review of the clock domain crossings and of the `.sdc` (section 5). The reference for the 100 MHz closure criterion is the Quartus worst case (slow model at 85 °C for setup, fast model at 0 °C for hold), recorded as the worst of seeds 1 to 5. The full compile of the new Core on the three tops and the cost of interrupts are in [core-novo.md](core-novo.md).
 
 ## 2. Measurement conditions
 

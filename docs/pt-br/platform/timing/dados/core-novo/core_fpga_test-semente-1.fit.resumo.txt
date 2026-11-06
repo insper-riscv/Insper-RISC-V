@@ -1,0 +1,20 @@
+Fitter Status : Successful - Fri Nov  6 01:12:11 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : core_fpga_test
+Top-level Entity Name : core_fpga_test
+Family : Cyclone V
+Device : 5CEBA4F23C7
+Timing Models : Final
+Logic utilization (in ALMs) : 7,172 / 18,480 ( 39 % )
+Total registers : 7987
+Total pins : 14 / 224 ( 6 % )
+Total virtual pins : 0
+Total block memory bits : 2,392,064 / 3,153,920 ( 76 % )
+Total RAM Blocks : 288 / 308 ( 94 % )
+Total DSP Blocks : 0 / 66 ( 0 % )
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 1 / 4 ( 25 % )
+Total DLLs : 0 / 4 ( 0 % )
