@@ -90,7 +90,7 @@ check-unique:
 	if [ -n "$$dups" ]; then echo "defined more than once:"; echo "$$dups"; exit 1; fi; \
 	echo "no entity or package is defined twice"
 
-# Every copy of the memory map (config, linker flags, boot ROM, runtime, the core's VHDL, the Quartus IPs)
+# Every copy of the memory map (config, linker flags, boot memory, runtime, the core's VHDL, the Quartus IPs)
 # agrees with platform.yaml, in each platform.
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
@@ -101,7 +101,7 @@ memory-map:
 	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
 	$(MAKE) generate-check sources-check
 
-# The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
+# The files written from the map of each platform (the linker flags, the linker script of the boot memory and
 # the VHDL package of the generics): `make generate` writes them and `make generate-check` fails when one
 # is out of date.
 generate:

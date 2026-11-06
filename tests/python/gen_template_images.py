@@ -7,7 +7,7 @@ Uso, da raiz do repositório:
 
 O mapa é o de `src/simulation/template/platform.yaml`. O programa é o
 do topo modular (guarda 0x5A na base da RAM, lê de volta, soma 1 e
-guarda o resultado na palavra seguinte), e a BOOT_ROM salta para a
+guarda o resultado na palavra seguinte), e a BOOT_MEMORY salta para a
 ROM, que começa logo depois dela. As imagens ficam em
 tests/python/unittests/rtl/data/template/.
 """
@@ -27,7 +27,7 @@ RAM_BASE = MAP["RAM.base"]
 
 
 def main() -> None:
-    """Write the BOOT_ROM image and the ROM image."""
+    """Write the BOOT_MEMORY image and the ROM image."""
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "boot_to_rom.hex").write_text(hex_lines([jal(X0, ROM_BASE)]))
     program = [0] * (ROM_BASE // 4) + body(RAM_BASE >> 12, 0)

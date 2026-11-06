@@ -4,7 +4,7 @@
 #   riscv-tools --root . generate-memory-map --platform src/simulation/modular/platform.yaml
 #
 # Every combination of memories and caches shares this map: the choice only changes where each memory sits
-# and which cache stands in front of it. The ROM starts right after the BOOT_ROM. The `memory` section below
+# and which cache stands in front of it. The ROM starts right after the BOOT_MEMORY. The `memory` section below
 # is the default (both memories inside the core, no cache); a test replaces it for one run (`--memory`, or
 # the rom_external, ram_external, has_icache and has_dcache generics of the top).
 #
@@ -18,11 +18,11 @@ profile: rv32im_zicclsm
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,       kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,       kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 1M-4K,    kind: rom, exec: true}
   - {name: RAM,      base: 0x00100000, size: 1M,       kind: ram}
 
-# Words at the top of RAM, as in the other platforms: where the host and the program meet (the boot ROM clears
+# Words at the top of RAM, as in the other platforms: where the host and the program meet (the boot memory clears
 # them at every reset, the program writes tohost at its end).
 reserved:
   stdout:   {base: 0x001FFBE0, size: 1K+8}
@@ -59,7 +59,7 @@ extras: [Zimop, Zicond, Interrupts]
 
 generate:
   specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/simulation/modular/runtime/boot_rom.ld}
+  boot_ld: {path: src/simulation/modular/runtime/boot_memory.ld}
   runtime: {path: src/simulation/modular/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/modular/modular_map_pkg.vhd

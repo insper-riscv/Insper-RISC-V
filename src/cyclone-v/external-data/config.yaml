@@ -1,5 +1,5 @@
 # The external-data platform: the DE0-CV board (Cyclone V) with the ROM inside the core and the RAM outside it.
-# The BOOT_ROM and the FLASH are inside the FPGA, the FLASH as one copy of a two-port memory that the host rewrites
+# The BOOT_MEMORY and the FLASH are inside the FPGA, the FLASH as one copy of a two-port memory that the host rewrites
 # over JTAG while the core is stopped (the same FLASH and loader as internal-mem); the SDRAM (64 MB at 0x40000000,
 # 143 MHz) is THE RAM and is reached through a write-through data cache. There is no instruction cache and no FLASH
 # chip: the instruction fetch reads port A of the FLASH and the data port of the core reads port B. The host reads and
@@ -10,15 +10,15 @@ toolchain:
   specs: src/cyclone-v/external-data/runtime/rv32im-fpga.specs
 
 # The addresses and the sizes come from the map of the platform (platform.yaml): the SDRAM is the RAM and the FLASH sits
-# right after the BOOT_ROM.
+# right after the BOOT_MEMORY.
 memory_map: platform.yaml
 
 paths:
   sources:
     - src/cyclone-v/external-data/runtime/_exit.c
     - src/cyclone-v/external-data/runtime/stdio.c
-  boot_rom: src/cyclone-v/external-data/runtime/boot_rom.S
-  boot_rom_linker_script: src/cyclone-v/external-data/runtime/boot_rom.ld
+  boot_memory: src/cyclone-v/external-data/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/external-data/runtime/boot_memory.ld
 
 emulator:
   sources:
@@ -139,12 +139,12 @@ quartus:
   sof_file: output_files/external-data.sof
   # The path (relative to project_dir) the FLASH IP reads its initial contents from at synthesis time.
   rom_mif_target: init.mif
-  boot_rom_mif_target: boot_rom_init.mif
+  boot_memory_mif_target: boot_memory_init.mif
   # The host reaches the RAM (the SDRAM) through the debug port, not the memory editor. The top gives the port the
   # Virtual JTAG instance 3 (the FLASH loader has the 0, the JTAG UART the 1 and the display the 2).
   ram_backend: sdram_debug
   sdram_debug_instance: 3
   # The FLASH is a single true dual-port copy that the JTAG loader of the Memory repository rewrites per test with the
-  # core halted: it has no In-System Memory Content Editor instance, and neither has the BOOT_ROM.
+  # core halted: it has no In-System Memory Content Editor instance, and neither has the BOOT_MEMORY.
   rom_write_method: jtag_loader
   rom_mem_instances: []

@@ -38,11 +38,11 @@ package template_map_pkg is
 	constant HAS_ZICCLSM         : boolean  := false;
 	-- A extensão Interrupts está no perfil.
 	constant HAS_INTERRUPTS      : boolean  := false;
-	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
-	constant BOOT_ROM_BITS       : natural  := 12;
-	-- Tamanho da BOOT_ROM, em bytes.
-	constant BOOT_ROM_SIZE_BYTES : positive := 4096;
-	-- Base da ROM, em KiB, logo depois da BOOT_ROM.
+	-- Expoente do tamanho da BOOT_MEMORY, em [0, 2**BOOT_MEMORY_BITS).
+	constant BOOT_MEMORY_BITS       : natural  := 12;
+	-- Tamanho da BOOT_MEMORY, em bytes.
+	constant BOOT_MEMORY_SIZE_BYTES : positive := 4096;
+	-- Base da ROM, em KiB, logo depois da BOOT_MEMORY.
 	constant ROM_BASE_KIB        : natural  := 4;
 	-- Fim exclusivo da ROM, em KiB.
 	constant ROM_END_KIB         : natural  := 32;

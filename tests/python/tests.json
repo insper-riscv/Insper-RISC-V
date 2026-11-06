@@ -119,7 +119,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_integrated",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex"
         },
         "build_args": [
@@ -245,7 +245,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_interrupts",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_irq_program.hex",
             "has_zicsr": true
         },
@@ -372,7 +372,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_data",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "ram_external": true
         },
@@ -499,7 +499,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external_instruction",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true
         },
@@ -626,7 +626,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true,
             "ram_external": true
@@ -645,7 +645,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_integrated",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true,
             "has_icache": false
@@ -655,7 +655,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_external_data",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "ram_external": true,
             "has_dcache": false
@@ -665,7 +665,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true,
             "has_icache": false,
@@ -677,7 +677,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true,
             "has_icache": false,
@@ -689,7 +689,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "rom_external": true,
             "has_icache": true,
@@ -701,7 +701,7 @@
         "extends": "ModularIntegrated",
         "test_module": "tests.python.unittests.rtl.modular_external",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
             "has_icache": true,
             "has_dcache": true
@@ -912,10 +912,10 @@
         ],
         "test_module": "tests.python.unittests.rtl.de0_cv_sim_top",
         "parameters": {
-            "BOOT_ROM_FILE": "tests/python/unittests/rtl/data/de0_cv/boot_rom.hex",
+            "BOOT_MEMORY_FILE": "tests/python/unittests/rtl/data/de0_cv/boot_memory.hex",
             "ROM_FILE": "tests/python/unittests/rtl/data/de0_cv/flash.hex",
             "SDRAM_FILE": "tests/python/unittests/rtl/data/de0_cv/sdram.hex",
-            "BOOT_ROM_ADDR_WIDTH": 10,
+            "BOOT_MEMORY_ADDR_WIDTH": 10,
             "ROM_ADDR_WIDTH": 16
         },
         "build_args": [
@@ -1035,9 +1035,9 @@
         ],
         "test_module": "tests.python.unittests.rtl.external_data_sim_top",
         "parameters": {
-            "BOOT_ROM_FILE": "tests/python/unittests/rtl/data/external_data/boot_rom.hex",
+            "BOOT_MEMORY_FILE": "tests/python/unittests/rtl/data/external_data/boot_memory.hex",
             "ROM_FILE": "tests/python/unittests/rtl/data/external_data/flash.hex",
-            "BOOT_ROM_ADDR_WIDTH": 10,
+            "BOOT_MEMORY_ADDR_WIDTH": 10,
             "ROM_ADDR_WIDTH": 16
         },
         "build_args": [
@@ -1053,7 +1053,7 @@
         "extends": "ExternalDataSimTop",
         "test_module": "tests.python.unittests.rtl.external_data_flash_update",
         "parameters": {
-            "BOOT_ROM_FILE": "tests/python/unittests/rtl/data/external_data/boot_rom_real.hex",
+            "BOOT_MEMORY_FILE": "tests/python/unittests/rtl/data/external_data/boot_memory_real.hex",
             "ROM_FILE": "tests/python/unittests/rtl/data/external_data/loader_flash.hex",
             "HAS_ZIFENCEI": true
         }
@@ -1142,7 +1142,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.template_sim_top",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/template/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/template/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/template/rom_program.hex"
         },
         "build_args": [
@@ -1276,9 +1276,9 @@
         ],
         "test_module": "tests.python.unittests.rtl.internal_mem_sim_top",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/internal_mem/boot_to_flash.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/internal_mem/boot_to_flash.hex",
             "rom_file": "tests/python/unittests/rtl/data/internal_mem/flash_program.hex",
-            "boot_rom_addr_width": 10,
+            "boot_memory_addr_width": 10,
             "rom_addr_width": 13,
             "ram_addr_width": 16
         },
@@ -1546,7 +1546,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/test-integrated/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/test-integrated/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/test-integrated/rom_program.hex"
         },
         "build_args": [
@@ -1672,7 +1672,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/test-external-data/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/test-external-data/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/test-external-data/rom_program.hex"
         },
         "build_args": [
@@ -1798,7 +1798,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/test-external-instruction/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/test-external-instruction/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/test-external-instruction/rom_program.hex"
         },
         "build_args": [
@@ -1924,7 +1924,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/test-external/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/test-external/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/test-external/rom_program.hex"
         },
         "build_args": [
@@ -2050,7 +2050,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-integrated/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-integrated/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-integrated/rom_program.hex"
         },
         "build_args": [
@@ -2186,7 +2186,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external-data/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-external-data/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external-data/rom_program.hex"
         },
         "build_args": [
@@ -2322,7 +2322,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external-instruction/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-external-instruction/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external-instruction/rom_program.hex"
         },
         "build_args": [
@@ -2458,7 +2458,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-external/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-external/rom_program.hex"
         },
         "build_args": [
@@ -2594,7 +2594,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-jtag/rom_program.hex"
         },
         "build_args": [
@@ -2728,7 +2728,7 @@
         ],
         "test_module": "tests.python.unittests.rtl.platform_minimal",
         "parameters": {
-            "boot_rom_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-pins/boot_to_rom.hex",
+            "boot_memory_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-pins/boot_to_rom.hex",
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-pins/rom_program.hex"
         },
         "build_args": [

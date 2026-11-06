@@ -8,7 +8,7 @@ Uso, da raiz do repositório:
 O mapa é o de `src/cyclone-v/de0-cv/platform.yaml`. Cada região roda um
 pedaço do programa e deixa uma marca na SDRAM:
 
-- a BOOT_ROM guarda `BOOT_MARK` na palavra 0 e salta para a FLASH;
+- a BOOT_MEMORY guarda `BOOT_MARK` na palavra 0 e salta para a FLASH;
 - a FLASH guarda `FLASH_MARK` na palavra 3, o valor `DISPLAY_VALUE` no
   registrador do display e salta para o código da SDRAM;
 - a SDRAM (imagem gravada no tempo zero) guarda `SDRAM_MARK` na
@@ -125,7 +125,7 @@ def main() -> None:
         *store_value(TOHOST, 1),
         jal(X0, 0),
     ]
-    write("boot_rom.hex", boot)
+    write("boot_memory.hex", boot)
     write("flash.hex", [0] * (FLASH_BASE // 4) + flash)
     write("sdram.hex", [0] * (SDRAM_CODE_OFFSET // 4) + sdram)
 
