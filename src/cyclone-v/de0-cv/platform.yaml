@@ -43,20 +43,26 @@ flash:
 # The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update
 # (commands of the FLASH chip; wired in the simulation top with HAS_FLASH_CONTROLLER, not yet in the board top), the
 # JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the
-# controller of the external interrupt lines (EXT_IRQ), whose output is the MEIP of the core.
+# PLIC (a 4 MiB window), the controller of the external interrupt lines, whose output is the MEIP of the core.
 peripherals:
   - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
   - {name: UART,    base: 0xC0000000, id: 4}
   - {name: DISPLAY, base: 0xD0000000, id: 5}
   - {name: CLINT,   base: 0xE0000000, id: 6}
-  - {name: EXT_IRQ, base: 0xF0000000, id: 7}
+  - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
 
-# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from EXT_IRQ, all in the clock domain of the core
+# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
 # (50 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (50 cycles per tick) and is
 # independent of the CSR time of Zicntr, which the core serves.
 interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000
+  # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
+  # FLASH controller (simulation top only).
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART_JTAG, id: 2}
+    - {name: FLASH,     id: 6}
 
 # The memory model: the FLASH and the SDRAM outside the core, behind the instruction and the data caches (32768 bits,
 # 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL, RAM_EXTERNAL and the caches from here.

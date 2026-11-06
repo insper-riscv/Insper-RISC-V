@@ -9,6 +9,10 @@ extends: ../de0-cv/config.yaml
 toolchain:
   specs: src/cyclone-v/external-data/runtime/rv32im-fpga.specs
 
+# O boot salta direto para a FLASH em 0x1000, sem escolher banco por cabeçalho: os programas são gravados como
+# binário puro, e não no formato de imagem de banco que a de0-cv herdada declara.
+flash_image: null
+
 # The addresses and the sizes come from the map of the platform (platform.yaml): the SDRAM is the RAM and the FLASH sits
 # right after the BOOT_MEMORY.
 memory_map: platform.yaml

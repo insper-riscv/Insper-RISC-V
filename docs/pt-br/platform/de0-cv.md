@@ -62,7 +62,7 @@ O armazenamento tem 256 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 8
 | Compilar a placa | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl` (só a síntese, com o argumento `map`) |
 | Programar a placa | `src/cyclone-v/de0-cv/de0-cv_program.sh`, no mesmo shell da compilação (`&&`) |
 | Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
-| ACT4 na placa | `certify-board --skip-build` com a configuração `config.flash-board-<perfil>.yaml` do repositório Certification |
+| ACT4 na placa | `gen_profiles.py --profile <perfil> --board --out build/target` e `certify-board` com o `config.yaml` gerado, no repositório Certification; o `tools/board/board_run.py act` do repositório Tests reparte os ELFs entre as duas placas |
 
 O `platform.yaml` é a única fonte do mapa. O `riscv-tools generate-memory-map` (`make generate`) escreve dele o pacote `de0_cv_map_pkg.vhd`, que o topo da placa, o topo de simulação e o projeto do Quartus (`de0-cv.qsf`) usam para os limites das regiões, o tamanho do chip de FLASH e a página da SDRAM que o hospedeiro compartilha com o programa, além das flags de ligação, do linker script da memória de boot e do `memory_map.h` com os endereços do `tohost`, do `fromhost`, do `stdout` e da UART para o runtime. O pacote traz ainda os `HAS_*` da plataforma (`HAS_E` entre eles), `BOOT_MEMORY_BITS` (12) e `ROM_STORAGE_BYTES` (262144). O `config.yaml` declara `memory_map: platform.yaml` e recebe do mapa as bases, as palavras, o `tohost`, o `fromhost` e a largura de endereço das memórias de simulação. O verificador `check-memory-map` confere só o que sobra escrito à mão: a memória de boot, o VHDL do núcleo e o cabeçalho dos programas.
 
