@@ -49,6 +49,7 @@ references:
   - {name: modular boot memory linker script, file: src/simulation/modular/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
   - {name: modular toolchain specs, file: src/simulation/modular/config.yaml, yaml: toolchain.specs, base: .}
   - {name: modular Spike stand-in, file: src/simulation/modular/config.yaml, yaml: emulator.sources, base: .}
+  - {name: SoC, paths: [src/soc/soc.vhd, docs/pt-br/soc/soc.md, docs/en/soc/soc.md]}
   - {name: template platform, paths: [src/simulation/template/platform.yaml, src/simulation/template/config.yaml, src/simulation/template/rtl/template_map_pkg.vhd, src/simulation/template/rtl/template_sim_top.vhd, src/simulation/template/runtime/boot_memory.S, src/simulation/template/runtime/boot_memory.ld, src/simulation/template/runtime/rv32im-fpga.specs, src/simulation/template/runtime/memory_map.h, src/simulation/template/runtime/_exit.c, src/simulation/template/runtime/stdio.c, src/simulation/template/runtime/spike_exit.S, tests/python/gen_template_images.py, tests/python/unittests/rtl/template_sim_top.py, tests/python/unittests/rtl/data/template/boot_to_rom.hex, tests/python/unittests/rtl/data/template/rom_program.hex, docs/pt-br/platform/template.md, docs/en/platform/template.md]}
   - {name: platform test-integrated, paths: [src/simulation/test-integrated/platform.yaml, src/simulation/test-integrated/config.yaml, src/simulation/test-integrated/modular_map_pkg.vhd, src/simulation/test-integrated/runtime/boot_memory.S, src/simulation/test-integrated/runtime/boot_memory.ld, src/simulation/test-integrated/runtime/rv32im-fpga.specs, src/simulation/test-integrated/runtime/memory_map.h, src/simulation/test-integrated/runtime/_exit.c, src/simulation/test-integrated/runtime/stdio.c, src/simulation/test-integrated/runtime/spike_exit.S, tests/python/unittests/rtl/data/platforms/test-integrated/boot_to_rom.hex, tests/python/unittests/rtl/data/platforms/test-integrated/rom_program.hex]}
   - {name: test-integrated sim sources, file: src/simulation/test-integrated/config.yaml, yaml: sim.vhdl_sources, base: .}
@@ -233,9 +234,16 @@ provides:
     requires: []
     sources:
       - src/simulation/modular/modular_map_pkg.vhd
+  # The SoC: the core, the caches, the interconnect, the CLINT, the PLIC and the peripherals, with no board pin, no
+  # family name and no memory chip. The tops (the simulation ones and the board ones) instantiate it and add the clocks
+  # and the memory backends.
+  soc:
+    requires: [ext_interconnect, Common-Components/utils, Core/core, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
+    sources:
+      - src/soc/soc.vhd
   # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).
   modular_sim_top:
-    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
+    requires: [soc, clk_gen_3way, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/flash_chip]
     sources:
       - src/simulation/modular/modular_sim_top.vhd
   test_integrated_map:
