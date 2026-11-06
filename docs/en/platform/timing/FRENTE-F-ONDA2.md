@@ -63,6 +63,27 @@ None of these is a small step: the first needs the counter write moved out of th
 
 The last milestone with the core closed is still M1 of [MARCOS.md](MARCOS.md) (50 MHz with the core phase at 8250 ps); what keeps M1 from closing is only the SDRAM controller.
 
+## 7. Registered Zihpm read (step F.P6c)
+
+Step F.P6c (`Core/docs/en/timing/P6_LEITURA_REGISTRADA_DO_ZIHPM.md`) takes the 29-counter multiplexer out of the CSR read-write loop. The table gives seed 1 at 100 MHz and the five seeds at 83.333 MHz (phase 6000 ps); the list of paths by number of levels is in [CAMINHOS-POR-NIVEIS.md](CAMINHOS-POR-NIVEIS.md).
+
+| Measure | Before F.P6c | After |
+| :--- | ---: | ---: |
+| 100 MHz, phase 5000, core to core | -2.687 ns | -2.053 ns |
+| 100 MHz, phase 6000, core to core | -2.549 ns | -1.393 ns (11.2 ns of data) |
+| Logic levels of the Zihpm bank (maximum) | 10 | 8 |
+
+| Domain at 83.333 MHz | S1 | S2 | S3 | S4 | S5 | Worst |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Core (`c3`) | -0.549 | -1.837 | -0.275 | -0.439 | -0.825 | -1.837 |
+| Fetch (`c2`) | 0.118 | -0.087 | -0.308 | -0.333 | -0.035 | -0.333 |
+| SDRAM controller | -0.745 | -0.255 | -0.204 | -0.173 | -0.713 | -0.745 |
+| `DRAM_CLK` | 0.429 | -0.127 | -0.047 | -0.078 | 0.394 | -0.127 |
+| Lowest hold, fast model | 0.009 | 0.092 | 0.089 | 0.056 | 0.118 | 0.009 |
+| ALMs | 9,067 | 9,062 | 9,062 | 9,005 | 9,045 | 9,067 |
+
+M3 stays open: the worst core path at 83.333 MHz becomes the one from the instruction-cache tag to the PC (4.0 to 4.2 ns of data plus 2.4 ns of RAM clock skew), followed by the Zihpm counter adding to itself and by the instruction confirmation (`r_we_ok`) that reaches the counters, the PC and the address class. The cost of the step is one cycle per CSR instruction that accesses the Zihpm bank.
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../../LICENSE).

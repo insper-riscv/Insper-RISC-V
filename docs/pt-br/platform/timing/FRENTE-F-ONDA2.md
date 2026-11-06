@@ -63,6 +63,27 @@ Nenhum desses é um passo pequeno: o primeiro exige tirar a escrita dos contador
 
 O último marco com o núcleo fechado continua sendo o M1 de [MARCOS.md](MARCOS.md) (50 MHz com a fase do núcleo em 8250 ps); o que impede o M1 de fechar é só o controlador da SDRAM.
 
+## 7. Leitura registrada do Zihpm (passo F.P6c)
+
+O passo F.P6c (`Core/docs/pt-br/timing/P6_LEITURA_REGISTRADA_DO_ZIHPM.md`) tira o multiplexador dos 29 contadores do laço leitura-escrita de CSR. A tabela dá a semente 1 a 100 MHz e as cinco sementes a 83,333 MHz (fase 6000 ps); a lista de caminhos por número de níveis está em [CAMINHOS-POR-NIVEIS.md](CAMINHOS-POR-NIVEIS.md).
+
+| Medida | Antes de F.P6c | Depois |
+| :--- | ---: | ---: |
+| 100 MHz, fase 5000, núcleo para núcleo | -2,687 ns | -2,053 ns |
+| 100 MHz, fase 6000, núcleo para núcleo | -2,549 ns | -1,393 ns (11,2 ns de dados) |
+| Níveis de lógica do banco do Zihpm (máximo) | 10 | 8 |
+
+| Domínio a 83,333 MHz | S1 | S2 | S3 | S4 | S5 | Pior |
+| :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Núcleo (`c3`) | -0,549 | -1,837 | -0,275 | -0,439 | -0,825 | -1,837 |
+| Busca (`c2`) | 0,118 | -0,087 | -0,308 | -0,333 | -0,035 | -0,333 |
+| Controlador da SDRAM | -0,745 | -0,255 | -0,204 | -0,173 | -0,713 | -0,745 |
+| `DRAM_CLK` | 0,429 | -0,127 | -0,047 | -0,078 | 0,394 | -0,127 |
+| Menor hold, modelo rápido | 0,009 | 0,092 | 0,089 | 0,056 | 0,118 | 0,009 |
+| ALMs | 9 067 | 9 062 | 9 062 | 9 005 | 9 045 | 9 067 |
+
+O M3 continua aberto: o pior caminho do núcleo a 83,333 MHz passa a ser o da tag da cache de instruções até o PC (4,0 a 4,2 ns de dados mais 2,4 ns de defasagem do relógio da RAM), seguido pelo contador do Zihpm somando a si mesmo e pela confirmação da instrução (`r_we_ok`) que chega aos contadores, ao PC e à classificação do endereço. O custo do passo é um ciclo por instrução CSR que acessa o banco do Zihpm.
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../../LICENSE).
