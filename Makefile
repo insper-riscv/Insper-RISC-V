@@ -38,14 +38,6 @@ SIM_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path
             $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/internal_mem_map_pkg.vhd \
             $(P)/rtl/rv32i3stage_core_sim_test.vhd
 
-# The simulation top of the modular platform (modular_sim_top): the core with the four memory models (the
-# caches and chips of Memory), the external interconnect, the CLINT and the external interrupt controller.
-MODULAR_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
-                Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd Memory/src/RAM/SoC/ram_chip.vhd \
-                $(addprefix Memory/src/cache/SoC/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
-                $(INTC_VHDL) src/interconnect/ext_interconnect.vhd $(P)/rtl/clk_gen_3way.vhd \
-                $(PM)/modular_map_pkg.vhd $(PM)/modular_sim_top.vhd
-
 # The simulation top of the template platform (template_sim_top): the core with the simulation memories and the optional JTAG UART.
 TEMPLATE_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
                  Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd \
@@ -62,6 +54,10 @@ BOARD_VHDL := $(INTC_VHDL) $(shell find src/interconnect Memory/src/RAM/SoC Memo
 # (the SDRAM, the data cache and the external interconnect).
 EXTDATA_VHDL := Memory/src/ROM/SoC/flash_simulation.vhd Memory/src/ROM/SoC/flash_loader.vhd \
                 $(PE)/external_data_map_pkg.vhd $(PE)/external-data_sim_top.vhd
+
+# The simulation top of the modular platform adds the instruction fetch bridge (the ROM behind no cache) to the board sources
+# (which carry the external interconnect, the caches, the chips, the CLINT and the external interrupt controller).
+MODULAR_VHDL := Memory/src/cache/SoC/ifetch_bridge.vhd $(PM)/modular_map_pkg.vhd $(PM)/modular_sim_top.vhd
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
@@ -83,7 +79,7 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: check-tops check-unique check-generics
+check: check-tops check-generics check-unique
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -102,7 +98,7 @@ check-tops:
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(TEMPLATE_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(MODULAR_VHDL))
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL) $(MODULAR_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. modular_sim_top
 	@echo "the simulation top of the modular platform builds"
 
@@ -127,6 +123,7 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
 	$(MAKE) generate-check
 

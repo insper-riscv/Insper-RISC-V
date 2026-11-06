@@ -128,12 +128,47 @@ def _run_entry(config: dict[str, Any]) -> None:
     run_cocotb_test({k: v for k, v in config.items() if k not in SKIP_KEYS})
 
 
+def _expand(configs: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Complete the entries that extend another one.
+
+    An entry with ``extends`` takes every key of the entry it names
+    (the sources, the build options) and replaces or adds its own; the
+    ``parameters`` of the two are merged, those of the extending entry
+    winning. The same simulation top can then be built with other
+    generics without repeating its list of sources.
+
+    Parameters
+    ----------
+    configs : dict of {str: dict of {str: Any}}
+        The entries as read from tests.json.
+
+    Returns
+    -------
+    dict of {str: dict of {str: Any}}
+        The entries with the inherited keys filled in.
+    """
+    expanded: dict[str, dict[str, Any]] = {}
+    for name, config in configs.items():
+        base_name = config.get("extends")
+        if base_name is None:
+            expanded[name] = config
+            continue
+        base = expanded[base_name]
+        own = {key: value for key, value in config.items() if key != "extends"}
+        parameters: dict[str, Any] = {
+            **(base.get("parameters") or {}),
+            **(own.get("parameters") or {}),
+        }
+        expanded[name] = {**base, **own, "parameters": parameters}
+    return expanded
+
+
 def _load_configs() -> dict[str, dict[str, Any]]:
     """Read tests.json, exiting with a message when it is unusable."""
     json_path = TESTS_ROOT / "python/tests.json"
     try:
         with json_path.open() as handle:
-            return json.load(handle)
+            return _expand(json.load(handle))
     except FileNotFoundError:
         print(f"Erro: Arquivo de configuração '{json_path}' não encontrado.")
     except json.JSONDecodeError:
