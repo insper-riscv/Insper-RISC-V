@@ -228,13 +228,14 @@ begin
 	LEDR(1) <= trap_seen;
 	LEDR(0) <= display_fail;
 
-	-- o_trap dura um ciclo de 63 MHz, invisível a olho nu: a bandeira o segura até o reset
-	process (pll_clk_idexmem)
+	-- o_trap dura um ciclo de 63 MHz, invisível a olho nu: a bandeira o segura até o reset. O reset é assíncrono
+	-- porque o botão também segura a PLL em reset e o clock do core pára, então um clear síncrono nunca o veria
+	process (pll_clk_idexmem, core_reset)
 	begin
-		if rising_edge(pll_clk_idexmem) then
-			if core_reset = '1' then
-				trap_seen <= '0';
-			elsif core_trap = '1' then
+		if core_reset = '1' then
+			trap_seen <= '0';
+		elsif rising_edge(pll_clk_idexmem) then
+			if core_trap = '1' then
 				trap_seen <= '1';
 			end if;
 		end if;

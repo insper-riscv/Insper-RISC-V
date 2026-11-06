@@ -39,7 +39,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 3. **FLASH.** O chip atende pedidos de linha ou de palavra com dois parâmetros de latência: bordas até a primeira palavra e bordas entre as palavras seguintes. Fora da janela do chip a leitura devolve zero.
 4. **Reinício.** O boot ROM executa `fence.i` antes de saltar para a FLASH. A instrução invalida a cache de instruções e a de dados, então o programa novo que o hospedeiro gravou não encontra linhas do anterior.
 5. **Hospedeiro.** O hospedeiro grava a imagem da FLASH pela memória interna do Quartus (instância 0) e os dados pela porta de depuração da SDRAM, com o núcleo parado no laço de reinício do boot ROM. Ele reinicia o núcleo escrevendo um valor diferente de zero em `fromhost`.
-6. **Trap.** O `LEDR1` do topo acende quando o núcleo pulsa `o_trap` e fica aceso até o próximo reset. Só um núcleo sem Zicsr pulsa `o_trap`; com Zicsr o núcleo trata a exceção em `mtvec` e o LED permanece apagado.
+6. **Trap.** O `LEDR1` do topo acende quando o núcleo pulsa `o_trap` e fica aceso até o próximo reset, inclusive o do botão `KEY4` (`FPGA_RESET_N`), que o apaga mesmo com o clock parado. O programa continua na memória, então ao soltar o botão ele pode repetir o trap e reacender o LED. Só um núcleo sem Zicsr pulsa `o_trap`; com Zicsr o núcleo trata a exceção em `mtvec` e o LED permanece apagado.
 
 ## 4. Tamanhos e latências
 
