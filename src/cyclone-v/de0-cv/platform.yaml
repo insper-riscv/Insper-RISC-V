@@ -80,6 +80,12 @@ sdram:
   clock_hz: 100000000
   dram_clk_phase_ps: 4000
 
+# The phase of the core clock (PLL output 3) against the fetch clock (output 2), measured by the Quartus timing of the 5 seeds
+# and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
+# crossings (docs/pt-br/platform/timing/MARCOS.md).
+pll:
+  core_phase_ps: 8250
+
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND, HAS_ZIHINTNTL, HAS_ZIHINTPAUSE and HAS_INTERRUPTS of the package).
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts]
 
@@ -133,3 +139,4 @@ checks:
   - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: SDRAM.clock_mhz}
   - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
   - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}
+  - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: PLL.core_phase_ps}

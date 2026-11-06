@@ -6,8 +6,8 @@
 //   outclk_0  100.000 MHz, phase 0        the SDRAM controller
 //   outclk_1  100.000 MHz, phase 4000 ps  the DRAM_CLK pin (measured by the Quartus timing of the 5 seeds)
 //   outclk_2   50.000 MHz, phase 0        instruction memories (clk_if)
-//   outclk_3   50.000 MHz, phase 6625 ps  the core and the data memories (clk_idexmem), about 120 degrees later
-//                                          (the step of a 1000 MHz VCO is 125 ps: 6667 ps is not allowed)
+//   outclk_3   50.000 MHz, phase 8250 ps  the core and the data memories (clk_idexmem), about 148 degrees later
+//                                          (the `pll` section of platform.yaml; the step of a 1000 MHz VCO is 125 ps)
 `timescale 1ns/10ps
 module sdram_platform_pll (
 	input  wire refclk,
@@ -34,7 +34,7 @@ module sdram_platform_pll (
 		.phase_shift2("0 ps"),
 		.duty_cycle2(50),
 		.output_clock_frequency3("50.000000 MHz"),
-		.phase_shift3("6625 ps"),
+		.phase_shift3("8250 ps"),
 		.duty_cycle3(50),
 		.pll_type("General"),
 		.pll_subtype("General")
