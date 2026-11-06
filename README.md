@@ -4,14 +4,16 @@
 
 ![Diagrama do pipeline](Core/docs/img/multi-stage-rv32m_pipeline_final-Pipeline.jpg)
 
-SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estágios que implementa RV32IM com as extensões Zicsr, Zicntr, Zihpm, Zifencei e Zicclsm, em 60 perfis gerados a partir de uma matriz. Este repositório é o topo do projeto. Ele liga o núcleo (`Core`), as memórias (`Memory`), os periféricos (`Peripherals`) e os blocos comuns (`Common-Components`) em duas plataformas, a de simulação `internal-mem` e a da placa DE0-CV (Cyclone V), e guarda o projeto do Quartus, o runtime, o mapa de memória, os testbenches das plataformas e a integração contínua conjunta. O trabalho é dividido em repositórios da organização [insper-riscv](https://github.com/insper-riscv), um por responsabilidade.
+SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estágios que implementa RV32IM com as extensões Zicsr, Zicntr, Zihpm, Zifencei e Zicclsm, em 60 perfis sobre a base RV32I e 60 sobre a RV32E gerados a partir de uma matriz, mais as extensões Zimop, Zicond, Zihintntl e Zihintpause ligadas por genéricos. Este repositório é o topo do projeto. Ele liga o núcleo (`Core`), as memórias (`Memory`), os periféricos (`Peripherals`) e os blocos comuns (`Common-Components`) em cinco plataformas (três de simulação e duas da placa DE0-CV, Cyclone V), e guarda o projeto do Quartus, o runtime, o mapa de memória, os testbenches das plataformas e a integração contínua conjunta. O trabalho é dividido em repositórios da organização [insper-riscv](https://github.com/insper-riscv), um por responsabilidade.
 
 ## 1. Documentação
 
 - [AUTHORS.md](AUTHORS.md): autores com commits no repositório, com nome e conta do GitHub.
 - [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, normas VHDL-2008, C23 e Python, regras de documentação e verificação antes de abrir Pull Request.
 - [CITATION.cff](CITATION.cff): metadados para citação do software.
-- [docs/pt-br/](docs/pt-br): guias (placa, simulação e KPIs), plataformas (memória, boot e runtime) e defeitos já diagnosticados.
+- [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, simulação, KPIs e nova arquitetura).
+- [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas, com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
+- [docs/pt-br/bugs/](docs/pt-br/bugs): defeitos já diagnosticados.
 - [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md): o interconector externo, que decodifica o mapa da plataforma entre a SDRAM e os periféricos, a sua variante AXI4 e os testes de integração.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
 
@@ -24,7 +26,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 | [Common-Components](https://github.com/insper-riscv/Common-Components) | Os blocos genéricos de VHDL (somador, flip-flop, registradores, multiplexadores, decodificador one-hot e buffer de três estados) | Nada |
 | [Core](https://github.com/insper-riscv/Core) | O processador em VHDL, por extensão da ISA, perfis e testes por entidade | Common-Components |
 | [Memory](https://github.com/insper-riscv/Memory) | Memórias, caches, controladores e modelos de simulação | Core (interface de memória) |
-| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER e UART, com testes por entidade | Common-Components |
+| [Peripherals](https://github.com/insper-riscv/Peripherals) | GPIO, TIMER, CLINT, controlador de interrupção externa, UART, controlador de FLASH e display, com testes por entidade | Common-Components |
 | [Tests](https://github.com/insper-riscv/Tests) | Os programas de teste (`asm/`, `c/`), goldens e os fluxos que os executam | Este repositório, Tools |
 | [Certification](https://github.com/insper-riscv/Certification) | A suíte oficial ACT4 (riscv-arch-test) | Este repositório, Tools |
 
@@ -40,17 +42,17 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 | `src/cyclone-v/external-data/` | Plataforma da placa DE0-CV com a BOOT_ROM e a FLASH de duas portas dentro da FPGA (uma só cópia, regravada por JTAG) e a SDRAM atrás da cache de dados, mais JTAG UART e display. O topo do Quartus é `external-data_top.vhd` e o de simulação é `rv32im_external_data_sim_test` |
 | `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
 
-Cada plataforma tem a mesma estrutura.
+Todas as plataformas têm o `platform.yaml` e o `runtime/`. A `internal-mem` separa o projeto do Quartus em `quartus/` e os módulos próprios em `rtl/`, a `template` tem só o `rtl/`, a `modular` tem só o topo de simulação e o pacote do mapa, e as da placa (`de0-cv` e `external-data`) guardam o projeto do Quartus, o topo e os scripts de síntese e programação na própria pasta.
 
 | Pasta ou arquivo | Conteúdo |
 | :--- | :--- |
 | `platform.yaml` | Mapa de memória e a lista de cada cópia manuscrita dele, verificada por `riscv-tools check-memory-map` |
 | `config.yaml` | Configuração do `riscv-tools` para toolchain, memória, Quartus e simulação |
-| `quartus/` | Projeto do Quartus (`.qpf`, `.qsf`, `.sdc`, topo de hardware e imagens `.mif`) |
+| `quartus/`, ou a própria pasta nas plataformas da placa | Projeto do Quartus (`.qpf`, `.qsf`, `.sdc`, topo de hardware, imagens `.mif` e os scripts `<plataforma>_synth.tcl` e `<plataforma>_program.sh`) |
 | `pll/` | IP da PLL |
 | `rtl/` | Topo de simulação e os módulos próprios da plataforma |
 | `runtime/` | `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `_exit.c`, `stdio.c` e `spike_exit.S` |
-| `testbench/` | `test_c_program.py`, o testbench cocotb que decide PASS ou FAIL de um programa |
+| `testbench/` | `test_c_program.py`, o testbench cocotb que decide PASS ou FAIL de um programa (`internal-mem` e `de0-cv`) |
 
 Os testes por entidade do RTL das plataformas ficam em `tests/python/`, com o catálogo `tests.json` que os conduz.
 
