@@ -17,43 +17,13 @@ PT := src/simulation/template
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
-
-# The UART of Peripherals is part of the simulation tops.
-UART_VHDL := Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd \
-             Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd \
-             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd \
-             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd \
-             Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd \
-             Peripherals/src/UART/serial/uart_fifo.vhd \
-             Peripherals/src/UART/serial/uart.vhd
-
-# The simulation top of internal-mem (rv32i3stage_core_sim_test): the core with the simulation memories and peripherals.
-SIM_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
-            Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd \
-            $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/internal_mem_map_pkg.vhd \
-            $(P)/rtl/rv32i3stage_core_sim_test.vhd
-
-# The simulation top of the template platform (template_sim_top): the core with the simulation memories and the optional JTAG UART.
-TEMPLATE_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
-                 Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd \
-                 Peripherals/src/UART/jtag/jtag_uart.vhd $(P)/rtl/clk_gen_3way.vhd \
-                 $(PT)/rtl/template_map_pkg.vhd $(PT)/rtl/template_sim_top.vhd
-
-# The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory, and the
-# external interconnect of this repository.
-BOARD_VHDL := $(shell find src/interconnect Memory/src/RAM/SoC Memory/src/RAM/FPGA/debug Memory/src/barramento/SoC Peripherals/src/UART/jtag Peripherals/src/display/soc -name '*.vhd' -not -path '*/cyclone-v/*' -not -name ram_simulation.vhd | sort) \
-               $(addprefix Memory/src/cache/SoC/,icache.vhd dcache.vhd flash_chip.vhd flash_arbiter.vhd mem_region_router.vhd) \
-               $(PF)/de0_cv_map_pkg.vhd $(PF)/de0-cv_sim_top.vhd
-
-# The simulation top of the external-data platform adds the two-port FLASH model and its loader to the board sources
-# (the SDRAM, the data cache and the external interconnect).
-EXTDATA_VHDL := Memory/src/ROM/SoC/flash_simulation.vhd Memory/src/ROM/SoC/flash_loader.vhd \
-                $(PE)/external_data_map_pkg.vhd $(PE)/external-data_sim_top.vhd
+# The source files of a top, in analysis order, from the provides of this repository and of its submodules.
+SOURCES := riscv-tools --root . sources
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-unique memory-map generate generate-check test unit-tests formal clean
+.PHONY: all sync paths check check-tops check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -70,25 +40,28 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: check-tops check-unique
+check: sources-check check-tops check-unique
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
 check-tops:
 	@mkdir -p $(WDIR)
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL))
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) internal_mem_sim_top)
 	@printf '00000000\n' > $(WDIR)/default.hex
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32i3stage_core_sim_test
 	@echo "the simulation top of internal-mem builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL))
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL) $(EXTDATA_VHDL))
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
 	@echo "the simulation top of the external-data platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(TEMPLATE_VHDL))
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) template_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) modular_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. modular_sim_top
+	@echo "the simulation top of the modular platform builds"
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
@@ -107,7 +80,7 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
-	$(MAKE) generate-check
+	$(MAKE) generate-check sources-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
 # the VHDL package of the generics): `make generate` writes them and `make generate-check` fails when one
@@ -125,6 +98,16 @@ generate-check:
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
+
+# The source lists of the tops (the config*.yaml, tests/python/tests.json and the .qsf files) come from the
+# provides of the repositories, through `riscv-tools sources`: `make generate-sources` writes them and
+# `make sources-check` fails when one is out of date. A new file of a submodule enters the tops through
+# the provides of that submodule, never by editing a list here.
+generate-sources:
+	uv run --no-project python scripts/generate_sources.py
+
+sources-check:
+	uv run --no-project python scripts/generate_sources.py --check
 
 # Per-entity cocotb tests of the RTL of the platforms (`make test TEST=clk_gen_3way`).
 test:

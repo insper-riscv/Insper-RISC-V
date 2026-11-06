@@ -156,7 +156,8 @@ O CONTRIBUTING exige atualizar, ao acrescentar arquivos, o `paths.yaml`, o `Make
 | Arquivo | O que acrescentar |
 | :--- | :--- |
 | `paths.yaml` | Os arquivos da plataforma na lista `references` e os campos de caminho do `config.yaml` |
-| `Makefile` | A variável `P<x> := src/simulation/exemplo`, as linhas de `memory-map`, `generate` e `generate-check` e a elaboração do topo em `check-tops` |
+| `Makefile` | A variável `P<x> := src/simulation/exemplo`, as linhas de `memory-map`, `generate` e `generate-check` e a elaboração do topo em `check-tops`, que lê as fontes do `riscv-tools sources` |
+| `paths.yaml` (`provides`) | O componente do topo, com as fontes e o que ele requer; o `scripts/generate_sources.py` ganha o arquivo de lista da plataforma |
 | `docs/pt-br/platform/` | Um documento `exemplo.md` e a linha na tabela do `README.md` da pasta, com o espelho em `docs/en/` |
 
 ## 5. Escolher o perfil do Core
@@ -298,12 +299,12 @@ Ele reúne, para o `riscv-tools`, o que é da plataforma.
 | `memory_map` | `platform.yaml`, de onde vêm as bases, o `tohost` e o `fromhost` |
 | `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_rom.S` e `boot_rom.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
-| `sim.vhdl_sources` | Todas as fontes, em ordem de dependência |
+| `sim.vhdl_sources` | Todas as fontes, em ordem de dependência, escritas pelo `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | O testbench cocotb, `testbench.test_c_program` da plataforma `internal-mem` |
 | `sim.parameters` | `BOOT_ROM_FILE` e `ROM_FILE` com as imagens de cada programa |
 | `emulator.sources` | `spike_exit.S` |
 
-A lista `sim.vhdl_sources` acompanha os arquivos de VHDL do topo. Se o topo ganhar um periférico, a fonte dele entra na lista antes do topo.
+A lista `sim.vhdl_sources` não se edita à mão. Ela vem do componente do topo no `provides` do `paths.yaml` da plataforma, que declara os componentes que o topo requer, e o `make generate-sources` a escreve na ordem de análise. Se o topo ganhar um periférico, o componente dele entra no `requires` do topo e a lista é regenerada.
 
 ### 8.2. O testbench
 
@@ -370,7 +371,7 @@ Este capítulo vale só se a plataforma tem uma FPGA. A `de0-cv` é a referênci
 | Arquivo | Conteúdo |
 | :--- | :--- |
 | `<plataforma>.qpf` | O projeto, com a revisão |
-| `<plataforma>.qsf` | Dispositivo, pinos e a lista de fontes VHDL e IP, que o `check-paths` confere contra o disco |
+| `<plataforma>.qsf` | Dispositivo, pinos e a lista de fontes VHDL e IP, escrita pelo `make generate-sources` e conferida contra o disco pelo `check-paths` |
 | `<plataforma>.sdc` | Os clocks e as restrições de entrada e saída, escritos a partir dos clocks da plataforma |
 | `pll/` | A IP do PLL que gera os clocks do núcleo |
 | `<plataforma>_synth.tcl` | Compila com a semente escolhida; com o argumento `map` só sintetiza |
