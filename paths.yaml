@@ -49,6 +49,7 @@ references:
   - {name: template boot ROM linker script, file: src/simulation/template/config.yaml, yaml: paths.boot_rom_linker_script, base: .}
   - {name: template toolchain specs, file: src/simulation/template/config.yaml, yaml: toolchain.specs, base: .}
   - {name: template Spike stand-in, file: src/simulation/template/config.yaml, yaml: emulator.sources, base: .}
+  - {name: internal-mem top tests and their images, paths: [tests/python/gen_internal_mem_images.py, tests/python/unittests/rtl/data/internal_mem/boot_to_flash.hex, tests/python/unittests/rtl/data/internal_mem/flash_program.hex, tests/python/unittests/rtl/internal_mem_sim_top.py, tests/python/unittests/rtl/board_program.py, tests/python/unittests/rtl/core_fpga_test.py, tests/python/unittests/rtl/blinky.py, tests/python/unittests/rtl/pll.py, tests/vhdl/fpga_ip_models.vhd, tests/python/unittests/integration/ext_axi_interconnect.py, tests/python/unittests/integration/ext_axi_interconnect_write_through.py]}
   - {name: bus integration tests, paths: [src/interconnect/ext_interconnect.vhd, src/interconnect/ext_axi_interconnect.vhd, src/interconnect/axi_router.vhd, src/interconnect/axi_slave_periph_bank.vhd, tests/python/unittests/integration/axi_router.py, tests/vhdl/ext_bus_system.vhd, tests/vhdl/ext_axi_bus_system.vhd, tests/python/unittests/integration/ext_bus.py, tests/python/unittests/integration/ext_axi_cache.py, tests/python/unittests/integration/jtag.py, tests/python/unittests/integration/checks.py, tests/python/unittests/integration/dut.py]}
   - {name: interconnect documents, paths: [docs/pt-br/interconnect/ext_interconnect.md, docs/en/interconnect/ext_interconnect.md, docs/pt-br/bugs/ROUTER_W_BEFORE_AW.md, docs/en/bugs/ROUTER_W_BEFORE_AW.md]}
   - {name: guides, paths: [docs/pt-br/guide/README.md, docs/pt-br/guide/nova-arquitetura.md, docs/en/guide/README.md, docs/en/guide/nova-arquitetura.md]}
@@ -62,12 +63,5 @@ tree:
   coverage:
     formal:
       ext_interconnect: []
-    # Entities without an entity test of their own, and why (changed only with a justification in the pull request).
-    exceptions:
-      blinky: "Board demonstration top, with no behavior to test beyond the pins; compiled by the Quartus project."
-      core_fpga_test: "Board top of the internal-memory platform; the sim top test and the Quartus compilation cover its wiring."
-      pll: "Behavioral stand-in of the generated PLL, used by the simulation tops."
-      rv32i3stage_core_sim_test: "Simulation top of the internal-memory platform; the tests of tests.json run on it."
-      ext_axi_interconnect: "Exercised through the ExtAxiBus and ExtAxiCache tests (toplevel ext_axi_bus_system)."
   vhdl_style:
     exclude: [src/simulation/internal-mem/pll/pll_sim.vhd]
