@@ -24,11 +24,10 @@ PLATFORMS: dict[str, list[str]] = {
     ],
 }
 
-# Tops sem cache: os generics de cache só existem no top da placa.
+# Tops sem cache: os generics de cache só existem nos tops que as instanciam.
 CACHE = {"HAS_ICACHE", "HAS_DCACHE"}
 NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
-    "src/simulation/modular/modular_sim_top.vhd",
 }
 
 CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)

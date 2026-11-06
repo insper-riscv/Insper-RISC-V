@@ -88,6 +88,7 @@
             "Memory/src/cache/SoC/flash_arbiter.vhd",
             "Memory/src/cache/SoC/flash_chip.vhd",
             "Memory/src/cache/SoC/icache.vhd",
+            "Memory/src/cache/SoC/ifetch_bridge.vhd",
             "Memory/src/cache/SoC/mem_region_router.vhd",
             "Memory/src/RAM/SoC/ram_chip.vhd",
             "Memory/src/RAM/SoC/ram_simulation.vhd",
@@ -193,6 +194,7 @@
             "Memory/src/cache/SoC/flash_arbiter.vhd",
             "Memory/src/cache/SoC/flash_chip.vhd",
             "Memory/src/cache/SoC/icache.vhd",
+            "Memory/src/cache/SoC/ifetch_bridge.vhd",
             "Memory/src/cache/SoC/mem_region_router.vhd",
             "Memory/src/RAM/SoC/ram_chip.vhd",
             "Memory/src/RAM/SoC/ram_simulation.vhd",
@@ -299,6 +301,7 @@
             "Memory/src/cache/SoC/flash_arbiter.vhd",
             "Memory/src/cache/SoC/flash_chip.vhd",
             "Memory/src/cache/SoC/icache.vhd",
+            "Memory/src/cache/SoC/ifetch_bridge.vhd",
             "Memory/src/cache/SoC/mem_region_router.vhd",
             "Memory/src/RAM/SoC/ram_chip.vhd",
             "Memory/src/RAM/SoC/ram_simulation.vhd",
@@ -405,6 +408,7 @@
             "Memory/src/cache/SoC/flash_arbiter.vhd",
             "Memory/src/cache/SoC/flash_chip.vhd",
             "Memory/src/cache/SoC/icache.vhd",
+            "Memory/src/cache/SoC/ifetch_bridge.vhd",
             "Memory/src/cache/SoC/mem_region_router.vhd",
             "Memory/src/RAM/SoC/ram_chip.vhd",
             "Memory/src/RAM/SoC/ram_simulation.vhd",
@@ -429,6 +433,72 @@
         "plusargs": [
             "--max-stack-alloc=0"
         ]
+    },
+    "ModularRomBridge": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_integrated",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "has_icache": false
+        }
+    },
+    "ModularRamDirect": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external_data",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "ram_external": true,
+            "has_dcache": false
+        }
+    },
+    "ModularBridgeDirect": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "has_icache": false,
+            "ram_external": true,
+            "has_dcache": false
+        }
+    },
+    "ModularBridgeDcache": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "has_icache": false,
+            "ram_external": true,
+            "has_dcache": true
+        }
+    },
+    "ModularIcacheDirect": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "has_icache": true,
+            "ram_external": true,
+            "has_dcache": false
+        }
+    },
+    "ModularInternalCaches": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_rom_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "has_icache": true,
+            "has_dcache": true
+        }
     },
     "ExtBus": {
         "toplevel": "ext_bus_system",

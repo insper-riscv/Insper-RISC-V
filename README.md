@@ -35,7 +35,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 | Caminho | Plataforma |
 | :--- | :--- |
 | `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_ROM, FLASH e RAM dentro da FPGA e o topo de simulação `rv32i3stage_core_sim_test`. É a base dos testes de entidade do pipeline |
-| `src/simulation/modular/` | Topo de simulação configurável, com a memória de instruções e a de dados dentro ou fora do chip (`integrated`, `external-data`, `external-instruction` e `external`), FLASH e RAM de 1 MB e caches de 4 kbit por padrão. É a base da simulação do ACT4 |
+| `src/simulation/modular/` | Topo de simulação configurável, com a ROM e a RAM dentro ou fora do chip e as caches de instruções e de dados presentes ou não, nas 16 combinações, FLASH e RAM de 1 MB e caches de 4 kbit por padrão. Roda os programas do repositório Tests e é a base da simulação do ACT4 |
 | `src/simulation/template/` | Plataforma modelo mínima (RAM e ROM internas, UART sobre JTAG opcional, perfil `rv32i`), o ponto de partida do guia de nova arquitetura |
 | `src/cyclone-v/external-data/` | Plataforma da placa DE0-CV com a BOOT_ROM e a FLASH de duas portas dentro da FPGA (uma só cópia, regravada por JTAG) e a SDRAM atrás da cache de dados, mais JTAG UART e display. O topo do Quartus é `external-data_top.vhd` e o de simulação é `rv32im_external_data_sim_test` |
 | `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
