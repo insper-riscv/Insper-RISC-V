@@ -42,7 +42,9 @@ entity core_fpga_test is
 		-- Zifencei no core (FENCE.I).
 		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
 		-- Acesso desalinhado executado em hardware (Zicclsm).
-		HAS_ZICCLSM  : boolean := work.internal_mem_map_pkg.HAS_ZICCLSM
+		HAS_ZICCLSM  : boolean := work.internal_mem_map_pkg.HAS_ZICCLSM;
+		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
+		HAS_INTERRUPTS : boolean := work.internal_mem_map_pkg.HAS_INTERRUPTS
 	);
 	port (
 		-- Clock de 50 MHz da placa, entrada do PLL.

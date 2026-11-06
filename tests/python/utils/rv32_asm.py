@@ -4,6 +4,8 @@ X0 = 0
 T0 = 5
 T1 = 6
 T2 = 7
+T3 = 28
+T4 = 29
 
 
 def lui(rd: int, imm20: int) -> int:
@@ -134,6 +136,75 @@ def jalr(rd: int, rs1: int, imm12: int) -> int:
         The 32-bit instruction.
     """
     return ((imm12 & 0xFFF) << 20) | (rs1 << 15) | (rd << 7) | 0x67
+
+
+def andi(rd: int, rs1: int, imm12: int) -> int:
+    """Encode ``andi rd, rs1, imm12``.
+
+    Parameters
+    ----------
+    rd : int
+        Destination register.
+    rs1 : int
+        Source register.
+    imm12 : int
+        Signed 12-bit immediate.
+
+    Returns
+    -------
+    int
+        The 32-bit instruction.
+    """
+    return ((imm12 & 0xFFF) << 20) | (rs1 << 15) | (7 << 12) | (rd << 7) | 0x13
+
+
+def beq(rs1: int, rs2: int, offset: int) -> int:
+    """Encode ``beq rs1, rs2, offset``.
+
+    Parameters
+    ----------
+    rs1 : int
+        First register.
+    rs2 : int
+        Second register.
+    offset : int
+        Signed byte offset, even, within 4 KiB.
+
+    Returns
+    -------
+    int
+        The 32-bit instruction.
+    """
+    imm = offset & 0x1FFF
+    return (
+        (((imm >> 12) & 1) << 31)
+        | (((imm >> 5) & 0x3F) << 25)
+        | (rs2 << 20)
+        | (rs1 << 15)
+        | (((imm >> 1) & 0xF) << 8)
+        | (((imm >> 11) & 1) << 7)
+        | 0x63
+    )
+
+
+def csrrs(rd: int, csr: int, rs1: int) -> int:
+    """Encode ``csrrs rd, csr, rs1`` (``csrr rd, csr`` with ``rs1 = x0``).
+
+    Parameters
+    ----------
+    rd : int
+        Destination register.
+    csr : int
+        The 12-bit CSR address.
+    rs1 : int
+        Register with the bits to set.
+
+    Returns
+    -------
+    int
+        The 32-bit instruction.
+    """
+    return (csr << 20) | (rs1 << 15) | (2 << 12) | (rd << 7) | 0x73
 
 
 def hex_lines(words: list[int]) -> str:

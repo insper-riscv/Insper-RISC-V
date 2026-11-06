@@ -15,12 +15,27 @@ Every data access of the core at or above `0x40000000` leaves through one extern
 | Range | Slave |
 | :--- | :--- |
 | bit 31 = 0 (from `0x40000000`) | the SDRAM bridge |
-| bit 31 = 1 | a peripheral window: bits 30:28 are the id, bits 9:2 the word offset in the window |
+| bit 31 = 1 | a peripheral window: bits 30:28 are the id, bits 15:2 (a 64 KiB window) the word offset in the window |
 
 | Id | Window | Peripheral |
 | ---: | :--- | :--- |
 | 4 | `0xC0000000` | JTAG UART |
-| 0 to 3, 5 to 7 | | none: a read gives 0, a write has no effect, the access completes |
+| 5 | `0xD0000000` | Seven-segment display |
+| 6 | `0xE0000000` | CLINT (`msip`, `mtimecmp` and `mtime`; 64 KiB window) |
+| 7 | `0xF0000000` | External interrupt controller (`EXT_IRQ`, 4 registers) |
+| 0 to 3 | | none: a read gives 0, a write has no effect, the access completes |
+
+## 2.1. Machine interrupts
+
+The CLINT (id 6) and the external interrupt controller `EXT_IRQ` (id 7) enter as slaves by the same path as the other peripherals, in the clock domain of the core, with no synchronizer. The three outputs reach the ports of the core.
+
+| Output | Core port | Bit of `mip` |
+| :--- | :--- | :--- |
+| `o_irq_software` of the CLINT (`msip`) | `i_irq_software` | MSIP, bit 3 |
+| `o_irq_timer` of the CLINT (`mtime >= mtimecmp`) | `i_irq_timer` | MTIP, bit 7 |
+| `o_irq_external` of `EXT_IRQ` | `i_irq_external` | MEIP, bit 11 |
+
+The `mtime` of the CLINT is a counter of its own, which adds 1 every $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ core cycles and is independent of the CSR `time` of Zicntr, which the core serves. The base of the CLINT, `mtime_hz` and `clock_hz` come from the `interrupts` section of `platform.yaml`, and no address of the CLINT is written by hand in the top or in the runtime. The core enables the interrupts only with `has_interrupts` and Zicsr, and the lines of `EXT_IRQ` stay at zero while no peripheral of the top raises one.
 
 ## 3. The handshake
 
@@ -32,7 +47,7 @@ The core holds the access on the port until `ready`, which stays high as a level
 
 ## 4. The AXI4 variant
 
-`ext_axi_interconnect.vhd` does the same decode over AXI4: the data cache and the master bridge of Memory in front, then `axi_router.vhd` and, behind it, the SDRAM slave bridge of Memory and `axi_slave_periph_bank.vhd`. The router sends `0x40000000` to `0x43FFFFFF` to the SDRAM and `0x80000000` and above to the peripherals, and answers DECERR anywhere else. The peripheral bank serves eight windows of 256 words, selected by bits 30:28. The whole chain is described in [dcache_axi.md](https://github.com/insper-riscv/Memory/blob/main/docs/en/barramento/dcache_axi.md) in Memory.
+`ext_axi_interconnect.vhd` does the same decode over AXI4: the data cache and the master bridge of Memory in front, then `axi_router.vhd` and, behind it, the SDRAM slave bridge of Memory and `axi_slave_periph_bank.vhd`. The router sends `0x40000000` to `0x43FFFFFF` to the SDRAM and `0x80000000` and above to the peripherals, and answers DECERR anywhere else. The peripheral bank serves eight windows of 16384 words (64 KiB), selected by bits 30:28. The whole chain is described in [dcache_axi.md](https://github.com/insper-riscv/Memory/blob/main/docs/en/barramento/dcache_axi.md) in Memory.
 
 ## 5. Verification
 

@@ -19,6 +19,9 @@ PLATFORMS: dict[str, list[str]] = {
     "src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd": [
         "src/cyclone-v/de0-cv/de0-cv_sim_top.vhd",
     ],
+    "src/cyclone-v/external-data/external_data_map_pkg.vhd": [
+        "src/cyclone-v/external-data/external-data_sim_top.vhd",
+    ],
     "src/simulation/modular/modular_map_pkg.vhd": [
         "src/simulation/modular/modular_sim_top.vhd",
     ],

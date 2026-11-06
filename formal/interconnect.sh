@@ -170,6 +170,6 @@ mutant "$ic" "$props" ext_interconnect '' ready_always     "s/'1' when st = ST_D
 mutant "$ic" "$props" ext_interconnect '' slot_zero_data   "s/pending <= i_p_rdata(32 \* id + 31 downto 32 \* id);/pending <= i_p_rdata(31 downto 0);/"
 mutant "$ic" "$props" ext_interconnect '' select_kept      "s/sel_wb <= '0';/null;/"
 mutant "$ic" "$props" ext_interconnect '' write_reads      "s/o_p_we(id) <= i_wren;/o_p_we(id) <= i_rden;/"
-mutant "$ic" "$props" ext_interconnect '' address_dropped  "s/o_p_addr    <= i_addr(9 downto 2);/o_p_addr    <= i_addr(10 downto 3);/"
+mutant "$ic" "$props" ext_interconnect '' address_dropped  "s/o_p_addr    <= i_addr(15 downto 2);/o_p_addr    <= i_addr(16 downto 3);/"
 
 [ "$fail" -eq 0 ] && echo "formal: all expectations met" || { echo "formal: FAILED (logs in build/formal)"; exit 1; }

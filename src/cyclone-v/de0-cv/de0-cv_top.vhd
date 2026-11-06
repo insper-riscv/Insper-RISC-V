@@ -123,11 +123,13 @@ architecture behaviour of core_fpga_sdram_flash is
 	signal m_rden    : std_logic;
 	signal m_wren    : std_logic;
 	signal m_ready   : std_logic;
-	signal p_addr    : std_logic_vector(7 downto 0);
+	signal p_addr    : std_logic_vector(13 downto 0);
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	signal p_byteena : std_logic_vector(3 downto 0);
 	signal p_we, p_re : std_logic_vector(7 downto 0);
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+	-- the three machine interrupt lines of the core
+	signal irq_timer, irq_software, irq_external : std_logic := '0';
 	-- the display register: the segments of the six digits, and its value
 	signal display_hex   : std_logic_vector(41 downto 0);
 	signal display_value : std_logic_vector(23 downto 0);
@@ -265,7 +267,8 @@ begin
 			has_zimop    => HAS_ZIMOP,
 			has_zicond   => HAS_ZICOND,
 			has_zihintntl   => HAS_ZIHINTNTL,
-			has_zihintpause => HAS_ZIHINTPAUSE
+			has_zihintpause => HAS_ZIHINTPAUSE,
+			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM)
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -300,6 +303,9 @@ begin
 			o_trap => core_trap,
 
 			i_hpm_ext_events => hpm_ext_events,
+			i_irq_software => irq_software,
+			i_irq_timer    => irq_timer,
+			i_irq_external => irq_external,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -437,15 +443,38 @@ begin
 	JTAG_UART : entity work.jtag_uart_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
 		);
+
+	-- The CLINT (msip, mtimecmp, mtime) and the controller of the external interrupt lines, in the clock domain of
+	-- the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. No peripheral of this
+	-- top raises an interrupt line yet, so the lines of EXT_IRQ stay at zero.
+	g_irq : if HAS_INTERRUPTS generate
+	CLINT : entity work.clint
+		generic map (tick_cycles => CLINT_TICK_CYCLES)
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
+			i_data_in => p_wdata, i_address => p_addr, i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
+			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
+			o_irq_timer => irq_timer, o_irq_software => irq_software
+		);
+
+	EXT_IRQ : entity work.ext_irq_controller
+		port map (
+			i_clk => pll_clk_idexmem, i_rst => core_reset,
+			i_irq_lines => (others => '0'), i_data_in => p_wdata, i_address => p_addr(1 downto 0),
+			i_write => p_we(EXT_IRQ_ID), i_read => p_re(EXT_IRQ_ID),
+			o_data_out => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
+			o_irq_external => irq_external
+		);
+	end generate g_irq;
 
 	-- the seven-segment display and its host port (DISPLAY_BASE)
 	DISPLAY : entity work.seg_display_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			o_hex => display_hex, o_value => display_value, o_fail => display_fail
 		);

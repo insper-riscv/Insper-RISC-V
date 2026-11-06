@@ -53,6 +53,8 @@ entity rv32im_external_data_sim_test is
 		HAS_ZIFENCEI : boolean := false;
 		-- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
 		HAS_ZICCLSM : boolean := true;
+		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
+		HAS_INTERRUPTS : boolean := false;
 		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
 		HAS_ZIHPM : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
@@ -212,7 +214,7 @@ architecture behaviour of rv32im_external_data_sim_test is
 	-- Atrás do interconector: pedido concluído.
 	signal m_ready   : std_logic;
 	-- Janela de periféricos: endereço de registrador.
-	signal p_addr    : std_logic_vector(7 downto 0);
+	signal p_addr    : std_logic_vector(13 downto 0);
 	-- Janela de periféricos: dado de escrita.
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	-- Janela de periféricos: máscara de bytes.
@@ -412,7 +414,7 @@ begin
 	u_uart : entity work.jtag_uart
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID),
 			i_tck => UART_TCK, i_tdi => UART_TDI, o_tdo => UART_TDO, i_ir_in => UART_IR_IN,
 			i_state_cdr => UART_STATE_CDR, i_state_sdr => UART_STATE_SDR,
@@ -422,7 +424,7 @@ begin
 	u_display : entity work.seg_display
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
 			i_state_cdr => '0', i_state_sdr => '0', i_state_udr => '0', i_state_uir => '0',

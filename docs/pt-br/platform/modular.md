@@ -59,3 +59,5 @@ O GHDL aloca os arrays das memórias na pilha, então a simulação de memórias
 ## 6. Verificação
 
 `tests/python/runner.py` roda um programa mínimo em cada modelo (`ModularIntegrated`, `ModularExternalData`, `ModularExternalInstruction` e `ModularExternal`). O programa guarda `0x5A` na base da RAM, lê de volta, soma 1 e guarda o resultado na palavra seguinte, e o teste confere as duas palavras na RAM interna ou no chip externo, conforme o modelo. Os quatro modelos usam as mesmas duas imagens, `boot_to_rom.hex` e `rom_program.hex`, geradas por `tests/python/gen_modular_images.py`.
+
+O `ModularInterrupts` roda o modelo `integrated` com `has_zicsr` ligado e a imagem `rom_irq_program.hex`: o programa escreve o maior valor no `mtimecmp`, lê o `mip` (MTIP baixo), arma o `mtimecmp` poucos ticks à frente do `mtime` e espera o bit MTIP do `mip`. O `mtimecmp` do CLINT é limpo de forma síncrona e o gerador de clock para os clocks durante o reset, então o programa o escreve antes de ler o `mip`.

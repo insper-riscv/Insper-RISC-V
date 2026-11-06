@@ -36,6 +36,8 @@ package de0_cv_map_pkg is
 	constant HAS_ZIFENCEI        : boolean  := true;
 	-- A extensão Zicclsm está no perfil.
 	constant HAS_ZICCLSM         : boolean  := true;
+	-- A extensão Interrupts está no perfil.
+	constant HAS_INTERRUPTS      : boolean  := true;
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
 	constant BOOT_ROM_BITS       : natural  := 12;
 	-- Tamanho da BOOT_ROM, em bytes.
@@ -88,5 +90,22 @@ package de0_cv_map_pkg is
 	constant DISPLAY_BASE : std_logic_vector(31 downto 0) := x"D0000000";
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
+
+	-- Endereço base do periférico CLINT.
+	constant CLINT_BASE : std_logic_vector(31 downto 0) := x"E0000000";
+	-- Índice da janela de 256 MiB do periférico CLINT (bits 30:28 do endereço).
+	constant CLINT_ID   : natural := 6;
+
+	-- Endereço base do periférico EXT_IRQ.
+	constant EXT_IRQ_BASE : std_logic_vector(31 downto 0) := x"F0000000";
+	-- Índice da janela de 256 MiB do periférico EXT_IRQ (bits 30:28 do endereço).
+	constant EXT_IRQ_ID   : natural := 7;
+
+	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
+	constant CLOCK_HZ          : positive := 50000000;
+	-- Frequência com que o mtime do CLINT conta, em Hz; é independente do CSR time.
+	constant MTIME_HZ          : positive := 1000000;
+	-- Ciclos de clock por incremento do mtime (tick_cycles do CLINT).
+	constant CLINT_TICK_CYCLES : positive := 50;
 
 end package de0_cv_map_pkg;

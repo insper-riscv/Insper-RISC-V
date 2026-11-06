@@ -36,6 +36,8 @@ package template_map_pkg is
 	constant HAS_ZIFENCEI        : boolean  := false;
 	-- A extensão Zicclsm está no perfil.
 	constant HAS_ZICCLSM         : boolean  := false;
+	-- A extensão Interrupts está no perfil.
+	constant HAS_INTERRUPTS      : boolean  := false;
 	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
 	constant BOOT_ROM_BITS       : natural  := 12;
 	-- Tamanho da BOOT_ROM, em bytes.

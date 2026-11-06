@@ -12,7 +12,8 @@ module props (input clk);
   wire [31:0] d_prq, d_pending;
   wire [31:0] rdata, m_addr, m_wdata, p_wdata;
   wire [3:0] m_be, p_be;
-  wire [7:0] p_addr, p_we, p_re;
+  wire [13:0] p_addr;
+  wire [7:0] p_we, p_re;
 
   ext_interconnect dut (.i_clk(clk), .i_rst(rst), .i_addr(addr), .i_wdata(wdata), .i_byteena(byteena), .i_rden(rden),
     .i_wren(wren), .i_mem_advance(mem_advance), .o_ready(ready), .o_rdata(rdata), .o_m_addr(m_addr), .o_m_wdata(m_wdata),
@@ -61,7 +62,7 @@ module props (input clk);
     if (is_periph) assert (!m_rden && !m_wren);
     else assert (strobe == 0 && m_rden == rden && m_wren == wren);
     // 3. O endereço, o dado e a máscara passam sem mudar.
-    assert (m_addr == addr && m_wdata == wdata && m_be == byteena && p_wdata == wdata && p_be == byteena && p_addr == addr[9:2]);
+    assert (m_addr == addr && m_wdata == wdata && m_be == byteena && p_wdata == wdata && p_be == byteena && p_addr == addr[15:2]);
     // 4. O pulso ao periférico dura um ciclo e só com o interconector livre; o acesso termina no ciclo seguinte e a
     //    resposta dura até o avanço (nenhum acesso trava).
     if (strobe != 0) assert (!d_st && is_periph && active);

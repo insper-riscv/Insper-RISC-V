@@ -79,6 +79,7 @@ set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/csr_value_consts.v
 set_global_assignment -name VHDL_FILE ../../../Core/src/Zicsr/trap_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/Zimop/zimop_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/generic_register.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/clearable_register.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/adder.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/mux_2x1.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/mux_4x1.vhd
@@ -423,6 +424,12 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ar
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
 set_global_assignment -name VHDL_FILE sdram_jtag_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint_mtime.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/CLINT/soc/clint.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/intc/soc/ext_irq_consts.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/intc/soc/ext_irq_controller.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/jtag_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../src/interconnect/ext_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/cyclone-v/jtag_uart_shell.vhd

@@ -8,7 +8,7 @@
 --                direto, com os pulsos de leitura e escrita retidos enquanto outro
 --                escravo está selecionado
 --   bit 31 = 1   uma janela de periféricos: os bits 30:28 são o id do periférico
---                e os bits 9:2 o deslocamento de palavra dentro dele
+--                e os bits 15:2 (janela de 64 KiB) o deslocamento de palavra dentro dele
 --
 -- Um acesso a periférico leva um ciclo do core: um único pulso de we ou re
 -- (mesmo enquanto o core espera outra coisa), com ready em nível até mem_advance,
@@ -65,7 +65,7 @@ entity ext_interconnect is
     i_m_rdata     : in  std_logic_vector(31 downto 0);
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico.
-    o_p_addr      : out std_logic_vector(7 downto 0);
+    o_p_addr      : out std_logic_vector(13 downto 0);
     -- Janela de periféricos: dado de escrita.
     o_p_wdata     : out std_logic_vector(31 downto 0);
     -- Janela de periféricos: habilita de bytes da escrita.
@@ -112,7 +112,7 @@ begin
   o_m_rden    <= i_rden and not is_periph;
   o_m_wren    <= i_wren and not is_periph;
 
-  o_p_addr    <= i_addr(9 downto 2);
+  o_p_addr    <= i_addr(15 downto 2);
   o_p_wdata   <= i_wdata;
   o_p_byteena <= i_byteena;
 

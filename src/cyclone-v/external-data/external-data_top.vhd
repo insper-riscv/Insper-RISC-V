@@ -215,7 +215,7 @@ architecture behaviour of core_fpga_external_data is
 	-- Atrás do interconector: pedido concluído.
 	signal m_ready   : std_logic;
 	-- Janela de periféricos: endereço de registrador.
-	signal p_addr    : std_logic_vector(7 downto 0);
+	signal p_addr    : std_logic_vector(13 downto 0);
 	-- Janela de periféricos: dado de escrita.
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	-- Janela de periféricos: máscara de bytes.
@@ -490,7 +490,7 @@ begin
 	u_jtag_uart : entity work.jtag_uart_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
 		);
 
@@ -498,7 +498,7 @@ begin
 	u_display : entity work.seg_display_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			o_hex => display_hex, o_value => display_value, o_fail => display_fail
 		);

@@ -149,13 +149,13 @@ async def test_a_peripheral_write_pulses_one_slot_once(dut: Dut):
     await start(dut)
     port = Port(dut)
     for slot in range(SLOTS):
-        await port.access(periph_addr(slot, 0x34), True, 0xD0000000 | slot)
+        await port.access(periph_addr(slot, 0x2034), True, 0xD0000000 | slot)
         check_equal(
             [p for p in port.we_pulses if p], [1 << slot], f"slot {slot}"
         )
         check_equal(sum(port.re_pulses), 0, "no read pulse on a write")
         check_equal(int(dut.o_p_wdata.value), 0xD0000000 | slot)
-        check_equal(int(dut.o_p_addr.value), 0x34)
+        check_equal(int(dut.o_p_addr.value), 0x2034)
         check_equal(port.memory_requests, 0, "memory left alone")
 
 

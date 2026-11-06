@@ -41,10 +41,20 @@ flash:
     - {name: B, base: 0x00020000, size: 128K}
 
 # The slots of the external interconnect (bits 30:28 of the address): the JTAG UART and the seven-segment
-# display of the board top.
+# display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the controller of the external
+# interrupt lines (EXT_IRQ), whose output is the MEIP of the core.
 peripherals:
   - {name: UART,    base: 0xC0000000, id: 4}
   - {name: DISPLAY, base: 0xD0000000, id: 5}
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: EXT_IRQ, base: 0xF0000000, id: 7}
+
+# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from EXT_IRQ, all in the clock domain of the core
+# (50 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (50 cycles per tick) and is
+# independent of the CSR time of Zicntr, which the core serves.
+interrupts:
+  clock_hz: 50000000
+  mtime_hz: 1000000
 
 # The memory model: the FLASH and the SDRAM outside the core, behind the instruction and the data caches (32768 bits,
 # 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL, RAM_EXTERNAL and the caches from here.
@@ -54,8 +64,8 @@ memory:
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 
-# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
-extras: [Zimop, Zicond]
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the package).
+extras: [Zimop, Zicond, Interrupts]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.

@@ -49,6 +49,7 @@ sim:
     - Core/src/Zicsr/trap_consts.vhd
     - Core/src/Zimop/zimop_consts.vhd
     - Common-Components/src/generic_register.vhd
+    - Common-Components/src/clearable_register.vhd
     - Common-Components/src/adder.vhd
     - Common-Components/src/mux_2x1.vhd
     - Common-Components/src/mux_4x1.vhd
@@ -115,6 +116,12 @@ sim:
     - Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
     - Memory/src/RAM/SoC/sim/sdram_model.vhd
     - Memory/src/RAM/SoC/sim/sdram_system.vhd
+    - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
+    - Peripherals/src/CLINT/soc/clint_consts.vhd
+    - Peripherals/src/CLINT/soc/clint_mtime.vhd
+    - Peripherals/src/CLINT/soc/clint.vhd
+    - Peripherals/src/intc/soc/ext_irq_consts.vhd
+    - Peripherals/src/intc/soc/ext_irq_controller.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
