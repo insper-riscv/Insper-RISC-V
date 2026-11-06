@@ -29,3 +29,58 @@ CACHE = {"HAS_ICACHE", "HAS_DCACHE"}
 NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
 }
+
+CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)
+GENERIC = re.compile(r"^\s*(HAS_\w+)\s*:", re.IGNORECASE | re.MULTILINE)
+
+
+def names(pattern: re.Pattern[str], path: Path) -> set[str]:
+    """Devolve os nomes ``HAS_*`` que o padrão acha no arquivo.
+
+    Parameters
+    ----------
+    pattern : re.Pattern
+        Expressão com o nome no primeiro grupo.
+    path : Path
+        Arquivo VHDL.
+
+    Returns
+    -------
+    set of str
+        Os nomes, em maiúsculas.
+    """
+    return {n.upper() for n in pattern.findall(path.read_text("utf-8"))}
+
+
+def missing(root: Path) -> list[str]:
+    """Lista os ``HAS_*`` do pacote que o top não declara.
+
+    Parameters
+    ----------
+    root : Path
+        Raiz do repositório.
+
+    Returns
+    -------
+    list of str
+        Uma mensagem por par (top, generic) ausente.
+    """
+    problems: list[str] = []
+    for package, tops in PLATFORMS.items():
+        wanted = names(CONSTANT, root / package)
+        for top in tops:
+            exempt: set[str] = CACHE if top in NO_CACHE else set()
+            absent = wanted - names(GENERIC, root / top) - exempt
+            problems += [f"{top}: falta o generic {n}" for n in sorted(absent)]
+    return problems
+
+
+def main() -> int:
+    """Imprime os generics ausentes e devolve o código de saída."""
+    problems = missing(Path(__file__).resolve().parents[1])
+    print("\n".join(problems) or "todos os HAS_* do pacote estão nos tops")
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
