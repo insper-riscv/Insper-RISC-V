@@ -35,10 +35,16 @@
  *    over at _reset. It lives here, and not in FLASH, because FLASH is
  *    rewritten while the core waits.
  *
- * There is no stack and no libc: the routines are leaves that return through
- * ra, or through t6 for the CRC loop. The CRC-32 is the bitwise one (IEEE
+ * There is no stack and no libc, so sp, gp and tp are free scratch (the
+ * program sets them in its _start) and only the registers of RV32E are
+ * used: the routines are leaves that return through
+ * ra, or through tp for the CRC loop. The CRC-32 is the bitwise one (IEEE
  * 802.3, reflected polynomial 0xEDB88320), one 32-bit word at a time, so the
- * ROM keeps no table: about 7 instructions for each of the 32 bits of a word.
+ * ROM keeps no table (it is instruction-only memory): 5 instructions for
+ * each of the 32 bits of a word, unrolled so that a word costs no taken
+ * branch but the one of the loop (the rolled loop, with its counter and
+ * its branch, was 7 instructions and 1 taken branch for each bit, and
+ * took about 4x more cycles for the same CRC).
  *
  * The words it clears must be clean on every entry, cold boot or restart: a
  * stale nonzero tohost reads as "already done", and the previous test's
@@ -78,7 +84,7 @@ rv32_wait_restart_poll:
     beqz t1, rv32_wait_restart_poll
     j    _reset
 
-    /* s0/s1: A valid (1) or not (0) and its version; s2/s3: the same for B. */
+    /* s0/s1: A valid (1) or not (0) and its version; gp/tp: the same for B. */
 bank_select:
     li   a2, RV32_BANK_A_BASE
     li   a3, RV32_BANK_A_SIZE
@@ -88,16 +94,16 @@ bank_select:
     li   a2, RV32_BANK_B_BASE
     li   a3, RV32_BANK_B_SIZE
     jal  ra, bank_check
-    mv   s2, a0
-    mv   s3, a1
+    mv   gp, a0
+    mv   tp, a1
     beqz s0, bank_a_invalid
-    beqz s2, boot_a             // only A is valid
-    bltu s1, s3, boot_b         // both: B only when strictly newer
+    beqz gp, boot_a             // only A is valid
+    bltu s1, tp, boot_b         // both: B only when strictly newer
 boot_a:
     li   t0, RV32_BANK_A_ENTRY
     j    boot_go
 bank_a_invalid:
-    beqz s2, rv32_wait_restart  // no valid bank: park, safe
+    beqz gp, rv32_wait_restart  // no valid bank: park, safe
 boot_b:
     li   t0, RV32_BANK_B_ENTRY
 boot_go:
@@ -107,15 +113,15 @@ boot_go:
 
     /* bank_check: a2 = base of the bank, a3 = size of the bank.
      * Returns a0 = 1 and a1 = version when the image is valid, a0 = 0 else.
-     * Clobbers t0-t6, a4, a5. */
+     * Clobbers t0-t2, sp, gp, tp, a4, a5. */
 bank_check:
     lw   t0, 0(a2)
     li   t1, RV32_IMAGE_MAGIC
     bne  t0, t1, bank_bad
-    mv   t3, a2                 // the header CRC covers the first 4 words
-    li   t4, 4
+    mv   sp, a2                 // the header CRC covers the first 4 words
+    li   gp, 4
     li   a4, -1
-    jal  t6, crc_words
+    jal  tp, crc_words
     not  a4, a4
     lw   t0, 16(a2)
     bne  a4, t0, bank_bad
@@ -125,10 +131,10 @@ bank_check:
     bnez t0, bank_bad
     addi t0, a3, -RV32_IMAGE_HEADER_SIZE
     bltu t0, a5, bank_bad
-    addi t3, a2, RV32_IMAGE_HEADER_SIZE
-    srli t4, a5, 2
+    addi sp, a2, RV32_IMAGE_HEADER_SIZE
+    srli gp, a5, 2
     li   a4, -1
-    jal  t6, crc_words
+    jal  tp, crc_words
     not  a4, a4
     lw   t0, 8(a2)
     bne  a4, t0, bank_bad
@@ -139,26 +145,24 @@ bank_bad:
     li   a0, 0
     ret
 
-    /* crc_words: t3 = address, t4 = number of words, a4 = CRC register.
-     * Returns the register in a4 (not yet inverted) and jumps back through t6.
-     * Clobbers t0-t4. */
+    /* crc_words: sp = address, gp = number of words, a4 = CRC register.
+     * Returns the register in a4 (not yet inverted) and jumps back through tp.
+     * Clobbers t0-t2, sp, gp. */
 crc_words:
     li   t2, CRC_POLY
 crc_next_word:
-    beqz t4, crc_done
-    lw   t0, 0(t3)
+    beqz gp, crc_done
+    lw   t0, 0(sp)
     xor  a4, a4, t0
-    li   t1, 32
-crc_bit:
+    .rept 32                    // one bit per step, straight-line: no branch inside a word
     andi t0, a4, 1
     neg  t0, t0                 // all ones when the low bit is set
     and  t0, t0, t2
     srli a4, a4, 1
     xor  a4, a4, t0
-    addi t1, t1, -1
-    bnez t1, crc_bit
-    addi t3, t3, 4
-    addi t4, t4, -1
+    .endr
+    addi sp, sp, 4
+    addi gp, gp, -1
     j    crc_next_word
 crc_done:
-    jr   t6
+    jr   tp
