@@ -113,4 +113,9 @@ package de0_cv_map_pkg is
 	-- Ciclos de clock por incremento do mtime (tick_cycles do CLINT).
 	constant CLINT_TICK_CYCLES : positive := 50;
 
+	-- Frequência do clock do controlador da SDRAM, em Hz.
+	constant SDRAM_CLOCK_HZ : positive := 100000000;
+	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
+	constant SDRAM_TCK_PS   : positive := 10000;
+
 end package de0_cv_map_pkg;

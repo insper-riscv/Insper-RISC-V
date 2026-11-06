@@ -145,7 +145,7 @@ sim:
   # so it is longer than internal-mem's. The boot memory also checks the CRC-32 of the image before the
   # jump, about 850 ticks of CLK for each word of the program (a program of 8 KiB takes 1.7 million).
   env:
-    SIM_EXTRA_CLOCKS: "CLK_MEM:7"
+    SIM_EXTRA_CLOCKS: "CLK_MEM:10"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "12000000"
     UART_START_ON_ACCESS: "1"

@@ -82,7 +82,9 @@ entity rv32im_sdram_flash_sim_test is
 	  FLASH_PROGRAM_LATENCY : natural := 200;
 	  -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 	  -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
-	  SDRAM_FILE : string := ""
+	  SDRAM_FILE : string := "";
+	  -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+	  SDRAM_TCK_PS : natural := work.de0_cv_map_pkg.SDRAM_TCK_PS
   	);
 	port (
     	CLK     : in  std_logic;
@@ -469,7 +471,10 @@ begin
 
 	-- the SDRAM and its chip model; the debug ports of the model stay unused here
 	SDRAM : entity work.sdram_system
-		generic map (init_file => SDRAM_FILE)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			init_file => SDRAM_FILE)
 		port map (
 			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
 			i_rst_mem => reset,   i_rst_cpu => reset,

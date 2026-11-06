@@ -17,7 +17,7 @@ from cocotb.triggers import ClockCycles, Timer
 from tests.python.utils.checks import check
 
 CLK_NS = 10  # clock base do núcleo (dividido por três dentro do topo)
-CLK_MEM_NS = 7  # clock da SDRAM, sem relação fixa com o do núcleo
+CLK_MEM_NS = 10  # clock da SDRAM (SDRAM_TCK_PS do platform.yaml), sem relação fixa com o do núcleo
 RESET_CYCLES = 5
 POLL_CYCLES = 500
 TIMEOUT_CYCLES = 400_000

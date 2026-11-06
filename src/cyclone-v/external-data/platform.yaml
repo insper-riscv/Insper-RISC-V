@@ -48,6 +48,14 @@ memory:
   icache: {enabled: false}
   dcache: {enabled: true, size_bits: 32768}
 
+# The clock of the SDRAM controller and the phase of the DRAM_CLK pin against it: the single source of the PLL
+# (src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, tied to these values by the checks below) and of the period the controller
+# and the chip model convert the chip timings with (SDRAM_TCK_PS of the generated package). The controller runs at 100 MHz,
+# the clock of the core at its final frequency (a 1 to 1 ratio), so its pin paths have 10 ns instead of 7 ns.
+sdram:
+  clock_hz: 100000000
+  dram_clk_phase_ps: 4000
+
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
 extras: [Zimop, Zicond]
 
@@ -75,3 +83,8 @@ checks:
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
   - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+
+  # --- the PLL of the SDRAM controller (shared by the de0-cv and external-data tops) -------------------------------
+  - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: SDRAM.clock_mhz}
+  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
+  - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}

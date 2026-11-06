@@ -87,7 +87,9 @@ entity rv32im_external_data_sim_test is
 		HAS_E : boolean := work.external_data_map_pkg.HAS_E;
 		-- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 		-- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de depuração.
-		SDRAM_FILE : string := ""
+		SDRAM_FILE : string := "";
+		-- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+		SDRAM_TCK_PS : natural := work.external_data_map_pkg.SDRAM_TCK_PS
 	);
 	port (
 		-- Clock base do núcleo.
@@ -472,7 +474,10 @@ begin
 
 	-- A SDRAM e o modelo do chip; as portas de depuração do modelo ficam sem uso aqui e a porta de instruções fica ociosa.
 	u_sdram : entity work.sdram_system
-		generic map (init_file => SDRAM_FILE)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			init_file => SDRAM_FILE)
 		port map (
 			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
 			i_rst_mem => reset,   i_rst_cpu => core_reset,
