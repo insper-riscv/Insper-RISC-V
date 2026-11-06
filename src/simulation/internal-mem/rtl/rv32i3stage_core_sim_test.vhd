@@ -66,6 +66,8 @@ entity rv32i3stage_core_sim_test is
 	  HAS_INTERRUPTS : boolean := false;
 	  -- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 	  HAS_SSCOFPMF : boolean := false;
+	  -- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+	  HAS_ACCESS_FAULTS : boolean := false;
 	  -- Zifencei no core (FENCE.I); false mantem o NOP.
 	  HAS_ZIFENCEI : boolean := false;
 	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).

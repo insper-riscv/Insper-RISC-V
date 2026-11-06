@@ -130,6 +130,8 @@ entity modular_sim_top is
     has_interrupts      : boolean := HAS_INTERRUPTS;
     -- Interrupção de estouro de contador (Sscofpmf): exige Zihpm e as interrupções.
     has_sscofpmf        : boolean := HAS_SSCOFPMF;
+    -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa; exige Zicsr.
+    has_access_faults   : boolean := HAS_ACCESS_FAULTS;
     -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
     clint_tick_cycles   : positive := 1;
     -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
@@ -306,6 +308,8 @@ architecture behaviour of modular_sim_top is
 
   -- Interrupções de máquina do núcleo: timer (MTIP) e software (MSIP) do CLINT, externa (MEIP) do controlador.
   signal irq_timer     : std_logic := '0';
+  -- mtime do CLINT, que o CSR time do núcleo espelha (zero sem CLINT).
+  signal clint_mtime   : std_logic_vector(63 downto 0) := (others => '0');
   -- Interrupção de software de máquina (MSIP), saída do CLINT.
   signal irq_software  : std_logic := '0';
   -- Interrupção externa de máquina (MEIP), saída do PLIC.
@@ -567,7 +571,10 @@ begin
       has_zihintntl   => has_zihintntl,
       has_zihintpause => has_zihintpause,
       has_interrupts  => has_interrupts and has_zicsr,
-      has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr
+      has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
+      time_external   => has_interrupts and has_zicsr,
+      has_access_faults => has_access_faults and has_zicsr,
+      periph_slots    => PERIPH_SLOTS
     )
     port map (
       o_trap           => open,
@@ -601,6 +608,7 @@ begin
       i_hpm_ext_events => hpm_ext_events,
       i_irq_software   => irq_software,
       i_irq_timer      => irq_timer,
+      i_mtime          => clint_mtime,
       i_irq_external   => irq_external,
       i_ic_data        => ic_data,
       i_ic_ready       => ic_ready,
@@ -705,7 +713,8 @@ begin
         i_read         => p_re(clint_id),
         o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
         o_irq_timer    => irq_timer,
-        o_irq_software => irq_software
+        o_irq_software => irq_software,
+        o_mtime        => clint_mtime
       );
 
     u_plic : entity work.plic

@@ -157,6 +157,8 @@ architecture behaviour of core_fpga_sdram_flash is
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 	-- the three machine interrupt lines of the core
 	signal irq_timer, irq_software, irq_external : std_logic := '0';
+	-- mtime of the CLINT, which the CSR time of the core mirrors.
+	signal clint_mtime : std_logic_vector(63 downto 0) := (others => '0');
 	-- the display register: the segments of the six digits, and its value
 	signal display_hex   : std_logic_vector(41 downto 0);
 	signal display_value : std_logic_vector(23 downto 0);
@@ -297,7 +299,10 @@ begin
 			has_zihintntl   => HAS_ZIHINTNTL,
 			has_zihintpause => HAS_ZIHINTPAUSE,
 			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
-			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS
+			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS,
+			time_external   => HAS_INTERRUPTS,
+			has_access_faults => HAS_ACCESS_FAULTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
+			periph_slots    => PERIPH_SLOTS
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -334,6 +339,7 @@ begin
 			i_hpm_ext_events => hpm_ext_events,
 			i_irq_software => irq_software,
 			i_irq_timer    => irq_timer,
+			i_mtime        => clint_mtime,
 			i_irq_external => irq_external,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
@@ -561,7 +567,7 @@ begin
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
-			o_irq_timer => irq_timer, o_irq_software => irq_software
+			o_irq_timer => irq_timer, o_irq_software => irq_software, o_mtime => clint_mtime
 		);
 
 	PLIC : entity work.plic
