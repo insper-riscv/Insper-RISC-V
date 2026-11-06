@@ -162,6 +162,28 @@ Uma atualização interrompida antes do passo 5 terminar deixa o cabeçalho da b
 
 Os programas de atualização rodam no topo de simulação da `de0-cv` com `HAS_FLASH_CONTROLLER`, que acrescenta o controlador, o armazenamento de duas portas e o chip de comandos, com as esperas de apagar e de gravar nos genéricos `FLASH_ERASE_LATENCY` e `FLASH_PROGRAM_LATENCY`. O repositório Tests os roda com um chip rápido e com um lento.
 
+## 8. Na placa
+
+O topo da placa tem o controlador, o armazenamento de duas portas e a porta de comandos do chip, os mesmos da simulação. O carregador JTAG e a porta de comandos dividem a porta B do armazenamento: com o núcleo parado a porta é do carregador, e com o núcleo em execução é da porta de comandos. As duas caches recebem a invalidação por região, e a linha `FLASH` (fonte 6) do PLIC sinaliza o fim ou a recusa de um comando.
+
+| Instância do Virtual JTAG | Dono |
+| :--- | :--- |
+| 0 | Carregador da FLASH |
+| 1 | UART sobre JTAG |
+| 2 | Display |
+| 3 | Porta de depuração da SDRAM (`quartus.sdram_debug_instance`) |
+
+O `riscv-tools run` não envia bytes pela UART, então o `tools/board/board_update.py` do repositório Tests conduz os três programas de atualização.
+
+| Passo | O que acontece |
+| :--- | :--- |
+| 1 | Zera a palavra de sobrevivência da SDRAM e o `tohost`, porque a placa não zera a SDRAM entre programas |
+| 2 | Grava a FLASH inteira pelo carregador, o que deixa a banca B zerada e inválida, e solta o núcleo |
+| 3 | Espera o programa chegar à leitura da UART e envia a imagem da banca B com `riscv-tools flash-image send` |
+| 4 | Espera o `tohost` e confere o texto do buffer de `stdout` com o `uart_expected.txt` |
+
+O `update-new` roda sozinho, gravado na banca B. O `plic-flash` roda com o console ligado, porque a UART só esvazia enquanto um hospedeiro a varre.
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).
