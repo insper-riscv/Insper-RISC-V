@@ -15,7 +15,7 @@ Every data access of the core at or above `0x40000000` leaves through one extern
 | Range | Slave |
 | :--- | :--- |
 | bit 31 = 0 (from `0x40000000`) | the SDRAM bridge |
-| bit 31 = 1 | a peripheral window: bits 30:28 are the id, bits 15:2 (a 64 KiB window) the word offset in the window |
+| bit 31 = 1 | a peripheral window: bits 30:28 are the id, bits `periph_addr_width + 1` to 2 the word offset in the window (14 bits and 64 KiB by default, 20 bits and 4 MiB for the PLIC) |
 
 | Id | Window | Peripheral |
 | ---: | :--- | :--- |

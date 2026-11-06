@@ -132,8 +132,18 @@ entity modular_sim_top is
     clint_tick_cycles   : positive := 1;
     -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
     clint_id            : natural range 0 to 7 := 6;
-    -- Índice da janela de 256 MiB do controlador de interrupção externa.
-    ext_irq_id          : natural range 0 to 7 := 7;
+    -- Índice da janela de 256 MiB do PLIC, o controlador das interrupções externas.
+    plic_id             : natural range 0 to 7 := 7;
+    -- Número de fontes do PLIC; as linhas são as IRQ_* abaixo, a partir da 1.
+    plic_n_sources      : positive range 6 to 1023 := 6;
+    -- Largura da prioridade e do limiar do PLIC, em bits.
+    plic_priority_bits  : positive range 1 to 32 := 3;
+    -- Largura do endereço de palavra da janela do PLIC (a janela tem 2**(plic_addr_width + 2) bytes).
+    plic_addr_width     : positive range 20 to 26 := 20;
+    -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
+    has_timer           : boolean := false;
+    -- Índice da janela do temporizador.
+    timer_id            : natural range 0 to 7 := 0;
     -- Chaves SW da placa, num bloco GPIO de 10 pinos (plataformas da FPGA).
     has_switches        : boolean := false;
     -- Índice da janela das chaves.
@@ -217,9 +227,24 @@ architecture behaviour of modular_sim_top is
   -- A RAM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de dados.
   constant RAM_PORT : boolean := ram_external or has_dcache;
 
-  -- Há algum periférico na janela de periféricos: o CLINT e o controlador externo, ou os do topo da placa.
+  -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
   constant HAS_PERIPHERALS : boolean :=
-    has_interrupts or has_switches or has_keys or has_display or has_uart_jtag or has_uart_pins;
+    has_interrupts or has_switches or has_keys or has_display or has_uart_jtag or has_uart_pins or has_timer;
+
+  -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
+  -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
+  -- UART serial pelos pinos.
+  constant IRQ_UART      : positive := 1;
+  -- UART sobre JTAG.
+  constant IRQ_UART_JTAG : positive := 2;
+  -- Chaves SW (GPIO).
+  constant IRQ_SWITCHES  : positive := 3;
+  -- Botões KEY (GPIO).
+  constant IRQ_KEYS      : positive := 4;
+  -- Temporizador de uso geral.
+  constant IRQ_TIMER     : positive := 5;
+  -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
+  constant IRQ_FLASH     : positive := 6;
 
   -- Escolhe entre dois valores naturais conforme a condição.
   function pick(cond : boolean; a : natural; b : natural) return natural is
@@ -281,11 +306,13 @@ architecture behaviour of modular_sim_top is
   signal irq_timer     : std_logic := '0';
   -- Interrupção de software de máquina (MSIP), saída do CLINT.
   signal irq_software  : std_logic := '0';
-  -- Interrupção externa de máquina (MEIP), saída do controlador de interrupção externa.
+  -- Interrupção externa de máquina (MEIP), saída do PLIC.
   signal irq_external  : std_logic := '0';
+  -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
+  signal irq_lines     : std_logic_vector(plic_n_sources downto 1) := (others => '0');
 
-  -- Janela de periféricos: deslocamento de palavra dentro do periférico (64 KiB por janela).
-  signal p_addr        : std_logic_vector(13 downto 0);
+  -- Janela de periféricos: deslocamento de palavra dentro do periférico (a janela do PLIC é a maior).
+  signal p_addr        : std_logic_vector(plic_addr_width - 1 downto 0);
   -- Janela de periféricos: dado de escrita.
   signal p_wdata       : std_logic_vector(31 downto 0);
   -- Janela de periféricos: habilita de bytes da escrita.
@@ -627,6 +654,7 @@ begin
   g_data_port : if ROM_PORT or RAM_PORT or HAS_PERIPHERALS generate
   begin
     u_interconnect : entity work.ext_interconnect
+      generic map (periph_addr_width => plic_addr_width)
       port map (
         i_clk         => pll_clk_idexmem,
         i_rst         => i_rst,
@@ -669,7 +697,7 @@ begin
         i_clk          => pll_clk_idexmem,
         i_rst          => i_rst,
         i_data_in      => p_wdata,
-        i_address      => p_addr,
+        i_address      => p_addr(13 downto 0),
         i_write        => p_we(clint_id),
         i_read         => p_re(clint_id),
         o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
@@ -677,18 +705,22 @@ begin
         o_irq_software => irq_software
       );
 
-    -- Nenhum periférico do topo gera linha de interrupção ainda: as linhas ficam em zero.
-    u_ext_irq : entity work.ext_irq_controller
+    u_plic : entity work.plic
+      generic map (
+        n_sources     => plic_n_sources,
+        priority_bits => plic_priority_bits,
+        addr_width    => plic_addr_width
+      )
       port map (
-        i_clk          => pll_clk_idexmem,
-        i_rst          => i_rst,
-        i_irq_lines    => (others => '0'),
-        i_data_in      => p_wdata,
-        i_address      => p_addr(1 downto 0),
-        i_write        => p_we(ext_irq_id),
-        i_read         => p_re(ext_irq_id),
-        o_data_out     => p_rdata(32 * ext_irq_id + 31 downto 32 * ext_irq_id),
-        o_irq_external => irq_external
+        i_clk      => pll_clk_idexmem,
+        i_rst      => i_rst,
+        i_sources  => irq_lines,
+        i_data_in  => p_wdata,
+        i_address  => p_addr,
+        i_write    => p_we(plic_id),
+        i_read     => p_re(plic_id),
+        o_data_out => p_rdata(32 * plic_id + 31 downto 32 * plic_id),
+        o_meip     => irq_external
       );
   end generate g_interrupts;
 
@@ -706,7 +738,7 @@ begin
         i_write      => p_we(switches_id),
         i_read       => p_re(switches_id),
         o_data_out   => p_rdata(32 * switches_id + 9 downto 32 * switches_id),
-        o_irq        => open,
+        o_irq        => irq_lines(IRQ_SWITCHES),
         io_gpio_pins => io_sw
       );
   end generate g_switches;
@@ -723,7 +755,7 @@ begin
         i_write      => p_we(keys_id),
         i_read       => p_re(keys_id),
         o_data_out   => p_rdata(32 * keys_id + 3 downto 32 * keys_id),
-        o_irq        => open,
+        o_irq        => irq_lines(IRQ_KEYS),
         io_gpio_pins => io_key
       );
   end generate g_keys;
@@ -764,6 +796,7 @@ begin
         i_we        => p_we(uart_jtag_id),
         i_re        => p_re(uart_jtag_id),
         o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
+        o_irq       => irq_lines(IRQ_UART_JTAG),
         i_tck       => i_uart_tck,
         i_tdi       => i_uart_tdi,
         o_tdo       => o_uart_tdo,
@@ -774,6 +807,22 @@ begin
         i_state_uir => i_uart_state_uir
       );
   end generate g_uart_jtag;
+
+  g_timer : if has_timer generate
+  begin
+    u_timer : entity work.timer
+      port map (
+        i_clk      => pll_clk_idexmem,
+        i_rst      => i_rst,
+        i_data_in  => p_wdata,
+        i_address  => p_addr(2 downto 0),
+        i_write    => p_we(timer_id),
+        i_read     => p_re(timer_id),
+        o_data_out => p_rdata(32 * timer_id + 31 downto 32 * timer_id),
+        o_irq      => irq_lines(IRQ_TIMER),
+        o_pwm      => open
+      );
+  end generate g_timer;
 
   g_uart_pins : if has_uart_pins generate
   begin
@@ -786,7 +835,7 @@ begin
         i_write    => p_we(uart_pins_id),
         i_read     => p_re(uart_pins_id),
         o_data_out => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
-        o_irq      => open,
+        o_irq      => irq_lines(IRQ_UART),
         i_uart_rx  => i_uart_rx,
         o_uart_tx  => o_uart_tx
       );

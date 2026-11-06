@@ -15,7 +15,7 @@ Todo acesso de dados do core em `0x40000000` ou acima sai por uma porta externa 
 | Faixa | Escravo |
 | :--- | :--- |
 | Bit 31 = 0 (a partir de `0x40000000`) | A ponte da SDRAM |
-| Bit 31 = 1 | Uma janela de periféricos: os bits 30:28 são o id e os bits 15:2 (janela de 64 KiB) o deslocamento de palavra dentro da janela |
+| Bit 31 = 1 | Uma janela de periféricos: os bits 30:28 são o id e os bits `periph_addr_width + 1` a 2 o deslocamento de palavra dentro da janela (14 bits e 64 KiB no padrão, 20 bits e 4 MiB para o PLIC) |
 
 | Id | Janela | Periférico |
 | ---: | :--- | :--- |

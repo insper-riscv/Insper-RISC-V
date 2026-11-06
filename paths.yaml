@@ -210,11 +210,11 @@ provides:
     sources:
       - src/cyclone-v/de0-cv/sdram_jtag_shell.vhd
   de0_cv_sim_top:
-    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/intc, Peripherals/flash-controller]
+    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   de0_cv_top:
-    requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash_store, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell, Peripherals/CLINT, Peripherals/intc]
+    requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash_store, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell, Peripherals/CLINT, Peripherals/PLIC]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_top.vhd
   external_data_map:
@@ -235,7 +235,7 @@ provides:
       - src/simulation/modular/modular_map_pkg.vhd
   # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).
   modular_sim_top:
-    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/intc, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
+    requires: [ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/GPIO, Peripherals/display, Peripherals/jtag_uart, Peripherals/UART]
     sources:
       - src/simulation/modular/modular_sim_top.vhd
   test_integrated_map:
