@@ -291,7 +291,7 @@ O barramento externo do núcleo entrega ao topo o endereço, o dado de escrita e
 
 ### 6.5. Interrupções
 
-O núcleo recebe as interrupções de máquina por três portas de nível, `i_irq_software`, `i_irq_timer` e `i_irq_external`, todas com valor padrão `'0'`. Elas só têm efeito com o genérico `has_interrupts` verdadeiro e `has_zicsr` ligado, e então o `mip` espelha as três portas e o `mie` as mascara. O CLINT (`Peripherals/src/CLINT/soc/`) entrega `o_irq_timer` e `o_irq_software`, e o controlador de interrupção externa (`Peripherals/src/intc/soc/`) reúne as linhas dos periféricos em `o_irq_external`. Cada um é um periférico comum, com janela própria (passo 6.4), e as suas saídas ligam diretamente às portas do núcleo.
+O núcleo recebe as interrupções de máquina por três portas de nível, `i_irq_software`, `i_irq_timer` e `i_irq_external`, todas com valor padrão `'0'`. Elas só têm efeito com o genérico `has_interrupts` verdadeiro e `has_zicsr` ligado, e então o `mip` espelha as três portas e o `mie` as mascara. O CLINT (`Peripherals/src/CLINT/soc/`) entrega `o_irq_timer` e `o_irq_software`, e o PLIC (`Peripherals/src/PLIC/soc/`) reúne as linhas dos periféricos em `o_meip`. Cada um é um periférico comum, com janela própria (passo 6.4), e as suas saídas ligam diretamente às portas do núcleo.
 
 ### 6.6. Convenções do CONTRIBUTING
 

@@ -34,9 +34,13 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, RisingEdge
 from riscv_tools.mem_validator import compare_bytes, load_golden
 
+import peripheral_models
+
 LOG = logging.getLogger("cocotb.testbench")
 
 TOHOST_ADDR = int(os.environ["TOHOST_ADDR"], 0)
+# fromhost fica 8 bytes acima de tohost; o programa pede ao hospedeiro simulado o que fazer.
+FROMHOST_ADDR = TOHOST_ADDR + 8
 RAM_BASE = int(os.environ.get("RAM_BASE", "0"))
 # A última página de 4 KiB da RAM guarda as palavras do hospedeiro,
 # então o fim da RAM é o fim da página de tohost.
@@ -124,6 +128,7 @@ class RamImage:
         """Vigia os barramentos de dados do topo dado."""
         self.dut = dut
         self.ram_bytes: dict[int, int] = {}
+        self.host: peripheral_models.JtagHost | None = None
 
     def _record(self, address: int, wdata: int, byteena: int) -> None:
         """Guarda os bytes que a escrita habilita, se caírem na RAM."""
@@ -153,6 +158,12 @@ class RamImage:
                 continue
             address, wdata, byteena = write
             self._record(address, wdata, byteena)
+            if (
+                self.host is not None
+                and address // 4 == FROMHOST_ADDR // 4
+                and byteena == FULL_WORD
+            ):
+                self.host.command(wdata)
             is_tohost = address // 4 == TOHOST_ADDR // 4
             if is_tohost and byteena == FULL_WORD and wdata & 1:
                 return wdata
@@ -204,6 +215,7 @@ async def test_program(dut: Any) -> None:
     reset.value = 1 - SIM_RESET_ACTIVE
 
     image = RamImage(dut)
+    image.host = peripheral_models.start(dut)
     core_cycles = 0
     retired = 0
     while core_cycles < TIMEOUT_CYCLES:

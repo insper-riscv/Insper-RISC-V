@@ -291,7 +291,7 @@ The external bus of the core delivers to the top the address, the write data and
 
 ### 6.5. Interrupts
 
-The core receives the machine interrupts through three level ports, `i_irq_software`, `i_irq_timer` and `i_irq_external`, all with default value `'0'`. They only have effect with the `has_interrupts` generic true and `has_zicsr` on, and then `mip` mirrors the three ports and `mie` masks them. The CLINT (`Peripherals/src/CLINT/soc/`) delivers `o_irq_timer` and `o_irq_software`, and the external interrupt controller (`Peripherals/src/intc/soc/`) gathers the peripheral lines into `o_irq_external`. Each one is an ordinary peripheral, with its own window (step 6.4), and its outputs connect directly to the ports of the core.
+The core receives the machine interrupts through three level ports, `i_irq_software`, `i_irq_timer` and `i_irq_external`, all with default value `'0'`. They only have effect with the `has_interrupts` generic true and `has_zicsr` on, and then `mip` mirrors the three ports and `mie` masks them. The CLINT (`Peripherals/src/CLINT/soc/`) delivers `o_irq_timer` and `o_irq_software`, and the PLIC (`Peripherals/src/PLIC/soc/`) gathers the peripheral lines into `o_meip`. Each one is an ordinary peripheral, with its own window (step 6.4), and its outputs connect directly to the ports of the core.
 
 ### 6.6. CONTRIBUTING conventions
 

@@ -22,18 +22,18 @@ Every data access of the core at or above `0x40000000` leaves through one extern
 | 4 | `0xC0000000` | JTAG UART |
 | 5 | `0xD0000000` | Seven-segment display |
 | 6 | `0xE0000000` | CLINT (`msip`, `mtimecmp` and `mtime`; 64 KiB window) |
-| 7 | `0xF0000000` | External interrupt controller (`EXT_IRQ`, 4 registers) |
+| 7 | `0xF0000000` | PLIC (4 MiB window; see [Platform interrupts](../platform/interrupcoes.md)) |
 | 0 to 3 | | none: a read gives 0, a write has no effect, the access completes |
 
 ## 2.1. Machine interrupts
 
-The CLINT (id 6) and the external interrupt controller `EXT_IRQ` (id 7) enter as slaves by the same path as the other peripherals, in the clock domain of the core, with no synchronizer. The three outputs reach the ports of the core.
+The CLINT (id 6) and the PLIC (id 7) enter as slaves by the same path as the other peripherals, in the clock domain of the core, with no synchronizer. The three outputs reach the ports of the core.
 
 | Output | Core port | Bit of `mip` |
 | :--- | :--- | :--- |
 | `o_irq_software` of the CLINT (`msip`) | `i_irq_software` | MSIP, bit 3 |
 | `o_irq_timer` of the CLINT (`mtime >= mtimecmp`) | `i_irq_timer` | MTIP, bit 7 |
-| `o_irq_external` of `EXT_IRQ` | `i_irq_external` | MEIP, bit 11 |
+| `o_meip` of the PLIC | `i_irq_external` | MEIP, bit 11 |
 
 The `mtime` of the CLINT is a counter of its own, which adds 1 every $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ core cycles and is independent of the CSR `time` of Zicntr, which the core serves. The base of the CLINT, `mtime_hz` and `clock_hz` come from the `interrupts` section of `platform.yaml`, and no address of the CLINT is written by hand in the top or in the runtime. The core enables the interrupts only with `has_interrupts` and Zicsr, and the lines of `EXT_IRQ` stay at zero while no peripheral of the top raises one.
 
