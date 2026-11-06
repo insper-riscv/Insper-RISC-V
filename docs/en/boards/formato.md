@@ -50,7 +50,7 @@ In `memories.<type>.signals` the value is a prefix (or a list of prefixes) witho
 
 | Family | Logic | Multipliers |
 | :--- | :--- | :--- |
-| `cyclone-v`, `cyclone-v-soc` | `alm` | `dsp18x18` (two per DSP block) |
+| `cyclone-v`, `cyclone-v-soc` | `alm` | `dsp_block` (the DSP block, as the Quartus counts it) |
 | `cyclone-iv-e`, `max-10`, `cyclone-10-lp` | `le` | `dsp9x9` (9-bit elements) |
 
 No unit converts into another by a fixed factor.
