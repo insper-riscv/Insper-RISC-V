@@ -1,4 +1,4 @@
-# The memory map of the fpga-integrated platform: DE0-CV platform, BOOT_ROM, FLASH and RAM inside the FPGA; switches, buttons and displays.
+# The memory map of the fpga-integrated platform: DE0-CV platform, BOOT_MEMORY, FLASH and RAM inside the FPGA; switches, buttons and displays.
 #
 #   riscv-tools --root . generate-memory-map --platform src/cyclone-v/fpga-integrated/platform.yaml
 #
@@ -9,7 +9,7 @@ profile: rv32im_zicclsm_zicntr_zihpm
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K, kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
   - {name: FLASH, base: 0x00001000, size: 28K, kind: rom, exec: true}
   - {name: RAM, base: 0x00008000, size: 160K, kind: ram}
 
@@ -38,7 +38,7 @@ extras: [Zimop, Zicond]
 
 generate:
   specs: {path: src/cyclone-v/fpga-integrated/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/cyclone-v/fpga-integrated/runtime/boot_rom.ld}
+  boot_ld: {path: src/cyclone-v/fpga-integrated/runtime/boot_memory.ld}
   runtime: {path: src/cyclone-v/fpga-integrated/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-v/fpga-integrated/modular_map_pkg.vhd

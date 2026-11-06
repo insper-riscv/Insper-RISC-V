@@ -1,7 +1,7 @@
-/* boot_rom.S -- the fixed bootloader of the de0-cv. Programmed into BOOT_ROM
+/* boot_memory.S -- the fixed bootloader of the de0-cv. Programmed into BOOT_MEMORY
  * once (initial full Quartus compile), never JTAG-rewritten again: only
  * FLASH gets reprogrammed (see config.yaml quartus:). It plays the role a
- * real SOC's boot ROM plays: it does not know what firmware (FLASH content)
+ * real SOC's boot memory plays: it does not know what firmware (FLASH content)
  * it is booting, it only knows how an image in a FLASH bank is laid out.
  *
  * The FLASH holds two banks (flash.banks of platform.yaml, flash_banks.h).
@@ -29,8 +29,8 @@
  *    register undefined (sp, gp and tp included: the firmware's _start sets
  *    them). With no valid bank it parks in rv32_wait_restart.
  *
- *  - rv32_wait_restart (fixed at 0x100, see boot_rom.ld): where a test ends
- *    and where the boot ROM parks when no bank is valid. It waits until the
+ *  - rv32_wait_restart (fixed at 0x100, see boot_memory.ld): where a test ends
+ *    and where the boot memory parks when no bank is valid. It waits until the
  *    host has written a new FLASH image and written fromhost, then starts
  *    over at _reset. It lives here, and not in FLASH, because FLASH is
  *    rewritten while the core waits.
@@ -61,7 +61,7 @@ _reset:
     li   t0, RV32_STDOUT_BASE    // stdout header
     sw   x0, 0(t0)               // length
     sw   x0, 4(t0)               // truncated
-    .word 0x0000100F             // fence.i (the boot ROM is assembled for rv32i): drop the lines of the previous program
+    .word 0x0000100F             // fence.i (the boot memory is assembled for rv32i): drop the lines of the previous program
     j    bank_select
 
     /* The test has already written tohost (1 = pass, (code << 1) | 1 = fail,

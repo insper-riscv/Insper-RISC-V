@@ -1,7 +1,7 @@
-/* boot_rom.S -- the fixed, generic bootloader. Programmed into BOOT_ROM
+/* boot_memory.S -- the fixed, generic bootloader. Programmed into BOOT_MEMORY
  * once (initial full Quartus compile), never JTAG-rewritten again: only
  * FLASH gets reprogrammed per test (see config.yaml quartus:). It plays
- * the role a real SOC's boot ROM plays: it does not know what firmware
+ * the role a real SOC's boot memory plays: it does not know what firmware
  * (FLASH content) it is booting.
  *
  * It does two things:
@@ -13,7 +13,7 @@
  *    constructors and calls main; main returning lands in _exit
  *    (platform/_exit.c).
  *
- *  - rv32_wait_restart (fixed at 0x100, see boot_rom.ld): where every test
+ *  - rv32_wait_restart (fixed at 0x100, see boot_memory.ld): where every test
  *    ends. It parks the core until the host has written a new FLASH image
  *    and written fromhost, then starts over at _reset. It lives here, and
  *    not in FLASH, because FLASH is rewritten while the core waits.
@@ -40,7 +40,7 @@ _reset:
     li   t0, RV32_STDOUT_BASE    // stdout header
     sw   x0, 0(t0)               // length
     sw   x0, 4(t0)               // truncated
-    .word 0x0000100F             // fence.i (the boot ROM is assembled for rv32i): drop the lines of the previous program
+    .word 0x0000100F             // fence.i (the boot memory is assembled for rv32i): drop the lines of the previous program
     li   t0, RV32_BOOT_ENTRY     // the crt0's _start
     li   a0, 0                   // the hart (entry contract: a0 = 0, a1 = 0)
     li   a1, 0

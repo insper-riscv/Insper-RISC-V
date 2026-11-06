@@ -2,7 +2,7 @@
  *
  * O núcleo não tem dispositivo de saída, então a saída vai para um buffer na RAM que o
  * hospedeiro lê quando o programa termina: uma região fixa no topo da RAM, logo abaixo das
- * palavras que a BOOT_ROM zera (tohost e fromhost). O rv32im-fpga.specs a deixa fora do
+ * palavras que a BOOT_MEMORY zera (tohost e fromhost). O rv32im-fpga.specs a deixa fora do
  * tamanho da RAM, então a pilha nunca a alcança.
  *
  *   +0   length     bytes escritos, no máximo STDOUT_SIZE

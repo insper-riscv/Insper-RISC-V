@@ -10,7 +10,7 @@ profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K, kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
   - {name: FLASH, base: 0x00001000, size: 252K, kind: rom, exec: true}
   - {name: RAM, base: 0x40000000, size: 32M, kind: ram}
 
@@ -39,7 +39,7 @@ extras: [Zimop, Zicond]
 
 generate:
   specs: {path: src/cyclone-v/fpga-external-data/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/cyclone-v/fpga-external-data/runtime/boot_rom.ld}
+  boot_ld: {path: src/cyclone-v/fpga-external-data/runtime/boot_memory.ld}
   runtime: {path: src/cyclone-v/fpga-external-data/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-v/fpga-external-data/modular_map_pkg.vhd

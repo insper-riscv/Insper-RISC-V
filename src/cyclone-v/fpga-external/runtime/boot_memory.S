@@ -1,4 +1,4 @@
-/* boot_rom.S: o carregador fixo da plataforma, gravado na BOOT_ROM. Ele não sabe qual programa
+/* boot_memory.S: o carregador fixo da plataforma, gravado na BOOT_MEMORY. Ele não sabe qual programa
  * (conteúdo da ROM) está iniciando.
  *
  * Faz duas coisas.
@@ -9,7 +9,7 @@
  *    da ROM, onde está o crt0 (_start, do rv32im-fpga.specs). O crt0 copia .data para a RAM,
  *    zera .bss e chama main; main retornando cai em _exit (_exit.c).
  *
- *  - rv32_wait_restart (fixo em 0x100, ver boot_rom.ld): onde todo programa termina. Ele
+ *  - rv32_wait_restart (fixo em 0x100, ver boot_memory.ld): onde todo programa termina. Ele
  *    segura o núcleo até o hospedeiro escrever fromhost e recomeça em _reset.
  *
  * As palavras precisam estar zeradas a cada entrada: um tohost antigo diferente de zero parece
