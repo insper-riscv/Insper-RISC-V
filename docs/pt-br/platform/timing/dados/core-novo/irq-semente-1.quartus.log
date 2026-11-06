@@ -220,8 +220,8 @@ Info (12021): Found 2 design units, including 1 entities, in source file <caminh
     Info (12022): Found design unit 1: Blinky-rtl File: <caminho-local> Line: 21
     Info (12023): Found entity 1: Blinky File: <caminho-local> Line: 12
 Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
-    Info (12022): Found design unit 1: boot_rom-rtl File: <caminho-local> Line: 42
-    Info (12023): Found entity 1: boot_rom File: <caminho-local> Line: 21
+    Info (12022): Found design unit 1: boot_memory-rtl File: <caminho-local> Line: 42
+    Info (12023): Found entity 1: boot_memory File: <caminho-local> Line: 21
 Info (12021): Found 2 design units, including 1 entities, in source file <caminho-local>
     Info (12022): Found design unit 1: flash_store-rtl File: <caminho-local> Line: 45
     Info (12023): Found entity 1: flash_store File: <caminho-local> Line: 24
@@ -477,10 +477,10 @@ Info (12021): Found 1 design units, including 1 entities, in source file db/alts
 Info (12128): Elaborating entity "altsyncram_09n1" for hierarchy "dcache:DCACHE|altsyncram:\gen_lane:0:lane[0][7]__1|altsyncram_09n1:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
 Info (12128): Elaborating entity "flash_arbiter" for hierarchy "flash_arbiter:FLASH_ARBITER" File: <caminho-local> Line: 387
 Info (12128): Elaborating entity "flash_chip" for hierarchy "flash_chip:FLASH_CHIP" File: <caminho-local> Line: 401
-Info (12128): Elaborating entity "boot_rom" for hierarchy "boot_rom:BOOT_ROM" File: <caminho-local> Line: 410
-Info (12128): Elaborating entity "altsyncram" for hierarchy "boot_rom:BOOT_ROM|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
-Info (12130): Elaborated megafunction instantiation "boot_rom:BOOT_ROM|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
-Info (12133): Instantiated megafunction "boot_rom:BOOT_ROM|altsyncram:u_altsyncram" with the following parameter: File: <caminho-local> Line: 45
+Info (12128): Elaborating entity "boot_memory" for hierarchy "boot_memory:BOOT_MEMORY" File: <caminho-local> Line: 410
+Info (12128): Elaborating entity "altsyncram" for hierarchy "boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
+Info (12130): Elaborated megafunction instantiation "boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram" File: <caminho-local> Line: 45
+Info (12133): Instantiated megafunction "boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram" with the following parameter: File: <caminho-local> Line: 45
     Info (12134): Parameter "address_aclr_a" = "NONE"
     Info (12134): Parameter "address_aclr_b" = "NONE"
     Info (12134): Parameter "address_reg_b" = "CLOCK1"
@@ -501,7 +501,7 @@ Info (12133): Instantiated megafunction "boot_rom:BOOT_ROM|altsyncram:u_altsyncr
     Info (12134): Parameter "indata_aclr_a" = "UNUSED"
     Info (12134): Parameter "indata_aclr_b" = "NONE"
     Info (12134): Parameter "indata_reg_b" = "CLOCK1"
-    Info (12134): Parameter "init_file" = "./boot_rom_init.mif"
+    Info (12134): Parameter "init_file" = "./boot_memory_init.mif"
     Info (12134): Parameter "init_file_layout" = "PORT_A"
     Info (12134): Parameter "maximum_depth" = "0"
     Info (12134): Parameter "numwords_a" = "1024"
@@ -533,7 +533,7 @@ Info (12133): Instantiated megafunction "boot_rom:BOOT_ROM|altsyncram:u_altsyncr
     Info (12134): Parameter "lpm_type" = "altsyncram"
 Info (12021): Found 1 design units, including 1 entities, in source file db/altsyncram_pi34.tdf
     Info (12023): Found entity 1: altsyncram_pi34 File: <caminho-local> Line: 28
-Info (12128): Elaborating entity "altsyncram_pi34" for hierarchy "boot_rom:BOOT_ROM|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
+Info (12128): Elaborating entity "altsyncram_pi34" for hierarchy "boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated" File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altsyncram.tdf Line: 792
 Info (12128): Elaborating entity "flash_store" for hierarchy "flash_store:FLASH_STORE" File: <caminho-local> Line: 422
 Info (12128): Elaborating entity "altsyncram" for hierarchy "flash_store:FLASH_STORE|altsyncram:u_altsyncram" File: <caminho-local> Line: 48
 Info (12130): Elaborated megafunction instantiation "flash_store:FLASH_STORE|altsyncram:u_altsyncram" File: <caminho-local> Line: 48
@@ -911,7 +911,7 @@ Info (119006): Selected device 5CEBA4F23C7 for design "de0-cv"
 Info (21077): Low junction temperature is 0 degrees C
 Info (21077): High junction temperature is 85 degrees C
 Warning (18550): Found RAM instances implemented as ROM because the write logic is disabled. One instance is listed below as an example.
-    Info (119043): Atom "boot_rom:BOOT_ROM|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated|ram_block1a23" is instantiated as RAM, but it is actually implemented as ROM function because the write logic is always disabled
+    Info (119043): Atom "boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram|altsyncram_pi34:auto_generated|ram_block1a23" is instantiated as RAM, but it is actually implemented as ROM function because the write logic is always disabled
 Info (171004): Fitter is performing a Standard Fit compilation using maximum Fitter effort to optimize design performance
 Warning (292013): Feature LogicLock is only available with a valid subscription license. You can purchase a software subscription to gain full access to this feature.
 Warning (15714): Some pins have incomplete I/O assignments. Refer to the I/O Assignment Warnings report for details

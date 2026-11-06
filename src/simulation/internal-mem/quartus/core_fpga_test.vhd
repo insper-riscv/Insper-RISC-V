@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Topo de hardware da plataforma internal-mem para a DE0-CV
 --
--- Monta o núcleo com a BOOT_ROM, a FLASH e a RAM dentro da FPGA, a UART mapeada em
+-- Monta o núcleo com a BOOT_MEMORY, a FLASH e a RAM dentro da FPGA, a UART mapeada em
 -- 0xC0000000, o carregador da FLASH por JTAG e o PLL de três fases. Os LEDs mostram o
 -- estado do PLL, do reset e do carregador. O reset do núcleo é a soma do PLL sem lock, do
 -- botão físico (ativo em nível baixo) e do carregador da FLASH.
@@ -62,18 +62,18 @@ end entity;
 
 architecture behaviour of core_fpga_test is
 
-	-- IF stage: barramento unico compartilhado por BOOT_ROM e FLASH
-	-- (ver rv32im_pipeline_core.vhd is_boot_rom_if/is_boot_rom_d)
+	-- IF stage: barramento unico compartilhado por BOOT_MEMORY e FLASH
+	-- (ver rv32im_pipeline_core.vhd is_boot_memory_if/is_boot_memory_d)
 	signal if_addr : std_logic_vector(31 downto 0);
 	-- Habilitação de leitura da busca de instrução ('1' = lê).
 	signal if_rden : std_logic;
-	-- Palavra de instrução lida da BOOT_ROM.
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra de instrução lida da BOOT_MEMORY.
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	-- Palavra de instrução lida da FLASH.
 	signal flash_data : std_logic_vector(31 downto 0);
 
 	-- Estagio MEM: leitura da FLASH como dado, para o copy-loop de .data
-	-- em boot_rom.S (ver rv32im_pipeline_core.vhd flash_addr2). E' a porta B
+	-- em boot_memory.S (ver rv32im_pipeline_core.vhd flash_addr2). E' a porta B
 	-- da unica copia da FLASH, que o carregador JTAG assume com o core parado.
 	signal flash_addr2 : std_logic_vector(31 downto 0);
 	-- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
@@ -216,7 +216,7 @@ begin
     );
 
 	-- O carregador da FLASH segura o core em reset enquanto grava a imagem do
-	-- proximo teste; liberado, o core reinicia pela BOOT_ROM.
+	-- proximo teste; liberado, o core reinicia pela BOOT_MEMORY.
 	core_reset <= (not pll_locked) or (not i_fpga_reset_n) or flash_halt;
 
 
@@ -268,7 +268,7 @@ begin
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
 			has_e           => HAS_E,
-			boot_rom_bits   => BOOT_ROM_BITS,
+			boot_memory_bits   => BOOT_MEMORY_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
 			ram_base_kib    => RAM_BASE_KIB,
@@ -283,7 +283,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2 => flash_addr2,
@@ -345,26 +345,26 @@ begin
 	-- permanece dedicada à sua própria porta do core.
 	sdram_rdata <= uart_rdata_d;
 
-	-- BOOT_ROM: fixa, gravada uma unica vez (nunca reescrita via JTAG
-	-- por teste -- ver config.yaml quartus.boot_rom_mif_target). So'
+	-- BOOT_MEMORY: fixa, gravada uma unica vez (nunca reescrita via JTAG
+	-- por teste -- ver config.yaml quartus.boot_memory_mif_target). So'
 	-- precisa de porta unica agora -- nada mais le dado direto dela
 	-- (ver rv32im_pipeline_core.vhd, estagio MEM so' fala com RAM).
-	u_boot_rom : entity work.boot_rom
-    generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
+	u_boot_memory : entity work.boot_memory
+    generic map (size_bytes => BOOT_MEMORY_SIZE_BYTES)
     port map (
-      i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
+      i_address => if_addr(log2_exact(BOOT_MEMORY_SIZE_BYTES) - 1 downto 2),
       i_clk   => pll_clk_if,
       i_rden    => if_rden,
       i_wren    => '0',
       i_data    => (others => '0'),
-      o_q       => boot_rom_data
+      o_q       => boot_memory_data
     );
 
 	-- FLASH: "firmware" desse teste, uma so' copia de duas portas, reescrita
 	-- por teste pelo carregador JTAG (ver config.yaml quartus.rom_write_method)
 	-- com o core parado. Porta A: busca de instrucao. Porta B: dado do
 	-- estagio MEM (mesmo clock que a RAM) ou escrita do carregador.
-	-- BOOT_ROM continua so' de porta unica.
+	-- BOOT_MEMORY continua so' de porta unica.
 	u_flash : entity work.flash
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (

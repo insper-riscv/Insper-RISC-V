@@ -20,9 +20,9 @@ paths:
   sources:
     - src/simulation/template/runtime/_exit.c
     - src/simulation/template/runtime/stdio.c
-  # O carregador fixo, construído uma vez para a BOOT_ROM.
-  boot_rom: src/simulation/template/runtime/boot_rom.S
-  boot_rom_linker_script: src/simulation/template/runtime/boot_rom.ld
+  # O carregador fixo, construído uma vez para a BOOT_MEMORY.
+  boot_memory: src/simulation/template/runtime/boot_memory.S
+  boot_memory_linker_script: src/simulation/template/runtime/boot_memory.ld
 
 sim:
   toplevel: template_sim_top
@@ -115,7 +115,7 @@ sim:
     SIM_TIMEOUT_CYCLES: "1000000"
   ghdl_std: "08"
   parameters:
-    BOOT_ROM_FILE: "{boot_rom_hex_path}"
+    BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
     ROM_FILE: "{hex_path}"
 
 # O Spike executa a imagem de cada programa, que termina no rv32_wait_restart de spike_exit.S.
