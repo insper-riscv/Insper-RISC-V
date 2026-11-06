@@ -134,7 +134,6 @@ sim:
     - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
-    - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
@@ -142,6 +141,8 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
     - Peripherals/src/UART/serial/uart_fifo.vhd
     - Peripherals/src/UART/serial/uart.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/UART/console/console.vhd
     - src/simulation/modular/modular_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:
