@@ -14,7 +14,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 - [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, simulação, KPIs e nova arquitetura).
 - [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas e as dez (quatro de teste, quatro na FPGA e duas de UART), com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): defeitos já diagnosticados.
-- [docs/pt-br/conformance/](docs/pt-br/conformance/riscv-nao-privilegiado.md): o relatório de conformidade com os capítulos 1, 2 e 4 a 11 do volume não privilegiado do RISC-V, com a evidência de cada requisito.
+- [docs/pt-br/conformance/](docs/pt-br/conformance/riscv-nao-privilegiado.md): o relatório de conformidade com os capítulos 1, 2 e 4 a 11 do volume não privilegiado do RISC-V, com a evidência de cada requisito, e [riscv-privilegiado.md](docs/pt-br/conformance/riscv-privilegiado.md), o do volume privilegiado para o hart só com o modo máquina.
 - [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md): o interconector externo, que decodifica o mapa da plataforma entre a SDRAM e os periféricos, a sua variante AXI4 e os testes de integração.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
 
