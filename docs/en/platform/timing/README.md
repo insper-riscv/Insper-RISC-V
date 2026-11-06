@@ -180,11 +180,11 @@ The bitstream has five clocks: the core and the fetch (the same frequency, diffe
 
 | Crossing | Mechanism in the RTL | Constraint in the `.sdc` | Situation at 100 MHz |
 | :--- | :--- | :--- | :--- |
-| Core and fetch to the controller, and back (SDRAM bridge) | Request, answer and initialization toggles through a two flip-flop synchronizer; buses held until the answer | `set_max_delay` of 10 ns and `set_min_delay` of -10 ns in both directions | The 10 ns bound is below two edges of the controller (14 ns) and of the core (20 ns), so it holds from 50 to 100 MHz |
+| Core and fetch to the controller, and back (SDRAM bridge) | Request, answer and initialization toggles through a two flip-flop synchronizer; buses held until the answer | `set_max_delay` of 10 ns and `set_min_delay` of -10 ns in both directions | The 10 ns bound is below two edges of the controller (20 ns at 100 MHz) and of the core (20 ns), so it holds from 50 to 100 MHz |
 | JTAG to the controller (SDRAM debug port) | Command toggle and initialization flag through a two flip-flop synchronizer | The same pair of bounds, between the controller and the JTAG | Holds |
 | Core to the JTAG (UART and display) | Command, answer and write toggles through a two flip-flop synchronizer; byte and value held until the toggle | The same pair of bounds, between the core and the JTAG | Holds |
 | Fetch to the core and back | Same frequency with a fixed phase; the PC feeds the cache and the tag returns to the PC | No exception: Quartus times it as a synchronous path with the phase difference | Worst path of the bitstream (section 3.2) |
-| Controller to the SDRAM pins | Output and input registers of the controller | `set_output_delay`, `set_input_delay` and a 2-cycle multicycle path on `DRAM_CLK_pin` | Slack from -0.744 to +0.428 ns depending on the seed (100 MHz), on the `DRAM_DQ` pin (input) and on `o_dram_dq_oe` (output) |
+| Controller to the SDRAM pins | Output and input registers of the controller | `set_output_delay`, `set_input_delay` and a 2-cycle multicycle path on `DRAM_CLK_pin` | Slack from +1.123 to +4.0 ns in the five seeds with the controller at 100 MHz, on the `DRAM_DQ` pin (input) and on `o_dram_dq_oe` (output); see [sdram-100mhz.md](sdram-100mhz.md) |
 | Reset button | `FPGA_RESET_N` and the PLL lock form `core_reset` | `set_false_path` from `FPGA_RESET_N` | The controller reset goes through a two flip-flop synchronizer (`rst_sr`); the core and the fetch use `core_reset` directly, with no deassertion synchronizer |
 
 Quartus reports 88 synchronizer chains (MTBF above 10^9 years), which covers the two flip-flop synchronizers of `Common-Components` and the chains of the JTAG hub itself.
