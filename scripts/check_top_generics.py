@@ -22,6 +22,9 @@ PLATFORMS: dict[str, list[str]] = {
     "src/cyclone-v/external-data/external_data_map_pkg.vhd": [
         "src/cyclone-v/external-data/external-data_sim_top.vhd",
     ],
+    "src/simulation/template/rtl/template_map_pkg.vhd": [
+        "src/simulation/template/rtl/template_sim_top.vhd",
+    ],
     "src/simulation/modular/modular_map_pkg.vhd": [
         "src/simulation/modular/modular_sim_top.vhd",
     ],
