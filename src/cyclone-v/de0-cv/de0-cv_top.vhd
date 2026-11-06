@@ -144,7 +144,7 @@ architecture behaviour of core_fpga_sdram_flash is
 
 	signal core_reset : std_logic;
 
-	-- Pulso de um ciclo de o_trap do core (só existe sem Zicsr) e a bandeira que o segura até o próximo reset
+	-- Pulso de um ciclo de o_trap_take do core (exceção tomada, com ou sem Zicsr) e a bandeira que o segura até o próximo reset
 	signal core_trap : std_logic;
 	signal trap_seen : std_logic := '0';
 
@@ -218,7 +218,7 @@ begin
 
 	-- LEDR9 a LEDR4 mostram as extensões do perfil do core ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga o LEDR6); LEDR0 acende quando algum
 	-- programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende quando o core sinaliza uma exceção
-	-- em o_trap (só sem Zicsr; com Zicsr o core trata a exceção em mtvec e o LED fica apagado) e fica aceso até o próximo reset; LEDR3 e LEDR2 ficam apagados,
+	-- em o_trap_take (com ou sem Zicsr, inclusive a exceção tratada em mtvec) e fica aceso até o próximo reset; LEDR3 e LEDR2 ficam apagados,
 	-- pois os LEDs nativos da placa já indicam que o FPGA roda e que a SDRAM responde
 	LEDR(9) <= '1' when HAS_ZICCLSM else '0';
 	LEDR(8) <= '1' when HAS_ZIFENCEI else '0';
@@ -230,7 +230,7 @@ begin
 	LEDR(1) <= trap_seen;
 	LEDR(0) <= display_fail;
 
-	-- o_trap dura um ciclo de 63 MHz, invisível a olho nu: a bandeira o segura até o reset. O reset é assíncrono
+	-- o_trap_take dura um ciclo de 63 MHz, invisível a olho nu: a bandeira o segura até o reset. O reset é assíncrono
 	-- porque o botão também segura a PLL em reset e o clock do core pára, então um clear síncrono nunca o veria
 	process (pll_clk_idexmem, core_reset)
 	begin
@@ -300,7 +300,7 @@ begin
 			i_sdram_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
-			o_trap => core_trap,
+			o_trap_take => core_trap,
 
 			i_hpm_ext_events => hpm_ext_events,
 			i_irq_software => irq_software,
