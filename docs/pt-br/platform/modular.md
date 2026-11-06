@@ -28,7 +28,7 @@ O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | Janela externa e periféricos | `0x40000000` | | `ext_base_kib`, `periph_base_kib` |
 
-Os limites estão em KiB. A BOOT_ROM de cada modelo salta para o início da ROM. O `config.yml` da plataforma que usa o topo é quem escolhe esses valores.
+Os limites estão em KiB. A BOOT_ROM de cada modelo salta para o início da ROM. Quem instancia o topo escolhe esses valores pelos genéricos, e o padrão é o do `platform.yaml`.
 
 ## 4. Tamanhos
 

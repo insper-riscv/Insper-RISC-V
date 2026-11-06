@@ -31,7 +31,31 @@ entity template_sim_top is
         -- Tamanho da RAM em bytes, uma potência de dois
         ram_size_bytes      : positive := RAM_STORAGE_BYTES;
         -- Instancia a UART sobre JTAG na janela de periféricos
-        has_uart            : boolean  := false
+        has_uart            : boolean  := false;
+        -- Base RV32E (16 registradores) no núcleo; falso é o RV32I do perfil
+        has_e               : boolean  := HAS_E;
+        -- Extensão M (multiplicação e divisão) no núcleo
+        has_m               : boolean  := HAS_M;
+        -- Extensão Zmmul (só multiplicação) no núcleo
+        has_zmmul           : boolean  := HAS_ZMMUL;
+        -- Extensão Zicsr (instruções CSR) no núcleo
+        has_zicsr           : boolean  := HAS_ZICSR;
+        -- Contadores da extensão Zicntr (implica Zicsr)
+        has_zicntr          : boolean  := HAS_ZICNTR;
+        -- Contadores de eventos da extensão Zihpm (exige Zicsr)
+        has_zihpm           : boolean  := HAS_ZIHPM;
+        -- Extensão Zimop (mop.r.n e mop.rr.n escrevem zero em rd)
+        has_zimop           : boolean  := HAS_ZIMOP;
+        -- Extensão Zicond (czero.eqz e czero.nez)
+        has_zicond          : boolean  := HAS_ZICOND;
+        -- Extensão Zihintntl (dicas de não temporalidade)
+        has_zihintntl       : boolean  := HAS_ZIHINTNTL;
+        -- Extensão Zihintpause (a instrução pause)
+        has_zihintpause     : boolean  := HAS_ZIHINTPAUSE;
+        -- Extensão Zifencei (fence.i)
+        has_zifencei        : boolean  := HAS_ZIFENCEI;
+        -- Extensão Zicclsm (acessos desalinhados)
+        has_zicclsm         : boolean  := HAS_ZICCLSM
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -136,14 +160,18 @@ begin
 
     u_core : entity work.core
         generic map(
-            has_e           => HAS_E,
-            has_m           => HAS_M,
-            has_zmmul       => HAS_ZMMUL,
-            has_zicsr       => HAS_ZICSR,
-            has_zicntr      => HAS_ZICNTR,
-            has_zihpm       => HAS_ZIHPM,
-            has_zifencei    => HAS_ZIFENCEI,
-            has_zicclsm     => HAS_ZICCLSM,
+            has_e           => has_e,
+            has_m           => has_m,
+            has_zmmul       => has_zmmul,
+            has_zicsr       => has_zicsr,
+            has_zicntr      => has_zicntr,
+            has_zihpm       => has_zihpm,
+            has_zifencei    => has_zifencei,
+            has_zicclsm     => has_zicclsm,
+            has_zimop       => has_zimop,
+            has_zicond      => has_zicond,
+            has_zihintntl   => has_zihintntl,
+            has_zihintpause => has_zihintpause,
             boot_rom_bits   => log2_exact(boot_rom_size_bytes),
             rom_end_kib     => ROM_END_KIB,
             rom_external    => ROM_EXTERNAL,
