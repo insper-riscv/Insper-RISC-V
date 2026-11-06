@@ -46,9 +46,6 @@ interrupts:
   clock_hz: 10000000
   mtime_hz: 10000000
 
-# Extensions outside the matrix of the Core that the platform turns on (HAS_INTERRUPTS of the package).
-extras: [Interrupts]
-
 # The default memory choice: both memories inside the chip, no cache. The sizes of the caches are in bits.
 memory:
   rom:    {external: false}
@@ -56,9 +53,9 @@ memory:
   icache: {enabled: false}
   dcache: {enabled: false}
 
-# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package),
-# as in the other platforms, so the programs of the Tests repository that use them run here too.
-extras: [Zimop, Zicond]
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the
+# package), as in the other platforms, so the programs of the Tests repository that use them run here too.
+extras: [Zimop, Zicond, Interrupts]
 
 generate:
   specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
