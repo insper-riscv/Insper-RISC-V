@@ -3,7 +3,6 @@
 from typing import Any
 
 import cocotb
-from cocotb.triggers import Edge
 
 from tests.python.unittests.rtl.platform_common import Results, start
 from tests.python.utils.checks import check
@@ -15,7 +14,7 @@ RX_VALID = 0x1
 async def loopback(dut: Any) -> None:
     """Connect the transmitter pin to the receiver pin."""
     while True:
-        await Edge(dut.o_uart_tx)
+        await dut.o_uart_tx.value_change
         dut.i_uart_rx.value = dut.o_uart_tx.value
 
 
@@ -30,4 +29,4 @@ async def test_byte_over_the_pins(dut: Any) -> None:
     received = await results.word(0)
     status = await results.word(1)
     check(received & 0xFF == BYTE, f"received {received:#x}, wanted {BYTE:#x}")
-    check(status & RX_VALID, f"STATUS {status:#x} has no RX_VALID")
+    check(bool(status & RX_VALID), f"STATUS {status:#x} has no RX_VALID")
