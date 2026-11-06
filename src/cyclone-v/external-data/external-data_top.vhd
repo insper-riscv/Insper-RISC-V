@@ -11,7 +11,7 @@
 -- busca de instruções lê a FLASH direto. O hospedeiro lê e escreve a SDRAM pelo
 -- mestre de depuração e a UART, o display e o carregador da FLASH são instâncias
 -- do Virtual JTAG. O clock do núcleo é de 50 MHz; o controlador e o mestre de
--- depuração rodam no clock de 142,857 MHz do mesmo PLL.
+-- depuração rodam no clock de 100 MHz do mesmo PLL (SDRAM_TCK_PS do pacote do mapa).
 -- ============================================================================
 
 library ieee;
@@ -571,7 +571,10 @@ begin
 	u_sdram_ctrl : entity work.sdram_ctrl
 		-- Os pinos de dados passam por um registrador nas células de E/S (ver o projeto do Quartus); a fase do clock
 		-- do pino DRAM_CLK faz o dado lido chegar a tempo, sem o clock extra que a simulação modela.
-		generic map (capture_extra => 0, sync_req => false)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			capture_extra => 0, sync_req => false)
 		port map (
 			i_clk => pll_clk_mem, i_rst => rst_mem,
 			i_req_tog => req_tog, o_ack_tog => ack_tog, o_init_done => init_done,

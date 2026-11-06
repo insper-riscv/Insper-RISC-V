@@ -57,7 +57,9 @@ entity template_sim_top is
         -- Extensão Zicclsm (acessos desalinhados)
         has_zicclsm         : boolean  := HAS_ZICCLSM;
         -- Interrupções de máquina (as portas i_irq_* do núcleo; exige Zicsr)
-        has_interrupts      : boolean  := HAS_INTERRUPTS
+        has_interrupts      : boolean  := HAS_INTERRUPTS;
+        -- Interrupção de estouro de contador (Sscofpmf; exige Zihpm e as interrupções)
+        has_sscofpmf        : boolean  := HAS_SSCOFPMF
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -175,6 +177,7 @@ begin
             has_zihintntl   => has_zihintntl,
             has_zihintpause => has_zihintpause,
             has_interrupts  => has_interrupts and has_zicsr,
+            has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
             boot_memory_bits   => log2_exact(boot_memory_size_bytes),
             rom_end_kib     => ROM_END_KIB,
             rom_external    => ROM_EXTERNAL,

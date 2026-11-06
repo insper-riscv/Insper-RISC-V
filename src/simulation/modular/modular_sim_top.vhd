@@ -128,6 +128,8 @@ entity modular_sim_top is
     -- Interrupções de máquina: o CLINT e o controlador externo ficam na janela de periféricos e as
     -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
     has_interrupts      : boolean := HAS_INTERRUPTS;
+    -- Interrupção de estouro de contador (Sscofpmf): exige Zihpm e as interrupções.
+    has_sscofpmf        : boolean := HAS_SSCOFPMF;
     -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
     clint_tick_cycles   : positive := 1;
     -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
@@ -564,7 +566,8 @@ begin
       has_zicond   => has_zicond,
       has_zihintntl   => has_zihintntl,
       has_zihintpause => has_zihintpause,
-      has_interrupts  => has_interrupts and has_zicsr
+      has_interrupts  => has_interrupts and has_zicsr,
+      has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr
     )
     port map (
       o_trap           => open,

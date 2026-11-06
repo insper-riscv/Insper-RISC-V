@@ -180,11 +180,11 @@ O bitstream tem cinco relógios: o do núcleo e o de busca (a mesma frequência,
 
 | Cruzamento | Mecanismo no RTL | Restrição no `.sdc` | Situação a 100 MHz |
 | :--- | :--- | :--- | :--- |
-| Núcleo e busca para o controlador, e de volta (ponte da SDRAM) | Toggles de pedido, resposta e inicialização por sincronizador de dois flip-flops; barramentos parados até a resposta | `set_max_delay` de 10 ns e `set_min_delay` de -10 ns nas duas direções | O limite de 10 ns é menor que duas bordas do controlador (14 ns) e do núcleo (20 ns), então vale de 50 a 100 MHz |
+| Núcleo e busca para o controlador, e de volta (ponte da SDRAM) | Toggles de pedido, resposta e inicialização por sincronizador de dois flip-flops; barramentos parados até a resposta | `set_max_delay` de 10 ns e `set_min_delay` de -10 ns nas duas direções | O limite de 10 ns é menor que duas bordas do controlador (20 ns a 100 MHz) e do núcleo (20 ns), então vale de 50 a 100 MHz |
 | JTAG para o controlador (porta de depuração da SDRAM) | Toggle de comando e flag de inicialização por sincronizador de dois flip-flops | Mesmo par de limites, entre o controlador e o JTAG | Vale |
 | Núcleo para o JTAG (UART e display) | Toggle de comando, de resposta e de gravação por sincronizador de dois flip-flops; byte e valor parados até o toggle | Mesmo par de limites, entre o núcleo e o JTAG | Vale |
 | Busca para o núcleo e de volta | Mesma frequência com fase fixa; o PC alimenta a cache e a tag volta ao PC | Nenhuma exceção: o Quartus cronometra como caminho síncrono com a diferença de fase | Pior caminho do bitstream (seção 3.2) |
-| Controlador para os pinos da SDRAM | Registradores de saída e de entrada do controlador | `set_output_delay`, `set_input_delay` e caminho multiciclo de 2 ciclos no `DRAM_CLK_pin` | Folga de -0,744 a +0,428 ns conforme a semente (100 MHz), no pino `DRAM_DQ` (entrada) e no `o_dram_dq_oe` (saída) |
+| Controlador para os pinos da SDRAM | Registradores de saída e de entrada do controlador | `set_output_delay`, `set_input_delay` e caminho multiciclo de 2 ciclos no `DRAM_CLK_pin` | Folga de +1,123 a +4,0 ns nas cinco sementes com o controlador a 100 MHz, no pino `DRAM_DQ` (entrada) e no `o_dram_dq_oe` (saída); ver [sdram-100mhz.md](sdram-100mhz.md) |
 | Botão de reset | `FPGA_RESET_N` e o travamento da PLL formam `core_reset` | `set_false_path` a partir de `FPGA_RESET_N` | O reset do controlador passa por um sincronizador de dois flip-flops (`rst_sr`); o do núcleo e o da busca usam `core_reset` direto, sem sincronizador de desassert |
 
 O Quartus informa 88 cadeias de sincronização (MTBF acima de 10^9 anos), o que cobre os sincronizadores de dois flip-flops do `Common-Components` e as cadeias do próprio concentrador do JTAG.

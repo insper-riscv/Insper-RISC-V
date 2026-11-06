@@ -65,15 +65,15 @@ _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
 SIM_CLOCK = os.environ.get("SIM_CLOCK", "CLK")
-SIM_CLOCK_PERIOD_NS = int(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
+SIM_CLOCK_PERIOD_NS = float(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
 SIM_RESET = os.environ.get("SIM_RESET", "reset")
 SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", "pll_clk_idexmem")
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "200000"))
 # More clocks the top has, "PORT:period_ns" separated by commas
-# (CLK_MEM:7 for the SDRAM clock)
+# (CLK_MEM:10 for the SDRAM clock)
 EXTRA_CLOCKS = [
-    (name, int(period))
+    (name, float(period))
     for name, period in (
         item.split(":")
         for item in os.environ.get("SIM_EXTRA_CLOCKS", "").split(",")

@@ -25,7 +25,7 @@ set_multicycle_path -hold  -end -from [get_clocks DRAM_CLK_pin] -to [get_clocks 
 # and the init flag, and request and read-data buses that hold from the edge a toggle flips until it is answered.
 # Nothing between the two sets of clocks is timed as a synchronous path: every crossing is bounded by a delay
 # shorter than the synchronizers' latency (no hold check). The 10 ns bound is below two periods of the
-# controller clock (2 x 7 ns = 14 ns, the shortest latency) and of the core clocks at 100 MHz (2 x 10 ns =
+# controller clock (2 x 10 ns = 20 ns at 100 MHz, the shortest latency) and of the core clocks at 100 MHz (2 x 10 ns =
 # 20 ns), so it holds from 50 to 100 MHz of the core without change.
 set clk_if    {u_pll|altera_pll_i|general[2].gpll~PLL_OUTPUT_COUNTER|divclk}
 set clk_core  {u_pll|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk}

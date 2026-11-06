@@ -38,6 +38,8 @@ package external_data_map_pkg is
 	constant HAS_ZICCLSM         : boolean  := true;
 	-- A extensão Interrupts está no perfil.
 	constant HAS_INTERRUPTS      : boolean  := false;
+	-- A extensão Sscofpmf está no perfil.
+	constant HAS_SSCOFPMF        : boolean  := false;
 	-- Expoente do tamanho da BOOT_MEMORY, em [0, 2**BOOT_MEMORY_BITS).
 	constant BOOT_MEMORY_BITS       : natural  := 12;
 	-- Tamanho da BOOT_MEMORY, em bytes.
@@ -90,5 +92,10 @@ package external_data_map_pkg is
 	constant DISPLAY_BASE : std_logic_vector(31 downto 0) := x"D0000000";
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
+
+	-- Frequência do clock do controlador da SDRAM, em Hz.
+	constant SDRAM_CLOCK_HZ : positive := 100000000;
+	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
+	constant SDRAM_TCK_PS   : positive := 10000;
 
 end package external_data_map_pkg;

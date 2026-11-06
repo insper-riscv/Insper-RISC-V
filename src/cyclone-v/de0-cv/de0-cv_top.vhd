@@ -11,7 +11,7 @@ use work.de0_cv_map_pkg.all;
 -- sends to the FLASH chip model (through its arbiter) or to the SDRAM bridge, arbiter and controller of the
 -- Memory repository. The FLASH window of the chip ends at 256 KiB; a read past it returns zero. The host reaches the
 -- SDRAM through the debug master and its Virtual JTAG shell, as a second master of the controller. The core
--- clock is 50 MHz; the controller and the debug master run on the 142.857 MHz clock of the same PLL.
+-- clock is 50 MHz; the controller and the debug master run on the 100 MHz clock of the same PLL (SDRAM_TCK_PS of the generated map package).
 entity core_fpga_sdram_flash is
 	generic (
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
@@ -296,7 +296,8 @@ begin
 			has_zicond   => HAS_ZICOND,
 			has_zihintntl   => HAS_ZIHINTNTL,
 			has_zihintpause => HAS_ZIHINTPAUSE,
-			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM)
+			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
+			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -652,7 +653,10 @@ begin
 		-- the data pins go through one register in the IO cells (see the Quartus project); the clock
 		-- phase of the pin DRAM_CLK makes the read data arrive in time for the register without the
 		-- extra clock the simulation models for registered pins (found on the board, docs/SDRAM_BRINGUP.md)
-		generic map (capture_extra => 0, sync_req => false)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			capture_extra => 0, sync_req => false)
 		port map (
 			i_clk => pll_clk_mem, i_rst => rst_mem,
 			i_req_tog => req_tog, o_ack_tog => ack_tog, o_init_done => init_done,

@@ -14,7 +14,7 @@
 - [docs/pt-br/guide/](docs/pt-br/guide/README.md): guides (board, simulation, KPIs and new architecture), in Portuguese.
 - [docs/pt-br/platform/](docs/pt-br/platform/README.md): the five platforms and the ten (four for tests, four on the FPGA and two for the UART), with the memory map, boot, runtime and program update of each one, in Portuguese.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): diagnosed defects, in Portuguese.
-- [docs/en/conformance/](docs/en/conformance/riscv-nao-privilegiado.md): the conformance report for chapters 1, 2 and 4 to 11 of the RISC-V unprivileged volume, with the evidence for each requirement.
+- [docs/en/conformance/](docs/en/conformance/riscv-nao-privilegiado.md): the conformance report for chapters 1, 2 and 4 to 11 of the RISC-V unprivileged volume, with the evidence for each requirement, and [riscv-privilegiado.md](docs/en/conformance/riscv-privilegiado.md), the one for the privileged volume for the machine-mode-only hart.
 - [docs/en/interconnect/ext_interconnect.md](docs/en/interconnect/ext_interconnect.md): the external interconnect, which decodes the platform map between the SDRAM and the peripherals, its AXI4 variant and the integration tests.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): KPI scripts (frequency, resources, CPI and tests) from a Quartus run (in Portuguese).
 
