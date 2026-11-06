@@ -21,9 +21,9 @@ paths:
   sources:
     - src/cyclone-v/fpga-external/runtime/_exit.c
     - src/cyclone-v/fpga-external/runtime/stdio.c
-  # O carregador fixo, construído uma vez para a BOOT_ROM.
-  boot_rom: src/cyclone-v/fpga-external/runtime/boot_rom.S
-  boot_rom_linker_script: src/cyclone-v/fpga-external/runtime/boot_rom.ld
+  # O carregador fixo, construído uma vez para a BOOT_MEMORY.
+  boot_memory: src/cyclone-v/fpga-external/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/fpga-external/runtime/boot_memory.ld
 
 sim:
   toplevel: modular_sim_top
@@ -145,10 +145,10 @@ sim:
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "2000000"
   ghdl_std: "08"
-  # As imagens: a BOOT_ROM é construída uma vez e a ROM vem do programa de cada teste. Os tamanhos das
+  # As imagens: a BOOT_MEMORY é construída uma vez e a ROM vem do programa de cada teste. Os tamanhos das
   # memórias são os genéricos do topo, cujo padrão vem de modular_map_pkg.
   parameters:
-    BOOT_ROM_FILE: "{boot_rom_hex_path}"
+    BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
     ROM_FILE: "{hex_path}"
     HAS_SWITCHES: "true"
     HAS_KEYS: "true"

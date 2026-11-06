@@ -25,7 +25,7 @@ isa:
   # and "// RV32_EXT: M,A" both normalize to rv32ima.
   canonical_order: "MAFDQLCBJTPVNH"
 
-# The addresses and the sizes of the memories come from the map of the platform (platform.yaml): the BOOT_ROM,
+# The addresses and the sizes of the memories come from the map of the platform (platform.yaml): the BOOT_MEMORY,
 # the FLASH and the RAM, the HTIF words tohost and fromhost, and the address width of each simulation memory
 # (sim.parameters below). Nothing of the map is written here.
 memory_map: platform.yaml
@@ -37,12 +37,12 @@ paths:
   sources:
     - src/simulation/internal-mem/runtime/_exit.c
     - src/simulation/internal-mem/runtime/stdio.c
-  # The fixed, shared bootloader (see boot_rom.S's own header comment)
-  # — built ONCE (not per test) into boot_rom.elf/.hex/.mif. It only
+  # The fixed, shared bootloader (see boot_memory.S's own header comment)
+  # — built ONCE (not per test) into boot_memory.elf/.hex/.mif. It only
   # clears the fixed words and jumps to FLASH_BASE, where the crt0 is,
   # and holds rv32_wait_restart.
-  boot_rom: src/simulation/internal-mem/runtime/boot_rom.S
-  boot_rom_linker_script: src/simulation/internal-mem/runtime/boot_rom.ld
+  boot_memory: src/simulation/internal-mem/runtime/boot_memory.S
+  boot_memory_linker_script: src/simulation/internal-mem/runtime/boot_memory.ld
 
 # Only needed by `riscv-tools freq-sweep` (Fmax search). The PLL has
 # three outputs (clk_if/clk_idexmem/clk_wb), one frequency in three
@@ -61,7 +61,7 @@ quartus:
   sof_file: output_files/core_fpga_test.sof         # relative to project_dir
   # Path (relative to project_dir) the FLASH IP reads its initial
   # contents from at synthesis time. build_fpga.py overwrites this
-  # file per test (BOOT_ROM has its own separate, one-time-only
+  # file per test (BOOT_MEMORY has its own separate, one-time-only
   # target below — it does NOT get touched by the per-test flow).
   #
   # NOT ips/FLASH1PORT/init.mif (that's just where the IP's own
@@ -74,12 +74,12 @@ quartus:
   # leftover from some earlier experiment) until this was pointed at
   # the right file.
   rom_mif_target: init.mif
-  # BOOT_ROM's own init file — written ONCE as part of the initial
-  # full compile (see paths.boot_rom/boot_rom_linker_script above),
+  # BOOT_MEMORY's own init file — written ONCE as part of the initial
+  # full compile (see paths.boot_memory/boot_memory_linker_script above),
   # never touched by the per-test JTAG rewrite flow build_fpga.py
   # normally uses (that flow only ever targets rom_mif_target/FLASH's
   # JTAG instance below).
-  boot_rom_mif_target: boot_rom_init.mif
+  boot_memory_mif_target: boot_memory_init.mif
   # jtag_hardware isn't configured here: the "USB-Blaster [<bus>-<port>]"
   # suffix reflects USB topology and drifts across reboots/hub
   # renumbering (seen firsthand: "[1-4]" became "[1-10]" between two
@@ -91,9 +91,9 @@ quartus:
   # the RAM debug tap. The RAM is the only IP that declares
   # ENABLE_RUNTIME_MOD (see core_fpga_test.vhd), so it is instance 0;
   # the tohost and fromhost words live inside RAM and share its index.
-  # BOOT_ROM and FLASH declare no ENABLE_RUNTIME_MOD, so they have NO
-  # instance index: BOOT_ROM is only touched by the one-time full
-  # compile+program (see boot_rom_mif_target above), and FLASH is a
+  # BOOT_MEMORY and FLASH declare no ENABLE_RUNTIME_MOD, so they have NO
+  # instance index: BOOT_MEMORY is only touched by the one-time full
+  # compile+program (see boot_memory_mif_target above), and FLASH is a
   # single true dual-port copy that the JTAG loader rewrites per test.
   # Verify against the real quartus_map/fitter report if this
   # project's instantiation in core_fpga_test.vhd ever changes.
@@ -101,7 +101,7 @@ quartus:
   # How the host rewrites FLASH per test: the JTAG loader of the Memory
   # repository (flash_loader) holds the core in reset, writes the single
   # FLASH copy through the second port, checks the count and the checksum
-  # and releases the core, which restarts from the BOOT_ROM by itself.
+  # and releases the core, which restarts from the BOOT_MEMORY by itself.
   # There is no In-System Memory Content Editor instance for the ROM.
   rom_write_method: jtag_loader
   rom_mem_instances: []
@@ -242,22 +242,22 @@ sim:
   # ROM_simulation reads its program image via a VHDL generic (a
   # file-open process inside the VHDL itself), not sim_runner's own
   # ROM_HEX env var — see rv32i3stage_core_sim_test.vhd (two separate
-  # ROM_simulation instances now, BOOT_ROM + FLASH). BOOT_ROM_FILE is
-  # substituted from sim_runner.run_suite's boot_rom_hex_path (built
-  # ONCE, see riscv_tools.boot_rom) — ROM_FILE (FLASH) still comes
+  # ROM_simulation instances now, BOOT_MEMORY + FLASH). BOOT_MEMORY_FILE is
+  # substituted from sim_runner.run_suite's boot_memory_hex_path (built
+  # ONCE, see riscv_tools.boot_memory) — ROM_FILE (FLASH) still comes
   # from each test's own {hex_path} like before. The
-  # boot_rom_addr_width/rom_addr_width/ram_addr_width generics size
-  # each memory array to match memory.boot_rom_words/rom_words/
+  # boot_memory_addr_width/rom_addr_width/ram_addr_width generics size
+  # each memory array to match memory.boot_memory_words/rom_words/
   # ram_words above — all three default to 2**9 (512 words) inside
   # rv32i3stage_core_sim_test.vhd, too small for this project's real
   # sizes.
   parameters:
-    BOOT_ROM_FILE: "{boot_rom_hex_path}"
+    BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
     ROM_FILE: "{hex_path}"
 
 # Spike runs each test's own image, which starts at the crt0's _start.
 # On the hardware that image ends in rv32_wait_restart, a routine of the
-# separate boot ROM at 0x100, so Spike's ELF is built with a stand-in
+# separate boot memory at 0x100, so Spike's ELF is built with a stand-in
 # for it (platform/spike_exit.S: a wait loop, plus the
 # tohost/fromhost symbols) and with -DRV32_SPIKE, which leaves the fixed
 # address out of the link (see rv32im-fpga.specs).

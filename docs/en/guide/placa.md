@@ -29,7 +29,7 @@ The bench cable shows up as `USB-Blaster [3-6]`, with the device `5CE(BA4|FA4)`.
 
 ## 3. Run programs on the board
 
-With the bitstream already programmed, the `riscv-tools` of the test project ([Tests](https://github.com/insper-riscv/Tests)) writes each program into the BOOT_ROM, the FLASH and the SDRAM over JTAG and checks the result, without recompiling the FPGA.
+With the bitstream already programmed, the `riscv-tools` of the test project ([Tests](https://github.com/insper-riscv/Tests)) writes each program into the BOOT_MEMORY, the FLASH and the SDRAM over JTAG and checks the result, without recompiling the FPGA.
 
 ```bash
 cd Tests

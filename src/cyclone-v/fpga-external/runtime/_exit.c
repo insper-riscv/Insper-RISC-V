@@ -2,7 +2,7 @@
  * não o fornece.
  *
  * Informa o resultado em tohost: código 0 é aprovado (1), qualquer outro é falha
- * ((código << 1) | 1). Depois entrega o núcleo ao rv32_wait_restart da BOOT_ROM, num endereço
+ * ((código << 1) | 1). Depois entrega o núcleo ao rv32_wait_restart da BOOT_MEMORY, num endereço
  * fixo que o arquivo de specs lhe dá; a imagem do Spike usa o spike_exit.S.
  */
 #include "memory_map.h"

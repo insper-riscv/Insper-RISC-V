@@ -1,5 +1,5 @@
-# The memory map of the SDRAM platform with the FLASH behind the caches: the BOOT_ROM inside the core, the
-# FLASH (right after the BOOT_ROM, up to 256 KiB) and the board's 64 MB SDRAM (the RAM) reached through the instruction and data
+# The memory map of the SDRAM platform with the FLASH behind the caches: the BOOT_MEMORY inside the core, the
+# FLASH (right after the BOOT_MEMORY, up to 256 KiB) and the board's 64 MB SDRAM (the RAM) reached through the instruction and data
 # caches: the source of truth `riscv-tools check-memory-map` checks every hand-written copy against.
 #
 #   uv run riscv-tools --root . check-memory-map --platform src/cyclone-v/de0-cv/platform.yaml
@@ -16,12 +16,12 @@ profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,    base: 0x00001000, size: 252K, kind: rom, exec: true}
   - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
 
-# Words at the top of RAM: the contract between the boot ROM, the program and
-# the host (platform/boot_rom.S clears them at every reset).
+# Words at the top of RAM: the contract between the boot memory, the program and
+# the host (platform/boot_memory.S clears them at every reset).
 reserved:
   stdout:   {base: 0x43FFFBE0, size: 1K+8}
   tohost:   {base: 0x43FFFFE8, size: 8}
@@ -76,14 +76,14 @@ memory:
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
-# flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
+# flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
 generate:
   specs: {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   bank_specs:
     - {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
     - {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
   banks_h: {path: src/cyclone-v/de0-cv/runtime/flash_banks.h}
-  boot_ld: {path: src/cyclone-v/de0-cv/runtime/boot_rom.ld}
+  boot_ld: {path: src/cyclone-v/de0-cv/runtime/boot_memory.ld}
   runtime: {path: src/cyclone-v/de0-cv/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
@@ -92,17 +92,17 @@ generate:
     ram: RAM
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`). The RAM is the SDRAM, so
-# only the BOOT_ROM and the FLASH are simulation arrays with an address width.
+# only the BOOT_MEMORY and the FLASH are simulation arrays with an address width.
 config:
   rom: FLASH
   ram: RAM
-  addr_widths: [boot_rom, rom]
+  addr_widths: [boot_memory, rom]
 
 checks:
   # --- config.yaml ---------------------------------------------------------
   - {name: config.yaml UART_SLOT, file: src/cyclone-v/de0-cv/config.yaml, pattern: 'UART_SLOT: "(\d+)"', expect: UART.id}
 
-  # --- boot ROM (boot_rom.S; its linker script is generated) --------------
+  # --- boot memory (boot_memory.S; its linker script is generated) --------------
 
   # --- runtime and Spike stand-in (shared with the sdram platform) ----------
 

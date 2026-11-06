@@ -9,7 +9,7 @@ Este guia leva a partir de um clone limpo do `Insper-RISC-V` até uma plataforma
 | Bloco | Repositório | O que entrega |
 | :--- | :--- | :--- |
 | Core | `Core` | O processador, escolhido por um perfil (base `rv32i` ou `rv32e` mais as extensões) |
-| Memory | `Memory` | BOOT_ROM, ROM e FLASH (inclusive a FLASH de duas portas), RAM e SDRAM, caches, chip de FLASH e roteador de regiões |
+| Memory | `Memory` | BOOT_MEMORY, ROM e FLASH (inclusive a FLASH de duas portas), RAM e SDRAM, caches, chip de FLASH e roteador de regiões |
 | Peripherals | `Peripherals` | UART, GPIO, temporizador, CLINT, controlador de interrupção externa, controlador de FLASH e display, cada um com um lado `soc` (independente de família) e, quando precisa, um lado por família |
 | Common-Components | `Common-Components` | Multiplexadores, registradores e pacotes de utilidades, presentes como submódulo nos outros três |
 | Insper-RISC-V | este repositório | Fixa a versão de cada submódulo e traz as plataformas, que ligam os blocos |
@@ -20,9 +20,9 @@ Este guia leva a partir de um clone limpo do `Insper-RISC-V` até uma plataforma
 | :--- | :--- | :--- |
 | `platform.yaml` | Pessoa | Fonte do mapa de memória, do perfil do Core, das palavras reservadas e dos periféricos, e a lista dos arquivos a gerar |
 | `rtl/<plataforma>_map_pkg.vhd` | `riscv-tools generate-memory-map` | Constantes VHDL do mapa e do perfil |
-| `runtime/rv32im-fpga.specs`, `runtime/boot_rom.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Parâmetros do linker, script de ligação da BOOT_ROM e endereços do runtime |
+| `runtime/rv32im-fpga.specs`, `runtime/boot_memory.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Parâmetros do linker, script de ligação da BOOT_MEMORY e endereços do runtime |
 | `rtl/<plataforma>_sim_top.vhd` | Pessoa | Topo de simulação, que só instancia e conecta os blocos |
-| `runtime/boot_rom.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Pessoa | O que o programa encontra ao iniciar e ao terminar |
+| `runtime/boot_memory.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Pessoa | O que o programa encontra ao iniciar e ao terminar |
 | `config.yaml` | Pessoa | Configuração do `riscv-tools` para compilar e simular, que lê o mapa do `platform.yaml` |
 
 Nenhum número do mapa se escreve em dois lugares. O que o `config.yaml` e o `Tests` precisam do mapa chega a eles pelo `platform.yaml`.
@@ -31,14 +31,14 @@ Nenhum número do mapa se escreve em dois lugares. O que o `config.yaml` e o `Te
 
 | Plataforma | Caminho | Quando copiar |
 | :--- | :--- | :--- |
-| `template` | `src/simulation/template/` | Ponto de partida de uma plataforma só de simulação, com BOOT_ROM, ROM e RAM dentro do chip |
+| `template` | `src/simulation/template/` | Ponto de partida de uma plataforma só de simulação, com BOOT_MEMORY, ROM e RAM dentro do chip |
 | `external-data` | `src/cyclone-v/external-data/` | Ponto de partida de uma placa DE0-CV, com a FLASH de duas portas dentro da FPGA e a SDRAM atrás da cache de dados |
 | `de0-cv` | `src/cyclone-v/de0-cv/` | Placa DE0-CV completa, com a FLASH como chip atrás das caches de instruções e de dados |
 
 A plataforma modelo tem esta forma.
 
 ```text
-  BOOT_ROM 4 KiB  --+
+  BOOT_MEMORY 4 KiB  --+
   ROM 28 KiB      --+--  núcleo (perfil do platform.yaml)  --  RAM 32 KiB
   (duas portas)                     |
                                     +-- janela de periféricos (bit 31 = 1) -- UART sobre JTAG (id 4)
@@ -134,7 +134,7 @@ Para o exemplo, a RAM passa a 64 KiB e o perfil a `rv32im`. A RAM começa em `0x
 platform: exemplo
 profile: rv32im
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
   - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
 reserved:
@@ -154,7 +154,7 @@ riscv-tools --root . check-memory-map --platform src/simulation/exemplo/platform
 
 | Saída esperada | Erro comum e causa |
 | :--- | :--- |
-| Quatro linhas `generated:` (specs, `boot_rom.ld`, `memory_map.h`, pacote VHDL) e `memory map OK` | `reserved stdout ... is not inside a RAM region`, porque os endereços reservados ficaram fora da RAM depois de mudar o tamanho |
+| Quatro linhas `generated:` (specs, `boot_memory.ld`, `memory_map.h`, pacote VHDL) e `memory map OK` | `reserved stdout ... is not inside a RAM region`, porque os endereços reservados ficaram fora da RAM depois de mudar o tamanho |
 | `HAS_M` verdadeiro e `RAM_END_KIB` igual a 96 no pacote gerado | `profile` com nome que não está em `matrix.yaml` |
 
 Quando o mapa mudar, rode o primeiro comando de novo. Com `--check` no fim, o mesmo comando não escreve nada e falha se algum arquivo gerado estiver fora de data.
@@ -268,16 +268,16 @@ O topo de simulação da plataforma modelo tem seis blocos, que o exemplo manté
 | :--- | :--- | :--- |
 | `u_clock` | `clk_gen_3way` | `src/simulation/internal-mem/rtl/` |
 | `u_core` | `core` | `Core/src/core/` |
-| `u_boot_rom` | `rom_simulation` | `Memory/src/ROM/SoC/` |
+| `u_boot_memory` | `rom_simulation` | `Memory/src/ROM/SoC/` |
 | `u_rom` | `rom_simulation` (duas portas) | `Memory/src/ROM/SoC/` |
 | `u_ram` | `ram_simulation` | `Memory/src/RAM/SoC/` |
 | `u_uart` (opcional) | `jtag_uart` | `Peripherals/src/UART/jtag/` |
 
-O núcleo tem três saídas de memória: a busca de instrução (BOOT_ROM e ROM), a porta de dados da ROM e da RAM, e o barramento externo, por onde passam os periféricos.
+O núcleo tem três saídas de memória: a busca de instrução (BOOT_MEMORY e ROM), a porta de dados da ROM e da RAM, e o barramento externo, por onde passam os periféricos.
 
 ### 6.2. Genéricos de tamanho
 
-Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_ROM_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
+Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_MEMORY_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
 
 ### 6.3. Perfil e mapa no `core`
 
@@ -340,8 +340,8 @@ O runtime é o que o programa encontra ao iniciar e ao terminar. Os quatro arqui
 
 | Arquivo | O que faz | O que muda com o mapa |
 | :--- | :--- | :--- |
-| `runtime/boot_rom.S` | `_reset` zera `stdout`, `tohost` e `fromhost` e salta para `RV32_BOOT_ENTRY`; `rv32_wait_restart` espera o `fromhost` | Nada, lê os endereços de `memory_map.h` |
-| `runtime/boot_rom.ld` | Script de ligação da BOOT_ROM, com `rv32_wait_restart` em `0x100` | Gerado |
+| `runtime/boot_memory.S` | `_reset` zera `stdout`, `tohost` e `fromhost` e salta para `RV32_BOOT_ENTRY`; `rv32_wait_restart` espera o `fromhost` | Nada, lê os endereços de `memory_map.h` |
+| `runtime/boot_memory.ld` | Script de ligação da BOOT_MEMORY, com `rv32_wait_restart` em `0x100` | Gerado |
 | `runtime/rv32im-fpga.specs` | Parâmetros do linker (`__flash`, `__flash_size`, `__ram`, `__ram_size`) e o crt0 da picolibc | Gerado |
 | `runtime/memory_map.h` | Endereços de RAM, `tohost`, `fromhost`, `stdout`, entrada de boot e base de cada periférico | Gerado |
 | `runtime/_exit.c` | Escreve o resultado em `tohost` e entra em `rv32_wait_restart` | Nada |
@@ -378,11 +378,11 @@ Ele reúne, para o `riscv-tools`, o que é da plataforma. Nenhum endereço nem t
 | :--- | :--- |
 | `toolchain` | GCC, `objcopy` e o `rv32im-fpga.specs` da plataforma |
 | `memory_map` | O `platform.yaml`, de onde vêm as bases, o `tohost`, o `fromhost` e o perfil |
-| `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_rom.S` e `boot_rom.ld` |
+| `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_memory.S` e `boot_memory.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
 | `sim.vhdl_sources` | Todas as fontes, em ordem de dependência, escritas pelo `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | O testbench cocotb, `testbench.test_c_program` da plataforma `internal-mem` |
-| `sim.parameters` | `BOOT_ROM_FILE` e `ROM_FILE` com as imagens de cada programa |
+| `sim.parameters` | `BOOT_MEMORY_FILE` e `ROM_FILE` com as imagens de cada programa |
 | `emulator.sources` | `spike_exit.S` |
 
 A lista `sim.vhdl_sources` não se edita à mão. Ela vem do componente do topo no `provides` do `paths.yaml` da plataforma, que declara os componentes que o topo requer, e o `make generate-sources` a escreve na ordem de análise. Se o topo ganhar um periférico, o componente dele entra no `requires` do topo e a lista é regenerada.
@@ -546,7 +546,7 @@ Depois da cópia, registre a plataforma como no passo 4.4, usando as linhas `ext
 | `<plataforma>_program.sh` | Programa o `.sof` pelo primeiro cabo do `jtagconfig` |
 | `<plataforma>_top.vhd` | O topo da placa, que liga o PLL, o núcleo, as memórias da placa e os periféricos |
 | `<plataforma>_map_pkg.vhd` | Pacote do mapa, gerado do `platform.yaml` |
-| `boot_rom_init.mif`, `init.mif` | Imagens iniciais da BOOT_ROM e da FLASH |
+| `boot_memory_init.mif`, `init.mif` | Imagens iniciais da BOOT_MEMORY e da FLASH |
 
 ### 10.3. Editar o `.qsf` e o `.sdc`
 
@@ -580,7 +580,7 @@ O primeiro comando só sintetiza e confere que os caminhos e as entidades resolv
 
 ### 10.5. Programas e certificação na placa
 
-Com o bitstream programado, o `Tests` escreve cada programa na BOOT_ROM e na FLASH por JTAG e confere o resultado, sem recompilar a FPGA. A configuração da placa no `Tests` é gerada como no passo 8.3, a partir do `config.yaml` da plataforma de placa.
+Com o bitstream programado, o `Tests` escreve cada programa na BOOT_MEMORY e na FLASH por JTAG e confere o resultado, sem recompilar a FPGA. A configuração da placa no `Tests` é gerada como no passo 8.3, a partir do `config.yaml` da plataforma de placa.
 
 ```bash
 riscv-tools platform sync --prefix Insper-RISC-V \
@@ -976,7 +976,7 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | `reserved stdout ... is not inside a RAM region` | As palavras reservadas ficaram fora da RAM depois de mudar o tamanho ou a base |
 | `generated files are out of date` | O `platform.yaml` mudou sem rodar `generate-memory-map` |
 | `cannot find in top entity generic 'has_e'` | O topo simulado não declara os doze genéricos `has_*` |
-| `timed out after ... cycles without a result` | O cabeçalho `rv32_platform.h` do projeto de testes tem o `tohost` de outra plataforma, ou a BOOT_ROM não salta para o início da ROM |
+| `timed out after ... cycles without a result` | O cabeçalho `rv32_platform.h` do projeto de testes tem o `tohost` de outra plataforma, ou a BOOT_MEMORY não salta para o início da ROM |
 | `rv32_test.h: No such file or directory` | O `generate-header` não rodou para a configuração da plataforma |
 | `unit "..." not found` | Falta uma fonte na lista do `ghdl`, ou a lista está fora de ordem |
 | `missing docs/...` no `make paths` | Falta o documento da plataforma, do periférico ou da memória em um dos idiomas |

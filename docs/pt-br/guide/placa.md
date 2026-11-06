@@ -29,7 +29,7 @@ O cabo da bancada aparece como `USB-Blaster [3-6]`, com o dispositivo `5CE(BA4|F
 
 ## 3. Rodar programas na placa
 
-Com o bitstream já programado, o `riscv-tools` do projeto de testes ([Tests](https://github.com/insper-riscv/Tests)) escreve cada programa na BOOT_ROM, na FLASH e na SDRAM por JTAG e confere o resultado, sem recompilar a FPGA.
+Com o bitstream já programado, o `riscv-tools` do projeto de testes ([Tests](https://github.com/insper-riscv/Tests)) escreve cada programa na BOOT_MEMORY, na FLASH e na SDRAM por JTAG e confere o resultado, sem recompilar a FPGA.
 
 ```bash
 cd Tests

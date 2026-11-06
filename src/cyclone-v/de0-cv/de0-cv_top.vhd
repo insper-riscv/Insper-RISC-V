@@ -4,8 +4,8 @@ use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.de0_cv_map_pkg.all;
 
--- The core on the board with the FLASH as a chip behind the caches: the core holds only the BOOT_ROM; the FLASH
--- (a 256 KB storage inside the FPGA, right after the BOOT_ROM at 0x800, written by the host over JTAG) and the SDRAM at 0x40000000
+-- The core on the board with the FLASH as a chip behind the caches: the core holds only the BOOT_MEMORY; the FLASH
+-- (a 256 KB storage inside the FPGA, right after the BOOT_MEMORY at 0x800, written by the host over JTAG) and the SDRAM at 0x40000000
 -- are reached through an instruction cache and a write-through data cache, whose line requests a region router
 -- sends to the FLASH chip model (through its arbiter) or to the SDRAM bridge, arbiter and controller of the
 -- Memory repository. The FLASH window of the chip ends at 256 KiB; a read past it returns zero. The host reaches the
@@ -63,7 +63,7 @@ architecture behaviour of core_fpga_sdram_flash is
 
 	signal if_addr : std_logic_vector(31 downto 0);
 	signal if_rden : std_logic;
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 
 	signal flash_addr2 : std_logic_vector(31 downto 0);
 	signal flash_rden2 : std_logic;
@@ -255,7 +255,7 @@ begin
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
 			has_e          => HAS_E,
-			boot_rom_bits  => BOOT_ROM_BITS,
+			boot_memory_bits  => BOOT_MEMORY_BITS,
 			rom_end_kib    => ROM_END_KIB,
 			rom_external   => ROM_EXTERNAL,
 			ram_base_kib   => RAM_BASE_KIB,
@@ -278,7 +278,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => (others => '0'),
 
 			o_flash_addr2 => flash_addr2,
@@ -404,15 +404,15 @@ begin
 			o_mem_addr => flash_mem_addr, i_mem_data => flash_mem_data
 		);
 
-	BOOT_ROM : entity work.boot_rom
-    generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
+	BOOT_MEMORY : entity work.boot_memory
+    generic map (size_bytes => BOOT_MEMORY_SIZE_BYTES)
     port map (
-      i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
+      i_address => if_addr(log2_exact(BOOT_MEMORY_SIZE_BYTES) - 1 downto 2),
       i_clk   => pll_clk_if,
       i_rden    => if_rden,
       i_wren    => '0',
       i_data    => (others => '0'),
-      o_q       => boot_rom_data
+      o_q       => boot_memory_data
     );
 
 	-- the storage behind the FLASH chip: a 256 KB RAM block the host rewrites over JTAG (instance FLASH)

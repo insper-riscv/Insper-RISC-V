@@ -1,6 +1,6 @@
 """O topo de simulação da external-data, com a FLASH de duas portas.
 
-A BOOT_ROM guarda uma marca na SDRAM e salta para a FLASH. A FLASH
+A BOOT_MEMORY guarda uma marca na SDRAM e salta para a FLASH. A FLASH
 guarda outra marca, lê como dado uma palavra que ela mesma guarda (a
 porta do estágio MEM, enquanto a busca usa a outra porta), copia essa
 palavra para a SDRAM, escreve no display, guarda a terceira marca e
@@ -40,7 +40,7 @@ async def test_both_flash_ports_serve_one_program(dut: Any) -> None:
     await start(dut)
     await wait_for_tohost(dut)
     words = {
-        "BOOT_ROM mark": (BOOT_WORD, BOOT_MARK),
+        "BOOT_MEMORY mark": (BOOT_WORD, BOOT_MARK),
         "FLASH mark": (FLASH_WORD, FLASH_MARK),
         "SDRAM mark": (SDRAM_WORD, SDRAM_MARK),
         "FLASH data word": (FLASH_DATA_WORD, FLASH_DATA),

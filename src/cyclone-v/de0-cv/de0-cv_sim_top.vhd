@@ -4,9 +4,9 @@ use ieee.numeric_std.all;
 use work.de0_cv_map_pkg.all;
 
 -- Simulation top of the SDRAM platform with the FLASH as a chip behind the caches: the core, the
--- BOOT_ROM (a VHDL array), the instruction and data caches, the FLASH chip model with its storage (a
+-- BOOT_MEMORY (a VHDL array), the instruction and data caches, the FLASH chip model with its storage (a
 -- VHDL array) and the SDRAM (bridge, arbiter, controller and chip model of the Memory repository) on
--- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH starts right after the BOOT_ROM and
+-- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH starts right after the BOOT_MEMORY and
 -- ends at 256 KiB, and the SDRAM is at 0x40000000; both are reached only through the caches, whose line
 -- requests a region router sends to the FLASH (through its arbiter) or to the SDRAM.
 --
@@ -21,9 +21,9 @@ use work.de0_cv_map_pkg.all;
 -- program prints.
 entity rv32im_sdram_flash_sim_test is
 	generic (
-	  BOOT_ROM_FILE : string := "default.hex";
+	  BOOT_MEMORY_FILE : string := "default.hex";
 	  ROM_FILE : string := "default.hex";
-	  boot_rom_addr_width : natural := 9;
+	  boot_memory_addr_width : natural := 9;
 	  rom_addr_width : natural := 18;
 	  -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
 	  FLASH_FIRST_LATENCY : natural := 24;
@@ -119,7 +119,7 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 
 	signal if_addr : std_logic_vector(31 downto 0);
 	signal if_rden : std_logic;
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	signal flash_data : std_logic_vector(31 downto 0);
 
 	signal flash_addr2 : std_logic_vector(31 downto 0);
@@ -240,7 +240,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM))
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -252,7 +252,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2 => flash_addr2,
@@ -490,13 +490,13 @@ begin
 			o_dbg_refreshes => dbg_refreshes, o_dbg_init_ok => dbg_init_ok
 	);
 
-	BOOT_ROM : entity work.ROM_simulation
-		generic map (rom_file => BOOT_ROM_FILE, size_bytes => 4 * 2 ** boot_rom_addr_width)
+	BOOT_MEMORY : entity work.ROM_simulation
+		generic map (rom_file => BOOT_MEMORY_FILE, size_bytes => 4 * 2 ** boot_memory_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,
 			i_re 		=> if_rden,
-			o_data	=> boot_rom_data
+			o_data	=> boot_memory_data
 	);
 
 end architecture;

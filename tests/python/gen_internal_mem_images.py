@@ -7,7 +7,7 @@ Uso, da raiz do repositório:
 
 O mapa é o de `src/simulation/internal-mem/platform.yaml`. O programa
 é o do topo modular (guarda 0x5A na base da RAM, lê de volta, soma 1
-e guarda o resultado na palavra seguinte), e a BOOT_ROM salta para a
+e guarda o resultado na palavra seguinte), e a BOOT_MEMORY salta para a
 entrada da FLASH. As imagens ficam em
 tests/python/unittests/rtl/data/internal_mem/.
 """
@@ -29,7 +29,7 @@ RAM_BASE = MAP["RAM.base"]
 
 
 def main() -> None:
-    """Write the BOOT_ROM image and the FLASH image."""
+    """Write the BOOT_MEMORY image and the FLASH image."""
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "boot_to_flash.hex").write_text(hex_lines([jal(X0, FLASH_BASE)]))
     program = [0] * (FLASH_BASE // 4) + body(RAM_BASE >> 12, 0)
