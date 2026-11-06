@@ -57,11 +57,70 @@ Não há tabela de descrição na BOOT_ROM: o mapa de memória é fixo por plata
 
 `boot.entry` é o único valor que a BOOT_ROM e o linker do firmware repetem. A BOOT_ROM o lê de `RV32_BOOT_ENTRY` e o linker o recebe do `rv32im-fpga.specs`, ambos gerados do mesmo `platform.yaml`, e o `riscv-tools check-memory-map` confere que as cópias escritas à mão coincidem com ele.
 
-## 6. Recomeço pelo ambiente de teste
+## 6. Como o núcleo chega à FLASH
+
+O núcleo não decide se pode saltar para a FLASH. O `_reset` da BOOT_ROM salta para `boot.entry` sempre, e a garantia de que a FLASH está completa nesse instante vem do hardware que a escreve e da ordem em que o hospedeiro o usa. Existem dois mecanismos, conforme a FLASH da plataforma.
+
+| Mecanismo | Plataformas | Quem mantém o núcleo fora da FLASH durante a escrita |
+| :--- | :--- | :--- |
+| Carregador da FLASH | FLASH interna de duas portas, reescrita pela JTAG ([internal-mem](internal-mem.md)) | O hardware: a saída de parada do carregador segura o núcleo em reset |
+| Escrita com o núcleo estacionado | Chip de FLASH atrás das caches, escrito pela memória interna do Quartus ([de0-cv](de0-cv.md)) | O protocolo: o núcleo espera no `rv32_wait_restart`, na BOOT_ROM, e só sai quando o hospedeiro escreve `fromhost` |
+
+### 6.1. Partida a frio
+
+1. A FPGA é programada com o `.sof`, que já traz a BOOT_ROM e a imagem inicial da FLASH.
+2. Com o PLL travado, o reset do núcleo é solto. O reset do núcleo é a combinação do PLL destravado, do botão da placa e, onde há carregador, da saída de parada dele.
+3. O carregador sai do reset com a parada desligada, então o núcleo não fica retido.
+4. O núcleo busca o endereço `0x0`, executa o `_reset`, zera `fromhost`, `tohost` e o cabeçalho do `stdout`, executa `fence.i` onde há caches e salta para `boot.entry`.
+5. O que o núcleo encontra em `boot.entry` é a imagem inicial do `.sof`. Na `internal-mem` é um programa de teste. Na `de0-cv` é um trecho de duas instruções que salta para o `rv32_wait_restart`, de modo que o núcleo espera o hospedeiro.
+
+Nenhuma etapa da partida a frio confere a FLASH antes do salto.
+
+### 6.2. Troca de teste com o carregador da FLASH
+
+1. O hospedeiro zera `tohost` pela porta de acesso à RAM, para não confundir o resultado do teste anterior com o do novo.
+2. Envia o comando de parada. A saída de parada sobe, o núcleo entra em reset onde quer que estivesse, e a porta B da FLASH passa a ser do carregador.
+3. Posiciona o cursor e envia a imagem em uma varredura do `STREAM`. A escrita só chega à memória com o núcleo parado.
+4. Lê a contagem e a soma de verificação do carregador e compara com as da imagem. Se diferirem, a troca é abortada e o núcleo continua parado.
+5. Envia o comando de liberação. O reset do núcleo cai, e o núcleo parte do endereço `0x0`.
+6. O `_reset` zera as palavras compartilhadas e salta para `boot.entry`, que agora é a imagem completa e conferida.
+
+O hospedeiro não escreve `fromhost` nesse caminho. O reinício vem da liberação do reset, e não do laço do `rv32_wait_restart`.
+
+### 6.3. Troca de teste com o núcleo estacionado
+
+1. O hospedeiro zera `tohost` pela porta de depuração da SDRAM.
+2. Escreve a imagem da FLASH pela memória interna do Quartus. O núcleo está no laço do `rv32_wait_restart`, que fica na BOOT_ROM, sem cache, e por isso não executa nada da FLASH que está sendo reescrita.
+3. Escreve um valor diferente de zero em `fromhost`.
+4. O laço lê `fromhost`, sai e salta para o `_reset`, que zera as palavras compartilhadas, executa `fence.i` para descartar as linhas do programa anterior e salta para `boot.entry`.
+
+### 6.4. Fim de teste
+
+1. O programa escreve o resultado em `tohost` (`1` para sucesso, `(código << 1) | 1` para falha).
+2. Salta para o `rv32_wait_restart`, que fica na BOOT_ROM e por isso nunca é reescrito.
+3. O hospedeiro lê `tohost` em intervalos e, ao ver o bit 0 em `1`, registra o veredito.
+4. O núcleo permanece no laço até a próxima troca. Com o carregador, a parada seguinte o tira do laço pelo reset. Com o núcleo estacionado, é o `fromhost` que o tira.
+
+### 6.5. Garantias de hardware
+
+| Garantia | Carregador da FLASH | Chip de FLASH com caches |
+| :--- | :--- | :--- |
+| Escrita na FLASH com o núcleo executando | Impossível: a habilitação de escrita da porta B é o pulso do carregador combinado com o estado de parada, e um pedido de escrita ou de leitura fora da parada é recusado e sinalizado no status | Não é impedida pelo hardware; vale o protocolo do núcleo estacionado |
+| Núcleo executando a FLASH enquanto ela é escrita | Não: o núcleo está em reset | Não, desde que esteja no `rv32_wait_restart`; o hospedeiro precisa esperar o fim do teste anterior |
+| Imagem conferida antes da execução | Contagem e soma de verificação lidas do carregador antes da liberação, a cargo do hospedeiro | Não há conferência pelo hardware |
+| Linhas de cache do programa anterior | A plataforma não tem cache de instruções, e o reset do núcleo reinicia as caches que houver | O `fence.i` do `_reset` as descarta |
+| Estado do restante da plataforma na troca | A RAM e os periféricos mantêm o conteúdo, e só as palavras compartilhadas são zeradas pelo `_reset` | O mesmo |
+| Efeito do botão de reset | Reinicia o núcleo pelo `_reset` com a FLASH que estiver gravada. O carregador não é reiniciado pelo botão, então uma parada em curso continua | Reinicia o núcleo pelo `_reset` com a FLASH que estiver gravada |
+
+### 6.6. Validade da FLASH
+
+A BOOT_ROM salta para `boot.entry` sem ler a FLASH. Ela não confere magia, tamanho nem CRC, de modo que uma FLASH vazia, interrompida no meio da escrita ou corrompida é executada como se fosse um programa. O cabeçalho de 256 bytes descrito em [atualizacao-de-programa.md](atualizacao-de-programa.md) carrega os campos que permitiriam essa conferência, mas nenhum código da BOOT_ROM os lê. Hoje a integridade da imagem depende da conferência de contagem e soma feita pelo hospedeiro com o carregador, ou do protocolo do núcleo estacionado.
+
+## 7. Recomeço pelo ambiente de teste
 
 O `rv32_wait_restart`, fixo em `boot.wait_restart` (`0x100`), é a rotina em que um programa de teste termina: ela para o núcleo até o hospedeiro regravar a FLASH e escrever `fromhost`, e então recomeça em `_reset`. Ela pertence ao ambiente de teste, e um firmware que não é programa de teste não a referencia. O protocolo completo está em [atualizacao-de-programa.md](atualizacao-de-programa.md).
 
-## 7. Plataformas
+## 8. Plataformas
 
 O mesmo contrato vale nas três plataformas, e só mudam os valores que vêm do `platform.yaml`.
 

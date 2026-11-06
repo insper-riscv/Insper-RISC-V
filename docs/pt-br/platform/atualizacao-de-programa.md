@@ -115,7 +115,7 @@ A FLASH da `de0-cv` tem duas bancas para a atualização de programa em campo, d
 | A | `0x00001000` | 124 KiB | `0x00001100` |
 | B | `0x00020000` | 128 KiB | `0x00020100` |
 
-Cada banca começa por uma página de cabeçalho de 256 bytes (magia, tamanho, CRC-32 da carga, versão e CRC do cabeçalho; o formato está no módulo `flash_image` do Tools), e o programa vem logo depois. A rotina de atualização grava a carga primeiro e o cabeçalho por último, então a boot ROM só aceita uma banca de cabeçalho válido.
+Cada banca começa por uma página de cabeçalho de 256 bytes (magia, tamanho, CRC-32 da carga, versão e CRC do cabeçalho; o formato está no módulo `flash_image` do Tools), e o programa vem logo depois. A rotina de atualização grava a carga primeiro e o cabeçalho por último, então um cabeçalho válido indica uma banca cuja atualização terminou. A boot ROM não confere o cabeçalho antes do salto, como diz o [contrato de entrada](contrato-de-entrada.md).
 
 O `make generate` escreve, a partir das bancas, os arquivos abaixo.
 

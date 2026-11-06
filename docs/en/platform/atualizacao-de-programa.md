@@ -49,7 +49,7 @@ The FLASH of the `de0-cv` has two banks for the program update in the field, dec
 | A | `0x00001000` | 124 KiB | `0x00001100` |
 | B | `0x00020000` | 128 KiB | `0x00020100` |
 
-Each bank starts with a 256-byte header page (magic, size, CRC-32 of the payload, version and header CRC; the format is in the `flash_image` module of Tools), and the program follows it. The update routine writes the payload first and the header last, so the boot ROM accepts only a bank with a valid header.
+Each bank starts with a 256-byte header page (magic, size, CRC-32 of the payload, version and header CRC; the format is in the `flash_image` module of Tools), and the program follows it. The update routine writes the payload first and the header last, so a valid header marks a bank whose update finished. The boot ROM does not check the header before the jump, as the [entry contract](contrato-de-entrada.md) says.
 
 `make generate` writes the files below from the banks.
 
