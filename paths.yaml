@@ -1,6 +1,7 @@
 # Every file path this repository references, checked by
 #   riscv-tools --root . check-paths --manifest paths.yaml
 # and by `make paths`. Run it before and after moving any file.
+repository: Insper-RISC-V
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
@@ -71,3 +72,92 @@ tree:
       ext_axi_interconnect: "Exercised through the ExtAxiBus and ExtAxiCache tests (toplevel ext_axi_bus_system)."
   vhdl_style:
     exclude: [src/simulation/internal-mem/pll/pll_sim.vhd]
+
+provides:
+  # Each component lists its sources in GHDL dependency order and the components it needs. A requires of the form
+  # <repository>/<component> names a component of a submodule (Common-Components, Core, Memory, Peripherals).
+  # The tops are the components named *_top, *_sim_top and core_fpga_test; riscv-tools sources Insper-RISC-V/<top>
+  # lists their files. core_fpga_test instantiates the PLL, and the PLL is not a requirement of it because the
+  # simulation analyzes pll_sim and the board pll_ip: list the PLL first, as in "sources pll_sim core_fpga_test".
+  clk_gen_3way:
+    requires: []
+    sources:
+      - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+  ext_interconnect:
+    requires: []
+    sources:
+      - src/interconnect/ext_interconnect.vhd
+  axi_interconnect:
+    requires: [Memory/axi_master_bridge, Memory/dcache]
+    sources:
+      - src/interconnect/axi_router.vhd
+      - src/interconnect/axi_slave_periph_bank.vhd
+      - src/interconnect/ext_axi_interconnect.vhd
+  internal_mem_map:
+    requires: []
+    sources:
+      - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
+  blinky:
+    requires: []
+    sources:
+      - src/simulation/internal-mem/rtl/Blinky.vhd
+  pll_ip:
+    requires: []
+    sources:
+      - src/simulation/internal-mem/pll/pll.vhd
+  pll_sim:
+    requires: []
+    sources:
+      - src/simulation/internal-mem/pll/pll_sim.vhd
+  internal_mem_sim_top:
+    requires: [internal_mem_map, clk_gen_3way, Core/core, Memory/ram_simulation, Memory/rom_simulation, Peripherals/UART]
+    sources:
+      - src/simulation/internal-mem/rtl/rv32i3stage_core_sim_test.vhd
+  core_fpga_test:
+    requires: [internal_mem_map, blinky, Common-Components/utils, Core/core, Memory/ram_cyclone_v, Memory/boot_rom, Memory/flash, Memory/flash_jtag_shell, Peripherals/UART]
+    sources:
+      - src/simulation/internal-mem/quartus/core_fpga_test.vhd
+  de0_cv_map:
+    requires: []
+    sources:
+      - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  de0_cv_sdram_jtag_shell:
+    requires: [Memory/sdram_debug]
+    sources:
+      - src/cyclone-v/de0-cv/sdram_jtag_shell.vhd
+  de0_cv_sim_top:
+    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display]
+    sources:
+      - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  de0_cv_top:
+    requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash_store, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell]
+    sources:
+      - src/cyclone-v/de0-cv/de0-cv_top.vhd
+  external_data_map:
+    requires: []
+    sources:
+      - src/cyclone-v/external-data/external_data_map_pkg.vhd
+  external_data_sim_top:
+    requires: [external_data_map, ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/rom_simulation, Memory/ram_simulation, Memory/flash_simulation, Memory/flash_loader, Memory/sdram_system, Memory/dcache, Peripherals/jtag_uart, Peripherals/display]
+    sources:
+      - src/cyclone-v/external-data/external-data_sim_top.vhd
+  external_data_top:
+    requires: [external_data_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_rom, Memory/flash, Memory/flash_jtag_shell, Memory/dcache, Peripherals/jtag_uart_shell, Peripherals/display_shell]
+    sources:
+      - src/cyclone-v/external-data/external-data_top.vhd
+  modular_map:
+    requires: []
+    sources:
+      - src/simulation/modular/modular_map_pkg.vhd
+  modular_sim_top:
+    requires: [modular_map, ext_interconnect, clk_gen_3way, Common-Components/utils, Core/core, Memory/onchip_ram, Memory/ram_simulation, Memory/rom_simulation, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router]
+    sources:
+      - src/simulation/modular/modular_sim_top.vhd
+  template_map:
+    requires: []
+    sources:
+      - src/simulation/template/rtl/template_map_pkg.vhd
+  template_sim_top:
+    requires: [template_map, clk_gen_3way, Common-Components/utils, Core/core, Memory/ram_simulation, Memory/rom_simulation, Peripherals/jtag_uart]
+    sources:
+      - src/simulation/template/rtl/template_sim_top.vhd
