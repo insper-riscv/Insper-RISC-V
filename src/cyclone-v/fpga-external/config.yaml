@@ -104,6 +104,7 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/RAM/SoC/ram_chip.vhd
     - Memory/src/RAM/SoC/onchip_ram_port.vhd
     - Memory/src/RAM/SoC/ram_simulation.vhd
