@@ -28,7 +28,7 @@ The map comes from generics and holds for the core and for the top. The default 
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | External window and peripherals | `0x40000000` | | `ext_base_kib`, `periph_base_kib` |
 
-The limits are in KiB. The BOOT_ROM of every model jumps to the start of the ROM. The `config.yml` of the platform that uses the top chooses these values.
+The limits are in KiB. The BOOT_ROM of every model jumps to the start of the ROM. Whoever instantiates the top chooses these values through the generics, and the default is that of the `platform.yaml`.
 
 ## 4. Sizes
 
