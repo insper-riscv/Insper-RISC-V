@@ -42,7 +42,7 @@ jobs:
         with:
           gates: |
             formal|ci-vhdl|src/interconnect formal Makefile .github/workflows/ci.yml
-            unit-tests|ci-vhdl|!docs/** !**/*.md !LICENSE !AUTHORS* !CITATION.cff !codeclone.baseline.json !ci-images.lock !.github/workflows/version-bump.yml !.github/workflows/tree.yml !formal/**
+            unit-tests|ci-vhdl|!docs/** !**/*.md !LICENSE !AUTHORS* !CITATION.cff !codeclone.baseline.json !.github/workflows/version-bump.yml !.github/workflows/tree.yml !formal/**
 
       - name: Look for a passed pull request run of the same tree
         id: lookup
