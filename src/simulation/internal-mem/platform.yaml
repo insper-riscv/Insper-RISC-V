@@ -16,12 +16,12 @@ profile: rv32im_zicclsm_zicntr_zihpm
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,    base: 0x00001000, size: 28K,  kind: rom, exec: true}
   - {name: RAM,      base: 0x00008000, size: 160K, kind: ram}
 
-# Words at the top of RAM: the contract between the boot ROM, the program and
-# the host (platform/boot_rom.S clears them at every reset).
+# Words at the top of RAM: the contract between the boot memory, the program and
+# the host (platform/boot_memory.S clears them at every reset).
 reserved:
   stdout:   {base: 0x0002FBE0, size: 1K+8}
   tohost:   {base: 0x0002FFE8, size: 8}
@@ -45,10 +45,10 @@ memory:
 extras: [Zimop, Zicond]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
-# flags of the test programs and the linker script of the boot ROM. `make memory-map` checks they are up to date.
+# flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
 generate:
   specs: {path: src/simulation/internal-mem/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/simulation/internal-mem/runtime/boot_rom.ld}
+  boot_ld: {path: src/simulation/internal-mem/runtime/boot_memory.ld}
   runtime: {path: src/simulation/internal-mem/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
@@ -61,19 +61,19 @@ generate:
 config:
   rom: FLASH
   ram: RAM
-  addr_widths: [boot_rom, rom, ram]
+  addr_widths: [boot_memory, rom, ram]
 
 checks:
   # --- config.yaml ---------------------------------------------------------
 
-  # --- boot ROM (boot_rom.S; its linker script is generated) --------------
+  # --- boot memory (boot_memory.S; its linker script is generated) --------------
 
   # --- runtime and Spike stand-in ------------------------------------------
 
   # --- VHDL of the core ----------------------------------------------------
 
   # --- Quartus IPs (only in RV32IM's tree) ---------------------------------
-  # The Quartus wrappers hold a power of two (size_bytes); the BOOT_ROM region fills its IP, and the FLASH and RAM
+  # The Quartus wrappers hold a power of two (size_bytes); the BOOT_MEMORY region fills its IP, and the FLASH and RAM
   # regions leave the tail of the next power of two (32 KB for the 28 KB FLASH, 256 KB for the 160 KB RAM) unused.
 
   # --- the test programs' header (only in RV32IM's tree) ----------------------------------

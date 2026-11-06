@@ -3,7 +3,7 @@
  *
  * Reports the result the way RV32_PASS()/RV32_FAIL() (rv32_test.h) do, in
  * tohost: code 0 is PASS (1), anything else FAIL ((code << 1) | 1). Then it
- * hands over to the boot ROM's rv32_wait_restart, which waits for the host
+ * hands over to the boot memory's rv32_wait_restart, which waits for the host
  * to load the next test, a fixed address the specs file gives it
  * (rv32im-fpga.specs); Spike's image gets platform/spike_exit.S's instead.
  */

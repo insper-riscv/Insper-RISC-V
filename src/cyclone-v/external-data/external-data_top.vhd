@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Topo da DE0-CV da plataforma external-data
 -- ============================================================================
--- O núcleo na placa com a ROM dentro do chip e a RAM fora dele. A BOOT_ROM e a
+-- O núcleo na placa com a ROM dentro do chip e a RAM fora dele. A BOOT_MEMORY e a
 -- FLASH ficam na FPGA; a FLASH é uma só cópia de uma memória de duas portas
 -- verdadeiras, a mesma da internal-mem: a porta A é lida pelo estágio IF, a
 -- porta B pelo estágio MEM (dado) e pelo carregador de FLASH, que a reescreve
@@ -94,8 +94,8 @@ architecture behaviour of core_fpga_external_data is
 	signal if_addr : std_logic_vector(31 downto 0);
 	-- Habilita de leitura da busca de instrução.
 	signal if_rden : std_logic;
-	-- Palavra lida da BOOT_ROM.
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra lida da BOOT_MEMORY.
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	-- Palavra lida da porta A da FLASH, pelo estágio IF.
 	signal flash_data : std_logic_vector(31 downto 0);
 
@@ -338,7 +338,7 @@ begin
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
 			has_e           => HAS_E,
-			boot_rom_bits   => BOOT_ROM_BITS,
+			boot_memory_bits   => BOOT_MEMORY_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
 			ram_base_kib    => RAM_BASE_KIB,
@@ -360,7 +360,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2   => flash_addr2,
@@ -393,15 +393,15 @@ begin
 	-- Sem cache de instruções nem chip de FLASH, só a cache de dados conta eventos.
 	hpm_ext_events <= '0' & dc_miss & '0';
 
-	u_boot_rom : entity work.boot_rom
-    generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
+	u_boot_memory : entity work.boot_memory
+    generic map (size_bytes => BOOT_MEMORY_SIZE_BYTES)
     port map (
-      i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
+      i_address => if_addr(log2_exact(BOOT_MEMORY_SIZE_BYTES) - 1 downto 2),
       i_clk     => pll_clk_if,
       i_rden    => if_rden,
       i_wren    => '0',
       i_data    => (others => '0'),
-      o_q       => boot_rom_data
+      o_q       => boot_memory_data
     );
 
 	-- A FLASH, uma só cópia de duas portas: A para a busca, B para o dado do estágio MEM e para o carregador.

@@ -142,7 +142,7 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_pk
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
-set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_rom.qip
+set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
@@ -393,7 +393,7 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[9]
 #============================================================
 # SPI_FLASH (reservado, GPIO_0 header/JP1 — chip de flash SPI
 # externo pro path de firmware update; ver conversa/arquitetura
-# de boot ROM + flash. Comentado até o periférico SPI existir
+# de boot memory + flash. Comentado até o periférico SPI existir
 # em VHDL e expor esses sinais no top-level (mesmo padrão da
 # seção VGA acima) — descomentar quando SPI_FLASH_CS/SCK/MOSI/
 # MISO forem portas reais de external-data_top.vhd.

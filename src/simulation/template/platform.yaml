@@ -1,5 +1,5 @@
 # O mapa de memória da plataforma modelo: a fonte do pacote `template_map_pkg`, dos parâmetros do
-# linker e do cabeçalho do runtime. A plataforma é só de simulação, com a BOOT_ROM, a ROM e a RAM
+# linker e do cabeçalho do runtime. A plataforma é só de simulação, com a BOOT_MEMORY, a ROM e a RAM
 # dentro do chip, e o guia de nova arquitetura (docs/pt-br/guide/nova-arquitetura.md) a copia no passo 1.
 #
 #   riscv-tools --root . generate-memory-map --platform src/simulation/template/platform.yaml
@@ -10,11 +10,11 @@ profile: rv32i
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
   - {name: RAM,      base: 0x00008000, size: 32K, kind: ram}
 
-# Palavras no topo da RAM: o contrato entre a BOOT_ROM, o programa e o hospedeiro (a BOOT_ROM as zera
+# Palavras no topo da RAM: o contrato entre a BOOT_MEMORY, o programa e o hospedeiro (a BOOT_MEMORY as zera
 # a cada reset).
 reserved:
   stdout:   {base: 0x0000FBE0, size: 1K+8}
@@ -31,7 +31,7 @@ peripherals:
 
 generate:
   specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/simulation/template/runtime/boot_rom.ld}
+  boot_ld: {path: src/simulation/template/runtime/boot_memory.ld}
   runtime: {path: src/simulation/template/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/template/rtl/template_map_pkg.vhd

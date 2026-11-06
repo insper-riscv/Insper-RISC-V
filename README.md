@@ -14,6 +14,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 - [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, simulação, KPIs e nova arquitetura).
 - [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas e as dez (quatro de teste, quatro na FPGA e duas de UART), com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): defeitos já diagnosticados.
+- [docs/pt-br/conformance/](docs/pt-br/conformance/riscv-nao-privilegiado.md): o relatório de conformidade com os capítulos 1, 2 e 4 a 11 do volume não privilegiado do RISC-V, com a evidência de cada requisito.
 - [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md): o interconector externo, que decodifica o mapa da plataforma entre a SDRAM e os periféricos, a sua variante AXI4 e os testes de integração.
 - [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md): scripts de KPI (frequência, recursos, CPI e testes) a partir de uma execução do Quartus.
 
@@ -36,11 +37,11 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 
 | Caminho | Plataforma |
 | :--- | :--- |
-| `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_ROM, FLASH e RAM dentro da FPGA e o topo de simulação `rv32i3stage_core_sim_test`. É a base dos testes de entidade do pipeline |
+| `src/simulation/internal-mem/` | Plataforma só de simulação, com BOOT_MEMORY, FLASH e RAM dentro da FPGA e o topo de simulação `rv32i3stage_core_sim_test`. É a base dos testes de entidade do pipeline |
 | `src/simulation/modular/` | Topo de simulação configurável, com a ROM e a RAM dentro ou fora do chip e as caches de instruções e de dados presentes ou não, nas 16 combinações, FLASH e RAM de 1 MB e caches de 4 kbit por padrão. Roda os programas do repositório Tests e é a base da simulação do ACT4 |
 | `src/simulation/template/` | Plataforma modelo mínima (RAM e ROM internas, UART sobre JTAG opcional, perfil `rv32i`), o ponto de partida do guia de nova arquitetura |
-| `src/cyclone-v/external-data/` | Plataforma da placa DE0-CV com a BOOT_ROM e a FLASH de duas portas dentro da FPGA (uma só cópia, regravada por JTAG) e a SDRAM atrás da cache de dados, mais JTAG UART e display. O topo do Quartus é `external-data_top.vhd` e o de simulação é `rv32im_external_data_sim_test` |
-| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_ROM no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
+| `src/cyclone-v/external-data/` | Plataforma da placa DE0-CV com a BOOT_MEMORY e a FLASH de duas portas dentro da FPGA (uma só cópia, regravada por JTAG) e a SDRAM atrás da cache de dados, mais JTAG UART e display. O topo do Quartus é `external-data_top.vhd` e o de simulação é `rv32im_external_data_sim_test` |
+| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_MEMORY no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
 
 Todas as plataformas têm o `platform.yaml` e o `runtime/`. A `internal-mem` separa o projeto do Quartus em `quartus/` e os módulos próprios em `rtl/`, a `template` tem só o `rtl/`, a `modular` tem só o topo de simulação e o pacote do mapa, e as da placa (`de0-cv` e `external-data`) guardam o projeto do Quartus, o topo e os scripts de síntese e programação na própria pasta.
 
@@ -51,7 +52,7 @@ Todas as plataformas têm o `platform.yaml` e o `runtime/`. A `internal-mem` sep
 | `quartus/`, ou a própria pasta nas plataformas da placa | Projeto do Quartus (`.qpf`, `.qsf`, `.sdc`, topo de hardware, imagens `.mif` e os scripts `<plataforma>_synth.tcl` e `<plataforma>_program.sh`) |
 | `pll/` | IP da PLL |
 | `rtl/` | Topo de simulação e os módulos próprios da plataforma |
-| `runtime/` | `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `_exit.c`, `stdio.c` e `spike_exit.S` |
+| `runtime/` | `rv32im-fpga.specs`, `boot_memory.S`, `boot_memory.ld`, `_exit.c`, `stdio.c` e `spike_exit.S` |
 | `testbench/` | `test_c_program.py`, o testbench cocotb que decide PASS ou FAIL de um programa (`internal-mem` e `de0-cv`) |
 
 Os testes por entidade do RTL das plataformas ficam em `tests/python/`, com o catálogo `tests.json` que os conduz.

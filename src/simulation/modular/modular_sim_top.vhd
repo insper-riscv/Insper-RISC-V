@@ -29,7 +29,7 @@
 -- has_dcache é ram_external ou HAS_DCACHE).
 --
 -- O mapa vem dos genéricos, cujo valor padrão é o do pacote modular_map_pkg, gerado do platform.yaml da
--- plataforma, e é o mesmo do núcleo: a BOOT_ROM em [0, tamanho), a ROM logo depois
+-- plataforma, e é o mesmo do núcleo: a BOOT_MEMORY em [0, tamanho), a ROM logo depois
 -- dela até rom_end_kib, a RAM em [ram_base_kib, ram_end_kib) e a janela externa a partir de
 -- ext_base_kib. O que o projeto escolhe fica no platform.yaml da plataforma.
 --
@@ -55,8 +55,8 @@ use work.modular_map_pkg.all;
 
 entity modular_sim_top is
   generic (
-    -- Imagem da BOOT_ROM, uma palavra de 32 bits por linha em hexadecimal.
-    boot_rom_file       : string  := "default.hex";
+    -- Imagem da BOOT_MEMORY, uma palavra de 32 bits por linha em hexadecimal.
+    boot_memory_file       : string  := "default.hex";
     -- Imagem da ROM, a partir do seu início (interna, ou o armazenamento do chip de FLASH externo).
     rom_file            : string  := "default.hex";
     -- Imagem inicial da RAM (interna, ou o chip de RAM externo); vazio deixa tudo em zero.
@@ -65,15 +65,15 @@ entity modular_sim_top is
     rom_external        : boolean := ROM_EXTERNAL;
     -- A RAM é externa (um chip fora do núcleo, alcançado pela porta).
     ram_external        : boolean := RAM_EXTERNAL;
-    -- Tamanho da BOOT_ROM em bytes, uma potência de dois de pelo menos 1 KiB.
-    boot_rom_size_bytes : positive := BOOT_ROM_SIZE_BYTES;
+    -- Tamanho da BOOT_MEMORY em bytes, uma potência de dois de pelo menos 1 KiB.
+    boot_memory_size_bytes : positive := BOOT_MEMORY_SIZE_BYTES;
     -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
     rom_size_bytes      : positive := ROM_STORAGE_BYTES;
     -- Tamanho da RAM em bytes, uma potência de dois.
     ram_size_bytes      : positive := RAM_STORAGE_BYTES;
     -- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil do platform.yaml por padrão).
     has_e               : boolean  := HAS_E;
-    -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_ROM.
+    -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_MEMORY.
     rom_end_kib         : natural  := ROM_END_KIB;
     -- Base, em KiB, da RAM.
     ram_base_kib        : natural  := RAM_BASE_KIB;
@@ -209,8 +209,8 @@ architecture behaviour of modular_sim_top is
 
 
 
-  -- Tamanho da BOOT_ROM em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
-  constant BOOT_KIB : natural := boot_rom_size_bytes / 1024;
+  -- Tamanho da BOOT_MEMORY em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
+  constant BOOT_KIB : natural := boot_memory_size_bytes / 1024;
 
   -- A ROM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de instruções.
   constant ROM_PORT : boolean := rom_external or has_icache;
@@ -247,8 +247,8 @@ architecture behaviour of modular_sim_top is
   signal if_addr       : std_logic_vector(31 downto 0);
   -- Habilitação de leitura da busca de instrução ('1' = lê).
   signal if_rden       : std_logic;
-  -- Palavra de instrução lida da BOOT_ROM.
-  signal boot_rom_data : std_logic_vector(31 downto 0);
+  -- Palavra de instrução lida da BOOT_MEMORY.
+  signal boot_memory_data : std_logic_vector(31 downto 0);
   -- Palavra de instrução lida da FLASH.
   signal flash_data    : std_logic_vector(31 downto 0) := (others => '0');
   -- Endereço da segunda porta da FLASH (estágio MEM).
@@ -489,8 +489,8 @@ architecture behaviour of modular_sim_top is
 
 begin
 
-  assert boot_rom_size_bytes mod 1024 = 0
-    report "boot_rom_size_bytes deve ser múltiplo de 1 KiB"
+  assert boot_memory_size_bytes mod 1024 = 0
+    report "boot_memory_size_bytes deve ser múltiplo de 1 KiB"
     severity failure;
 
   o_ram_en      <= ram_en;
@@ -522,7 +522,7 @@ begin
       has_zifencei => has_zifencei,
       has_zicclsm  => has_zicclsm,
       has_e         => has_e,
-      boot_rom_bits => log2_exact(boot_rom_size_bytes),
+      boot_memory_bits => log2_exact(boot_memory_size_bytes),
       rom_end_kib   => rom_end_kib,
       rom_external  => ROM_PORT,
       ram_base_kib  => ram_base_kib,
@@ -548,7 +548,7 @@ begin
       i_rst            => i_rst,
       o_if_addr        => if_addr,
       o_if_rden        => if_rden,
-      i_boot_rom_data  => boot_rom_data,
+      i_boot_memory_data  => boot_memory_data,
       i_flash_data     => flash_data,
       o_flash_addr2    => flash_addr2,
       o_flash_rden2    => flash_rden2,
@@ -578,13 +578,13 @@ begin
       o_ic_inval       => ic_inval
     );
 
-  u_boot_rom : entity work.rom_simulation
-    generic map (rom_file => boot_rom_file, size_bytes => boot_rom_size_bytes)
+  u_boot_memory : entity work.rom_simulation
+    generic map (rom_file => boot_memory_file, size_bytes => boot_memory_size_bytes)
     port map (
       i_addr => if_addr(31 downto 2),
       i_clk  => pll_clk_if,
       i_re   => if_rden,
-      o_data => boot_rom_data
+      o_data => boot_memory_data
     );
 
   -- ROM do núcleo: a FLASH com duas portas, uma para instruções e outra para dados.

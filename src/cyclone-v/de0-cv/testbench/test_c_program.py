@@ -129,7 +129,7 @@ HALF_TCK_NS = 40
 # update, takes the bytes faster: UART_SCANS_PER_BYTE sets the scans
 # between two bytes.
 SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
-# The boot ROM checks the images before it jumps to the program, and the
+# The boot memory checks the images before it jumps to the program, and the
 # startup of the program clears its .bss through the SDRAM, which
 # together take much longer than the 64-place receive queue holds the
 # bytes of a console that is already sending. With UART_START_ON_ACCESS

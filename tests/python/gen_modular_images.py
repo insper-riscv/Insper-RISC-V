@@ -9,7 +9,7 @@ O `riscv-tools` vem da imagem `ci-vhdl`, não das dependências do
 projeto, e o mapa é o de `src/simulation/modular/platform.yaml`.
 
 O programa guarda 0x5A na base da RAM, lê de volta, soma 1 e guarda o
-resultado na palavra seguinte. A BOOT_ROM salta para a ROM, que começa
+resultado na palavra seguinte. A BOOT_MEMORY salta para a ROM, que começa
 logo depois dela, e os quatro modelos usam as mesmas duas imagens, em
 tests/python/unittests/rtl/data/modular/.
 """
@@ -39,7 +39,7 @@ from tests.python.utils.rv32_asm import (
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/modular"
 ROOT = Path(__file__).resolve().parents[2]
 MAP = symbols(load_platform(ROOT / "src/simulation/modular/platform.yaml"))
-ROM_BASE = MAP["ROM.base"]  # a ROM começa logo depois da BOOT_ROM
+ROM_BASE = MAP["ROM.base"]  # a ROM começa logo depois da BOOT_MEMORY
 RAM_BASE = MAP["RAM.base"]
 ROM_BASE_WORDS = ROM_BASE // 4
 RAM_HI20 = RAM_BASE >> 12
@@ -147,7 +147,7 @@ def main() -> None:
     """Write every image.
 
     The four models run the same two images, because the ROM always
-    starts right after the BOOT_ROM and the RAM has the same address.
+    starts right after the BOOT_MEMORY and the RAM has the same address.
     """
     write("boot_to_rom.hex", [jal(X0, ROM_BASE_WORDS * 4)])
     write("rom_program.hex", [0] * ROM_BASE_WORDS + body(RAM_HI20, 0))
