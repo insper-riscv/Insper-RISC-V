@@ -1,0 +1,41 @@
+{
+  "meta": {
+    "generator": {
+      "name": "codeclone",
+      "version": "2.0.3"
+    },
+    "schema_version": "2.1",
+    "fingerprint_version": "1",
+    "python_tag": "cp314",
+    "created_at": "2026-11-06T04:34:46Z",
+    "payload_sha256": "4153e2273a6c2f8170d2697799c8982074dae0f887c992909a5f3473cd59f3bd",
+    "metrics_payload_sha256": "cd87f31cc77e9c3fa8ec8ebbd2414e80392e99856bf6fd323139181f4d444490"
+  },
+  "clones": {
+    "functions": [],
+    "blocks": [
+      "3562b7e32332f49066c33f04744a288971381c28|c9f74aa1ab1e11d38cc14f63ff20c491651c17d3|7854a233bd154811aa4afb32c64e8667f680eb6a|d0c61164b66e306c7bc89d2245a26c9a8da4c3c7",
+      "67a3c08aaeb95fd665055d20575b6ef35a2dc89a|6d03479693de15c6beb4c4ce40d6eba020c3d882|6d03479693de15c6beb4c4ce40d6eba020c3d882|6d03479693de15c6beb4c4ce40d6eba020c3d882",
+      "67a3c08aaeb95fd665055d20575b6ef35a2dc89a|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d54260a92e28db326006ab3e206dae342273c1cb",
+      "d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7",
+      "d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7|d54260a92e28db326006ab3e206dae342273c1cb|d212c948f28f7f1d26c93a7ab5de0e3fdc350ca7"
+    ]
+  },
+  "metrics": {
+    "max_complexity": 10,
+    "high_risk_functions": [],
+    "max_coupling": 3,
+    "high_coupling_classes": [],
+    "max_cohesion": 1,
+    "low_cohesion_classes": [],
+    "dependency_cycles": [],
+    "dependency_max_depth": 4,
+    "dead_code_items": [],
+    "health_score": 87,
+    "health_grade": "B",
+    "typing_param_permille": 1000,
+    "typing_return_permille": 703,
+    "docstring_permille": 1000,
+    "typing_any_count": 61
+  }
+}
