@@ -142,6 +142,45 @@ The chosen option is the controller at 100 MHz with the 1 to 1 bridge, not the f
 | Change the controller clock or phase | Edit `sdram.clock_hz` and `sdram.dram_clk_phase_ps` in `platform.yaml`, and `output_clock_frequency0`, `output_clock_frequency1` and `phase_shift1` in `src/cyclone-v/de0-cv/pll/sdram_platform_pll.v`, then run `riscv-tools generate-memory-map`; `check-memory-map` verifies that both sides agree |
 | Simulate with another clock | `SIM_CLOCK_PERIOD_NS` (period of `CLK`, three times the core's) and `SIM_EXTRA_CLOCKS=CLK_MEM:<ns>` with the parameter `SDRAM_TCK_PS=<ps>` of the simulation top |
 
+## 9. Milestones M1 and M2 with the controller at 100 MHz
+
+The sources are those of the merge with the core track of `onda2` (Core `a826b68`, steps F.P4 and F.P5; Memory `8455a20`; Peripherals `6ed5e07`). The `DRAM_CLK` phase is 4000 ps.
+
+### 9.1. Milestone M1: 50 MHz, core phase at 8250 ps
+
+| Seed | ALMs | Registers | Core Fmax (MHz) | Controller Fmax (MHz) | core | fetch | controller | `DRAM_CLK` | JTAG | min. hold |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 7948 | 9155 | 63.78 | 157.98 | 0.976 | 3.623 | 3.670 | 1.679 | 10.598 | 0.091 |
+| 2 | 7943 | 9214 | 65.41 | 163.85 | 0.048 | 3.964 | 3.897 | 1.123 | 11.051 | 0.052 |
+| 3 | 7956 | 9222 | 67.14 | 172.06 | 1.260 | 2.496 | 4.188 | 1.203 | 10.767 | 0.122 |
+| 4 | 7978 | 9178 | 66.48 | 154.66 | 0.979 | 3.689 | 3.534 | 1.172 | 11.000 | 0.132 |
+| 5 | 7911 | 9221 | 62.9 | 145.82 | 0.953 | 3.194 | 3.142 | 1.644 | 10.720 | 0.118 |
+| Worst | 7978 | 9222 | 62.9 | 145.82 | 0.048 | 2.496 | 3.142 | 1.123 | 10.598 | 0.052 |
+
+| Condition | Result |
+| :--- | :--- |
+| Non-negative setup slack in all domains (core, fetch, controller, `DRAM_CLK`, JTAG) | Met in the five seeds; the smallest is +0.048 ns in the core (seed 2) |
+| Non-negative hold slack in the fast model at 0 °C | Met in the five seeds; the smallest is +0.052 ns |
+| Hardware suite on the board with the seed 5 bitstream | 127 programs of the regression and 17 programs of `sdram-flash` pass (`sdram-copy`, `sdram-loop`, `cache-sweep`, `code-sweep`, `flash-const`, `sdram-exec-copy`, `selfmod-repeat`, `sdram-memtest`, `sdram-bytes`, `sdram-refresh` and the others); the three UART-on-pins programs are left out because the board has no UART wired |
+
+M1 closes. The 8250 ps phase is versioned in the PLL and in the `pll` section of `platform.yaml` after this board validation.
+
+### 9.2. Milestone M2: 66.667 MHz
+
+Worst of the five seeds (ns) by core phase, with the controller and `DRAM_CLK` as above.
+
+| Core phase | Core | Fetch | Controller | `DRAM_CLK` | Min. hold |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 8500 ps | -0.366 | 0.194 | 3.377 | 1.123 | 0.022 |
+| 8625 ps | -0.217 | -0.035 | 3.320 | 1.123 | 0.123 |
+| 8875 ps | 0.567 | -0.272 | 3.315 | 1.123 | 0.117 |
+
+M2 does not close: the instruction cache loop (tag to the PC) and the core loop trade slack with the phase, and none of the three phases leaves both with non-negative slack in the five seeds (8500 ps fails in the core of seeds 2 and 5, 8875 ps in the fetch of seeds 3 and 4, and 8625 ps in the core of seed 2, with -0.217 ns, and in the fetch of seeds 3 and 4, with -0.035 ns at worst). The controller and `DRAM_CLK` no longer limit the milestone.
+
+### 9.3. Milestones M3 and M4
+
+[FRENTE-F-ONDA2.md](FRENTE-F-ONDA2.md) measures the core and the fetch at 83.333 MHz and at 100 MHz with steps F.P4 and F.P5: the core is at -0.09 to -1.79 ns at 83.333 MHz and the loop of CSR read feeding the write of the Zihpm counter has 12.3 ns of data against the 10 ns period. The SDRAM controller and `DRAM_CLK` are no longer part of what is missing: at 100 MHz they have 3.1 ns and 1.1 ns of slack (section 5). M3 and M4 do not close, and what is missing is only the core loop.
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../../LICENSE).

@@ -1,0 +1,20 @@
+Fitter Status : Successful - Fri Nov  6 17:22:35 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : de0-cv
+Top-level Entity Name : core_fpga_sdram_flash
+Family : Cyclone V
+Device : 5CEBA4F23C7
+Timing Models : Final
+Logic utilization (in ALMs) : 7,978 / 18,480 ( 43 % )
+Total registers : 9279
+Total pins : 93 / 224 ( 42 % )
+Total virtual pins : 0
+Total block memory bits : 2,203,904 / 3,153,920 ( 70 % )
+Total RAM Blocks : 272 / 308 ( 88 % )
+Total DSP Blocks : 0 / 66 ( 0 % )
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 1 / 4 ( 25 % )
+Total DLLs : 0 / 4 ( 0 % )

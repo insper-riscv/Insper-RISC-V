@@ -142,6 +142,45 @@ A opção escolhida é o controlador a 100 MHz com a ponte de razão 1 para 1, e
 | Mudar o relógio ou a fase do controlador | Editar `sdram.clock_hz` e `sdram.dram_clk_phase_ps` do `platform.yaml`, `output_clock_frequency0`, `output_clock_frequency1` e `phase_shift1` de `src/cyclone-v/de0-cv/pll/sdram_platform_pll.v`, e rodar `riscv-tools generate-memory-map`; o `check-memory-map` confere que os dois lados batem |
 | Simular com outro relógio | `SIM_CLOCK_PERIOD_NS` (período do `CLK`, três vezes o do núcleo) e `SIM_EXTRA_CLOCKS=CLK_MEM:<ns>` com o parâmetro `SDRAM_TCK_PS=<ps>` do topo de simulação |
 
+## 9. Marcos M1 e M2 com o controlador a 100 MHz
+
+As fontes são as do merge com a trilha do núcleo da `onda2` (Core `a826b68`, passos F.P4 e F.P5; Memory `8455a20`; Peripherals `6ed5e07`). A fase do `DRAM_CLK` é a de 4000 ps.
+
+### 9.1. Marco M1: 50 MHz, fase do núcleo em 8250 ps
+
+| Semente | ALMs | Registradores | Fmax núcleo (MHz) | Fmax controlador (MHz) | núcleo | busca | controlador | `DRAM_CLK` | JTAG | hold mín. |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | 7948 | 9155 | 63,78 | 157,98 | 0,976 | 3,623 | 3,670 | 1,679 | 10,598 | 0,091 |
+| 2 | 7943 | 9214 | 65,41 | 163,85 | 0,048 | 3,964 | 3,897 | 1,123 | 11,051 | 0,052 |
+| 3 | 7956 | 9222 | 67,14 | 172,06 | 1,260 | 2,496 | 4,188 | 1,203 | 10,767 | 0,122 |
+| 4 | 7978 | 9178 | 66,48 | 154,66 | 0,979 | 3,689 | 3,534 | 1,172 | 11,000 | 0,132 |
+| 5 | 7911 | 9221 | 62,9 | 145,82 | 0,953 | 3,194 | 3,142 | 1,644 | 10,720 | 0,118 |
+| Pior | 7978 | 9222 | 62,9 | 145,82 | 0,048 | 2,496 | 3,142 | 1,123 | 10,598 | 0,052 |
+
+| Condição | Resultado |
+| :--- | :--- |
+| Folga de setup não negativa em todos os domínios (núcleo, busca, controlador, `DRAM_CLK`, JTAG) | Cumprida nas cinco sementes; a menor é +0,048 ns no núcleo (semente 2) |
+| Folga de hold não negativa no modelo rápido a 0 °C | Cumprida nas cinco sementes; a menor é +0,052 ns |
+| Suíte de hardware na placa com o bitstream da semente 5 | 127 programas da regressão e 17 programas da `sdram-flash` passam (`sdram-copy`, `sdram-loop`, `cache-sweep`, `code-sweep`, `flash-const`, `sdram-exec-copy`, `selfmod-repeat`, `sdram-memtest`, `sdram-bytes`, `sdram-refresh` e os demais); os três programas de UART por pinos ficam de fora porque a placa não tem UART ligada |
+
+O M1 fecha. A fase de 8250 ps fica versionada na PLL e na seção `pll` do `platform.yaml` depois dessa validação na placa.
+
+### 9.2. Marco M2: 66,667 MHz
+
+Pior das cinco sementes (ns) por fase do núcleo, com o controlador e `DRAM_CLK` como acima.
+
+| Fase do núcleo | Núcleo | Busca | Controlador | `DRAM_CLK` | Hold mín. |
+| :--- | ---: | ---: | ---: | ---: | ---: |
+| 8500 ps | -0,366 | 0,194 | 3,377 | 1,123 | 0,022 |
+| 8625 ps | -0,217 | -0,035 | 3,320 | 1,123 | 0,123 |
+| 8875 ps | 0,567 | -0,272 | 3,315 | 1,123 | 0,117 |
+
+O M2 não fecha: o laço da cache de instruções (etiqueta até o PC) e o do núcleo trocam folga com a fase, e nenhuma das três fases deixa os dois com folga não negativa nas cinco sementes (a de 8500 ps falha no núcleo das sementes 2 e 5, a de 8875 ps na busca das sementes 3 e 4 e a de 8625 ps no núcleo da semente 2, com -0,217 ns, e na busca das sementes 3 e 4, com -0,035 ns no pior caso). O controlador e `DRAM_CLK` não limitam mais o marco.
+
+### 9.3. Marcos M3 e M4
+
+O [FRENTE-F-ONDA2.md](FRENTE-F-ONDA2.md) mede o núcleo e a busca a 83,333 MHz e a 100 MHz com os passos F.P4 e F.P5: o núcleo fica em -0,09 a -1,79 ns a 83,333 MHz e o laço de leitura de CSR realimentando a escrita do contador do Zihpm tem 12,3 ns de dados contra os 10 ns do período. O controlador da SDRAM e `DRAM_CLK` deixaram de ser parte do que falta: a 100 MHz eles têm 3,1 ns e 1,1 ns de folga (seção 5). O M3 e o M4 não fecham, e o que falta é só o laço do núcleo.
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../../LICENSE).
