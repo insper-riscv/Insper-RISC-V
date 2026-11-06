@@ -120,7 +120,8 @@ gravada só no compile inicial, e a `FLASH`, regravada pelo carregador, não tem
 | o_ledr(2) | `i_fpga_reset_n`     | Aceso = botão físico de reset **solto**. Apagado = botão pressionado. |
 | o_ledr(3) | `not core_reset`   | Aceso = core fora de reset, rodando. Apagado = core em reset (PLL sem lock, ou botão pressionado). |
 | o_ledr(4) | `flash_halt`       | Aceso = core parado pelo carregador da FLASH (reset mantido enquanto a imagem é gravada). |
-| o_ledr(5-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
+| o_ledr(5) | `trap_seen`        | Aceso = o core tomou uma exceção (`o_trap_take`, com ou sem Zicsr) desde o último reset; o botão `KEY4` o apaga. |
+| o_ledr(6-9) | (não usados)     | Livres: usados como latches de debug temporários durante o bring-up da placa, removidos depois de servirem seu propósito. |
 
 Como diagnóstico rápido sem precisar abrir uma sessão JTAG: se o_ledr(1) ou
 o_ledr(3) estiverem apagados, o problema está **antes** do core (PLL/reset);

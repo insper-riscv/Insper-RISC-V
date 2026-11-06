@@ -157,6 +157,11 @@ architecture behaviour of core_fpga_test is
 	-- (ex: depois de carregar um novo conteúdo de ROM via JTAG).
 	signal core_reset : std_logic;
 
+	-- Pulso de um ciclo de o_trap_take do core (exceção tomada, com ou sem Zicsr).
+	signal core_trap : std_logic;
+	-- Bandeira que segura o pulso até o próximo reset.
+	signal trap_seen : std_logic := '0';
+
 	-- UART memory-mapped em UART_BASE
 	signal uart_selected : std_logic;
 	-- Escrita na UART ('1' = escreve; janela selecionada e escrita do núcleo).
@@ -230,6 +235,20 @@ begin
 	o_ledr(2) <= i_fpga_reset_n;     -- '1' botao de reset fisico solto
 	o_ledr(3) <= not core_reset;   -- '1' core fora de reset, rodando
 	o_ledr(4) <= flash_halt;       -- '1' core parado pelo carregador da FLASH
+	o_ledr(5) <= trap_seen;        -- '1' core tomou uma exceção desde o último reset
+
+	-- o_trap_take dura um ciclo de clock do core, invisível a olho nu: a bandeira o segura até o reset. O reset é
+	-- assíncrono porque o botão também segura a PLL em reset e o clock do core pára, então um clear síncrono nunca o veria
+	process (pll_clk_idexmem, core_reset)
+	begin
+		if core_reset = '1' then
+			trap_seen <= '0';
+		elsif rising_edge(pll_clk_idexmem) then
+			if core_trap = '1' then
+				trap_seen <= '1';
+			end if;
+		end if;
+	end process;
 
 	u_core : entity work.core
 		generic map (
@@ -284,7 +303,9 @@ begin
 			o_sdram_wren    => sdram_wren,
 			i_sdram_rdata   => sdram_rdata,
 			i_sdram_ready   => '1',
-			o_mem_advance   => open
+			o_mem_advance   => open,
+
+			o_trap_take     => core_trap
 	);
 
 	u_uart_peripheral : entity work.UART
