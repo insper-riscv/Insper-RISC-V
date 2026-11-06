@@ -22,7 +22,7 @@ quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl && src/cyclone-v/de0-cv/de0-
 
 | Script | What it does |
 | :--- | :--- |
-| `de0-cv_synth.tcl [seed] [map]` | Fixes the `HIGH PERFORMANCE EFFORT` mode and the seed (default 5) and compiles. With `map` only synthesis runs, which is enough to check paths and entities. It does not write the assignments to the `.qsf` |
+| `de0-cv_synth.tcl [seed] [map] [GENERIC=value ...]` | Fixes the `HIGH PERFORMANCE EFFORT` mode and the seed (default 5) and compiles. With `map` only synthesis runs, which is enough to check paths and entities. Each `GENERIC=value` replaces a generic of the top for this compilation only (`HPM_COUNTERS=4 HPM_WIDTH=40` compiles the reduced Zihpm). It does not write the assignments to the `.qsf` |
 | `de0-cv_program.sh [file.sof]` | Programs `output_files/de0-cv.sof` through the first cable `jtagconfig` lists. The `CABLE` variable picks another cable |
 
 The bench cable shows up as `USB-Blaster [3-6]`, with the device `5CE(BA4|FA4)`.
@@ -44,7 +44,7 @@ Without `--skip-reconfigure`, `run` compiles and programs first, through the cha
 | Symptom | What to check |
 | :--- | :--- |
 | `jtagconfig` does not list the cable | USB cable, board power and, if the chain shows as broken, a power cycle |
-| `jtagconfig` lists the board, but reads and writes through the In-System Memory Content Editor hang | The PLL lost lock and the core stayed in reset. Only a power cycle recovers it |
+| `jtagconfig` lists the board, but reads and writes through the JTAG hang | The PLL lost lock and the core stayed in reset. Only a power cycle recovers it |
 | `quartus_pgm` fails right after a compile | The rule of section 1 was broken |
 
 ---
