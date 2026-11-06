@@ -29,9 +29,9 @@ package de0_cv_map_pkg is
 	-- A extensão Zicond está no perfil.
 	constant HAS_ZICOND          : boolean  := true;
 	-- A extensão Zihintntl está no perfil.
-	constant HAS_ZIHINTNTL       : boolean  := false;
+	constant HAS_ZIHINTNTL       : boolean  := true;
 	-- A extensão Zihintpause está no perfil.
-	constant HAS_ZIHINTPAUSE     : boolean  := false;
+	constant HAS_ZIHINTPAUSE     : boolean  := true;
 	-- A extensão Zifencei está no perfil.
 	constant HAS_ZIFENCEI        : boolean  := true;
 	-- A extensão Zicclsm está no perfil.
