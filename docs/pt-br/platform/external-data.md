@@ -51,8 +51,7 @@ Como a busca de instruções não alcança a SDRAM, nenhum código roda a partir
 | :--- | :--- |
 | Compilar a placa | `quartus_sh -t src/cyclone-v/external-data/external-data_synth.tcl` |
 | Programar a placa | `src/cyclone-v/external-data/external-data_program.sh`, no mesmo shell da compilação (`&&`) |
-| Simulação dos programas | `riscv-tools --config tools/riscv_build/config.sdram-external-data.yaml compile --emit hex`, depois `sim` (no repositório Tests) |
-| Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-external-data.yaml run --skip-reconfigure --skip-recompile` |
+| Simulação e programas na placa | No repositório Tests, com o `config.platform-external-data.yaml` gerado por `riscv-tools platform sync` a partir do `config.yaml` desta plataforma, como nos passos 8.3 e 10.5 do [guia de nova arquitetura](../guide/nova-arquitetura.md): `compile --emit hex` e `sim`, ou `compile --emit mif` e `run --skip-reconfigure --skip-recompile` |
 | Teste do topo de simulação | `make test TEST=ExternalDataSimTop` |
 
 O `platform.yaml` é a única fonte do mapa, e o `make generate` escreve dele o pacote `external_data_map_pkg.vhd`, as flags de ligação, o linker script da BOOT_MEMORY e o `memory_map.h`. O `config.yaml` guarda `quartus.sdram_debug_instance`, o índice do Virtual JTAG da porta de depuração da SDRAM, que o `riscv-tools` passa ao script da porta.
