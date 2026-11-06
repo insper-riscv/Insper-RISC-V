@@ -49,9 +49,9 @@ entity rv32i3stage_core_sim_test is
 	  -- Largura, em bits, de cada contador de eventos do Zihpm.
 	  HPM_WIDTH : natural range 0 to 64 := 64;
 	  -- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-	  HAS_ZIMOP : boolean := false;
+	  HAS_ZIMOP : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
 	  -- Extensao Zicond no core (czero.eqz e czero.nez).
-	  HAS_ZICOND : boolean := false;
+	  HAS_ZICOND : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
 	  -- Extensao M completa no core.
 	  HAS_M : boolean := true;
 	  -- Multiplicacao sem divisao (Zmmul) no core.
@@ -60,6 +60,18 @@ entity rv32i3stage_core_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Zifencei no core (FENCE.I); false mantem o NOP.
 	  HAS_ZIFENCEI : boolean := false;
+	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
+	  ROM_EXTERNAL : boolean := work.internal_mem_map_pkg.ROM_EXTERNAL;
+	  -- A RAM fica fora do core (o modelo de memória do platform.yaml).
+	  RAM_EXTERNAL : boolean := work.internal_mem_map_pkg.RAM_EXTERNAL;
+	  -- Existe cache de instruções (o modelo de memória do platform.yaml).
+	  HAS_ICACHE : boolean := work.internal_mem_map_pkg.HAS_ICACHE;
+	  -- Existe cache de dados (o modelo de memória do platform.yaml).
+	  HAS_DCACHE : boolean := work.internal_mem_map_pkg.HAS_DCACHE;
+	  -- Tamanho da cache de instruções, em bits (o modelo de memória do platform.yaml).
+	  ICACHE_SIZE_BITS : positive := work.internal_mem_map_pkg.ICACHE_SIZE_BITS;
+	  -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
+	  DCACHE_SIZE_BITS : positive := work.internal_mem_map_pkg.DCACHE_SIZE_BITS;
 	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
 	  HAS_E : boolean := work.internal_mem_map_pkg.HAS_E
   	);
@@ -138,7 +150,7 @@ architecture behaviour of rv32i3stage_core_sim_test is
 	-- Indica que o PLL travou ('1' = travado).
 	signal pll_locked     : std_logic;
 
-	-- Mesma UART memory-mapped do topo de hardware, em 0xC0000000.
+	-- Mesma UART memory-mapped do topo de hardware, em UART_BASE.
 	signal uart_selected : std_logic;
 	-- Escrita na UART ('1' = escreve; janela selecionada e escrita do núcleo).
 	signal uart_write    : std_logic;
@@ -166,9 +178,9 @@ architecture behaviour of rv32i3stage_core_sim_test is
 
 begin
 
-	-- A UART fica na janela de perifericos (0xC0000000), que o core atende pela porta externa.
+	-- A UART fica na janela de perifericos (UART_BASE), que o core atende pela porta externa.
 	uart_selected <= '1'
-		when sdram_addr(31 downto 28) = x"C"
+		when sdram_addr(31 downto 28) = UART_BASE(31 downto 28)
 		else '0';
 	uart_write <= sdram_wren and uart_selected;
 	uart_read  <= sdram_rden and uart_selected;

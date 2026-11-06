@@ -1,12 +1,13 @@
 # Platforms
 
-A platform wires the core, the memories and the peripherals into something that runs. This repository has three.
+A platform wires the core, the memories and the peripherals into something that runs. This repository has four.
 
 | Platform | Path | Description |
 | :--- | :--- | :--- |
 | [de0-cv](de0-cv.md) | `src/cyclone-v/de0-cv/` | The DE0-CV board (Cyclone V), with the BOOT_ROM in the core and the FLASH and the SDRAM behind the caches |
 | [internal-mem](internal-mem.md) | `src/simulation/internal-mem/` | Simulation-only platform, with BOOT_ROM, FLASH and RAM inside the FPGA |
 | [modular](modular.md) | `src/simulation/modular/` | Configurable simulation top that covers the `integrated`, `external-data`, `external-instruction` and `external` models, with memories and caches sized in powers of two |
+| [template](template.md) | `src/simulation/template/` | Minimal model platform (internal RAM and ROM, optional UART over JTAG, `rv32i` profile) that the new architecture guide copies |
 
 The documents common to both describe what the program sees.
 
@@ -17,3 +18,4 @@ The documents common to both describe what the program sees.
 | [contrato-de-entrada.md](contrato-de-entrada.md) | Entry contract between the BOOT_ROM and the firmware |
 | [runtime.md](runtime.md) | C runtime, platform file, `stdout` and Spike |
 | [atualizacao-de-programa.md](atualizacao-de-programa.md) | Replacing one program with another and the boot handoff between tests |
+| [timing/README.md](timing/README.md) | Timing baseline (Fmax, critical paths), cycles per instruction and clock domain crossings of the `de0-cv` |

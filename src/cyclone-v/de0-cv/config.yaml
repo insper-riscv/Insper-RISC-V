@@ -44,6 +44,7 @@ sim:
     - Core/src/shared/word_consts.vhd
     - Core/src/M/muldiv_consts.vhd
     - Core/src/Zicond/zicond_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
     - Core/src/Zicsr/csr_value_consts.vhd
     - Core/src/Zicsr/trap_consts.vhd
     - Core/src/Zimop/zimop_consts.vhd
@@ -74,6 +75,10 @@ sim:
     - Core/src/Zicond/zicond_decode.vhd
     - Core/src/Zicond/zicond_unit.vhd
     - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
     - Core/src/Zimop/zimop_decode.vhd
     - Core/src/Zicsr/csr_addr_consts.vhd
     - Core/src/Zicsr/csr_event_consts.vhd
@@ -117,12 +122,6 @@ sim:
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
-  # FENCE.I invalidates the instruction cache of this platform (the generic exists in its top only)
-  parameters:
-    HAS_ZIFENCEI: true
-    HAS_ZIHPM: true
-    HAS_ZIMOP: true
-    HAS_ZICOND: true
   test_module: testbench.test_c_program
   python_path:
     - src/cyclone-v/de0-cv
@@ -145,3 +144,6 @@ quartus:
   # The memory editor sees only the FLASH storage (0), the one IP that declares ENABLE_RUNTIME_MOD; the BOOT_ROM is
   # written once by the full compile and the SDRAM is reached through the debug port.
   rom_mem_instances: [0]
+  # The de0-cv top has no JTAG loader (internal-mem has): the FLASH store is rewritten through the memory editor, so the
+  # method inherited from internal-mem (jtag_loader) must be overridden.
+  rom_write_method: mem_edit

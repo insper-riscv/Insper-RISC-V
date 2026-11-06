@@ -142,6 +142,10 @@ architecture behaviour of core_fpga_sdram_flash is
 
 	signal core_reset : std_logic;
 
+	-- Pulso de um ciclo de o_trap do core (só existe sem Zicsr) e a bandeira que o segura até o próximo reset
+	signal core_trap : std_logic;
+	signal trap_seen : std_logic := '0';
+
 	-- master A (the core's bridge) and master B (the debug master) of the arbiter, and the controller
 	signal a_req, a_ack, a_we : std_logic;
 	signal a_addr  : std_logic_vector(23 downto 0);
@@ -211,7 +215,8 @@ begin
 	core_reset <= (not pll_locked) or (not FPGA_RESET_N);
 
 	-- LEDR9 a LEDR4 mostram as extensões do perfil do core ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga o LEDR6); LEDR0 acende quando algum
-	-- programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR3 a LEDR1 ficam apagados,
+	-- programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende quando o core sinaliza uma exceção
+	-- em o_trap (só sem Zicsr; com Zicsr o core trata a exceção em mtvec e o LED fica apagado) e fica aceso até o próximo reset; LEDR3 e LEDR2 ficam apagados,
 	-- pois os LEDs nativos da placa já indicam que o FPGA roda e que a SDRAM responde
 	LEDR(9) <= '1' when HAS_ZICCLSM else '0';
 	LEDR(8) <= '1' when HAS_ZIFENCEI else '0';
@@ -219,8 +224,21 @@ begin
 	LEDR(6) <= '1' when HAS_ZMMUL else '0';
 	LEDR(5) <= '1' when HAS_ZICNTR else '0';
 	LEDR(4) <= '1' when HAS_M else '0';
-	LEDR(3 downto 1) <= (others => '0');
+	LEDR(3 downto 2) <= (others => '0');
+	LEDR(1) <= trap_seen;
 	LEDR(0) <= display_fail;
+
+	-- o_trap dura um ciclo de 63 MHz, invisível a olho nu: a bandeira o segura até o reset
+	process (pll_clk_idexmem)
+	begin
+		if rising_edge(pll_clk_idexmem) then
+			if core_reset = '1' then
+				trap_seen <= '0';
+			elsif core_trap = '1' then
+				trap_seen <= '1';
+			end if;
+		end if;
+	end process;
 
 	CORE : entity work.core
 		generic map (
@@ -242,7 +260,9 @@ begin
 			periph_base_kib => PERIPH_BASE_KIB,
 			has_zihpm    => HAS_ZIHPM,
 			hpm_counters => HPM_COUNTERS,
-			hpm_width    => HPM_WIDTH
+			hpm_width    => HPM_WIDTH,
+			has_zimop    => HAS_ZIMOP,
+			has_zicond   => HAS_ZICOND
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -274,6 +294,8 @@ begin
 			i_sdram_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
+			o_trap => core_trap,
+
 			i_hpm_ext_events => hpm_ext_events,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
@@ -284,7 +306,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
-		generic map (rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -322,7 +344,7 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	DCACHE : entity work.dcache
-		generic map (write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -408,20 +430,20 @@ begin
 			o_p_we => p_we, o_p_re => p_re, i_p_rdata => p_rdata
 		);
 
-	-- the UART whose other end is a host on JTAG (0xC0000000)
+	-- the UART whose other end is a host on JTAG (UART_BASE)
 	JTAG_UART : entity work.jtag_uart_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
-			o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4)
+			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
+			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
 		);
 
-	-- the seven-segment display and its host port (0xD0000000)
+	-- the seven-segment display and its host port (DISPLAY_BASE)
 	DISPLAY : entity work.seg_display_shell
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(5), i_re => p_re(5),
-			o_rdata => p_rdata(32 * 5 + 31 downto 32 * 5),
+			i_addr => p_addr, i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			o_hex => display_hex, o_value => display_value, o_fail => display_fail
 		);
 

@@ -12,6 +12,7 @@ NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'P
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
 PM := src/simulation/modular
+PT := src/simulation/template
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
@@ -30,6 +31,12 @@ SIM_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path
             Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd \
             $(UART_VHDL) $(P)/rtl/clk_gen_3way.vhd $(P)/rtl/internal_mem_map_pkg.vhd \
             $(P)/rtl/rv32i3stage_core_sim_test.vhd
+
+# The simulation top of the template platform (template_sim_top): the core with the simulation memories and the optional JTAG UART.
+TEMPLATE_VHDL := $(shell find Common-Components/src Core/src -name '*.vhd' -not -path 'Core/src/common/*' | sort) \
+                 Memory/src/RAM/SoC/ram_simulation.vhd Memory/src/ROM/SoC/rom_simulation.vhd \
+                 Peripherals/src/UART/jtag/jtag_uart.vhd $(P)/rtl/clk_gen_3way.vhd \
+                 $(PT)/rtl/template_map_pkg.vhd $(PT)/rtl/template_sim_top.vhd
 
 # The simulation top of the board platform adds the SDRAM, the caches, the FLASH chip and the region router of Memory, and the
 # external interconnect of this repository.
@@ -70,6 +77,9 @@ check-tops:
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(SIM_VHDL) $(BOARD_VHDL))
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$(riscv-tools vhdl-sort $(TEMPLATE_VHDL))
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
+	@echo "the simulation top of the template platform builds"
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
@@ -86,6 +96,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
 	$(MAKE) generate-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
@@ -95,11 +106,13 @@ generate:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
 
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
 
 # Per-entity cocotb tests of the RTL of the platforms (`make test TEST=clk_gen_3way`).
 test:

@@ -19,7 +19,7 @@ Com uma só memória externa, a cache fala direto com o chip (`ram_chip` para a 
 
 ## 3. Mapa de memória
 
-O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que são o padrão dos genéricos `has_*`, além de `BOOT_ROM_BITS` (12) e `ROM_STORAGE_BYTES` (1048576).
+O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que são o padrão dos genéricos `has_*`, além de `BOOT_ROM_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). O modelo padrão (`integrated`) é a seção `memory` do `platform.yaml`, de onde saem `ROM_EXTERNAL` e `RAM_EXTERNAL`, os padrões dos genéricos `rom_external` e `ram_external`; cada teste os sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes. `HAS_ZIMOP` e `HAS_ZICOND` também vêm do pacote, ligados pelo campo `extras` do `platform.yaml` quando a plataforma os usa (a modular não os usa).
 
 | Região | Início | Fim | Genéricos |
 | :--- | :--- | :--- | :--- |
