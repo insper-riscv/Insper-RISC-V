@@ -73,7 +73,7 @@ memory:
   dcache: {enabled: true, size_bits: 32768}
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND, HAS_ZIHINTNTL, HAS_ZIHINTPAUSE and HAS_INTERRUPTS of the package).
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts]
+extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
