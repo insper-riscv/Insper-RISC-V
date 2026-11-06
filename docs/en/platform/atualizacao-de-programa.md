@@ -90,6 +90,28 @@ An update interrupted before step 5 ends leaves the header of the bank erased, a
 
 The update programs run on the simulation top of `de0-cv` with `HAS_FLASH_CONTROLLER`, which adds the controller, the two-port storage and the command chip, with the erase and program waits in the generics `FLASH_ERASE_LATENCY` and `FLASH_PROGRAM_LATENCY`. The Tests repository runs them with a fast chip and with a slow one.
 
+## 8. On the board
+
+The board top has the controller, the two-port storage and the command port of the chip, the same as the simulation. The JTAG loader and the command port share port B of the storage: with the core halted the port belongs to the loader, and with the core running it belongs to the command port. The two caches receive the invalidation by region, and the `FLASH` line (source 6) of the PLIC signals the end or the refusal of a command.
+
+| Virtual JTAG instance | Owner |
+| :--- | :--- |
+| 0 | FLASH loader |
+| 1 | UART over JTAG |
+| 2 | Display |
+| 3 | SDRAM debug port (`quartus.sdram_debug_instance`) |
+
+`riscv-tools run` does not send bytes over the UART, so `tools/board/board_update.py` of the Tests repository drives the three update programs.
+
+| Step | What happens |
+| :--- | :--- |
+| 1 | Clears the survivor word of the SDRAM and `tohost`, because the board does not clear the SDRAM between programs |
+| 2 | Writes the whole FLASH through the loader, which leaves bank B zeroed and invalid, and releases the core |
+| 3 | Waits for the program to reach the UART read and sends the image of bank B with `riscv-tools flash-image send` |
+| 4 | Waits for `tohost` and compares the text of the `stdout` buffer with `uart_expected.txt` |
+
+`update-new` runs alone, written to bank B. `plic-flash` runs with the console attached, because the UART only drains while a host scans it.
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../LICENSE).

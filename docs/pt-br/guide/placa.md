@@ -22,7 +22,7 @@ quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl && src/cyclone-v/de0-cv/de0-
 
 | Script | O que faz |
 | :--- | :--- |
-| `de0-cv_synth.tcl [semente] [map]` | Fixa o modo `HIGH PERFORMANCE EFFORT` e a semente (padrão 5) e compila. Com `map` só a síntese roda, o que basta para conferir caminhos e entidades. Não grava as atribuições no `.qsf` |
+| `de0-cv_synth.tcl [semente] [map] [GENERIC=valor ...]` | Fixa o modo `HIGH PERFORMANCE EFFORT` e a semente (padrão 5) e compila. Com `map` só a síntese roda, o que basta para conferir caminhos e entidades. Cada `GENERIC=valor` troca um generic do topo só nessa compilação (`HPM_COUNTERS=4 HPM_WIDTH=40` compila o Zihpm reduzido). Não grava as atribuições no `.qsf` |
 | `de0-cv_program.sh [arquivo.sof]` | Programa `output_files/de0-cv.sof` pelo primeiro cabo do `jtagconfig`. A variável `CABLE` escolhe outro cabo |
 
 O cabo da bancada aparece como `USB-Blaster [3-6]`, com o dispositivo `5CE(BA4|FA4)`.
@@ -44,7 +44,7 @@ Sem `--skip-reconfigure`, o `run` compila e programa antes, pela cadeia da seç�
 | Sintoma | O que verificar |
 | :--- | :--- |
 | `jtagconfig` não lista o cabo | Cabo USB, alimentação da placa e, se a cadeia aparecer quebrada, um ciclo de energia dela |
-| `jtagconfig` lista a placa, mas leituras e escritas pelo In-System Memory Content Editor travam | O PLL perdeu o lock e o núcleo ficou em reset. Só um ciclo de energia recupera |
+| `jtagconfig` lista a placa, mas leituras e escritas pelo JTAG travam | O PLL perdeu o lock e o núcleo ficou em reset. Só um ciclo de energia recupera |
 | O `quartus_pgm` falha logo depois de uma compilação | A regra da seção 1 foi quebrada |
 
 ---

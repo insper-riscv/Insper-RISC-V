@@ -38,7 +38,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 2. **Dados.** Loads e stores à FLASH e à SDRAM passam pela cache de dados, com linhas de 16 bytes e mapeamento direto de 4 KB. Um store à FLASH nunca altera a cache e é concluído pelo roteador sem efeito, como um chip protegido contra escrita.
 3. **FLASH.** O chip atende pedidos de linha ou de palavra com dois parâmetros de latência: bordas até a primeira palavra e bordas entre as palavras seguintes. Fora da janela do chip a leitura devolve zero.
 4. **Reinício.** A memória de boot executa `fence.i` antes de ler a FLASH. A instrução invalida a cache de instruções e a de dados, então a conferência das bancas e o programa novo que o hospedeiro gravou não encontram linhas do anterior. A FLASH tem duas bancas, e a memória de boot salta para a de maior versão cujo cabeçalho e CRC-32 conferem ([contrato de entrada](contrato-de-entrada.md), seção 6.6); sem banca válida o núcleo espera no laço de reinício.
-5. **Hospedeiro.** O hospedeiro grava a imagem da FLASH pela memória interna do Quartus (instância 0) e os dados pela porta de depuração da SDRAM, com o núcleo parado no laço de reinício da memória de boot. Ele reinicia o núcleo escrevendo um valor diferente de zero em `fromhost`.
+5. **Hospedeiro.** O hospedeiro grava a imagem da FLASH pelo carregador JTAG (instância 0 do Virtual JTAG), que para o núcleo com o reset enquanto escreve a porta B do armazenamento e o solta no fim, e os dados pela porta de depuração da SDRAM (instância 3). Cada troca de programa reinicia, portanto, o núcleo, o CLINT e o PLIC.
 6. **Trap.** O `LEDR1` do topo acende quando o núcleo pulsa `o_trap_take` e fica aceso até o próximo reset, inclusive o do botão `KEY4` (`FPGA_RESET_N`), que o apaga mesmo com o clock parado. O programa continua na memória, então ao soltar o botão ele pode repetir o trap e reacender o LED. `o_trap_take` pulsa quando o núcleo toma uma exceção, com ou sem Zicsr, inclusive a que ele trata em `mtvec`.
 
 ## 4. Tamanhos e latências
@@ -46,7 +46,7 @@ Os 4 KB do topo da SDRAM guardam as palavras que o hospedeiro escreve por trás 
 | Item | Simulação | Placa |
 | :--- | :--- | :--- |
 | Janela do chip de FLASH | 256 KB (`size_bytes` igual a 262144), dos quais a FLASH ocupa os 252 KiB depois da BOOT_MEMORY | A mesma |
-| Armazenamento da FLASH | Vetor de 256 KB | 256 KB em blocos de RAM, regravável por JTAG |
+| Armazenamento da FLASH | Vetor de 256 KB | 256 KB em blocos de RAM de duas portas: a porta A é lida pelo chip, a porta B é do carregador JTAG (núcleo parado) e do controlador de FLASH (núcleo em execução) |
 | Latência do chip | 24 bordas até a primeira palavra e 4 entre as seguintes (padrão) | A mesma |
 
 O armazenamento tem 256 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 872 bytes e os primeiros 4 KB do vetor correspondem à BOOT_MEMORY, que o programa da FLASH não usa. Um vetor de 1 MB não roda no GHDL.
@@ -59,7 +59,9 @@ O armazenamento tem 256 KB porque o maior teste do ACT4 (`I-jal-00`) ocupa 131 8
 | Simulação dos programas da SDRAM e da FLASH | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex`, depois `sim --exclude cpi-kernels,hex-id` |
 | Atualização de programa | `config.sdram-flash-update.yaml` e `-update-slow.yaml` do repositório Tests, que ligam `HAS_FLASH_CONTROLLER` no topo de simulação (ver [atualizacao-de-programa.md](atualizacao-de-programa.md)) |
 | Latência do chip | As configurações `config.sdram-flash-lat2.yaml`, `-lat20.yaml` e `-lat60.yaml`, e as `-regression-lat*` |
+| Atualização de programa na placa | `tools/board/board_update.py` do repositório Tests (ver [atualizacao-de-programa.md](atualizacao-de-programa.md), seção 8) |
 | Compilar a placa | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl` (só a síntese, com o argumento `map`) |
+| Zihpm reduzido | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl 1 HPM_COUNTERS=4 HPM_WIDTH=40`, sem alterar os padrões do topo |
 | Programar a placa | `src/cyclone-v/de0-cv/de0-cv_program.sh`, no mesmo shell da compilação (`&&`) |
 | Programas na placa | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 na placa | `gen_profiles.py --profile <perfil> --board --out build/target` e `certify-board` com o `config.yaml` gerado, no repositório Certification; o `tools/board/board_run.py act` do repositório Tests reparte os ELFs entre as duas placas |

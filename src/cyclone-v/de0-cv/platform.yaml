@@ -41,7 +41,7 @@ flash:
     - {name: B, base: 0x00020000, size: 128K}
 
 # The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update
-# (commands of the FLASH chip; wired in the simulation top with HAS_FLASH_CONTROLLER, not yet in the board top), the
+# (commands of the FLASH chip; wired in the board top and, with HAS_FLASH_CONTROLLER, in the simulation top), the
 # JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the
 # PLIC (a 4 MiB window), the controller of the external interrupt lines, whose output is the MEIP of the core.
 peripherals:
@@ -58,7 +58,7 @@ interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000
   # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
-  # FLASH controller (simulation top only).
+  # FLASH controller (board and simulation).
   plic: {priority_bits: 3}
   sources:
     - {name: UART_JTAG, id: 2}
