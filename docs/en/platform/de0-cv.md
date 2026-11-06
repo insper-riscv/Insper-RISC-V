@@ -38,7 +38,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 2. **Data.** Loads and stores to the FLASH and the SDRAM go through the data cache, with 16-byte lines and 4 KB direct mapping. A store to the FLASH never changes the cache and the router completes it with no effect, like a write-protected chip.
 3. **FLASH.** The chip serves line or word requests with two latency parameters, edges up to the first word and edges between the following words. Outside the chip window a read returns zero.
 4. **Restart.** The boot memory executes `fence.i` before reading the FLASH. The instruction invalidates the instruction cache and the data cache, so the check of the banks and the new program the host wrote do not find lines of the previous one. The FLASH has two banks, and the boot memory jumps to the one with the larger version whose header and CRC-32 match ([entry contract](contrato-de-entrada.md), section 6.6); with no valid bank the core waits in the restart loop.
-5. **Host.** The host writes the FLASH image through the Quartus in-system memory (instance 0) and the data through the SDRAM debug port, with the core parked in the boot memory restart loop. It restarts the core by writing a non-zero value to `fromhost`.
+5. **Host.** The host writes the FLASH image through the JTAG loader (Virtual JTAG instance 0), which holds the core in reset while it writes port B of the storage and releases it at the end, and the data through the SDRAM debug port (instance 3). Every program change therefore restarts the core, the CLINT and the PLIC.
 6. **Trap.** The `LEDR1` of the top lights when the core pulses `o_trap_take` and stays lit until the next reset, including the one of the `KEY4` button (`FPGA_RESET_N`), which clears it even with the clock stopped. The program stays in memory, so on releasing the button it may trap again and relight the LED. `o_trap_take` pulses when the core takes an exception, with or without Zicsr, including the one it handles at `mtvec`.
 
 ## 4. Sizes and latencies
@@ -46,7 +46,7 @@ The top 4 KB of the SDRAM hold the words the host writes behind the caches (`toh
 | Item | Simulation | Board |
 | :--- | :--- | :--- |
 | FLASH chip window | 256 KB (`size_bytes` equal to 262144), of which the FLASH takes the 252 KiB after the BOOT_MEMORY | The same |
-| FLASH storage | 256 KB array | 256 KB in RAM blocks, rewritable over JTAG |
+| FLASH storage | 256 KB array | 256 KB in two-port RAM blocks: port A is read by the chip, port B belongs to the JTAG loader (core halted) and to the FLASH controller (core running) |
 | Chip latency | 24 edges to the first word and 4 between the following ones (default) | The same |
 
 The storage has 256 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 bytes and the first 4 KB of the array stand for the BOOT_MEMORY, which the FLASH program does not use. A 1 MB array does not run in GHDL.
@@ -59,7 +59,9 @@ The storage has 256 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 
 | Simulation of the SDRAM and FLASH programs | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex`, then `sim --exclude cpi-kernels,hex-id` |
 | Program update | `config.sdram-flash-update.yaml` and `-update-slow.yaml` of the Tests repository, which turn on `HAS_FLASH_CONTROLLER` in the simulation top (see [atualizacao-de-programa.md](atualizacao-de-programa.md)) |
 | Chip latency | The `config.sdram-flash-lat2.yaml`, `-lat20.yaml` and `-lat60.yaml` configurations, and the `-regression-lat*` ones |
+| Program update on the board | `tools/board/board_update.py` of the Tests repository (see [atualizacao-de-programa.md](atualizacao-de-programa.md), section 8) |
 | Compile the board | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl` (synthesis only, with the `map` argument) |
+| Reduced Zihpm | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl 1 HPM_COUNTERS=4 HPM_WIDTH=40`, leaving the defaults of the top unchanged |
 | Program the board | `src/cyclone-v/de0-cv/de0-cv_program.sh`, in the same shell as the compile (`&&`) |
 | Programs on the board | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
 | ACT4 on the board | `gen_profiles.py --profile <profile> --board --out build/target` and `certify-board` with the generated `config.yaml`, in the Certification repository; `tools/board/board_run.py act` of the Tests repository splits the ELFs between the two boards |

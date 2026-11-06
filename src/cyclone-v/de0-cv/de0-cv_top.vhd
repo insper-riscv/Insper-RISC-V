@@ -5,12 +5,13 @@ use work.utils_pkg.all;
 use work.de0_cv_map_pkg.all;
 
 -- The core on the board with the FLASH as a chip behind the caches: the core holds only the BOOT_MEMORY; the FLASH
--- (a 256 KB storage inside the FPGA, right after the BOOT_MEMORY at 0x800, written by the host over JTAG) and the SDRAM at 0x40000000
+-- (a 256 KB two-port storage inside the FPGA, right after the BOOT_MEMORY, written by the host over JTAG through the FLASH
+-- loader and by the program through the FLASH controller and the command chip) and the SDRAM at 0x40000000
 -- are reached through an instruction cache and a write-through data cache, whose line requests a region router
 -- sends to the FLASH chip model (through its arbiter) or to the SDRAM bridge, arbiter and controller of the
 -- Memory repository. The FLASH window of the chip ends at 256 KiB; a read past it returns zero. The host reaches the
 -- SDRAM through the debug master and its Virtual JTAG shell, as a second master of the controller. The core
--- clock is 50 MHz; the controller and the debug master run on the 142.857 MHz clock of the same PLL.
+-- clock is 50 MHz; the controller and the debug master run on the 100 MHz clock of the same PLL (SDRAM_TCK_PS of the generated map package).
 entity core_fpga_sdram_flash is
 	generic (
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
@@ -104,6 +105,30 @@ architecture behaviour of core_fpga_sdram_flash is
 	signal fc_rden, fc_line, fc_adv, fc_ready : std_logic;
 	signal fa_rdx, fb_rdx, fc_rdx : std_logic_vector(95 downto 0);
 	signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
+	-- Controlador de FLASH e chip de comandos: comando, estado, buffer de pagina, porta B do armazenamento e invalidacao
+	-- por regiao das duas caches.
+	signal fl_cmd_valid, fl_busy, fl_wel, fl_refused : std_logic;
+	signal fl_cmd_op       : std_logic_vector(2 downto 0);
+	signal fl_cmd_addr     : std_logic_vector(31 downto 0);
+	signal fl_buf_idx      : std_logic_vector(5 downto 0);
+	signal fl_buf_data     : std_logic_vector(31 downto 0);
+	signal fl_b_addr, fl_b_wdata, fl_b_data : std_logic_vector(31 downto 0);
+	signal fl_b_we         : std_logic;
+	signal fl_inval_valid  : std_logic;
+	signal fl_inval_first, fl_inval_last : std_logic_vector(31 downto 0);
+	-- Carregador JTAG da FLASH: dono da porta B com o nucleo parado (flash_halt), e a porta B que chega ao armazenamento.
+	signal flash_halt      : std_logic;
+	signal flash_cmd_tog, flash_done_tog : std_logic;
+	signal flash_op        : std_logic_vector(3 downto 0);
+	signal flash_cmd_addr, flash_rsp_addr : std_logic_vector(23 downto 0);
+	signal flash_cmd_data, flash_rsp_data : std_logic_vector(31 downto 0);
+	signal flash_rsp_status : std_logic_vector(7 downto 0);
+	signal ld_address_b    : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+	signal ld_rden_b, ld_wren_b : std_logic;
+	signal ld_data_b       : std_logic_vector(31 downto 0);
+	signal st_address_b    : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+	signal st_wren_b       : std_logic;
+	signal st_data_b       : std_logic_vector(31 downto 0);
 	signal flash_data2_unused : std_logic_vector(31 downto 0) := (others => '0');
 
 	signal sdram_addr    : std_logic_vector(31 downto 0);
@@ -216,7 +241,8 @@ begin
       locked   => pll_locked
     );
 
-	core_reset <= (not pll_locked) or (not FPGA_RESET_N);
+	-- O carregador da FLASH para o nucleo (flash_halt) enquanto o hospedeiro regrava a imagem, e o solta no fim.
+	core_reset <= (not pll_locked) or (not FPGA_RESET_N) or flash_halt;
 
 	-- LEDR9 a LEDR4 mostram as extensões do perfil do core ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga o LEDR6); LEDR0 acende quando algum
 	-- programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende quando o core sinaliza uma exceção
@@ -323,6 +349,7 @@ begin
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
 			i_invalidate => ic_inval, o_miss => ic_miss,
+			i_inval_region => fl_inval_valid, i_inval_first => fl_inval_first, i_inval_last => fl_inval_last,
 			o_d_addr => id_addr, o_d_rden => id_rden, o_d_advance => id_adv, i_d_ready => id_ready,
 			i_d_rdata => id_rdata, o_d_line => id_line, i_d_rdata_x => id_rdx
 		);
@@ -363,6 +390,7 @@ begin
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
 			i_flush => ic_inval, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
+			i_inval_region => fl_inval_valid, i_inval_first => fl_inval_first, i_inval_last => fl_inval_last,
 			i_bypass => dc_bypass,
 			o_d_addr => dd_addr, o_d_wdata => dd_wdata, o_d_byteena => dd_be,
 			o_d_rden => dd_rden, o_d_wren => dd_wren, o_d_advance => dd_adv, i_d_ready => dd_ready,
@@ -416,16 +444,87 @@ begin
       o_q       => boot_memory_data
     );
 
-	-- the storage behind the FLASH chip: a 256 KB RAM block the host rewrites over JTAG (instance FLASH)
-	FLASH_STORE : entity work.flash_store
+	-- the storage behind the FLASH chip: a 256 KB two-port RAM. Port A is read by the chip behind the caches. Port B is the
+	-- loader's while the core is halted (the host rewrites the image over JTAG) and the command port's otherwise (erase and
+	-- program of the update routine); the loader forces its own write enable to zero with the core running.
+	FLASH_STORE : entity work.flash
     generic map (size_bytes => ROM_STORAGE_BYTES)
     port map (
-      i_address => flash_mem_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
-      i_clk   => pll_clk_idexmem,
-      i_rden    => '1',
-      i_wren    => '0',
-      i_data    => (others => '0'),
-      o_q       => flash_mem_data
+      i_clk_a     => pll_clk_idexmem,
+      i_address_a => flash_mem_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+      i_rden_a    => '1',
+      o_q_a       => flash_mem_data,
+      i_clk_b     => pll_clk_idexmem,
+      i_address_b => st_address_b,
+      i_rden_b    => '1',
+      i_wren_b    => st_wren_b,
+      i_data_b    => st_data_b,
+      o_q_b       => fl_b_data
+    );
+
+	st_address_b <= ld_address_b when flash_halt = '1' else fl_b_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2);
+	st_wren_b    <= ld_wren_b    when flash_halt = '1' else fl_b_we;
+	st_data_b    <= ld_data_b    when flash_halt = '1' else fl_b_wdata;
+
+	FLASH_LOADER : entity work.flash_loader
+    generic map (addr_width => log2_exact(ROM_STORAGE_BYTES) - 2)
+    port map (
+      i_clk         => pll_clk_idexmem,
+      i_rst         => not pll_locked,
+      i_cmd_tog     => flash_cmd_tog,
+      o_done_tog    => flash_done_tog,
+      i_op          => flash_op,
+      i_addr        => flash_cmd_addr,
+      i_data        => flash_cmd_data,
+      o_rsp_addr    => flash_rsp_addr,
+      o_rsp_data    => flash_rsp_data,
+      o_rsp_status  => flash_rsp_status,
+      o_halt        => flash_halt,
+      i_mem_address => (others => '0'),
+      i_mem_rden    => '0',
+      o_address_b   => ld_address_b,
+      o_rden_b      => ld_rden_b,
+      o_wren_b      => ld_wren_b,
+      o_data_b      => ld_data_b,
+      i_q_b         => fl_b_data
+    );
+
+	-- the Virtual JTAG instance of the loader (instance 0; the JTAG UART is 1, the display 2, the SDRAM debug port 3)
+	FLASH_JTAG : entity work.flash_jtag_shell
+    port map (
+      o_cmd_tog    => flash_cmd_tog,
+      o_op         => flash_op,
+      o_addr       => flash_cmd_addr,
+      o_data       => flash_cmd_data,
+      i_done_tog   => flash_done_tog,
+      i_rsp_addr   => flash_rsp_addr,
+      i_rsp_data   => flash_rsp_data,
+      i_rsp_status => flash_rsp_status
+    );
+
+	-- the command port of the chip (erase, program, protect) on port B of the storage, and the controller the program
+	-- reaches at FLASH_CTRL_BASE
+	FLASH_CMD : entity work.flash_cmd_port
+    generic map (size_bytes => ROM_STORAGE_BYTES, base_addr => (others => '0'))
+    port map (
+      i_clk => pll_clk_idexmem, i_rst => core_reset,
+      i_cmd_valid => fl_cmd_valid, i_cmd_op => fl_cmd_op, i_cmd_addr => fl_cmd_addr,
+      o_busy => fl_busy, o_wel => fl_wel, o_refused => fl_refused,
+      o_buf_idx => fl_buf_idx, i_buf_data => fl_buf_data,
+      o_mem_addr => fl_b_addr, o_mem_we => fl_b_we, o_mem_wdata => fl_b_wdata, i_mem_data => fl_b_data,
+      o_inval_valid => fl_inval_valid, o_inval_first => fl_inval_first, o_inval_last => fl_inval_last
+    );
+
+	FLASH_CTRL : entity work.flash_controller
+    port map (
+      i_clk => pll_clk_idexmem, i_rst => core_reset,
+      i_data_in => p_wdata, i_address => p_addr(2 downto 0),
+      i_write => p_we(FLASH_CTRL_ID), i_read => p_re(FLASH_CTRL_ID),
+      o_data_out => p_rdata(32 * FLASH_CTRL_ID + 31 downto 32 * FLASH_CTRL_ID),
+      o_irq => irq_lines(IRQ_FLASH),
+      o_cmd_valid => fl_cmd_valid, o_cmd_op => fl_cmd_op, o_cmd_addr => fl_cmd_addr,
+      i_busy => fl_busy, i_wel => fl_wel, i_refused => fl_refused,
+      i_buf_idx => fl_buf_idx, o_buf_data => fl_buf_data
     );
 
 	-- SDRAM: the bridge (core clock), the arbiter and the controller (SDRAM clock), and the debug port
@@ -454,7 +553,7 @@ begin
 
 	-- The CLINT (msip, mtimecmp, mtime) and the PLIC (the controller of the external interrupt lines), in the clock
 	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
-	-- raises its line (IRQ_UART_JTAG); the other lines of the PLIC stay at zero.
+	-- and the FLASH controller raise their lines (IRQ_UART_JTAG and IRQ_FLASH); the others stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
@@ -531,6 +630,7 @@ begin
 		);
 
 	SDRAM_JTAG : entity work.sdram_jtag_shell
+		generic map (instance_index => 3, auto_instance_index => "NO")
 		port map (
 			o_cmd_tog => cmd_tog, o_op => d_op, o_be => d_be, o_addr => d_addr, o_data => d_data,
 			i_done_tog => done_tog, i_rsp_addr => r_addr, i_rsp_data => r_data, i_rsp_status => r_status
@@ -553,7 +653,10 @@ begin
 		-- the data pins go through one register in the IO cells (see the Quartus project); the clock
 		-- phase of the pin DRAM_CLK makes the read data arrive in time for the register without the
 		-- extra clock the simulation models for registered pins (found on the board, docs/SDRAM_BRINGUP.md)
-		generic map (capture_extra => 0, sync_req => false)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			capture_extra => 0, sync_req => false)
 		port map (
 			i_clk => pll_clk_mem, i_rst => rst_mem,
 			i_req_tog => req_tog, o_ack_tog => ack_tog, o_init_done => init_done,

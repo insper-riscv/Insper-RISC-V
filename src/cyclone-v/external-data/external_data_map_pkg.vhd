@@ -93,4 +93,9 @@ package external_data_map_pkg is
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
 
+	-- Frequência do clock do controlador da SDRAM, em Hz.
+	constant SDRAM_CLOCK_HZ : positive := 100000000;
+	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
+	constant SDRAM_TCK_PS   : positive := 10000;
+
 end package external_data_map_pkg;

@@ -41,7 +41,7 @@ flash:
     - {name: B, base: 0x00020000, size: 128K}
 
 # The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update
-# (commands of the FLASH chip; wired in the simulation top with HAS_FLASH_CONTROLLER, not yet in the board top), the
+# (commands of the FLASH chip; wired in the board top and, with HAS_FLASH_CONTROLLER, in the simulation top), the
 # JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the
 # PLIC (a 4 MiB window), the controller of the external interrupt lines, whose output is the MEIP of the core.
 peripherals:
@@ -58,7 +58,7 @@ interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000
   # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
-  # FLASH controller (simulation top only).
+  # FLASH controller (board and simulation).
   plic: {priority_bits: 3}
   sources:
     - {name: UART_JTAG, id: 2}
@@ -71,6 +71,20 @@ memory:
   ram:    {external: true}
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
+
+# The clock of the SDRAM controller and the phase of the DRAM_CLK pin against it: the single source of the PLL
+# (src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, tied to these values by the checks below) and of the period the controller
+# and the chip model convert the chip timings with (SDRAM_TCK_PS of the generated package). The controller runs at 100 MHz,
+# the clock of the core at its final frequency (a 1 to 1 ratio), so its pin paths have 10 ns instead of 7 ns.
+sdram:
+  clock_hz: 100000000
+  dram_clk_phase_ps: 4000
+
+# The phase of the core clock (PLL output 3) against the fetch clock (output 2), measured by the Quartus timing of the 5 seeds
+# and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
+# crossings (docs/pt-br/platform/timing/MARCOS.md).
+pll:
+  core_phase_ps: 8250
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND, HAS_ZIHINTNTL, HAS_ZIHINTPAUSE and HAS_INTERRUPTS of the package).
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
@@ -120,3 +134,9 @@ checks:
   - {name: Tests header RV32_BANK_A_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.size}
   - {name: Tests header RV32_BANK_B_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.base}
   - {name: Tests header RV32_BANK_B_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.size}
+
+  # --- the PLL of the SDRAM controller (shared by the de0-cv and external-data tops) -------------------------------
+  - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: SDRAM.clock_mhz}
+  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
+  - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}
+  - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: PLL.core_phase_ps}

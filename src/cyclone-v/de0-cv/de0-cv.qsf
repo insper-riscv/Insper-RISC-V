@@ -143,7 +143,9 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ct
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
-set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_store.qip
+set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash.qip
+set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
+set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/flash_cmd_port.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/icache.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/flash_chip.vhd
@@ -162,6 +164,7 @@ set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_con
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_gateway.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic_arbiter.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/PLIC/soc/plic.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/flash-controller/soc/flash_controller.vhd
 set_global_assignment -name VHDL_FILE de0-cv_top.vhd
 
 #============================================================

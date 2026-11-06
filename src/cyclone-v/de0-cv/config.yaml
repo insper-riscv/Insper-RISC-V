@@ -147,7 +147,7 @@ sim:
   # so it is longer than internal-mem's. The boot memory also checks the CRC-32 of the image before the
   # jump, about 850 ticks of CLK for each word of the program (a program of 8 KiB takes 1.7 million).
   env:
-    SIM_EXTRA_CLOCKS: "CLK_MEM:7"
+    SIM_EXTRA_CLOCKS: "CLK_MEM:10"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "12000000"
     UART_START_ON_ACCESS: "1"
@@ -157,13 +157,13 @@ quartus:
   project_dir: src/cyclone-v/de0-cv
   project_name: de0-cv
   sof_file: output_files/de0-cv.sof
-  rom_mif_target: flash_init.mif
+  rom_mif_target: init.mif
   boot_memory_mif_target: boot_memory_init.mif
   # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
   ram_backend: sdram_debug
-  # The memory editor sees only the FLASH storage (0), the one IP that declares ENABLE_RUNTIME_MOD; the BOOT_MEMORY is
-  # written once by the full compile and the SDRAM is reached through the debug port.
-  rom_mem_instances: [0]
-  # The de0-cv top has no JTAG loader (internal-mem has): the FLASH store is rewritten through the memory editor, so the
-  # method inherited from internal-mem (jtag_loader) must be overridden.
-  rom_write_method: mem_edit
+  # The FLASH is a two-port storage with no memory editor instance: the host rewrites it through the FLASH loader (a
+  # Virtual JTAG instance 0 that halts the core while it writes port B); the BOOT_MEMORY is written once by the full
+  # compile and the SDRAM is reached through the debug port (Virtual JTAG instance 3: the JTAG UART is 1, the display 2).
+  rom_mem_instances: []
+  rom_write_method: jtag_loader
+  sdram_debug_instance: 3
