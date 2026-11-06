@@ -42,7 +42,7 @@ entity rv32i3stage_core_sim_test is
 	  HAS_ZICSR : boolean := false;
 	  -- Habilita os contadores da extensão Zicntr (implica Zicsr).
 	  HAS_ZICNTR : boolean := false;
-	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
+	  -- Contadores de eventos da extensao Zihpm (29, indices 3 a 31); exige Zicsr.
 	  HAS_ZIHPM : boolean := false;
 	  -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
 	  HPM_COUNTERS : natural range 0 to 29 := 29;
