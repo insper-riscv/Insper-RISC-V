@@ -16,11 +16,14 @@ configura o pino como saída e o move, e a entrada sincronizada o
 acompanha.
 """
 
+import logging
+import os
 from typing import Any
 
 import cocotb
-from cocotb.triggers import Edge, Timer
+from cocotb.triggers import Edge, First, Timer
 
+LOG = logging.getLogger("cocotb.testbench")
 HALF_TCK_NS = 40
 SCAN_BITS = 48
 PUSH_FLAG = 1 << 8
@@ -130,6 +133,29 @@ class JtagHost:
             await self._scan(command)
 
 
+async def trace_interrupts(dut: Any) -> None:
+    """Registra cada mudança das linhas do PLIC e do MEIP (SIM_TRACE_IRQ=1).
+
+    Parameters
+    ----------
+    dut : Any
+        O topo sob teste.
+    """
+    while True:
+        await First(Edge(dut.irq_lines), Edge(dut.irq_external))
+        plic = dut.g_interrupts.u_plic
+        LOG.info(
+            "irq_lines=%s irq_external=%s pending=%s enable=%s "
+            "priorities=%s threshold=%s",
+            dut.irq_lines.value,
+            dut.irq_external.value,
+            plic.pending.value,
+            plic.enable_reg.value,
+            plic.priorities.value,
+            plic.threshold.value,
+        )
+
+
 def start(dut: Any) -> JtagHost | None:
     """Inicia os modelos que o topo tem portas para.
 
@@ -145,6 +171,8 @@ def start(dut: Any) -> JtagHost | None:
     """
     if not hasattr(dut, "o_uart_tx"):
         return None
+    if os.environ.get("SIM_TRACE_IRQ") and hasattr(dut, "irq_lines"):
+        cocotb.start_soon(trace_interrupts(dut))
     cocotb.start_soon(uart_loopback(dut))
     if not hasattr(dut, "i_uart_tck"):
         return None

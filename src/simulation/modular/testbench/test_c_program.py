@@ -34,7 +34,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, RisingEdge
 from riscv_tools.mem_validator import compare_bytes, load_golden
 
-import peripheral_models
+from testbench import peripheral_models
 
 LOG = logging.getLogger("cocotb.testbench")
 
@@ -56,6 +56,9 @@ TEST_NAME = os.environ.get("TEST_NAME", "?")
 SIM_CLOCK = os.environ.get("SIM_CLOCK", "i_clk")
 SIM_CLOCK_PERIOD_NS = int(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
 SIM_RESET = os.environ.get("SIM_RESET", "i_rst")
+# O clock dos estágios é o base dividido por três: o reset precisa durar várias bordas dele para zerar também
+# os periféricos (o PLIC e o CLINT), que não têm outro caminho de inicialização.
+RESET_CYCLES = int(os.environ.get("SIM_RESET_CYCLES", "30"))
 SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", "pll_clk_idexmem")
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "2000000"))
@@ -211,7 +214,7 @@ async def test_program(dut: Any) -> None:
     cocotb.start_soon(Clock(clock, SIM_CLOCK_PERIOD_NS, unit="ns").start())
     reset = getattr(dut, SIM_RESET)
     reset.value = SIM_RESET_ACTIVE
-    await ClockCycles(clock, 5)
+    await ClockCycles(clock, RESET_CYCLES)
     reset.value = 1 - SIM_RESET_ACTIVE
 
     image = RamImage(dut)
