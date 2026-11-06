@@ -82,14 +82,14 @@ def body(base_hi20: int, base_low: int) -> list[int]:
 
 
 def irq_body(base_hi20: int) -> list[int]:
-    """Return the program that raises MTIP in the CLINT and reads it in mip.
+    """Return the program that raises MTIP in the CLINT, reading mip.
 
-    The mtimecmp of the CLINT is not cleared by the reset of this top (its
-    clear is synchronous and the clocks stop in reset), so the program
-    first writes the largest value to it, reads mip at RAM+8 (MTIP low),
-    arms mtimecmp to IRQ_DELAY ticks after the current mtime, polls mip
-    until MTIP shows up and stores the masked bit at RAM+0 and 0x5B at
-    RAM+4.
+    The mtimecmp of the CLINT is not cleared by the reset of this top
+    (its clear is synchronous and the clocks stop in reset), so the
+    program first writes the largest value to it and reads mip at RAM+8
+    (MTIP low). Then it arms mtimecmp to IRQ_DELAY ticks after the
+    current mtime, polls mip until MTIP shows up and stores the masked
+    bit at RAM+0 and 0x5B at RAM+4.
 
     Parameters
     ----------

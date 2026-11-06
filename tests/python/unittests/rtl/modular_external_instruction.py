@@ -7,10 +7,10 @@ import cocotb
 from tests.python.unittests.rtl.modular_common import (
     FIRST,
     SECOND,
-    start,
     wait_for_internal_result,
     watch_internal_ram,
 )
+from tests.python.unittests.rtl.platform_common import start
 from tests.python.utils.checks import check
 
 

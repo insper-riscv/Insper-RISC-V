@@ -1,10 +1,12 @@
 """UART pelo JTAG: o hospedeiro lê o 'H' e devolve um byte."""
 
+from functools import partial
 from typing import Any
 
 import cocotb
 from cocotb.triggers import Timer
 
+from tests.python.unittests.integration.jtag import shift_bits
 from tests.python.unittests.rtl.platform_common import Results, start
 from tests.python.utils.checks import check
 
@@ -40,15 +42,13 @@ async def scan(dut: Any, command: int) -> int:
     int
         The bits shifted out.
     """
-    await tck(dut, cdr=True)
-    out = 0
-    for i in range(SCAN_BITS):
-        dut.i_uart_tdi.value = (command >> i) & 1
-        await Timer(1, unit="ns")
-        out |= int(dut.o_uart_tdo.value) << i
-        await tck(dut, sdr=True)
-    await tck(dut, udr=True)
-    return out
+    return await shift_bits(
+        dut.i_uart_tdi,
+        dut.o_uart_tdo,
+        partial(tck, dut),
+        SCAN_BITS,
+        command,
+    )
 
 
 def bytes_of(reply: int) -> list[int]:

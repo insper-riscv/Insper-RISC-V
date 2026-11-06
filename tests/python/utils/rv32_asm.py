@@ -188,7 +188,7 @@ def beq(rs1: int, rs2: int, offset: int) -> int:
 
 
 def csrrs(rd: int, csr: int, rs1: int) -> int:
-    """Encode ``csrrs rd, csr, rs1`` (``csrr rd, csr`` with ``rs1 = x0``).
+    """Encode ``csrrs rd, csr, rs1`` (``csrr`` when ``rs1`` is ``x0``).
 
     Parameters
     ----------

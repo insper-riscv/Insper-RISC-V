@@ -2,8 +2,8 @@
 
 O programa (rom_irq_program.hex) lê o mip antes de armar o timer, arma o
 mtimecmp do CLINT, espera o bit MTIP do mip e guarda o resultado na RAM
-interna. O mtime do CLINT conta um tick por ciclo do núcleo e não depende
-do CSR time.
+interna. O mtime do CLINT conta um tick por ciclo do núcleo e não
+depende do CSR time.
 """
 
 from typing import Any
@@ -13,10 +13,10 @@ import cocotb
 from tests.python.unittests.rtl.modular_common import (
     RAM_BASE,
     SECOND,
-    start,
     wait_for_internal_result,
     watch_internal_ram,
 )
+from tests.python.unittests.rtl.platform_common import start
 from tests.python.utils.checks import check
 
 MTIP = 0x80
@@ -24,7 +24,7 @@ MTIP = 0x80
 
 @cocotb.test()
 async def test_mtip_shows_up_in_mip(dut: Any) -> None:
-    """The timer line is low before the arming and MTIP is set after it."""
+    """The timer line is low before arming and MTIP is set after it."""
     writes: dict[int, int] = {}
     cocotb.start_soon(watch_internal_ram(dut, writes))
     await start(dut, reset_cycles=30)
