@@ -243,7 +243,7 @@ Section 3.2.1 and the sources of `MSIP`, `MTIP` and `MEIP` of 3.1.9. `mtime`, `m
 | L5 | A change in the comparison reaches `MTIP` "eventually, not necessarily immediately" | EEI choice | The CLINT registers the result for one cycle. Proof `clint_props` |
 | L6 | Writing `mtimecmp` in two 32-bit halves raises no spurious interrupt from the intermediate value | Conforming | The manual sequence (all ones in the low half, then the high, then the low) is proved. Proof `clint_props` (`SEQ` mode), macro `RVIRQ_TIMER_AFTER` of the programs |
 | L7 | `msip` is a memory-mapped 32-bit register with bit 0 in `MSIP` | Conforming | The other bits read zero. cocotb `CLINT`, proof `clint_props`, program `irq-priority` |
-| L8 | The `time` CSR is the read-only shadow of `mtime` | Conforming | With `time_external`, on wherever there is a CLINT, `time` and `timeh` read the `o_mtime` output of the CLINT; without a CLINT `time` counts by itself, with the `tick_cycles` period. cocotb `CsrFileTimeExternal` and `CLINT`, formal `csrt_safety` (mutants `time_halves_swapped`, `time_not_external`) and `clint_props`, program `time-follows-mtime` |
+| L8 | The `time` CSR is the read-only shadow of `mtime` | Conforming | With `time_external`, on wherever there is a CLINT, `time` and `timeh` read the `o_mtime` output of the CLINT; without a CLINT `time` counts by itself, with the `tick_cycles` period. cocotb `CsrFileTimeExternal` and `CLINT`, formal `csrt_safety` (mutants `time_halves_swapped`, `time_hi_zero`) and `clint_props`, program `time-follows-mtime` |
 | L9 | The `mtime` shared among harts and `msip` for inter-processor interrupts | Not applicable | One hart only |
 
 ## 14. Physical memory: PMA and PMP
