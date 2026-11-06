@@ -59,7 +59,9 @@ entity template_sim_top is
         -- Interrupções de máquina (as portas i_irq_* do núcleo; exige Zicsr)
         has_interrupts      : boolean  := HAS_INTERRUPTS;
         -- Interrupção de estouro de contador (Sscofpmf; exige Zihpm e as interrupções)
-        has_sscofpmf        : boolean  := HAS_SSCOFPMF
+        has_sscofpmf        : boolean  := HAS_SSCOFPMF;
+        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa (exige Zicsr)
+        has_access_faults   : boolean  := HAS_ACCESS_FAULTS
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -178,6 +180,8 @@ begin
             has_zihintpause => has_zihintpause,
             has_interrupts  => has_interrupts and has_zicsr,
             has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
+            has_access_faults => has_access_faults and has_zicsr,
+            periph_slots    => PERIPH_SLOTS,
             boot_memory_bits   => log2_exact(boot_memory_size_bytes),
             rom_end_kib     => ROM_END_KIB,
             rom_external    => ROM_EXTERNAL,

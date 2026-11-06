@@ -48,7 +48,7 @@ peripherals:
   - {name: PLIC,      base: 0xF0000000, id: 7, size: 4M}
 
 # The mtime of the CLINT counts at mtime_hz, one tick per clock cycle of the core in the simulation, and is
-# independent of the CSR time of Zicntr.
+# mirrored by the CSR time of Zicntr (o_mtime of the CLINT into i_mtime of the core).
 interrupts:
   clock_hz: 10000000
   mtime_hz: 10000000

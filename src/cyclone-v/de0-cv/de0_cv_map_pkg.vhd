@@ -40,6 +40,8 @@ package de0_cv_map_pkg is
 	constant HAS_INTERRUPTS      : boolean  := true;
 	-- A extensão Sscofpmf está no perfil.
 	constant HAS_SSCOFPMF        : boolean  := true;
+	-- A extensão Access_faults está no perfil.
+	constant HAS_ACCESS_FAULTS   : boolean  := true;
 	-- Expoente do tamanho da BOOT_MEMORY, em [0, 2**BOOT_MEMORY_BITS).
 	constant BOOT_MEMORY_BITS       : natural  := 12;
 	-- Tamanho da BOOT_MEMORY, em bytes.
@@ -82,6 +84,9 @@ package de0_cv_map_pkg is
 	constant ROM_VIA_PORT        : boolean  := ROM_EXTERNAL or HAS_ICACHE;
 	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).
 	constant RAM_VIA_PORT        : boolean  := RAM_EXTERNAL or HAS_DCACHE;
+
+	-- Janelas de 256 MiB do barramento de periféricos que têm periférico (bit n para o índice n, bits 30:28 do endereço).
+	constant PERIPH_SLOTS : std_logic_vector(7 downto 0) := "11111000";
 
 	-- Endereço base do periférico FLASH_CTRL.
 	constant FLASH_CTRL_BASE : std_logic_vector(31 downto 0) := x"B0000000";

@@ -147,13 +147,13 @@ Section 3.1.15, Tables 16 and 17, and 3.6. The exceptions that depend on modes, 
 | ID | Requirement | Status | Evidence |
 | :--- | :--- | :--- | :--- |
 | X1 | Cause 0 (instruction address misaligned) comes from a taken jump or branch with a misaligned target, with `mepc` at the jump and `mtval` at the target; a branch not taken does not raise it | Conforming | Program `trap-misaligned-jump`, cocotb `CoreMisalignedJump` and `TrapUnit`, formal `trap_unit_props` |
-| X2 | Cause 1 (instruction access fault) for an access that violates a PMA; the manual strongly recommends it be precise | Open gap | The Core does not raise it: a fetch outside an executable region returns whatever the memory behind returns. The decision and the cost are in section 14 |
+| X2 | Cause 1 (instruction access fault) for an access that violates a PMA; the manual strongly recommends it be precise | Conforming | With `has_access_faults` (on in the `de0-cv` by `extras: [AccessFaults]`) a fetch outside ROM, RAM and the external window traps with `mtval` equal to the PC. cocotb `TrapUnitAccessFaults`, formal `trap_af_safety` (mutants `af_fetch_below_illegal`, `af_fetch_tval_ea`), program `access-fetch-fault` |
 | X3 | Cause 2 (illegal instruction) covers a reserved or nonexistent encoding, an unsupported `SYSTEM` instruction, a nonexistent CSR and a write to a read-only CSR | Conforming | cocotb `CoreIllegalInstruction`, `CoreTrapPriority`, `ControlUnit`, `CsrDecode`, programs `trap-illegal`, `conformance-decode` and `priv-csr-priority`, formal `trap_unit_props` |
 | X4 | The debug CSRs (`0x7B0` to `0x7BF`) and trigger CSRs (`0x7A0` to `0x7A3`) do not exist outside debug mode and raise an illegal instruction | Conforming | cocotb `CoreTrapPriority` (`dcsr`, `dpc`, `dscratch0`, `dscratch1`, `0x7B4`, `0x7BF`, `tselect`, `tdata1`), program `priv-csr-priority` (debug block) |
 | X5 | The CSRs of modes and extensions the hart lacks (`sstatus`, `satp`, `medeleg`, `mideleg`, `mcounteren`, `menvcfg`, `mseccfg`, `mtinst`, `mtval2`, PMP, `scountovf`) raise an illegal instruction | Conforming | cocotb `CoreTrapPriority`, `CsrFile` (`test_unknown_csr_is_illegal`), `CsrFileZihpm`, formal `csr_file_props` and `csr_hpm_props`, program `trap-illegal` |
 | X6 | Cause 3 (breakpoint) comes from `EBREAK`, with `mepc` at the instruction and no other operation | Conforming | Program `trap-ecall-ebreak`, cocotb `TrapUnit` and `CoreTrapSignal`, formal `trap_unit_props` |
 | X7 | Causes 4 and 6 (misaligned load and store address) are optional, and the hart may execute the access or trap | EEI choice | With Zicclsm the Core executes the misaligned access in main memory and traps outside it (`mtval` is the effective address); without Zicclsm every misaligned access traps. cocotb `TrapUnit`, `TrapUnitNoZicclsm`, `CoreMisaligned`, programs `trap-misaligned-ldst` and `misaligned-crossing`, ACT4 `rv32i/Zicclsm` (13) |
-| X8 | Causes 5 and 7 (load and store access fault) for an access that violates a PMA, such as a write to read-only memory | Open gap | The Core does not raise them: a write to the `BOOT_MEMORY` or the FLASH is dropped, and a read of a region without memory returns whatever the bus returns. The decision and the cost are in section 14 |
+| X8 | Causes 5 and 7 (load and store access fault) for an access that violates a PMA, such as a write to read-only memory | Conforming | With `has_access_faults` a load outside the map traps with cause 5 and a store outside the map or into the ROM with cause 7, with `mtval` equal to the address, before the misalignment, and without touching the memory. cocotb `TrapUnitAccessFaults`, `RegExMemFaults`, formal `trap_af_safety` (mutants `af_load_uses_write_flag`, `af_store_after_misaligned`, `af_store_fault_cause_load`), programs `access-load-fault` and `access-store-fault` |
 | X9 | Causes 8 and 9 (`ECALL` from U and S), 10, 12, 13 and 15 (page faults), 14 and 17 | Not applicable | The Core has neither U and S modes nor virtual memory |
 | X10 | Causes 16 (double trap, Smdbltrp), 18 (software check, Zicfilp and Zicfiss) and 19 (hardware error) | Not applicable | The Core has neither these extensions nor hardware error detection |
 | X11 | Cause 11 (environment call from M-mode) comes from `ECALL`, with `mepc` at the instruction and no other operation | Conforming | Program `trap-ecall-ebreak`, cocotb `TrapUnit` and `CoreTrapSignal`, formal `trap_unit_props`, ACT4 `rv32i/I` (39) |
@@ -204,7 +204,7 @@ Sections 3.1.10 to 3.1.12. The Zihpm conformance, row by row, is also in [Core/d
 | C8 | Without `mcountinhibit` the hart behaves as if it were zero | EEI choice | The register exists with Zicntr or Zihpm, and without both the address is nonexistent. cocotb `CsrFileNoZicntr` |
 | C9 | `mcounteren` exists only with U-mode | Conforming | Without U-mode the access is illegal. cocotb `CoreTrapPriority` |
 | C10 | `mcyclecfg`, `minstretcfg` and the mode filtering fields (Smcntrpmf) | Not applicable | The Core does not implement Smcntrpmf, and the addresses are illegal |
-| C11 | The `time` CSR is the read-only shadow of `mtime` (see row L8) | Conforming | See section 13 |
+| C11 | The `time` CSR is the read-only shadow of `mtime` (see row L8) | Conforming | See row L8 |
 
 ### 11.2. Sscofpmf
 
@@ -243,7 +243,7 @@ Section 3.2.1 and the sources of `MSIP`, `MTIP` and `MEIP` of 3.1.9. `mtime`, `m
 | L5 | A change in the comparison reaches `MTIP` "eventually, not necessarily immediately" | EEI choice | The CLINT registers the result for one cycle. Proof `clint_props` |
 | L6 | Writing `mtimecmp` in two 32-bit halves raises no spurious interrupt from the intermediate value | Conforming | The manual sequence (all ones in the low half, then the high, then the low) is proved. Proof `clint_props` (`SEQ` mode), macro `RVIRQ_TIMER_AFTER` of the programs |
 | L7 | `msip` is a memory-mapped 32-bit register with bit 0 in `MSIP` | Conforming | The other bits read zero. cocotb `CLINT`, proof `clint_props`, program `irq-priority` |
-| L8 | The `time` CSR is the read-only shadow of `mtime` | Open gap | The `time` of the Core is a counter of its own, with the same period as `mtime` (`tick_cycles`) but independent of it: the two coincide as long as the program does not write `mtime`. See section 13 |
+| L8 | The `time` CSR is the read-only shadow of `mtime` | Conforming | With `time_external`, on wherever there is a CLINT, `time` and `timeh` read the `o_mtime` output of the CLINT; without a CLINT `time` counts by itself, with the `tick_cycles` period. cocotb `CsrFileTimeExternal` and `CLINT`, formal `csrt_safety` (mutants `time_halves_swapped`, `time_hi_zero`) and `clint_props`, program `time-follows-mtime` |
 | L9 | The `mtime` shared among harts and `msip` for inter-processor interrupts | Not applicable | One hart only |
 
 ## 14. Physical memory: PMA and PMP
@@ -253,7 +253,7 @@ Sections 3.6 and 3.7.
 | ID | Requirement | Status | Evidence |
 | :--- | :--- | :--- | :--- |
 | A1 | The physical memory attributes (PMA) of each region are fixed at design time and known to software | Conforming | The memory map of `platform.yaml` is the source, and `generate-memory-map` writes it to the VHDL, the linker and the runtime header |
-| A2 | A PMA violation (execution from a region with no fetch, write to read-only memory, access to a region without memory) raises a precise access fault, wherever possible | Open gap | It does not raise (see X2 and X8). Section 14 records the decision |
+| A2 | A PMA violation (execution from a region with no fetch, write to read-only memory, access to a region without memory) raises a precise access fault, wherever possible | Conforming | With `has_access_faults`: see X2 and X8. The valid map (ROM, RAM, external window and occupied peripheral slots) comes from `platform.yaml`. On platforms without the `AccessFaults` extra the Core raises no causes 1, 5 and 7 (a platform choice) |
 | A3 | A misaligned access to main memory executes or traps, and execution need not be atomic | Conforming | Zicclsm. Program `misaligned-crossing`, ACT4 `rv32i/Zicclsm` (13) |
 | A4 | The atomicity PMAs (AMO, reservability), coherence and cacheability per region | Not applicable | The Core has neither the A extension nor coherence between harts |
 | A5 | PMP (`pmpcfg`, `pmpaddr`) and Smepmp (`mseccfg`) | Not applicable | The Core implements no PMP; the addresses `0x3A0` to `0x3EF` and `0x747` are illegal. cocotb `CoreTrapPriority` |
@@ -261,15 +261,15 @@ Sections 3.6 and 3.7.
 
 ### 14.1. Access faults
 
-The manual strongly recommends that PMA violations be precise exceptions, "wherever possible", but does not demand them: a platform may return zero or drop the write. The Core decides the regions by the memory map of `platform.yaml` (the `BOOT_MEMORY`, the FLASH, the RAM, the external window and the peripheral window), but those regions are the neighborhood in which the address falls, not the existence of memory or of a peripheral. What lies behind each region (the real RAM size, which peripherals answer in the peripheral window) is decided outside the Core, so the Core cannot state that an address is nonexistent.
+The manual strongly recommends that PMA violations be precise exceptions, "wherever possible". The Core raises them with the `has_access_faults` generic (off by default; the `de0-cv` turns it on with `extras: [AccessFaults]`). The valid map comes from `platform.yaml`: the KiB generics the Core already received (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) and the `periph_slots` generic, which `riscv-tools` writes as `PERIPH_SLOTS` (one bit per 256 MiB window of the peripheral bus that holds a peripheral).
 
-| Violation | Effect today | What the cause would need |
-| :--- | :--- | :--- |
-| Write to the `BOOT_MEMORY` or the FLASH | Dropped | Compare the effective address with the end of the ROM in the MEM stage and raise cause 7 |
-| Fetch from the peripheral window | The memory behind returns what it has | Mark the fetch outside the executable regions in the IF stage and carry the mark to EX, for cause 1 |
-| Access to a region without memory | The bus returns zero or what it has | A bus error signal, or the real size of each region among the generics of the Core, for causes 5 and 7 |
+| Violation | Cause | `mtval` | Where it is decided |
+| :--- | :---: | :--- | :--- |
+| Fetch outside ROM, RAM and the external window (gap, empty window or peripheral) | 1 | PC | EX stage, from the registered PC |
+| Load to an address outside the map | 5 | Effective address | Bit registered in EX/MEM, checked in the MEM stage |
+| Store to an address outside the map or into the ROM | 7 | Effective address | The same write bit, registered in EX/MEM |
 
-The cost is in the barrier registers (one bit per stage for the fetch) and one more comparator in the MEM stage, in the path the F front of the core works to shorten. The decision was to record the gap and not change the pipeline in a region of intense timing work without a platform that needs causes 1, 5 and 7.
+The validity of the data address leaves EX with the classification `reg_ex_mem` already registers, and the MEM stage only checks the bit, so the path the F front shortened gains no comparator. The access fault beats misalignment, and the fetch fault beats the illegal instruction (Table 17). On platforms without the extra the Core raises no causes 1, 5 and 7, and the validity bit is constant and not synthesized.
 
 ## 15. Out of scope
 
@@ -290,10 +290,7 @@ The cost is in the barrier registers (one bit per stage for the fetch) and one m
 
 ## 16. Gaps and choices
 
-| ID | Status | Summary | What would close it |
-| :--- | :--- | :--- | :--- |
-| X2, X8, A2 | Open gap | The Core does not raise access faults 1, 5 and 7 | A platform that declares the nonexistent or read-only regions, and the fetch mark and MEM comparator of section 14.1 |
-| L8 | Open gap | `time` is a counter of its own and not the shadow of the CLINT `mtime` | A 64-bit `i_mtime` port on the Core, wired to the CLINT `mtime` output, in place of the `tick_divider` counter of `time`; it needs a new output on the CLINT |
+There is no open gap. Two rows depend on the platform turning the extension on: access faults 1, 5 and 7 (X2, X8 and A2) only exist where `platform.yaml` has `extras: [AccessFaults]`, today the `de0-cv`, and `time` mirrors `mtime` (L8) where there is a CLINT, today the `de0-cv` and the `modular`.
 
 The EEI choices that change what a program sees are: `mvendorid`, `marchid`, `mimpid` and `mconfigptr` are zero (D8 to D12); `mtval` is zero on the illegal instruction and on `EBREAK` (T8 and T9); the vectored mode of `mtvec` asks for a 64-byte aligned `BASE` (V5); `WFI` is a `nop` (I2); the interrupt beats the exception of the same instruction (Q11); `FENCE.I` makes an interrupt wait one cycle (Q12); the misaligned access to main memory runs in two steps (X7).
 
