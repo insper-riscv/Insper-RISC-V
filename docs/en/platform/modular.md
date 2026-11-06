@@ -6,7 +6,7 @@ A single simulation top, `modular_sim_top` (`src/simulation/modular/`), builds t
 
 The top also wires, through generics, optional board peripherals (switches, buttons, displays and the two UARTs) that the [ten platforms](dez-plataformas.md) use; without them the peripheral window has only the CLINT and the external controller, when the interrupts are on.
 
-Every combination has the BOOT_ROM, the boot memory that leaves the CPU in a known state, and the ROM always starts right after it.
+Every combination has the BOOT_MEMORY, the boot memory that leaves the CPU in a known state, and the ROM always starts right after it.
 
 ## 2. The choices and the architectures
 
@@ -76,16 +76,16 @@ Both simulated chips serve word requests without a cache. The FLASH and the SDRA
 
 ## 4. Memory map
 
-The map comes from generics and holds for the core and for the top. The default value of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses, to the `memory_map.h` header of the runtime, to the linker specs file and to the linker script of the BOOT_ROM (`make generate`, and `make generate-check` verifies it in CI). The values are those of the ACT4 simulation. The package also carries the `HAS_*` of the platform (`HAS_E` among them), which are the default of the `has_*` generics, plus `BOOT_ROM_BITS` (12) and `ROM_STORAGE_BYTES` (1048576). The default choice is the `memory` section of `platform.yaml` (both memories in the core, no cache), which yields `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` and `HAS_DCACHE`; `--memory` of `riscv-tools` replaces it for one run, and each test overrides it through the parameters of `tests.json`. The checks of `riscv-tools check-memory-map` (`checks` of `platform.yaml`) cover the hand-written copy of the RAM base in the tests and the platform header of the test repository. `HAS_ZIMOP` and `HAS_ZICOND` come from the package, turned on by the `extras` field of `platform.yaml`.
+The map comes from generics and holds for the core and for the top. The default value of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses, to the `memory_map.h` header of the runtime, to the linker specs file and to the linker script of the BOOT_MEMORY (`make generate`, and `make generate-check` verifies it in CI). The values are those of the ACT4 simulation. The package also carries the `HAS_*` of the platform (`HAS_E` among them), which are the default of the `has_*` generics, plus `BOOT_MEMORY_BITS` (12) and `ROM_STORAGE_BYTES` (1048576). The default choice is the `memory` section of `platform.yaml` (both memories in the core, no cache), which yields `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` and `HAS_DCACHE`; `--memory` of `riscv-tools` replaces it for one run, and each test overrides it through the parameters of `tests.json`. The checks of `riscv-tools check-memory-map` (`checks` of `platform.yaml`) cover the hand-written copy of the RAM base in the tests and the platform header of the test repository. `HAS_ZIMOP` and `HAS_ZICOND` come from the package, turned on by the `extras` field of `platform.yaml`.
 
 | Region | Start | End | Generics |
 | :--- | :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000` | `0x00001000` | `boot_rom_size_bytes` |
-| ROM | right after the BOOT_ROM, `0x00001000` | `0x00100000` | `rom_end_kib` |
+| BOOT_MEMORY | `0x00000000` | `0x00001000` | `boot_memory_size_bytes` |
+| ROM | right after the BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | External window and peripherals | `0x80000000` | | `ext_base_kib`, `periph_base_kib` |
 
-The limits are in KiB. The words that the host and the program share (the standard output, `tohost` and `fromhost`) sit at the top of the RAM, in the last 4 KiB page, which the caches bypass. The BOOT_ROM clears those words and jumps to the start of the ROM.
+The limits are in KiB. The words that the host and the program share (the standard output, `tohost` and `fromhost`) sit at the top of the RAM, in the last 4 KiB page, which the caches bypass. The BOOT_MEMORY clears those words and jumps to the start of the ROM.
 
 ## 5. Sizes
 
@@ -93,7 +93,7 @@ Every size is a power of two, checked at elaboration time by the `log2_exact` of
 
 | Generic | Unit | Default |
 | :--- | :--- | :--- |
-| `boot_rom_size_bytes` | bytes | 4096, multiple of 1 KiB |
+| `boot_memory_size_bytes` | bytes | 4096, multiple of 1 KiB |
 | `rom_size_bytes` | bytes | 1048576 (1 MB) |
 | `ram_size_bytes` | bytes | 1048576 (1 MB) |
 | `icache_size_bits` | bits | 4096 (4 kbit) |
@@ -103,7 +103,7 @@ The `flash_first_latency`, `flash_next_latency` and `ext_ram_latency` generics g
 
 ## 6. How to use
 
-The images enter through the `boot_rom_file`, `rom_file` and `ram_file` generics, one 32-bit word per line in hexadecimal.
+The images enter through the `boot_memory_file`, `rom_file` and `ram_file` generics, one 32-bit word per line in hexadecimal.
 
 | Port | Use |
 | :--- | :--- |
@@ -115,7 +115,7 @@ GHDL allocates the memory arrays on the stack, so simulating 1 MB memories needs
 
 ## 7. Programs of the test repositories
 
-`src/simulation/modular/config.yaml` takes the platform to `riscv-tools`: the runtime (`boot_rom.S`, `_exit.c`, `stdio.c`, `spike_exit.S`), the linker script and the specs file generated from the map, the cocotb testbench and the list of VHDL sources. Nothing of the map is written in it. The profile and the memories of a run come from the command line, without changing any versioned file.
+`src/simulation/modular/config.yaml` takes the platform to `riscv-tools`: the runtime (`boot_memory.S`, `_exit.c`, `stdio.c`, `spike_exit.S`), the linker script and the specs file generated from the map, the cocotb testbench and the list of VHDL sources. Nothing of the map is written in it. The profile and the memories of a run come from the command line, without changing any versioned file.
 
 ```bash
 ulimit -s unlimited
@@ -130,7 +130,7 @@ The command writes, in the test repository, `config.generated.yaml` with the `RO
 
 | Item | Behavior on the modular platform |
 | :--- | :--- |
-| BOOT_ROM | Clears the standard-output header, `tohost` and `fromhost` and jumps to the ROM; it does not run `fence.i`, because the simulation starts from empty caches |
+| BOOT_MEMORY | Clears the standard-output header, `tohost` and `fromhost` and jumps to the ROM; it does not run `fence.i`, because the simulation starts from empty caches |
 | Standard output | Linear 1 KiB buffer at the top of the RAM |
 | UART and display | No peripheral wired: the `uart-echo`, `uart-tx` and `uart-errors` programs do not apply |
 | Testbench | Watches the bus of the RAM of the core and the external bus at the same time, detects the `tohost` write and, in tests with a `golden.json`, checks the RAM rebuilt from the writes |

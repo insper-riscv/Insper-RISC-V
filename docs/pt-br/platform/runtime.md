@@ -38,7 +38,7 @@ crt0-hosted%O%s
 | :--- | :--- |
 | `__flash`, `__flash_size` | Onde o `picolibc.ld` põe `.init`, `.text` e `.rodata` (a FLASH, de `0x1000`, 28 KB) |
 | `__ram`, `__ram_size` | Onde ele põe `.data`, `.bss`, o heap e a pilha (a RAM, de `0x8000`). Os 1056 bytes do topo ficam de fora: 24 do `tohost`, do `fromhost` e de 8 livres, 1032 do `stdout` (seção 5) |
-| `rv32_wait_restart=0x100` | O endereço fixo da rotina da BOOT_ROM em que todo teste termina. Sai do link quando se compila com `-DRV32_SPIKE` (seção 6) |
+| `rv32_wait_restart=0x100` | O endereço fixo da rotina da BOOT_MEMORY em que todo teste termina. Sai do link quando se compila com `-DRV32_SPIKE` (seção 6) |
 | `crt0-hosted` | O startup da picolibc: ajusta `sp` e `gp`, copia `.data` da FLASH, zera `.bss`, prepara o TLS, roda construtores, chama `main` e chama `exit` com o que `main` retornou |
 
 Fora do `riscv-tools`, o mesmo arquivo serve a qualquer compilação:
@@ -71,13 +71,13 @@ Em `src/simulation/internal-mem/runtime/`:
 
 | Arquivo | Papel |
 | :--- | :--- |
-| `boot_rom.S`, `boot_rom.ld` | A BOOT_ROM, gravada uma vez: limpa as palavras compartilhadas, pula para `0x1000` (`RV32_BOOT_ENTRY`) e guarda o `rv32_wait_restart` em `0x100` (ver [boot.md](boot.md)) |
-| `memory_map.h` | Gerado do `platform.yaml`: os endereços do `tohost`, do `fromhost`, do `stdout`, da UART e da entrada do boot (`RV32_BOOT_ENTRY`, `0x1000`), que a BOOT_ROM, o `_exit.c`, o `stdio.c` e o `spike_exit.S` incluem |
+| `boot_memory.S`, `boot_memory.ld` | A BOOT_MEMORY, gravada uma vez: limpa as palavras compartilhadas, pula para `0x1000` (`RV32_BOOT_ENTRY`) e guarda o `rv32_wait_restart` em `0x100` (ver [boot.md](boot.md)) |
+| `memory_map.h` | Gerado do `platform.yaml`: os endereços do `tohost`, do `fromhost`, do `stdout`, da UART e da entrada do boot (`RV32_BOOT_ENTRY`, `0x1000`), que a BOOT_MEMORY, o `_exit.c`, o `stdio.c` e o `spike_exit.S` incluem |
 | `_exit.c` | O `_exit` em que o `crt0` termina: código 0 é PASS (`tohost` `1`), qualquer outro é FAIL (`tohost` `(código << 1) | 1`); depois salta para o `rv32_wait_restart` |
 | `stdio.c` | A função de escrita do `stdout` (seção 5) |
 | `spike_exit.S` | O substituto do `rv32_wait_restart` para o ELF do Spike (seção 6) |
 
-No `config.yaml`: `toolchain.specs` aponta para o `rv32im-fpga.specs`, `paths.sources` lista `_exit.c` e `stdio.c` (compilados em todo teste), `paths.boot_rom` e `paths.boot_rom_linker_script` apontam para a BOOT_ROM, e `emulator.sources` e `emulator.gcc_flags` montam o ELF do Spike.
+No `config.yaml`: `toolchain.specs` aponta para o `rv32im-fpga.specs`, `paths.sources` lista `_exit.c` e `stdio.c` (compilados em todo teste), `paths.boot_memory` e `paths.boot_memory_linker_script` apontam para a BOOT_MEMORY, e `emulator.sources` e `emulator.gcc_flags` montam o ELF do Spike.
 
 ## 5. Saída de dados (`stdout`)
 
@@ -89,13 +89,13 @@ O core não tem nenhuma saída externa. O `stdout` (e `stderr`) é um buffer de 
 | `0x0002FBE4` | `truncated`: 1 quando algum byte não coube |
 | `0x0002FBE8` | `data`: 1024 bytes |
 
-O buffer é linear: quando enche, a escrita para e `truncated` fica em 1. A BOOT_ROM zera o cabeçalho a cada início. Não há entrada: a leitura devolve fim de arquivo. `printf`, `puts` e `putchar` funcionam sem alteração no código C; o teste `c/stdout-printf` confere o conteúdo e o `c/stdout-truncate` confere o estouro. O host lê essa região com o `dump-ram`, no endereço `0x27BE0` relativo ao início da RAM.
+O buffer é linear: quando enche, a escrita para e `truncated` fica em 1. A BOOT_MEMORY zera o cabeçalho a cada início. Não há entrada: a leitura devolve fim de arquivo. `printf`, `puts` e `putchar` funcionam sem alteração no código C; o teste `c/stdout-printf` confere o conteúdo e o `c/stdout-truncate` confere o estouro. O host lê essa região com o `dump-ram`, no endereço `0x27BE0` relativo ao início da RAM.
 
 O `printf` completo (com suporte a `double`) custa cerca de 12 KB dos 28 KB da FLASH.
 
 ## 6. O Spike
 
-O programa de um teste termina no `rv32_wait_restart`, que no hardware é código da BOOT_ROM, num endereço fixo, e a imagem do teste não tem nada lá. Para o Spike, o ELF é montado à parte, com `-DRV32_SPIKE` (que tira o endereço fixo do link) e com `src/simulation/internal-mem/runtime/spike_exit.S`, que define o `rv32_wait_restart` como código comum (uma espera, já que o teste escreveu o `tohost`, onde o Spike para). `tohost` e `fromhost` são símbolos absolutos nas palavras reservadas do topo da RAM, então o arquivo não ocupa espaço e todo endereço do ELF do Spike, e portanto de um golden, é o da imagem que o hardware carrega.
+O programa de um teste termina no `rv32_wait_restart`, que no hardware é código da BOOT_MEMORY, num endereço fixo, e a imagem do teste não tem nada lá. Para o Spike, o ELF é montado à parte, com `-DRV32_SPIKE` (que tira o endereço fixo do link) e com `src/simulation/internal-mem/runtime/spike_exit.S`, que define o `rv32_wait_restart` como código comum (uma espera, já que o teste escreveu o `tohost`, onde o Spike para). `tohost` e `fromhost` são símbolos absolutos nas palavras reservadas do topo da RAM, então o arquivo não ocupa espaço e todo endereço do ELF do Spike, e portanto de um golden, é o da imagem que o hardware carrega.
 
 ## 7. Limites conhecidos
 

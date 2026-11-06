@@ -36,11 +36,11 @@
 
 | Path | Platform |
 | :--- | :--- |
-| `src/simulation/internal-mem/` | Simulation-only platform, with BOOT_ROM, FLASH and RAM inside the FPGA and the `rv32i3stage_core_sim_test` simulation top. It is the base of the pipeline entity tests |
+| `src/simulation/internal-mem/` | Simulation-only platform, with BOOT_MEMORY, FLASH and RAM inside the FPGA and the `rv32i3stage_core_sim_test` simulation top. It is the base of the pipeline entity tests |
 | `src/simulation/modular/` | Configurable simulation top, with the ROM and the RAM inside or outside the chip and the instruction and data caches present or not, in the 16 combinations, 1 MB FLASH and RAM and 4 kbit caches by default. It runs the programs of the Tests repository and is the base of the ACT4 simulation |
 | `src/simulation/template/` | Minimal model platform (internal RAM and ROM, optional UART over JTAG, `rv32i` profile), the starting point of the new architecture guide |
-| `src/cyclone-v/external-data/` | The DE0-CV board platform with the BOOT_ROM and the two-port FLASH inside the FPGA (a single copy, rewritten over JTAG) and the SDRAM behind the data cache, plus a JTAG UART and a display. The Quartus top is `external-data_top.vhd` and the simulation top is `rv32im_external_data_sim_test` |
-| `src/cyclone-v/de0-cv/` | The DE0-CV board platform, with the BOOT_ROM in the core and the FLASH and the SDRAM behind the caches, plus a JTAG UART and a display. The Quartus top is `de0-cv_top.vhd` and the simulation top is `rv32im_sdram_flash_sim_test` |
+| `src/cyclone-v/external-data/` | The DE0-CV board platform with the BOOT_MEMORY and the two-port FLASH inside the FPGA (a single copy, rewritten over JTAG) and the SDRAM behind the data cache, plus a JTAG UART and a display. The Quartus top is `external-data_top.vhd` and the simulation top is `rv32im_external_data_sim_test` |
+| `src/cyclone-v/de0-cv/` | The DE0-CV board platform, with the BOOT_MEMORY in the core and the FLASH and the SDRAM behind the caches, plus a JTAG UART and a display. The Quartus top is `de0-cv_top.vhd` and the simulation top is `rv32im_sdram_flash_sim_test` |
 
 Every platform has the `platform.yaml` and the `runtime/`. The `internal-mem` platform separates the Quartus project in `quartus/` and its own modules in `rtl/`, the `template` has only `rtl/`, the `modular` has only the simulation top and the map package, and the board platforms (`de0-cv` and `external-data`) keep the Quartus project, the top and the synthesis and programming scripts in the folder itself.
 
@@ -51,7 +51,7 @@ Every platform has the `platform.yaml` and the `runtime/`. The `internal-mem` pl
 | `quartus/`, or the folder itself on the board platforms | The Quartus project (`.qpf`, `.qsf`, `.sdc`, hardware top, `.mif` images and the `<platform>_synth.tcl` and `<platform>_program.sh` scripts) |
 | `pll/` | The PLL IP |
 | `rtl/` | The simulation top and the modules of the platform |
-| `runtime/` | `rv32im-fpga.specs`, `boot_rom.S`, `boot_rom.ld`, `_exit.c`, `stdio.c` and `spike_exit.S` |
+| `runtime/` | `rv32im-fpga.specs`, `boot_memory.S`, `boot_memory.ld`, `_exit.c`, `stdio.c` and `spike_exit.S` |
 | `testbench/` | `test_c_program.py`, the cocotb testbench that decides PASS or FAIL of a program (`internal-mem` and `de0-cv`) |
 
 The per-entity tests of the platform RTL are in `tests/python/`, with the `tests.json` catalog that drives them.
