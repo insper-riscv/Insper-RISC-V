@@ -191,9 +191,8 @@ async def access(
         check_true(clocks < TIMEOUT, "the access never completed")
     dut.i_mem_advance.value = 1
     await post_edge(dut)
-    dut.i_mem_advance.value = 0
-    dut.i_rden.value = 0
-    dut.i_wren.value = 0
+    for name in ("i_mem_advance", "i_rden", "i_wren"):
+        getattr(dut, name).value = 0
     return int(dut.o_rdata.value), clocks
 
 
