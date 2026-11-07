@@ -114,11 +114,11 @@ package mkr_vidor_4000_map_pkg is
 	constant PLIC_ID   : natural := 7;
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
-	constant CLOCK_HZ          : positive := 48000000;
+	constant CLOCK_HZ          : positive := 50000000;
 	-- Frequência com que o mtime do CLINT conta, em Hz; é independente do CSR time.
 	constant MTIME_HZ          : positive := 1000000;
 	-- Ciclos de clock por incremento do mtime (tick_cycles do CLINT).
-	constant CLINT_TICK_CYCLES : positive := 48;
+	constant CLINT_TICK_CYCLES : positive := 50;
 
 	-- Número de fontes do PLIC (o maior identificador de fonte).
 	constant PLIC_N_SOURCES     : positive := 6;
@@ -130,5 +130,10 @@ package mkr_vidor_4000_map_pkg is
 	constant IRQ_UART_JTAG : positive := 2;
 	-- Identificador da fonte FLASH no PLIC.
 	constant IRQ_FLASH : positive := 6;
+
+	-- Frequência do clock do controlador da SDRAM, em Hz.
+	constant SDRAM_CLOCK_HZ : positive := 100000000;
+	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
+	constant SDRAM_TCK_PS   : positive := 10000;
 
 end package mkr_vidor_4000_map_pkg;

@@ -24,8 +24,8 @@ memory:
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 clocks:
-  core: {mhz: 48, phase_ps: 0}
-  mem:  {mhz: 96}
+  core: {mhz: 50, phase_ps: 8250}
+  mem:  {mhz: 100}
 console: jtag
 io: {}
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
@@ -38,7 +38,7 @@ peripherals:
   - {name: CLINT,   base: 0xE0000000, id: 6}
   - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
 interrupts:
-  clock_hz: 48000000
+  clock_hz: 50000000
   mtime_hz: 1000000
   plic: {priority_bits: 3}
   sources:
