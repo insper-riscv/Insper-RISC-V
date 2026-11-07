@@ -60,7 +60,7 @@ sdram:
 # and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
 # crossings (docs/pt-br/platform/timing/MARCOS.md).
 pll:
-  core_phase_ps: 8250
+  core_phase_ps: 7500
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
 extras: [Zimop, Zicond]
