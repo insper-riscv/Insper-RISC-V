@@ -207,6 +207,12 @@ provides:
     requires: []
     sources:
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  # The on-chip RAM backend of the calibration tops: the port of the Memory (synthesizable) without the chip model of the same
+  # component, which has protected types and is for simulation only.
+  cal_onchip_ram:
+    requires: [Common-Components/utils, Memory/latency_counter, Memory/ram_cyclone_v]
+    sources:
+      - Memory/src/RAM/SoC/onchip_ram_port.vhd
   cal_de2_115_map:
     requires: []
     sources:
@@ -223,6 +229,10 @@ provides:
     requires: []
     sources:
       - boards/calibration/platforms/de0-nano/de0_nano_map_pkg.vhd
+  cal_de0_cv_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/de0-cv/de0_cv_map_pkg.vhd
   cal_de10_nano_map:
     requires: []
     sources:
