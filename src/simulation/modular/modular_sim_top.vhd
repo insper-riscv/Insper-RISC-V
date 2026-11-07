@@ -85,6 +85,8 @@ entity modular_sim_top is
     icache_size_bits    : positive := 4096;
     -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
     dcache_size_bits    : positive := 4096;
+    -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+    cache_window_bits   : natural range 26 to 29 := 26;
     -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
     flash_first_latency : natural := 24;
     -- Bordas entre as palavras seguintes da mesma linha do chip de FLASH.
@@ -360,6 +362,7 @@ begin
       has_dcache          => has_dcache,
       icache_size_bits    => icache_size_bits,
       dcache_size_bits    => dcache_size_bits,
+      cache_window_bits   => cache_window_bits,
       has_zicsr           => has_zicsr,
       has_zicntr          => has_zicntr,
       has_zihpm           => has_zihpm,
