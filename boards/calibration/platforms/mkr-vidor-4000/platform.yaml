@@ -1,7 +1,7 @@
 # Plataforma de calibração da família cyclone-10-lp na Arduino MKR Vidor 4000 (10CL016YU256C8G). Esquema: docs/pt-br/boards/formato.md.
 # Só o `quartus_map` lê este arquivo: a lista de perfis (`../../profiles/cyclone-10-lp.yaml`) troca o perfil, os extras e as caches, e o
 # harness do Tools (`riscv-tools calibrate run`) regera o pacote do mapa de memória e o projeto da placa a cada perfil.
-# O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a SDRAM de 16 bits.
+# O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a RAM emulada em blocos (o controlador de SDRAM do Memory tem endereço de linha de 13 bits e a SDRAM da placa tem 12).
 platform: mkr-vidor-4000
 board: auto
 boards: [mkr-vidor-4000]
@@ -10,17 +10,17 @@ profiles: ../../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,       base: 0x00001000, size: 28K,  kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 8M, kind: ram}
+  - {name: RAM,         base: 0x40000000, size: 64K, kind: ram}
 reserved:
-  stdout:   {base: 0x407FFBE0, size: 1K+8}
-  tohost:   {base: 0x407FFFE8, size: 8}
-  fromhost: {base: 0x407FFFF0, size: 8}
+  stdout:   {base: 0x4000FBE0, size: 1K+8}
+  tohost:   {base: 0x4000FFE8, size: 8}
+  fromhost: {base: 0x4000FFF0, size: 8}
 boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 memory:
   rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
-  ram:    {external: true, backend: dispositivo, device: sdram}
+  ram:    {external: true, backend: emulado}
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 clocks:

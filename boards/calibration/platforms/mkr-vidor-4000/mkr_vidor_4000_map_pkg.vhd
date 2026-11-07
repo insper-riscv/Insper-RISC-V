@@ -58,14 +58,14 @@ package mkr_vidor_4000_map_pkg is
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1056768;
+	constant RAM_END_KIB         : natural  := 1048640;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
-	constant RAM_STORAGE_BYTES   : positive := 8388608;
+	constant RAM_STORAGE_BYTES   : positive := 65536;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"407FF";
+		x"4000F";
 	-- A RAM fica fora do núcleo.
 	constant RAM_EXTERNAL        : boolean  := true;
 	-- Base da janela externa, em KiB; dali em diante é externo.
