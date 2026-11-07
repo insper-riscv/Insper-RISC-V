@@ -18,9 +18,9 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: 10M50DAF484C7G
 measured_on: '2026-11-07'
-sources_hash: a31f0fe97b24d890929411b736a632e6a035e07201f2fc34f7cbd2db1cd8f05e
+sources_hash: 0d60d3a16ee5905a0ef7f6bed00fa37dab6af78e2e7b997cab7095bc4d380c54
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: a2153085172a1e317cac5bc823901ae822d8055f
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
   Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
   Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
@@ -32,8 +32,8 @@ command:
 - compile.tcl
 - de10_lite_de10_lite
 - '5'
-- map
-elapsed_s: 53
+- fit
+elapsed_s: 147
 result:
   logic: 19662
   registers: 8817
@@ -122,3 +122,10 @@ entities:
   luts: 2
   registers: 0
   memory_bits: 0
+fit_result:
+  logic: 17865
+  registers: 8766
+  ram_bits: 368896
+  multipliers: 0
+  plls: 1
+  pins: 93

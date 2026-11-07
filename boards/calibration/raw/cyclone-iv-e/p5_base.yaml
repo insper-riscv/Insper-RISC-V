@@ -12,9 +12,9 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: EP4CE115F29C7
 measured_on: '2026-11-07'
-sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+sources_hash: e385cf8b444d42e27ef35884556d27797038b51be4736986e31198f88481c417
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: a2153085172a1e317cac5bc823901ae822d8055f
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
   Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
   Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
@@ -38,8 +38,8 @@ command:
 - compile.tcl
 - de2_115_de2_115
 - '5'
-- map
-elapsed_s: 52
+- fit
+elapsed_s: 144
 result:
   logic: 17869
   registers: 8297
@@ -108,3 +108,10 @@ entities:
   luts: 2
   registers: 0
   memory_bits: 0
+fit_result:
+  logic: 15290
+  registers: 8297
+  ram_bits: 893184
+  multipliers: 0
+  plls: 1
+  pins: 76

@@ -14,7 +14,7 @@ device: 10CL016YU256C8G
 measured_on: '2026-11-07'
 sources_hash: f66005a83adc601902b13718fd9ced0b0d5bc920f46a74c5f5a47b894aa0938d
 revisions:
-  .: 7262f9e4a5684b91e1d980ed435f004a78bb56f2
+  .: a2153085172a1e317cac5bc823901ae822d8055f
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
   Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
   Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
@@ -38,8 +38,8 @@ command:
 - compile.tcl
 - mkr_vidor_4000_mkr_vidor_4000
 - '5'
-- map
-elapsed_s: 38
+- fit
+elapsed_s: 84
 result:
   logic: 10959
   registers: 5069
@@ -108,3 +108,10 @@ entities:
   luts: 2
   registers: 0
   memory_bits: 0
+fit_result:
+  logic: 9281
+  registers: 5069
+  ram_bits: 303360
+  multipliers: 0
+  plls: 1
+  pins: 2

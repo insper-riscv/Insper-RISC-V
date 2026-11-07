@@ -5,7 +5,7 @@ unit_basis: quartus_map estimate
 fitted_on:
 - profile: p1_rv32i
   seed: 5
-  sources_hash: a1cc45154cbf3b216cd6ed97c7113bda1ad60a75bb0a96c1ee37f4973ed8d31f
+  sources_hash: 6a12d61e698b4ad81426cfee00cac5f4f6b8e2b6e76b22813fa865bb20067ff8
 - profile: p1_rv32e
   seed: 5
   sources_hash: d5daf7a4a118a6f13129e7bf3eab5240b9642c6fbd05547237787377e3f26d66
@@ -23,7 +23,7 @@ fitted_on:
   sources_hash: 8568a764af14dc521303f58566b3ea594892403e58caf77813558002cf7fe578
 - profile: p3_zicntr_zifencei
   seed: 5
-  sources_hash: 62fea75801fbe5f6e24e3bb7cf480d5bd548b7fe003d232b08328d087088b4f8
+  sources_hash: 6dfd0389343dc16ddad8b00c75e09a836b07e2bf6eaa35e0b39f27271cf978c4
 - profile: p3_zicclsm_zicntr_zifencei
   seed: 5
   sources_hash: 90ea79a3025d833f1c86ac7c848f42c418d54c004422091c4ddfd3850f49070d
@@ -44,7 +44,7 @@ fitted_on:
   sources_hash: e1ddfc1be04d6dcf2883f8475e9e28f26e96fff52d1543ae6720971ba7ba3649
 - profile: p5_base
   seed: 5
-  sources_hash: e1ddfc1be04d6dcf2883f8475e9e28f26e96fff52d1543ae6720971ba7ba3649
+  sources_hash: 27fb28a45c4bd1752ac4bcd54ad2c3e0fa34e3acdcf2752b2bd47efd013bd31e
 - profile: p6_zimop
   seed: 5
   sources_hash: 4abd0de85b0745de38cd41ccfb1d11373d9c4fa8452ffa30f68a41120e2f222f
@@ -139,8 +139,16 @@ error:
   - p5_full
   - p7_ic64
   - p7_dc64
-  map_to_fit_ratio: null
-known_fit_check: null
+  map_to_fit_ratio: 0.88
+known_fit_check:
+  profiles:
+    p1_rv32i: 0.8371
+    p3_zicntr_zifencei: 0.8687
+    p5_base: 0.9058
+    p5_full: 0.9086
+  ratio_low: 0.8371
+  ratio_high: 0.9086
+  ratio_mid: 0.88
 fmax:
   core_mhz_by_grade:
     C7: null
