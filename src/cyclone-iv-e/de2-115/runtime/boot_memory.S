@@ -21,6 +21,11 @@
  *    executes fence.i (no line of the previous program, in either cache, can
  *    hide the FLASH the host has just written) and goes to bank_select.
  *
+ *  - RAM entry: if the word at RV32_RAM_END - 8 holds 'RAMB' (0x52414D42), the
+ *    host has left a program in the SDRAM through the debug port and the word at
+ *    RV32_RAM_END - 4 is its entry. The magic is cleared and the program runs
+ *    (once); this is how the NOR programmer reaches a board whose FLASH is empty.
+ *
  *  - bank_select: checks the magic, the header CRC, the size and the payload
  *    CRC-32 of each bank. It jumps to the entry (base + header size) of the
  *    valid bank with the larger version, A on a tie; a bank that does not
@@ -55,6 +60,7 @@
 #include "flash_banks.h"
 
 #define CRC_POLY 0xEDB88320
+#define RV32_RAM_BOOT_MAGIC 0x52414D42   // 'RAMB'
 
     .section .text.reset
     .global _reset
@@ -68,7 +74,13 @@ _reset:
     sw   x0, 0(t0)               // length
     sw   x0, 4(t0)               // truncated
     .word 0x0000100F             // fence.i (the boot memory is assembled for rv32i): drop the lines of the previous program
-    j    bank_select
+    li   t0, RV32_RAM_END        // RAM entry: the host left a program in the SDRAM (magic and entry in the last 8 bytes)
+    lw   t1, -8(t0)
+    li   t2, RV32_RAM_BOOT_MAGIC
+    bne  t1, t2, bank_select
+    lw   t3, -4(t0)
+    sw   x0, -8(t0)              // once: the next restart goes back to the FLASH
+    jr   t3
 
     /* The test has already written tohost (1 = pass, (code << 1) | 1 = fail,
      * see rv32_test.h). The core parks here until the host has written a new

@@ -17,6 +17,8 @@ paths:
     - src/cyclone-iv-e/de2-115/runtime/stdio.c
   boot_memory: src/cyclone-iv-e/de2-115/runtime/boot_memory.S
   boot_memory_linker_script: src/cyclone-iv-e/de2-115/runtime/boot_memory.ld
+  # The program the host leaves in the SDRAM to write a bank of the NOR chip (riscv-tools nor_program).
+  nor_programmer: src/cyclone-iv-e/de2-115/runtime/nor_programmer.c
 
 emulator:
   sources:
@@ -36,5 +38,6 @@ quartus:
   ram_backend: sdram_debug
   sdram_debug_instance: 3
   rom_mem_instances: []
-  rom_write_method: jtag_loader
+  # The NOR has no loader: a program in the SDRAM writes the bank (the boot memory starts it through its RAM entry).
+  rom_write_method: nor_program
   display_digits: 8
