@@ -3035,5 +3035,29 @@
             "rom_file": "tests/python/unittests/rtl/data/platforms/fpga-uart-pins/uart_program.hex",
             "has_uart_pins": true
         }
+    },
+    "ModularInternalCachesWindow128": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "has_icache": true,
+            "has_dcache": true,
+            "cache_window_bits": 27
+        }
+    },
+    "ModularBridgeDcacheWindow128": {
+        "extends": "ModularIntegrated",
+        "test_module": "tests.python.unittests.rtl.modular_external",
+        "parameters": {
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex",
+            "rom_external": true,
+            "has_icache": false,
+            "ram_external": true,
+            "has_dcache": true,
+            "cache_window_bits": 27
+        }
     }
 }
