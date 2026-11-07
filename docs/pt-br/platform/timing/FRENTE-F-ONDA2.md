@@ -84,6 +84,135 @@ O passo F.P6c (`Core/docs/pt-br/timing/P6_LEITURA_REGISTRADA_DO_ZIHPM.md`) tira 
 
 O M3 continua aberto: o pior caminho do núcleo a 83,333 MHz passa a ser o da tag da cache de instruções até o PC (4,0 a 4,2 ns de dados mais 2,4 ns de defasagem do relógio da RAM), seguido pelo contador do Zihpm somando a si mesmo e pela confirmação da instrução (`r_we_ok`) que chega aos contadores, ao PC e à classificação do endereço. O custo do passo é um ciclo por instrução CSR que acessa o banco do Zihpm.
 
+## 8. Os 100 MHz: cinco sementes, o gap e o ganho de cada passo
+
+### 8.1. Condições
+
+Árvore Insper-RISC-V `8e05f01` (Core `9deecac`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), medida com o RTL anterior às duas últimas alterações da tabela 8.4, com o controlador da SDRAM e o `DRAM_CLK` em 100 MHz da frente F.P6, núcleo e busca em 100 MHz, fase do núcleo 6000 ps, `HIGH PERFORMANCE EFFORT`, sementes 1 a 5, modelo lento a 85 °C. A fase de 5000 ps dá resultado idêntico no domínio do núcleo (o fitter não muda o posicionamento porque os pares entre os relógios de busca e núcleo têm folga).
+
+| Semente | Núcleo (ns) | Dados do pior caminho (ns) | Busca | Controlador da SDRAM (ns) | `DRAM_CLK` (ns) | ALMs |
+| ---: | ---: | ---: | :--- | ---: | ---: | ---: |
+| 1 | -1,418 | 11,3 | folga positiva | +2,048 | +1,156 | 10 905 |
+| 2 | -1,647 | 11,4 | folga positiva | +2,099 | +0,670 | 10 916 |
+| 3 | -1,220 | 11,1 | folga positiva | +1,792 | +0,660 | 10 887 |
+| 4 | -2,300 | 12,1 | folga positiva | +1,214 | +1,200 | 10 890 |
+| 5 | -1,687 | 11,5 | folga positiva | +1,587 | +1,116 | 10 885 |
+| Pior | -2,300 | 12,1 | | +1,214 | +0,660 | 10 916 |
+
+O gap real para os 100 MHz é a pior folga do núcleo: faltam 2,30 ns na pior semente e 1,22 ns na melhor. Os pares com o relógio de busca fecham em todas as sementes, assim como o controlador da SDRAM e o `DRAM_CLK`.
+
+### 8.2. Caminhos acima de 10 ns de dados
+
+Os destinos do núcleo cujo pior caminho passa de 10 ns de dados são 906 na semente 4 e 476 na semente 1 (de 20 000 destinos analisados), concentrados em:
+
+| Módulo de destino | Semente 4 | Semente 1 |
+| :--- | ---: | ---: |
+| `ID/EX` | 212 | 170 |
+| Banco do Zihpm | 178 | 37 |
+| `csr_file` | 122 | 32 |
+| `EX/MEM` | 121 | 111 |
+| `IF/ID` | 97 | 70 |
+| `dcache` | 40 | 36 |
+
+### 8.3. Lista por níveis de lógica (semente 4)
+
+| Níveis | Dados (ns) | Folga (ns) | Endpoints | Origem | Destino |
+| ---: | ---: | ---: | ---: | :--- | :--- |
+| 10 | 11.73 | -1.969 | 1 | `u_reg_mem_wb/r_we_ok` | `u_reg_ex_mem/r_same` |
+| 10 | 10.15 | -0.362 | 32 | `u_reg_ex_mem/r_in_main` | `INTERCONNECT/pending[#]` |
+| 9 | 12.08 | -2.300 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_rs2_val[#]` |
+| 9 | 11.79 | -2.019 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_alu_out[#]` |
+| 9 | 11.76 | -1.995 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_rs1_val[#]` |
+| 9 | 11.73 | -1.943 | 3 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_ext_ram_op[#]` |
+| 9 | 11.69 | -1.930 | 43 | `plic:\PLIC/priorities[#]` | `counter#:\u_minstret/generic_register:\u_hi/o_d[#]` |
+| 9 | 11.68 | -1.895 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_valid` |
+| 9 | 11.68 | -1.895 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_we_ram` |
+| 9 | 11.63 | -1.856 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_pc[#]` |
+| 9 | 11.62 | -1.846 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_re_ram` |
+| 9 | 11.62 | -1.846 | 3 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_funct#[#]` |
+| 9 | 11.62 | -1.846 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_en_ram` |
+| 9 | 11.59 | -1.815 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_store_data[#]` |
+| 9 | 11.58 | -1.806 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_ok_wr` |
+| 9 | 11.57 | -1.800 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_pc#[#]` |
+| 9 | 11.53 | -1.795 | 32 | `u_reg_ex_mem/r_in_main` | `DCACHE/pend[#]` |
+| 9 | 11.53 | -1.790 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_is_csr` |
+| 9 | 11.56 | -1.781 | 4 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_byte_mask[#]` |
+| 9 | 11.56 | -1.781 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_imm[#]` |
+| 9 | 11.49 | -1.756 | 32 | `plic:\PLIC/priorities[#]` | `u_reg_if_id/r_pc[#]` |
+| 9 | 11.46 | -1.737 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_illegal` |
+| 9 | 11.47 | -1.735 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_is_muldiv` |
+| 9 | 11.47 | -1.734 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_wb_sel[#]` |
+| 9 | 11.47 | -1.729 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_sel_pc4_alu` |
+| 9 | 11.41 | -1.664 | 3 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_funct#[#]` |
+| 9 | 11.39 | -1.652 | 30 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_pc[#]` |
+| 9 | 11.39 | -1.649 | 5 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_rd[#]` |
+| 9 | 11.41 | -1.634 | 1 | `plic:\PLIC/priorities[#]` | `u_reg_ex_mem/r_in_main` |
+| 9 | 11.37 | -1.626 | 8 | `plic:\PLIC/priorities[#]` | `u_reg_id_ex/r_alu_sel[#]` |
+
+| Domínio | Módulo de destino | Endpoints | >= 6 níveis | >= 8 níveis | >= 10 níveis | Máx. de níveis | Máx. de atraso (ns) |
+| :--- | :--- | ---: | ---: | ---: | ---: | ---: | ---: |
+| c3 | EX/MEM | 121 | 121 | 121 | 1 | 10 | 11.79 |
+| c3 | ext_interconnect INT | 66 | 34 | 32 | 1 | 10 | 10.49 |
+| c3 | Zihpm banco | 4079 | 278 | 165 | 0 | 9 | 11.34 |
+| c3 | dcache | 740 | 322 | 61 | 0 | 9 | 12.20 |
+| c3 | csr_file | 718 | 222 | 124 | 0 | 9 | 11.69 |
+| c3 | PC | 393 | 74 | 13 | 0 | 9 | 11.16 |
+| c3 | ID/EX | 214 | 214 | 214 | 0 | 9 | 12.08 |
+| c3 | clint g_irq CLINT | 155 | 152 | 2 | 0 | 9 | 10.26 |
+| c3 | IF/ID | 97 | 97 | 97 | 0 | 9 | 11.49 |
+| c3 | IF | 1 | 1 | 1 | 0 | 9 | 11.14 |
+| c3 | EX | 465 | 284 | 1 | 0 | 8 | 10.47 |
+| c3 | generic_register u_w | 91 | 66 | 8 | 0 | 8 | 10.95 |
+| c3 | plic g_irq PLIC | 31 | 25 | 3 | 0 | 8 | 9.56 |
+| c3 | seg_display_shell DI | 25 | 25 | 12 | 0 | 8 | 9.26 |
+| c3 | trap_seen | 1 | 1 | 1 | 0 | 8 | 10.72 |
+| c3 | jtag_uart_shell JTAG | 608 | 497 | 0 | 0 | 7 | 9.95 |
+| c3 | flash_cmd_port FLASH | 194 | 100 | 0 | 0 | 7 | 9.52 |
+| c3 | icache | 175 | 29 | 0 | 0 | 7 | 8.63 |
+| c3 | flash_controller FLA | 80 | 43 | 0 | 0 | 7 | 10.36 |
+| c3 | MEM/WB | 46 | 46 | 0 | 0 | 7 | 9.24 |
+| c3 | flash_chip FLASH_CHI | 176 | 1 | 0 | 0 | 6 | 9.62 |
+| c3 | desalinhado | 34 | 2 | 0 | 0 | 6 | 8.96 |
+
+### 8.4. Ganho de cada passo (núcleo para núcleo a 100 MHz)
+
+| Passo | Efeito medido |
+| :--- | :--- |
+| F.P4 (classificação do endereço registrada) | núcleo para núcleo a 83,3 MHz de -0,64 para -0,29 ns; a 100 MHz o caminho `r_we_ok` até `r_same` passa a ser um dos piores (11,1 a 11,7 ns) |
+| F.P5 (validade em RAM, seleção pelo endereço registrado, habilitação do PC a uma porta de `i_ic_ready`) | tira o laço da busca da lista de piores: o par busca para núcleo e o par núcleo para busca ficam com folga positiva a 100 MHz |
+| F.P6c (leitura registrada do Zihpm) | a 100 MHz, fase 6000, semente 1: de -2,55 para -1,39 ns |
+| Replay de IF (o PC segue sem esperar a cache) | fecha o par `c2>c3`; a cache de instruções deixa de limitar a frequência |
+| Escritas de preenchimento da icache registradas e `check_addr` desligado | tiram `d_addr_i` e `addr_q` das listas |
+| Linhas de interrupção por registrador na entrada do núcleo | tira o `priorities` do PLIC do primeiro lugar (semente 4: de -2,30 para -2,24, o próximo caminho é `r_we_ok` até o PC) |
+| `maxfan` em `r_we_ok` e nos seletores do adiantamento, e `r_same` calculado em MEM a partir de dois registradores | sem ganho na pior semente (de -2,30 a -2,48 contra -2,24 a -2,28: dentro da dispersão de ±0,5 ns entre sementes) |
+| `counter64` em blocos | não feito: depois de F.P6c o contador deixou de aparecer entre os piores caminhos |
+
+### 8.5. O que falta
+
+O limite é o laço do estágio EX: `r_we_ok` ou `r_fwd_match_rs*` (seleção do adiantamento, fan-out 98), multiplexador do operando A, ULA (quatro níveis de LUT) e, depois dela, a classificação do endereço, a decisão de desvio, a limpeza de `IF/ID`, `ID/EX` e `EX/MEM` e a habilitação do PC, com 11,1 a 12,1 ns de dados. O redirecionamento de desvio registrado não corta o trecho que termina em `r_alu_out` (11,0 a 11,5 ns) e só ganha nos destinos de limpeza, então por si só não fecha os 2,3 ns. Os candidatos que sobram, em ordem de ganho esperado:
+
+1. Adiantar para a ULA só a partir de registradores (o resultado de EX é registrado e usado no ciclo seguinte), o que tira o seletor e o multiplexador do adiantamento do laço ao custo de um ciclo em cada dependência de dado imediata; cabe nos cinco estágios.
+2. O redirecionamento de desvio e JALR registrado, que corta os destinos de limpeza (`r_pc`, `r_inst`, `r_valid`, escritas), a um ciclo a mais por desvio tomado.
+3. A classificação do endereço calculada de `rs1` e `imm` em paralelo com a soma.
+4. Região LogicLock para o laço do estágio EX, que só se justifica se medir ganho de roteamento (1,3 a 1,9 ns entre níveis nos caminhos mais longos).
+
+## 9. Marco fechado: 76,923 MHz
+
+A frequência mais alta que a PLL de 1000 MHz entrega e que fecha o setup no modelo lento a 85 °C e o hold no modelo rápido a 0 °C em todos os domínios das cinco sementes é 1000 / 13 = 76,923077 MHz, com a fase do núcleo em 7500 ps. Ela passa o marco M2 (66,7 MHz) e fica abaixo do M3 (80 MHz), que a PLL não produz (80 MHz pede o divisor 12,5). A frequência de 83,333 MHz (divisor 12) não fecha.
+
+Árvore Insper-RISC-V `b5a9169` (Core `07a1fbe`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), `HIGH PERFORMANCE EFFORT`.
+
+| Semente | Núcleo (ns) | Busca para núcleo (ns) | Núcleo para busca (ns) | Núcleo para núcleo (ns) | Controlador da SDRAM (ns) | `DRAM_CLK` (ns) | Hold mínimo (ns) |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | +0,926 | +1,157 | +0,722 | +0,926 | +4,005 | +1,679 | +0,085 |
+| 2 | +0,469 | +0,469 | +0,880 | +1,072 | +3,452 | +1,123 | +0,110 |
+| 3 | +1,215 | +1,215 | +0,513 | +1,274 | +3,532 | +1,204 | +0,110 |
+| 4 | +1,026 | +1,344 | +0,097 | +1,026 | +3,393 | +1,172 | +0,115 |
+| 5 | +0,617 | +0,743 | +0,711 | +0,617 | +3,286 | +1,644 | +0,115 |
+| Pior | +0,469 | +0,469 | +0,097 | +0,617 | +3,286 | +1,123 | +0,085 |
+
+A 83,333 MHz (fase 7000 ps, mesma árvore) o núcleo fecha em quatro das cinco sementes (pior -0,771 ns, semente 4, 12,6 ns de dados) e o par núcleo para busca falha em quatro (pior -1,268 ns). A frequência, a fase e o arredondamento do tick estão em `platform.yaml` (`pll.core_clock_hz`, `pll.core_phase_ps`, `interrupts.clock_hz`) e no arquivo da PLL, que o `check-memory-map` confere.
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../../LICENSE).

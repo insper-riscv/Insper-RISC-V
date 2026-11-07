@@ -157,6 +157,11 @@ architecture behaviour of core_fpga_sdram_flash is
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 	-- the three machine interrupt lines of the core
 	signal irq_timer, irq_software, irq_external : std_logic := '0';
+	-- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do CLINT
+	-- ficam fora do caminho que decide a tomada da interrupção (um ciclo de latência a mais).
+	signal irq_timer_q, irq_software_q, irq_external_q : std_logic := '0';
+	-- mtime of the CLINT, which the CSR time of the core mirrors.
+	signal clint_mtime : std_logic_vector(63 downto 0) := (others => '0');
 	-- the display register: the segments of the six digits, and its value
 	signal display_hex   : std_logic_vector(41 downto 0);
 	signal display_value : std_logic_vector(23 downto 0);
@@ -277,7 +282,7 @@ begin
 			has_zmmul    => HAS_ZMMUL,
 			has_zicsr    => HAS_ZICSR or HAS_ZICNTR,
 			has_zicntr   => HAS_ZICNTR,
-			tick_cycles  => 50,
+			tick_cycles  => CLINT_TICK_CYCLES,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
 			has_e          => HAS_E,
@@ -297,7 +302,10 @@ begin
 			has_zihintntl   => HAS_ZIHINTNTL,
 			has_zihintpause => HAS_ZIHINTPAUSE,
 			has_interrupts  => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
-			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS
+			has_sscofpmf    => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS,
+			time_external   => HAS_INTERRUPTS,
+			has_access_faults => HAS_ACCESS_FAULTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM),
+			periph_slots    => PERIPH_SLOTS
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
@@ -332,9 +340,10 @@ begin
 			o_trap_take => core_trap,
 
 			i_hpm_ext_events => hpm_ext_events,
-			i_irq_software => irq_software,
-			i_irq_timer    => irq_timer,
-			i_irq_external => irq_external,
+			i_irq_software => irq_software_q,
+			i_irq_timer    => irq_timer_q,
+			i_mtime        => clint_mtime,
+			i_irq_external => irq_external_q,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -344,7 +353,7 @@ begin
 	-- Instruction cache of the SDRAM: on the clock of the instruction memories, so that the
 	-- instruction of the PC is there in the same cycle the core samples it, as for the ROMs
 	ICACHE : entity work.icache
-		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB, check_addr => false)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -555,13 +564,22 @@ begin
 	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
 	-- and the FLASH controller raise their lines (IRQ_UART_JTAG and IRQ_FLASH); the others stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
+	process (pll_clk_idexmem)
+	begin
+		if rising_edge(pll_clk_idexmem) then
+			irq_timer_q    <= irq_timer;
+			irq_software_q <= irq_software;
+			irq_external_q <= irq_external;
+		end if;
+	end process;
+
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
-			o_irq_timer => irq_timer, o_irq_software => irq_software
+			o_irq_timer => irq_timer, o_irq_software => irq_software, o_mtime => clint_mtime
 		);
 
 	PLIC : entity work.plic

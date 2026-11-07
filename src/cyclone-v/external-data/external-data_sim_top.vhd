@@ -59,6 +59,8 @@ entity rv32im_external_data_sim_test is
 		HAS_INTERRUPTS : boolean := false;
 		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 		HAS_SSCOFPMF : boolean := false;
+		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+		HAS_ACCESS_FAULTS : boolean := false;
 		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
 		HAS_ZIHPM : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.

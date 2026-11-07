@@ -46,7 +46,9 @@ entity core_fpga_test is
 		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 		HAS_INTERRUPTS : boolean := work.internal_mem_map_pkg.HAS_INTERRUPTS;
 		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_SSCOFPMF : boolean := work.internal_mem_map_pkg.HAS_SSCOFPMF
+		HAS_SSCOFPMF : boolean := work.internal_mem_map_pkg.HAS_SSCOFPMF;
+		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+		HAS_ACCESS_FAULTS : boolean := work.internal_mem_map_pkg.HAS_ACCESS_FAULTS
 	);
 	port (
 		-- Clock de 50 MHz da placa, entrada do PLL.

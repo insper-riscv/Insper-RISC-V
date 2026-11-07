@@ -122,6 +122,8 @@ entity modular_sim_top is
     has_interrupts      : boolean := HAS_INTERRUPTS;
     -- Interrupção de estouro de contador (Sscofpmf): exige Zihpm e as interrupções.
     has_sscofpmf        : boolean := HAS_SSCOFPMF;
+    -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa; exige Zicsr.
+    has_access_faults   : boolean := HAS_ACCESS_FAULTS;
     -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
     clint_tick_cycles   : positive := 1;
     -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
@@ -373,6 +375,8 @@ begin
       has_zicclsm         => has_zicclsm,
       has_interrupts      => has_interrupts,
       has_sscofpmf        => has_sscofpmf,
+      has_access_faults   => has_access_faults,
+      periph_slots        => PERIPH_SLOTS,
       clint_tick_cycles   => clint_tick_cycles,
       clint_id            => clint_id,
       plic_id             => plic_id,

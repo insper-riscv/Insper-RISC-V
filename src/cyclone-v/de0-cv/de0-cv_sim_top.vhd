@@ -45,6 +45,8 @@ entity rv32im_sdram_flash_sim_test is
 	  HAS_INTERRUPTS : boolean := true;
 	  -- Interrupcao de estouro de contador (Sscofpmf): exige Zihpm e as interrupcoes.
 	  HAS_SSCOFPMF : boolean := work.de0_cv_map_pkg.HAS_SSCOFPMF;
+	  -- Falhas de acesso (causas 1, 5 e 7) fora das regioes validas do mapa; exige Zicsr.
+	  HAS_ACCESS_FAULTS : boolean := work.de0_cv_map_pkg.HAS_ACCESS_FAULTS;
 	  -- Ciclos de clock do core por incremento do mtime do CLINT.
 	  CLINT_TICK_CYCLES : positive := work.de0_cv_map_pkg.CLINT_TICK_CYCLES;
 	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
@@ -164,6 +166,11 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 	-- the three machine interrupt lines of the core
 	signal irq_timer, irq_software, irq_external : std_logic := '0';
+	-- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do CLINT
+	-- ficam fora do caminho que decide a tomada da interrupção (um ciclo de latência a mais).
+	signal irq_timer_q, irq_software_q, irq_external_q : std_logic := '0';
+	-- mtime of the CLINT, which the CSR time of the core mirrors.
+	signal clint_mtime : std_logic_vector(63 downto 0) := (others => '0');
 
 	signal pll_clk_if     : std_logic;
 	signal pll_clk_idexmem: std_logic;
@@ -244,7 +251,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), has_sscofpmf => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS)
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), has_sscofpmf => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS, time_external => HAS_INTERRUPTS, has_access_faults => HAS_ACCESS_FAULTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -281,9 +288,10 @@ begin
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
-			i_irq_software => irq_software,
-			i_irq_timer    => irq_timer,
-			i_irq_external => irq_external,
+			i_irq_software => irq_software_q,
+			i_irq_timer    => irq_timer_q,
+			i_mtime        => clint_mtime,
+			i_irq_external => irq_external_q,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -291,7 +299,7 @@ begin
 	);
 
 	ICACHE : entity work.icache
-		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB, check_addr => false)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -446,13 +454,22 @@ begin
 	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
 	-- and the FLASH controller raise their lines (IRQ_UART_JTAG and IRQ_FLASH); the others stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
+	process (pll_clk_idexmem)
+	begin
+		if rising_edge(pll_clk_idexmem) then
+			irq_timer_q    <= irq_timer;
+			irq_software_q <= irq_software;
+			irq_external_q <= irq_external;
+		end if;
+	end process;
+
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
 			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
-			o_irq_timer => irq_timer, o_irq_software => irq_software
+			o_irq_timer => irq_timer, o_irq_software => irq_software, o_mtime => clint_mtime
 		);
 
 	PLIC : entity work.plic
