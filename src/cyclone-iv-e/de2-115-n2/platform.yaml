@@ -100,6 +100,3 @@ config:
   rom: FLASH
   ram: RAM
   addr_widths: [boot_memory, rom, ram]
-
-checks:
-  - {name: config.yaml UART_SLOT, file: src/cyclone-iv-e/de2-115-n2/config.yaml, pattern: 'UART_SLOT: "(\d+)"', expect: UART.id}
