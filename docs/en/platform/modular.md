@@ -2,7 +2,7 @@
 
 ## 1. What it is
 
-A single simulation top, `modular_sim_top` (`src/simulation/modular/`), builds the core with four independent choices: the ROM and the RAM inside or outside the chip, and the instruction cache and the data cache present or not. A memory that the core reaches through its port (external, or internal behind a cache) sits in a simulated chip model of configurable size. It serves any variation of the core (the `has_*` generics pick the extensions), runs the programs of the test repositories (section 7) and is the base of the ACT4 simulation of the 60 profiles.
+A single simulation top, `modular_sim_top` (`src/simulation/modular/`), instantiates the [SoC](../soc/soc.md) and adds the three-phase clock and the chip models to it. The SoC builds the core with four independent choices: the ROM and the RAM inside or outside the chip, and the instruction cache and the data cache present or not. A memory that the core reaches through its port (external, or internal behind a cache) sits in a simulated chip model of configurable size. It serves any variation of the core (the `has_*` generics pick the extensions), runs the programs of the test repositories (section 7) and is the base of the ACT4 simulation of the 60 profiles.
 
 The top also wires, through generics, optional board peripherals (switches, buttons, displays and the two UARTs) that the [ten platforms](dez-plataformas.md) use; without them the peripheral window has only the CLINT and the external controller, when the interrupts are on.
 
