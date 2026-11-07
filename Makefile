@@ -42,6 +42,7 @@ sync:
 paths:
 	riscv-tools --root . check-paths --manifest paths.yaml
 	riscv-tools --root . check-tree --kind top
+	riscv-tools --root . check-boards
 
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of

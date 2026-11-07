@@ -129,11 +129,13 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
+    - Memory/src/block_ram/altera/block_ram.vhd
     - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
     - Memory/src/ROM/Cyclone-V/boot_memory.vhd
     - Memory/src/ROM/Cyclone-V/flash.vhd
     - Memory/src/ROM/SoC/flash_jtag_core.vhd
     - Memory/src/ROM/SoC/flash_loader.vhd
+    - Common-Components/src/altera/virtual_jtag.vhd
     - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
