@@ -145,3 +145,6 @@ checks:
   - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
   - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}
   - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: PLL.core_phase_ps}
+  - {name: PLL fetch clock, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency2\("(\d+)\.', expect: PLL.core_clock_mhz}
+  - {name: PLL core clock, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency3\("(\d+)\.', expect: PLL.core_clock_mhz}
+  - {name: Tests header RV32_TICK_CYCLES, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_TICK_CYCLES\s+(\d+)', expect: INTERRUPTS.tick_cycles}

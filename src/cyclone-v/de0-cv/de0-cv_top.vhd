@@ -11,7 +11,7 @@ use work.de0_cv_map_pkg.all;
 -- sends to the FLASH chip model (through its arbiter) or to the SDRAM bridge, arbiter and controller of the
 -- Memory repository. The FLASH window of the chip ends at 256 KiB; a read past it returns zero. The host reaches the
 -- SDRAM through the debug master and its Virtual JTAG shell, as a second master of the controller. The core
--- clock is 50 MHz; the controller and the debug master run on the 100 MHz clock of the same PLL (SDRAM_TCK_PS of the generated map package).
+-- clock is the one of `pll.core_clock_hz` of platform.yaml; the controller and the debug master run on the 100 MHz clock of the same PLL (SDRAM_TCK_PS of the generated map package).
 entity core_fpga_sdram_flash is
 	generic (
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
