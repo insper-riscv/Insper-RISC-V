@@ -1,17 +1,18 @@
-# Perfis da calibração da Cyclone V (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o projeto que o `board generate` escreve para a DE0-CV, compilado com `program --compile-only --stop-after map`.
-# A calibração mede o dispositivo (5CEBA4) e não a placa. O topo da DE0-CV é fixo: a SDRAM, a FLASH, o display, a JTAG UART e o controlador
-# de FLASH existem em todos os perfis e ficam absorvidos no termo do núcleo (`fixed`); só o que o `platform.yaml` e os generics variam entra no ajuste.
+# Perfis da calibração da Cyclone V (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o `quartus_map` do projeto que o
+# `board generate` escreve para a de0-cv (5CEBA4). A calibração mede o dispositivo e não a placa. O topo da plataforma de calibração é fixo:
+# a FLASH emulada, o display, a JTAG UART, o controlador de FLASH e a SDRAM de 16 bits existem em todos os
+# perfis e ficam absorvidos no termo do núcleo (`fixed`); só o que o `platform.yaml` e os generics variam entra no ajuste.
 family: cyclone-v
 unit: alm
 project:
-  platform: src/cyclone-v/de0-cv/platform.yaml
+  platform: src/calibration/de0-cv/platform.yaml
   board: de0-cv
   seed: 5
 # Bits de um bloco M10K.
 bits_per_block: 10240
 # Tamanho das caches (kbit) que o termo do núcleo já contém; os termos de cache medem a diferença para ele.
 reference_kbit: 32
-# Termos que o topo fixo da DE0-CV carrega em toda medida, fixados em zero.
+# Termos que o topo fixo carrega em toda medida, fixados em zero.
 fixed:
   peripherals.CLINT: 0.0
   peripherals.PLIC_base: 0.0
@@ -19,12 +20,8 @@ fixed:
   peripherals.UART: 0.0
   peripherals.DISPLAY: 0.0
   peripherals.FLASH_CTRL: 0.0
-  backends.sdram_16: 0.0
   per_block_glue: 0.0
-# Faixa de ALMs do perfil completo depois do ajuste, medida em `docs/pt-br/platform/timing/core-novo.md` (8058 a 8095).
-known_fit:
-  profile: p5_full
-  alms: [8058, 8095]
+  backends.sdram_16: 0.0
 profiles:
   # 1. Núcleo mínimo.
   - {id: p1_rv32i, group: 1, profile: rv32i}

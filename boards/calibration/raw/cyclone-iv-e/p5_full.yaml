@@ -1,0 +1,111 @@
+id: p5_full
+group: 5
+family: cyclone-iv-e
+unit: le
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+extras:
+- Zimop
+- Zicond
+- Zihintntl
+- Zihintpause
+- Interrupts
+- Sscofpmf
+icache_kbit: 32
+dcache_kbit: 32
+generics: {}
+holdout: true
+seed: 5
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+device: EP4CE115F29C7
+measured_on: '2026-11-07'
+sources_hash: 32928ebddb7d00ac03bb4527fbb7296ccc20eed98389e1abb186ad1e83fc61be
+revisions:
+  .: a2153085172a1e317cac5bc823901ae822d8055f
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
+  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
+  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
+  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+added_constants: []
+command:
+- quartus_sh
+- -t
+- compile.tcl
+- de2_115_de2_115
+- '5'
+- fit
+elapsed_s: 169
+result:
+  logic: 19193
+  registers: 8747
+  ram_bits: 893184
+  multipliers: 0
+  plls: 1
+  pins: 76
+entities:
+- name: de2_115_de2_115_top
+  depth: 0
+  luts: 15312
+  registers: 8747
+  memory_bits: 893184
+- name: boot_memory:boot_inst
+  depth: 1
+  luts: 0
+  registers: 0
+  memory_bits: 32768
+- name: de2_115_de2_115_pll:pll_inst
+  depth: 1
+  luts: 1
+  registers: 1
+  memory_bits: 0
+- name: flash:flash_store_inst
+  depth: 1
+  luts: 140
+  registers: 4
+  memory_bits: 262144
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 88
+  registers: 166
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 183
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 153
+  registers: 167
+  memory_bits: 0
+- name: onchip_ram_port:ram_port_inst
+  depth: 1
+  luts: 152
+  registers: 411
+  memory_bits: 0
+- name: ram:ram_store_inst
+  depth: 1
+  luts: 105
+  registers: 74
+  memory_bits: 524288
+- name: sld_hub:auto_hub
+  depth: 1
+  luts: 180
+  registers: 106
+  memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 14305
+  registers: 7655
+  memory_bits: 73984
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
+fit_result:
+  logic: 16474
+  registers: 8747
+  ram_bits: 893184
+  multipliers: 0
+  plls: 1
+  pins: 76

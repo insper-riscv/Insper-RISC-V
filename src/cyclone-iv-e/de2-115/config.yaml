@@ -1,0 +1,39 @@
+# The de2-115 platform: the DE2-115 board (Cyclone IV E) at level N4, with the FLASH NOR and the 128 MB SDRAM of the
+# board behind the caches and the console on the JTAG UART. Only what differs from internal-mem is written here.
+extends: ../../simulation/internal-mem/config.yaml
+
+# The tests are linked for bank A (from the end of its header page) and packed as its image.
+toolchain:
+  specs: src/cyclone-iv-e/de2-115/runtime/rv32im-fpga-bank-a.specs
+
+flash_image: {bank: A, version: 1}
+
+# The addresses and the sizes come from the map of the platform (platform.yaml).
+memory_map: platform.yaml
+
+paths:
+  sources:
+    - src/cyclone-iv-e/de2-115/runtime/_exit.c
+    - src/cyclone-iv-e/de2-115/runtime/stdio.c
+  boot_memory: src/cyclone-iv-e/de2-115/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-iv-e/de2-115/runtime/boot_memory.ld
+
+emulator:
+  sources:
+    - src/cyclone-iv-e/de2-115/runtime/spike_exit.S
+
+quartus:
+  # The project is written by `board generate` from platform.yaml and the board package (boards/de2-115), and `program`
+  # writes it before compiling: nothing under build/ is versioned.
+  generate: {platform: src/cyclone-iv-e/de2-115/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
+  project_dir: build/de2-115-de2-115
+  project_name: de2_115_de2_115
+  sof_file: output_files/de2_115_de2_115.sof
+  rom_mif_target: init.mif
+  boot_memory_mif_target: boot_memory_init.mif
+  # The host reaches the RAM (the SDRAM) through the debug port (Virtual JTAG instance 3: the FLASH loader is 0, the JTAG UART 1
+  # and the display 2). The FLASH is the NOR chip, written by the program update through the FLASH controller.
+  ram_backend: sdram_debug
+  sdram_debug_instance: 3
+  rom_mem_instances: []
+  rom_write_method: jtag_loader

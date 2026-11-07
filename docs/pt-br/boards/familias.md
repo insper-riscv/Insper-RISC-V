@@ -18,6 +18,7 @@ O arquivo `boards/families/<família>.yaml` guarda o que vale para todo disposit
 | `onchip_flash` | IP da FLASH interna, ou `null` |
 | `fmax.core_mhz_by_grade` | Frequência de núcleo medida por grau, `null` sem medida |
 | `calibration` | Arquivo de calibração do estimador, relativo a `boards/`, ou `null` |
+| `slew_rate` | Se o ajuste aceita `SLEW_RATE` nos pinos 3.3-V LVTTL; ausente vale `true`, e a `cyclone-iv-e`, a `max-10` e a `cyclone-10-lp` o recusam (`false`) |
 
 ## 3. Famílias
 
@@ -29,7 +30,7 @@ O arquivo `boards/families/<família>.yaml` guarda o que vale para todo disposit
 | `max-10` | LE | `altpll`, 5 saídas | M9K de 9216 bits | `altera_onchip_flash` |
 | `cyclone-10-lp` | LE | `altpll`, 5 saídas | M9K de 9216 bits | não |
 
-O único Fmax medido é o da `cyclone-v` no grau `C7`. A calibração fica `null` até a medição existir, e o validador avisa disso (regra V18).
+O único Fmax medido é o da `cyclone-v` no grau `C7`. Cada família tem a tabela de calibração em `calibration/<família>.yaml`, descrita em [calibracao.md](calibracao.md), e o validador avisa quando ela falta (regra V18).
 
 ---
 

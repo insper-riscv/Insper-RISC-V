@@ -64,7 +64,8 @@ set_global_assignment -name VHDL_FILE external_data_map_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/synchronizer.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
-set_global_assignment -name VHDL_FILE ../de0-cv/sdram_jtag_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Common-Components/src/altera/virtual_jtag.vhd
+set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/Cyclone-V/sdram_jtag_shell.vhd
 set_global_assignment -name VHDL_FILE ../../interconnect/ext_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/utils_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pipeline_types.vhd
@@ -142,10 +143,10 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_pk
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
+set_global_assignment -name QIP_FILE ../../../Memory/src/RAM/FPGA/Cyclone-V/ram.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash.qip
 set_global_assignment -name QIP_FILE ../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
-set_global_assignment -name VHDL_FILE ../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/jtag_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/cyclone-v/jtag_uart_shell.vhd

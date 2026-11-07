@@ -140,8 +140,8 @@ sim:
     - src/soc/soc.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Memory/src/latency/SoC/latency_counter.vhd
-    - Memory/src/RAM/SoC/ram_chip.vhd
     - Memory/src/RAM/SoC/onchip_ram_port.vhd
+    - Memory/src/RAM/SoC/ram_chip.vhd
     - Memory/src/RAM/SoC/ram_simulation.vhd
     - Memory/src/ROM/SoC/rom_simulation.vhd
     - Memory/src/cache/SoC/flash_chip.vhd

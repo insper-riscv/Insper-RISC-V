@@ -12,7 +12,11 @@ pll:
 block_ram: {kind: m9k, bits_per_block: 9216}
 memory_ip: altsyncram
 virtual_jtag: true
+# O Quartus recusa SLEW_RATE nos pinos 3.3-V LVTTL desta família (erro 169303).
+slew_rate: false
 onchip_flash: null
 fmax:
   core_mhz_by_grade: {C7: null, C8: null}
-calibration: null
+calibration: calibration/cyclone-iv-e.yaml
+# O ajuste do Quartus recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL da Cyclone IV E (erro 169303), e o gerador de pinos a omite.
+slew_rate: false
