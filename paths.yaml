@@ -17,7 +17,6 @@ references:
   - {name: boot memory linker script, file: src/simulation/internal-mem/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
   - {name: toolchain specs, file: src/simulation/internal-mem/config.yaml, yaml: toolchain.specs, base: .}
   - {name: Spike stand-in, file: src/simulation/internal-mem/config.yaml, yaml: emulator.sources, base: .}
-  - {name: PLL for freq-sweep, file: src/simulation/internal-mem/config.yaml, yaml: freq_sweep.pll_file, base: .}
   - {name: Quartus project dir, file: src/simulation/internal-mem/config.yaml, yaml: quartus.project_dir, base: .}
   - {name: board project (core_fpga_test.qsf), file: src/simulation/internal-mem/quartus/core_fpga_test.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
   - {name: Quartus IPs of the PLL, paths: [src/simulation/internal-mem/pll/pll.qip, src/simulation/internal-mem/pll/pll_0002.qip]}
@@ -205,6 +204,51 @@ provides:
     requires: []
     sources:
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  cal_de2_115_map:
+    requires: []
+    sources:
+      - src/calibration/de2-115/de2_115_map_pkg.vhd
+  cal_de10_lite_map:
+    requires: []
+    sources:
+      - src/calibration/de10-lite/de10_lite_map_pkg.vhd
+  cal_mkr_vidor_4000_map:
+    requires: []
+    sources:
+      - src/calibration/mkr-vidor-4000/mkr_vidor_4000_map_pkg.vhd
+  cal_de0_nano_map:
+    requires: []
+    sources:
+      - src/calibration/de0-nano/de0_nano_map_pkg.vhd
+  cal_de0_cv_map:
+    requires: []
+    sources:
+      - src/calibration/de0-cv/de0_cv_map_pkg.vhd
+  cal_de10_nano_map:
+    requires: []
+    sources:
+      - src/calibration/de10-nano/de10_nano_map_pkg.vhd
+  # The components the generated tops of the calibration platforms need (docs/pt-br/boards/calibracao.md): `board generate`
+  # takes the sources of the project from the closure of the `top` of each platform. The platforms with the SDRAM of the board
+  # carry its controller, and the others emulate the RAM in blocks of the FPGA.
+  cal_de0_cv_board:
+    requires: [soc, cal_de0_cv_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
+  cal_de10_lite_board:
+    requires: [soc, cal_de10_lite_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
+  cal_de0_nano_board:
+    requires: [soc, cal_de0_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
+  cal_de2_115_board:
+    requires: [soc, cal_de2_115_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  cal_mkr_vidor_4000_board:
+    requires: [soc, cal_mkr_vidor_4000_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  cal_de10_nano_board:
+    requires: [soc, cal_de10_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
   de0_cv_sim_top:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:

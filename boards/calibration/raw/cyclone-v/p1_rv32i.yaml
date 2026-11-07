@@ -10,15 +10,15 @@ generics: {}
 holdout: false
 seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
-device: null
-measured_on: '2026-11-06'
-sources_hash: eb66001cb768faafd271e48a9ca84c7cafaf8e2cf7dc803dc9580b8c4c677720
+device: 5CEBA4F23C7
+measured_on: '2026-11-07'
+sources_hash: 3f86cc0a42fc5f49aa9e575aea8f7dd7fefc23ef9482223522a6089a51d04c54
 revisions:
-  .: 8f647022250429106c63b85a88b92f6ecbb44685
-  Common-Components: 56c293ed30320fda0f02b9957f3976eb0256b862
+  .: 49edc0ae46327ce54f4b8127573505a2b4c62c02
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
   Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 8455a20561b779dcdb069dc6e21c7d5804bf560d
-  Peripherals: 6ed5e077baad2f9977e6ac706a2dc7f97e43adfc
+  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
+  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
 added_constants:
 - CLINT_BASE
 - CLINT_ID
@@ -35,140 +35,103 @@ added_constants:
 command:
 - quartus_sh
 - -t
-- de0-cv_synth.tcl
+- compile.tcl
+- de0_cv_de0_cv
 - '5'
-- map
-elapsed_s: 41
+- fit
+elapsed_s: 112
 result:
-  logic: 5134
-  registers: 5891
-  ram_bits: 2205952
+  logic: 4122
+  registers: 5609
+  ram_bits: 368896
   multipliers: 0
   plls: 1
   pins: 93
 entities:
-- name: core_fpga_sdram_flash
+- name: de0_cv_de0_cv_top
   depth: 0
-  luts: 6437
-  registers: 5891
-  memory_bits: 2205952
-- name: boot_memory:BOOT_MEMORY
+  luts: 4769
+  registers: 5609
+  memory_bits: 368896
+- name: boot_memory:boot_inst
   depth: 1
   luts: 0
   registers: 0
   memory_bits: 32768
-- name: core:CORE
-  depth: 1
-  luts: 1714
-  registers: 1534
-  memory_bits: 0
-- name: dcache:DCACHE
-  depth: 1
-  luts: 1157
-  registers: 556
-  memory_bits: 36608
-- name: ext_interconnect:INTERCONNECT
-  depth: 1
-  luts: 61
-  registers: 66
-  memory_bits: 0
-- name: flash:FLASH_STORE
-  depth: 1
-  luts: 455
-  registers: 10
-  memory_bits: 2097152
-- name: flash_arbiter:FLASH_ARBITER
-  depth: 1
-  luts: 29
-  registers: 4
-  memory_bits: 0
-- name: flash_chip:FLASH_CHIP
-  depth: 1
-  luts: 420
-  registers: 176
-  memory_bits: 0
-- name: flash_cmd_port:FLASH_CMD
-  depth: 1
-  luts: 237
-  registers: 194
-  memory_bits: 0
-- name: flash_controller:FLASH_CTRL
-  depth: 1
-  luts: 25
-  registers: 44
-  memory_bits: 2048
-- name: flash_jtag_shell:FLASH_JTAG
-  depth: 1
-  luts: 88
-  registers: 161
-  memory_bits: 0
-- name: flash_loader:FLASH_LOADER
-  depth: 1
-  luts: 88
-  registers: 170
-  memory_bits: 0
-- name: icache:ICACHE
-  depth: 1
-  luts: 224
-  registers: 134
-  memory_bits: 36864
-- name: jtag_uart_shell:JTAG_UART
-  depth: 1
-  luts: 1044
-  registers: 728
-  memory_bits: 512
-- name: mem_region_router:ROUTER_D
-  depth: 1
-  luts: 70
-  registers: 1
-  memory_bits: 0
-- name: mem_region_router:ROUTER_I
-  depth: 1
-  luts: 4
-  registers: 1
-  memory_bits: 0
-- name: sdram_arbiter:SDRAM_ARBITER
-  depth: 1
-  luts: 81
-  registers: 461
-  memory_bits: 0
-- name: sdram_cpu_bridge:IBRIDGE
-  depth: 1
-  luts: 16
-  registers: 287
-  memory_bits: 0
-- name: sdram_cpu_bridge:SDRAM_BRIDGE
-  depth: 1
-  luts: 21
-  registers: 422
-  memory_bits: 0
-- name: sdram_ctrl:SDRAM_CTRL
-  depth: 1
-  luts: 222
-  registers: 378
-  memory_bits: 0
-- name: sdram_dbg_master:SDRAM_DEBUG
-  depth: 1
-  luts: 202
-  registers: 230
-  memory_bits: 0
-- name: sdram_jtag_shell:SDRAM_JTAG
-  depth: 1
-  luts: 17
-  registers: 135
-  memory_bits: 0
-- name: sdram_platform_pll:pll_inst
+- name: de0_cv_de0_cv_pll:pll_inst
   depth: 1
   luts: 0
   registers: 0
   memory_bits: 0
-- name: seg_display_shell:DISPLAY
+- name: flash:flash_store_inst
   depth: 1
-  luts: 60
-  registers: 82
+  luts: 12
+  registers: 4
+  memory_bits: 262144
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 82
+  registers: 166
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 88
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 136
+  registers: 167
+  memory_bits: 0
+- name: sdram_arbiter:sdram_arbiter_inst
+  depth: 1
+  luts: 81
+  registers: 461
+  memory_bits: 0
+- name: sdram_cpu_bridge:sdram_data_bridge
+  depth: 1
+  luts: 17
+  registers: 422
+  memory_bits: 0
+- name: sdram_cpu_bridge:sdram_instruction_bridge
+  depth: 1
+  luts: 13
+  registers: 287
+  memory_bits: 0
+- name: sdram_ctrl:sdram_ctrl_inst
+  depth: 1
+  luts: 221
+  registers: 378
+  memory_bits: 0
+- name: sdram_dbg_master:sdram_debug_inst
+  depth: 1
+  luts: 200
+  registers: 230
+  memory_bits: 0
+- name: sdram_jtag_shell:sdram_jtag_inst
+  depth: 1
+  luts: 17
+  registers: 135
   memory_bits: 0
 - name: sld_hub:auto_hub
   depth: 1
-  luts: 144
-  registers: 98
+  luts: 135
+  registers: 91
   memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 3761
+  registers: 3087
+  memory_bits: 73984
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 4
+  registers: 0
+  memory_bits: 0
+fit_result:
+  logic: 3845
+  registers: 5861
+  ram_bits: 368896
+  multipliers: 0
+  plls: 1
+  pins: 93

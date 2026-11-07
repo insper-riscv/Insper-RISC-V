@@ -1,0 +1,92 @@
+family: cyclone-v
+anchor: p1_rv32i
+shift: -628.0
+profiles: 14
+max_pct: 20.385
+anchored_max_pct: 4.039
+anchored_rms_pct: 3.134
+residuals:
+- id: p1_rv32i
+  measured: 3494.0
+  predicted: 4122.0
+  error_pct: 17.974
+  anchored_predicted: 3494.0
+  anchored_error_pct: 0.0
+- id: p1_rv32e
+  measured: 3120.0
+  predicted: 3756.0
+  error_pct: 20.385
+  anchored_predicted: 3128.0
+  anchored_error_pct: 0.256
+- id: p2_rv32im
+  measured: 3909.0
+  predicted: 4436.0
+  error_pct: 13.482
+  anchored_predicted: 3808.0
+  anchored_error_pct: -2.584
+- id: p3_zicntr_zifencei
+  measured: 4464.0
+  predicted: 4926.3
+  error_pct: 10.356
+  anchored_predicted: 4298.3
+  anchored_error_pct: -3.712
+- id: p3_zicclsm_zicntr_zifencei
+  measured: 4588.0
+  predicted: 5041.0
+  error_pct: 9.874
+  anchored_predicted: 4413.0
+  anchored_error_pct: -3.814
+- id: p4_hpm_4x40
+  measured: 4790.0
+  predicted: 5253.3
+  error_pct: 9.672
+  anchored_predicted: 4625.3
+  anchored_error_pct: -3.439
+- id: p4_hpm_16x52
+  measured: 5851.0
+  predicted: 6258.1
+  error_pct: 6.959
+  anchored_predicted: 5630.1
+  anchored_error_pct: -3.775
+- id: p5_base
+  measured: 7420.0
+  predicted: 7842.0
+  error_pct: 5.687
+  anchored_predicted: 7214.0
+  anchored_error_pct: -2.777
+- id: p5_full
+  measured: 7643.0
+  predicted: 8185.0
+  error_pct: 7.091
+  anchored_predicted: 7557.0
+  anchored_error_pct: -1.126
+- id: p6_interrupts
+  measured: 7392.0
+  predicted: 8078.6
+  error_pct: 9.288
+  anchored_predicted: 7450.6
+  anchored_error_pct: 0.792
+- id: p7_ic8
+  measured: 4464.0
+  predicted: 4926.2
+  error_pct: 10.353
+  anchored_predicted: 4298.2
+  anchored_error_pct: -3.715
+- id: p7_dc8
+  measured: 4302.0
+  predicted: 4774.6
+  error_pct: 10.985
+  anchored_predicted: 4146.6
+  anchored_error_pct: -3.612
+- id: p7_ic64
+  measured: 4464.0
+  predicted: 4926.5
+  error_pct: 10.36
+  anchored_predicted: 4298.5
+  anchored_error_pct: -3.708
+- id: p7_dc64
+  measured: 4690.0
+  predicted: 5128.6
+  error_pct: 9.351
+  anchored_predicted: 4500.6
+  anchored_error_pct: -4.039

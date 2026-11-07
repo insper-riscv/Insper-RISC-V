@@ -1,0 +1,111 @@
+id: p6_zimop
+group: 6
+family: cyclone-10-lp
+unit: le
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+extras:
+- Zimop
+icache_kbit: 32
+dcache_kbit: 32
+generics: {}
+holdout: false
+seed: 5
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+device: 10CL016YU256C8G
+measured_on: '2026-11-07'
+sources_hash: 7e0dfda451bd9695066cab3d873875f6cc8dbfe1336a416c8bd63dd9057b6323
+revisions:
+  .: 7262f9e4a5684b91e1d980ed435f004a78bb56f2
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
+  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
+  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
+  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+added_constants:
+- CLINT_BASE
+- CLINT_ID
+- PLIC_BASE
+- PLIC_ID
+- CLOCK_HZ
+- MTIME_HZ
+- CLINT_TICK_CYCLES
+- PLIC_N_SOURCES
+- PLIC_PRIORITY_BITS
+- PLIC_ADDR_WIDTH
+- IRQ_UART_JTAG
+- IRQ_FLASH
+command:
+- quartus_sh
+- -t
+- compile.tcl
+- mkr_vidor_4000_mkr_vidor_4000
+- '5'
+- map
+elapsed_s: 51
+result:
+  logic: 17832
+  registers: 8330
+  ram_bits: 303360
+  multipliers: 0
+  plls: 1
+  pins: 2
+entities:
+- name: mkr_vidor_4000_mkr_vidor_4000_top
+  depth: 0
+  luts: 14039
+  registers: 8330
+  memory_bits: 303360
+- name: boot_memory:boot_inst
+  depth: 1
+  luts: 0
+  registers: 0
+  memory_bits: 32768
+- name: flash:flash_store_inst
+  depth: 1
+  luts: 2
+  registers: 2
+  memory_bits: 131072
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 86
+  registers: 164
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 183
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 184
+  registers: 166
+  memory_bits: 0
+- name: mkr_vidor_4000_mkr_vidor_4000_pll:pll_inst
+  depth: 1
+  luts: 1
+  registers: 1
+  memory_bits: 0
+- name: onchip_ram_port:ram_port_inst
+  depth: 1
+  luts: 150
+  registers: 408
+  memory_bits: 0
+- name: ram:ram_store_inst
+  depth: 1
+  luts: 95
+  registers: 67
+  memory_bits: 65536
+- name: sld_hub:auto_hub
+  depth: 1
+  luts: 184
+  registers: 106
+  memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 13147
+  registers: 7253
+  memory_bits: 73984
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0

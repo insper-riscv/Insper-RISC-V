@@ -15,4 +15,6 @@ virtual_jtag: true
 onchip_flash: null
 fmax:
   core_mhz_by_grade: {C8: null}
-calibration: null
+calibration: calibration/cyclone-10-lp.yaml
+# A Cyclone 10 LP é da mesma tecnologia da Cyclone IV E, que recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL (erro 169303); o gerador de pinos a omite (a Vidor não tem LED nem display, de modo que não há teste).
+slew_rate: false
