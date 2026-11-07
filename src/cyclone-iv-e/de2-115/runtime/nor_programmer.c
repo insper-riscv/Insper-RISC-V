@@ -21,6 +21,19 @@ int main(void) {
     volatile uint32_t *job = (volatile uint32_t *)NOR_JOB_ADDR;
     if (job[0] != NOR_JOB_MAGIC) RV32_FAIL(1);
     int status = rv32_update_bank(job[1], (uint8_t *)NOR_IMAGE_ADDR, job[2], job[3], ram_code, ROUTINE_WORDS);
+    if (status == RV32_UPDATE_MISMATCH) {
+        // report the first word that differs after the job: its offset, what was sent and what the chip holds
+        volatile uint32_t *sent = (volatile uint32_t *)NOR_IMAGE_ADDR;
+        volatile uint32_t *chip = (volatile uint32_t *)job[1];
+        for (uint32_t i = 0; i < job[2] / 4u; i++) {
+            if (sent[i] != chip[i]) {
+                job[4] = 4u * i;
+                job[5] = sent[i];
+                job[6] = chip[i];
+                break;
+            }
+        }
+    }
     if (status != RV32_UPDATE_OK) RV32_FAIL(10 + status);
     RV32_PASS();
 }
