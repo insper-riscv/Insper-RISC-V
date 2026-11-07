@@ -1,6 +1,6 @@
-"""Confere os números das fontes do PLIC contra o topo modular.
+"""Confere os números das fontes do PLIC contra o SoC.
 
-O topo modular (``modular_sim_top.vhd``) liga cada periférico a uma linha
+O SoC (``soc.vhd``), que o topo modular instancia, liga cada periférico a uma linha
 do PLIC pelas constantes ``LINE_<NOME>``. As plataformas com PLIC listam
 as mesmas fontes em ``interrupts.sources`` do ``platform.yaml`` (de onde
 o ``generate-memory-map`` escreve ``IRQ_<NOME>`` e ``RV32_IRQ_<NOME>``).
@@ -15,7 +15,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP = ROOT / "src/simulation/modular/modular_sim_top.vhd"
+TOP = ROOT / "src/soc/soc.vhd"
 PLATFORMS = [
     ROOT / "src/simulation/modular/platform.yaml",
     ROOT / "src/cyclone-v/de0-cv/platform.yaml",
@@ -43,7 +43,7 @@ def main() -> int:
             if top.get(name) != ident:
                 problems.append(
                     f"{path.relative_to(ROOT)}: fonte {name} id {ident}, "
-                    f"o topo modular tem {top.get(name)}"
+                    f"o SoC tem {top.get(name)}"
                 )
     for message in problems:
         print(message)

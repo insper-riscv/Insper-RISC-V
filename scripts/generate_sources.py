@@ -204,6 +204,7 @@ ENTRADAS = (
         ("fpga_uart_pins_map", "modular_sim_top"),
         "PlatformFpgaUartPins",
     ),
+    Saida(TESTS_JSON, ("soc",), "SocRoles"),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),
