@@ -37,3 +37,4 @@ quartus:
   sdram_debug_instance: 3
   rom_mem_instances: []
   rom_write_method: jtag_loader
+  display_digits: 8

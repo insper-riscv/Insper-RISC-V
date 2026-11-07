@@ -44,14 +44,6 @@ paths:
   boot_memory: src/simulation/internal-mem/runtime/boot_memory.S
   boot_memory_linker_script: src/simulation/internal-mem/runtime/boot_memory.ld
 
-# Only needed by `riscv-tools freq-sweep` (Fmax search). The PLL has
-# three outputs (clk_if/clk_idexmem/clk_wb), one frequency in three
-# phases 0/120/240 degrees; the sweep rewrites all three together.
-# Path is relative to this project's root (RV32IM's root is one level up).
-freq_sweep:
-  pll_file: src/simulation/internal-mem/pll/pll_0002.v
-  phase_count: 3
-
 quartus:
   # Points at RV32IM's real project — this repo (RISC-V-Workstation-
   # Tests) is vendored as RV32IM's own Tests/ submodule, so RV32IM's
