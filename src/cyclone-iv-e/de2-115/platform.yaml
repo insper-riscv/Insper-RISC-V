@@ -66,7 +66,6 @@ memory:
 # frequency, its phase comes from the board).
 clocks:
   core:  {mhz: 50, phase_ps: 0}
-  fetch: {mhz: 50, phase_ps: 0}
   mem:   {mhz: 100}
 
 # The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.

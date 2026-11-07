@@ -65,7 +65,6 @@ memory:
 # The clocks of the PLL (`riscv-tools board generate`). There is no `mem` clock: no memory chip of the board is used.
 clocks:
   core:  {mhz: 50, phase_ps: 0}
-  fetch: {mhz: 50, phase_ps: 0}
 
 # The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
 console: jtag
