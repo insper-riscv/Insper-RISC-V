@@ -300,6 +300,24 @@ entity soc is
     o_display_hex   : out std_logic_vector(7 * display_digits - 1 downto 0);
     -- Valor do registrador do display, quatro bits por dígito.
     o_display_value : out std_logic_vector(4 * display_digits - 1 downto 0);
+    -- Virtual JTAG do display (o hospedeiro lê e escreve o registrador): clock da cadeia.
+    i_display_tck   : in  std_logic := '0';
+    -- Virtual JTAG do display: dado vindo do hospedeiro.
+    i_display_tdi   : in  std_logic := '0';
+    -- Virtual JTAG do display: dado para o hospedeiro.
+    o_display_tdo   : out std_logic;
+    -- Virtual JTAG do display: registrador de instrução.
+    i_display_ir_in : in  std_logic_vector(1 downto 0) := "00";
+    -- Virtual JTAG do display: estado Capture-DR.
+    i_display_state_cdr : in std_logic := '0';
+    -- Virtual JTAG do display: estado Shift-DR.
+    i_display_state_sdr : in std_logic := '0';
+    -- Virtual JTAG do display: estado Update-DR.
+    i_display_state_udr : in std_logic := '0';
+    -- Virtual JTAG do display: estado Update-IR.
+    i_display_state_uir : in std_logic := '0';
+    -- Bandeira de falha que o hospedeiro grava no display ('1' = houve falha).
+    o_display_fail  : out std_logic;
     -- Virtual JTAG da UART via JTAG: clock da cadeia.
     i_uart_tck      : in  std_logic := '0';
     -- Virtual JTAG da UART via JTAG: dado vindo do hospedeiro.
@@ -888,16 +906,16 @@ begin
         i_we        => p_we(display_id),
         i_re        => p_re(display_id),
         o_rdata     => p_rdata(32 * display_id + 31 downto 32 * display_id),
-        i_tck       => '0',
-        i_tdi       => '0',
-        o_tdo       => open,
-        i_ir_in     => "00",
-        i_state_cdr => '0',
-        i_state_sdr => '0',
-        i_state_udr => '0',
-        i_state_uir => '0',
+        i_tck       => i_display_tck,
+        i_tdi       => i_display_tdi,
+        o_tdo       => o_display_tdo,
+        i_ir_in     => i_display_ir_in,
+        i_state_cdr => i_display_state_cdr,
+        i_state_sdr => i_display_state_sdr,
+        i_state_udr => i_display_state_udr,
+        i_state_uir => i_display_state_uir,
         o_value     => o_display_value,
-        o_fail      => open,
+        o_fail      => o_display_fail,
         o_hex       => o_display_hex
       );
   end generate g_display;
@@ -952,6 +970,12 @@ begin
         o_buf_data  => o_flash_buf_data
       );
   end generate g_flash_ctrl;
+
+  g_no_display : if not HAS_DISPLAY_ROLE generate
+  begin
+    o_display_tdo  <= '0';
+    o_display_fail <= '0';
+  end generate g_no_display;
 
   g_no_flash_ctrl : if not has_flash_ctrl generate
   begin
