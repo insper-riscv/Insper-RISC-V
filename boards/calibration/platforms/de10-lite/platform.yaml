@@ -1,0 +1,48 @@
+# Plataforma de calibração da família max-10 na Terasic DE10-Lite (10M50DAF484C7G). Esquema: docs/pt-br/boards/formato.md.
+# Só o `quartus_map` lê este arquivo: a lista de perfis (`../../profiles/max-10.yaml`) troca o perfil, os extras e as caches, e o
+# harness do Tools (`riscv-tools calibrate run`) regera o pacote do mapa de memória e o projeto da placa a cada perfil.
+# O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a SDRAM de 16 bits.
+platform: de10-lite
+board: auto
+boards: [de10-lite]
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+profiles: ../../../../Core/profiles/matrix.yaml
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: FLASH,       base: 0x00001000, size: 28K,  kind: rom, exec: true}
+  - {name: RAM,         base: 0x40000000, size: 16M, kind: ram}
+reserved:
+  stdout:   {base: 0x40FFFBE0, size: 1K+8}
+  tohost:   {base: 0x40FFFFE8, size: 8}
+  fromhost: {base: 0x40FFFFF0, size: 8}
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+memory:
+  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
+  ram:    {external: true, backend: dispositivo, device: sdram}
+  icache: {enabled: true, size_bits: 32768}
+  dcache: {enabled: true, size_bits: 32768}
+clocks:
+  core: {mhz: 50, phase_ps: 8250}
+  mem:  {mhz: 100}
+console: jtag
+io:
+  leds: {count: 10, need: required}
+  display: {count: 6, need: optional}
+extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
+generate:
+  vhdl: {path: boards/calibration/platforms/de10-lite/de10_lite_map_pkg.vhd, package: de10_lite_map_pkg, rom: FLASH, ram: RAM}
+peripherals:
+  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
+  - {name: UART,    base: 0xC0000000, id: 4}
+  - {name: DISPLAY, base: 0xD0000000, id: 5}
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
+interrupts:
+  clock_hz: 50000000
+  mtime_hz: 1000000
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART_JTAG, id: 2}
+    - {name: FLASH,     id: 6}

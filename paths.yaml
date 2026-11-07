@@ -207,6 +207,26 @@ provides:
     requires: []
     sources:
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  cal_de2_115_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/de2-115/de2_115_map_pkg.vhd
+  cal_de10_lite_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/de10-lite/de10_lite_map_pkg.vhd
+  cal_mkr_vidor_4000_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/mkr-vidor-4000/mkr_vidor_4000_map_pkg.vhd
+  cal_de0_nano_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/de0-nano/de0_nano_map_pkg.vhd
+  cal_de10_nano_map:
+    requires: []
+    sources:
+      - boards/calibration/platforms/de10-nano/de10_nano_map_pkg.vhd
   de0_cv_sdram_jtag_shell:
     requires: [Memory/sdram_debug]
     sources:
