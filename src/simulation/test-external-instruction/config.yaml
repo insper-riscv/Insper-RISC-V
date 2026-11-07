@@ -136,6 +136,7 @@ sim:
     - Peripherals/src/UART/serial/uart.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/UART/console/console.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
     - src/soc/soc.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Memory/src/latency/SoC/latency_counter.vhd

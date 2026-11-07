@@ -239,7 +239,7 @@ provides:
   # family name and no memory chip. The tops (the simulation ones and the board ones) instantiate it and add the clocks
   # and the memory backends.
   soc:
-    requires: [ext_interconnect, Common-Components/utils, Core/core, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/console]
+    requires: [ext_interconnect, Common-Components/utils, Core/core, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Memory/ifetch_bridge, Peripherals/CLINT, Peripherals/PLIC, Peripherals/TIMER, Peripherals/GPIO, Peripherals/display, Peripherals/console, Peripherals/flash-controller]
     sources:
       - src/soc/soc.vhd
   # The top of the ten platforms too: each of them analyzes its own package first (`sources <name>_map modular_sim_top`).
