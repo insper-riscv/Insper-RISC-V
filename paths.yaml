@@ -17,7 +17,6 @@ references:
   - {name: boot memory linker script, file: src/simulation/internal-mem/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
   - {name: toolchain specs, file: src/simulation/internal-mem/config.yaml, yaml: toolchain.specs, base: .}
   - {name: Spike stand-in, file: src/simulation/internal-mem/config.yaml, yaml: emulator.sources, base: .}
-  - {name: PLL for freq-sweep, file: src/simulation/internal-mem/config.yaml, yaml: freq_sweep.pll_file, base: .}
   - {name: Quartus project dir, file: src/simulation/internal-mem/config.yaml, yaml: quartus.project_dir, base: .}
   - {name: board project (core_fpga_test.qsf), file: src/simulation/internal-mem/quartus/core_fpga_test.qsf, pattern: '-name (?:VHDL_FILE|VERILOG_FILE|QIP_FILE|SDC_FILE) (\S+)'}
   - {name: Quartus IPs of the PLL, paths: [src/simulation/internal-mem/pll/pll.qip, src/simulation/internal-mem/pll/pll_0002.qip]}
