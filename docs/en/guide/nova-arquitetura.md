@@ -747,6 +747,10 @@ riscv-tools --config src/cyclone-v/minhaplaca/config.yaml timing-paths --npaths 
 
 A negative setup slack indicates a path longer than the clock period. The result changes from seed to seed, and the argument of `<platform>_synth.tcl` chooses the seed.
 
+### 10.7. New board
+
+A board the repository does not know yet does not start from a copy of a board platform, but from the board package (`boards/<board>/`), which `riscv-tools board generate` turns into the Quartus project. The step by step, from the `board.yaml` to level N2, is in [adicionar-placa.md](adicionar-placa.md); sections 10.1 to 10.6 hold for the hand-written project files.
+
 ## 11. Add a new peripheral
 
 The example is an LED register, `led_register`, with a 32-bit register whose low bits light the LEDs. A peripheral has a `soc` side, family independent, and, when it needs an FPGA shell, a `<family>` side. The steps below apply in the `Peripherals` repository, in `Insper-RISC-V/Peripherals` or in your own clone.
