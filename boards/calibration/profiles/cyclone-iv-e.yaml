@@ -5,7 +5,7 @@
 family: cyclone-iv-e
 unit: le
 project:
-  platform: boards/calibration/platforms/de2-115/platform.yaml
+  platform: src/calibration/de2-115/platform.yaml
   board: de2-115
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de2_115_map, cal_onchip_ram]
   seed: 5

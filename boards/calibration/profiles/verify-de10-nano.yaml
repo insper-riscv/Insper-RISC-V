@@ -4,7 +4,7 @@
 family: cyclone-v
 unit: alm
 project:
-  platform: boards/calibration/platforms/de10-nano/platform.yaml
+  platform: src/calibration/de10-nano/platform.yaml
   board: de10-nano
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de10_nano_map, cal_onchip_ram]
   seed: 5

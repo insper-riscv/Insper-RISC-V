@@ -18,6 +18,7 @@ The `boards/families/<family>.yaml` file keeps what holds for every device of a 
 | `onchip_flash` | IP of the internal FLASH, or `null` |
 | `fmax.core_mhz_by_grade` | Core frequency measured for each grade, `null` without a measure |
 | `calibration` | Calibration file of the estimator, relative to `boards/`, or `null` |
+| `slew_rate` | Whether the fitter accepts `SLEW_RATE` on 3.3-V LVTTL pins; absent means `true`, and `cyclone-iv-e`, `max-10` and `cyclone-10-lp` refuse it (`false`) |
 
 ## 3. Families
 
@@ -29,7 +30,7 @@ The `boards/families/<family>.yaml` file keeps what holds for every device of a 
 | `max-10` | LE | `altpll`, 5 outputs | M9K of 9216 bits | `altera_onchip_flash` |
 | `cyclone-10-lp` | LE | `altpll`, 5 outputs | M9K of 9216 bits | no |
 
-The only measured Fmax is the `cyclone-v` one in grade `C7`. The calibration stays `null` until the measurement exists, and the validator warns of it (rule V18).
+The only measured Fmax is the `cyclone-v` one in grade `C7`. Each family has its calibration table in `calibration/<family>.yaml`, described in [calibracao.md](calibracao.md), and the validator warns when it is missing (rule V18).
 
 ---
 

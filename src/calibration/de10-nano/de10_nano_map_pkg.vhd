@@ -1,6 +1,6 @@
 -- ===========================================================================
 -- Mapa de memória da plataforma, gerado por
--- `riscv-tools generate-memory-map` a partir de boards/calibration/platforms/mkr-vidor-4000/platform.yaml.
+-- `riscv-tools generate-memory-map` a partir de src/calibration/de10-nano/platform.yaml.
 --
 -- Não edite à mão: mude o YAML da plataforma e rode o comando de novo. Os
 -- limites estão em KiB, como os genéricos do núcleo, e os endereços dos
@@ -10,7 +10,7 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-package mkr_vidor_4000_map_pkg is
+package de10_nano_map_pkg is
 
 	-- O perfil é o RV32E (16 registradores); falso é o RV32I (32).
 	constant HAS_E               : boolean  := false;
@@ -49,23 +49,23 @@ package mkr_vidor_4000_map_pkg is
 	-- Base da ROM, em KiB, logo depois da BOOT_MEMORY.
 	constant ROM_BASE_KIB        : natural  := 4;
 	-- Fim exclusivo da ROM, em KiB.
-	constant ROM_END_KIB         : natural  := 16;
+	constant ROM_END_KIB         : natural  := 32;
 	-- Armazenamento da ROM, em bytes: a menor potência de dois que cobre
 	-- [0, fim da ROM).
-	constant ROM_STORAGE_BYTES   : positive := 16384;
+	constant ROM_STORAGE_BYTES   : positive := 32768;
 	-- A ROM fica fora do núcleo.
 	constant ROM_EXTERNAL        : boolean  := true;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1048584;
+	constant RAM_END_KIB         : natural  := 1048640;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
-	constant RAM_STORAGE_BYTES   : positive := 8192;
+	constant RAM_STORAGE_BYTES   : positive := 65536;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"40001";
+		x"4000F";
 	-- A RAM fica fora do núcleo.
 	constant RAM_EXTERNAL        : boolean  := true;
 	-- Base da janela externa, em KiB; dali em diante é externo.
@@ -136,4 +136,4 @@ package mkr_vidor_4000_map_pkg is
 	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
 	constant SDRAM_TCK_PS   : positive := 10000;
 
-end package mkr_vidor_4000_map_pkg;
+end package de10_nano_map_pkg;

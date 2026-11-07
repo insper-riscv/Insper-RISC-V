@@ -5,7 +5,7 @@
 family: cyclone-10-lp
 unit: le
 project:
-  platform: boards/calibration/platforms/mkr-vidor-4000/platform.yaml
+  platform: src/calibration/mkr-vidor-4000/platform.yaml
   board: mkr-vidor-4000
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_mkr_vidor_4000_map, cal_onchip_ram]
   seed: 5

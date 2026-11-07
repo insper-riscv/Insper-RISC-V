@@ -15,4 +15,6 @@ virtual_jtag: true
 onchip_flash: null
 fmax:
   core_mhz_by_grade: {C7: null, C8: null}
-calibration: null
+calibration: calibration/cyclone-iv-e.yaml
+# O ajuste do Quartus recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL da Cyclone IV E (erro 169303), e o gerador de pinos a omite.
+slew_rate: false

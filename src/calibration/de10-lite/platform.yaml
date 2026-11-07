@@ -1,12 +1,12 @@
-# Plataforma de calibração da família cyclone-v na Terasic DE0-CV (5CEBA4F23C7). Esquema: docs/pt-br/boards/formato.md.
-# Só o `quartus_map` lê este arquivo: a lista de perfis (`../../profiles/cyclone-v.yaml`) troca o perfil, os extras e as caches, e o
+# Plataforma de calibração da família max-10 na Terasic DE10-Lite (10M50DAF484C7G). Esquema: docs/pt-br/boards/formato.md.
+# Só o `quartus_map` lê este arquivo: a lista de perfis (`boards/calibration/profiles/max-10.yaml`) troca o perfil, os extras e as caches, e o
 # harness do Tools (`riscv-tools calibrate run`) regera o pacote do mapa de memória e o projeto da placa a cada perfil.
 # O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a SDRAM de 16 bits.
-platform: de0-cv
+platform: de10-lite
 board: auto
-boards: [de0-cv]
+boards: [de10-lite]
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
-profiles: ../../../../Core/profiles/matrix.yaml
+profiles: ../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,       base: 0x00001000, size: 28K,  kind: rom, exec: true}
@@ -32,7 +32,7 @@ io:
   display: {count: 6, need: optional}
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
-  vhdl: {path: boards/calibration/platforms/de0-cv/de0_cv_map_pkg.vhd, package: de0_cv_map_pkg, rom: FLASH, ram: RAM}
+  vhdl: {path: src/calibration/de10-lite/de10_lite_map_pkg.vhd, package: de10_lite_map_pkg, rom: FLASH, ram: RAM}
 peripherals:
   - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
   - {name: UART,    base: 0xC0000000, id: 4}

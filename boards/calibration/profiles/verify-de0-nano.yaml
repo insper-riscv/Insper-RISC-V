@@ -4,7 +4,7 @@
 family: cyclone-iv-e
 unit: le
 project:
-  platform: boards/calibration/platforms/de0-nano/platform.yaml
+  platform: src/calibration/de0-nano/platform.yaml
   board: de0-nano
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de0_nano_map, Memory/sdram, Memory/sdram_debug, de0_cv_sdram_jtag_shell]
   seed: 5

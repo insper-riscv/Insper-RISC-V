@@ -1,6 +1,6 @@
 -- ===========================================================================
 -- Mapa de memória da plataforma, gerado por
--- `riscv-tools generate-memory-map` a partir de boards/calibration/platforms/de0-cv/platform.yaml.
+-- `riscv-tools generate-memory-map` a partir de src/calibration/de0-cv/platform.yaml.
 --
 -- Não edite à mão: mude o YAML da plataforma e rode o comando de novo. Os
 -- limites estão em KiB, como os genéricos do núcleo, e os endereços dos

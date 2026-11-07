@@ -5,7 +5,7 @@
 family: max-10
 unit: le
 project:
-  platform: boards/calibration/platforms/de10-lite/platform.yaml
+  platform: src/calibration/de10-lite/platform.yaml
   board: de10-lite
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de10_lite_map, Memory/sdram, Memory/sdram_debug, de0_cv_sdram_jtag_shell]
   seed: 5

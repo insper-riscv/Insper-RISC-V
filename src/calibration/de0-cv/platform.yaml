@@ -1,26 +1,26 @@
-# Plataforma de calibração da família cyclone-iv-e na Terasic DE2-115 (EP4CE115F29C7). Esquema: docs/pt-br/boards/formato.md.
-# Só o `quartus_map` lê este arquivo: a lista de perfis (`../../profiles/cyclone-iv-e.yaml`) troca o perfil, os extras e as caches, e o
+# Plataforma de calibração da família cyclone-v na Terasic DE0-CV (5CEBA4F23C7). Esquema: docs/pt-br/boards/formato.md.
+# Só o `quartus_map` lê este arquivo: a lista de perfis (`boards/calibration/profiles/cyclone-v.yaml`) troca o perfil, os extras e as caches, e o
 # harness do Tools (`riscv-tools calibrate run`) regera o pacote do mapa de memória e o projeto da placa a cada perfil.
-# O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a RAM emulada em blocos (a SDRAM da placa tem 32 bits e o Memory não tem controlador dessa largura).
-platform: de2-115
+# O topo é o da DE0-CV: BOOT_MEMORY, FLASH emulada com carregador e JTAG, console JTAG UART, display e a SDRAM de 16 bits.
+platform: de0-cv
 board: auto
-boards: [de2-115]
+boards: [de0-cv]
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
-profiles: ../../../../Core/profiles/matrix.yaml
+profiles: ../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,       base: 0x00001000, size: 28K,  kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 64K, kind: ram}
+  - {name: RAM,         base: 0x40000000, size: 16M, kind: ram}
 reserved:
-  stdout:   {base: 0x4000FBE0, size: 1K+8}
-  tohost:   {base: 0x4000FFE8, size: 8}
-  fromhost: {base: 0x4000FFF0, size: 8}
+  stdout:   {base: 0x40FFFBE0, size: 1K+8}
+  tohost:   {base: 0x40FFFFE8, size: 8}
+  fromhost: {base: 0x40FFFFF0, size: 8}
 boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 memory:
   rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
-  ram:    {external: true, backend: emulado}
+  ram:    {external: true, backend: dispositivo, device: sdram}
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 clocks:
@@ -28,11 +28,11 @@ clocks:
   mem:  {mhz: 100}
 console: jtag
 io:
-  leds: {count: 18, need: required}
-  display: {count: 8, need: optional}
+  leds: {count: 10, need: required}
+  display: {count: 6, need: optional}
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
-  vhdl: {path: boards/calibration/platforms/de2-115/de2_115_map_pkg.vhd, package: de2_115_map_pkg, rom: FLASH, ram: RAM}
+  vhdl: {path: src/calibration/de0-cv/de0_cv_map_pkg.vhd, package: de0_cv_map_pkg, rom: FLASH, ram: RAM}
 peripherals:
   - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
   - {name: UART,    base: 0xC0000000, id: 4}
