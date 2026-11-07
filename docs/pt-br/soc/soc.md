@@ -63,6 +63,7 @@ Cinco generics ligam o que as placas de relógio alto precisam, todos desligados
 | `has_dcache_bypass` e `bypass_page` | A página de 4 KiB indicada (a do topo da RAM) nunca fica na cache de dados, porque ali estão as palavras que o hospedeiro compartilha com o programa |
 | `has_flash_ctrl` e `flash_ctrl_id` | O controlador de FLASH da atualização de programa fica na janela indicada, com a interrupção na linha 6 e os comandos do chip em `o_flash_cmd_*` e `i_flash_cmd_*` |
 | `i_inval_valid`, `i_inval_first` e `i_inval_last` (portas) | A região regravada da FLASH, que derruba as linhas das duas caches |
+| `i_display_*`, `o_display_tdo` e `o_display_fail` (portas) | O Virtual JTAG pelo qual o hospedeiro lê e grava o registrador do display e a bandeira de falha; o topo da placa liga o nó de índice 2 |
 
 ## 6. Linhas do PLIC
 

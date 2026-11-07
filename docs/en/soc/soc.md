@@ -63,6 +63,7 @@ Five generics turn on what boards with a high clock need, all off by default so 
 | `has_dcache_bypass` and `bypass_page` | The 4 KiB page given (the one at the top of the RAM) is never kept in the data cache, because the words the host shares with the program live there |
 | `has_flash_ctrl` and `flash_ctrl_id` | The program update FLASH controller sits in the given window, with the interrupt on line 6 and the chip commands on `o_flash_cmd_*` and `i_flash_cmd_*` |
 | `i_inval_valid`, `i_inval_first` and `i_inval_last` (ports) | The rewritten FLASH region, which drops the lines of both caches |
+| `i_display_*`, `o_display_tdo` and `o_display_fail` (ports) | The Virtual JTAG through which the host reads and writes the display register and the failure flag; the board top wires the node of index 2 |
 
 ## 6. PLIC lines
 
