@@ -52,6 +52,18 @@ As chaves e os botões são blocos GPIO, e o display é o registrador `seg_displ
 
 O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` e `periph_base_kib`. Os valores vêm do `platform.yaml`, pelo pacote que o topo lê. O SoC não depende desse pacote. As extensões do núcleo (`has_*`), as caches (`has_icache`, `has_dcache` e os tamanhos), as interrupções (`has_interrupts`, `plic_*`, `clint_*`) e os índices das janelas dos periféricos são generics com valor neutro.
 
+### 5.1. Cortes de caminho crítico e atualização de programa
+
+Cinco generics ligam o que as placas de relógio alto precisam, todos desligados por padrão para que as plataformas de simulação fiquem como estavam.
+
+| Generic | Efeito |
+| :--- | :--- |
+| `registered_irqs` | As três linhas de interrupção entram no núcleo por um registrador, um ciclo de latência a mais, e saem do caminho que decide a tomada da interrupção |
+| `fast_icache_select` | A cache de instruções escolhe a região pelo endereço registrado e não confere o endereço a cada consulta; exige o relógio de busca defasado do relógio do núcleo |
+| `has_dcache_bypass` e `bypass_page` | A página de 4 KiB indicada (a do topo da RAM) nunca fica na cache de dados, porque ali estão as palavras que o hospedeiro compartilha com o programa |
+| `has_flash_ctrl` e `flash_ctrl_id` | O controlador de FLASH da atualização de programa fica na janela indicada, com a interrupção na linha 6 e os comandos do chip em `o_flash_cmd_*` e `i_flash_cmd_*` |
+| `i_inval_valid`, `i_inval_first` e `i_inval_last` (portas) | A região regravada da FLASH, que derruba as linhas das duas caches |
+
 ## 6. Linhas do PLIC
 
 Cada periférico liga a sua interrupção a uma linha fixa do PLIC, a mesma em toda plataforma.
