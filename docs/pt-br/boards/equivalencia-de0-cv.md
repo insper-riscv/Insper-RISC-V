@@ -61,15 +61,23 @@ O gerado fecha o setup e o hold em todos os domínios nas cinco sementes. Os bit
 
 ## 5. Placa
 
-Os programas do repositório de testes rodaram na placa DE0-CV com o bitstream do projeto gerado (semente 5), pelo executor de placa do repositório de testes.
+Os programas do repositório de testes e os ELFs do ACT4 rodaram na placa DE0-CV com o bitstream do projeto gerado (semente 5, folga de setup +0,759 ns no pior domínio), pelo executor de placa do repositório de testes.
 
 | Etapa | Programas | Passaram | Falharam |
 | :--- | ---: | ---: | :--- |
 | SDRAM | 20 | 20 | nenhum |
 | Interrupções | 13 | 13 | nenhum |
-| Regressão | 128 | 127 | `hpm-cpi` |
+| Regressão | 128 | 128 | nenhum |
+| ACT4 (`rv32im_full_zifencei`) | 114 | 114 | nenhum |
 
-O `hpm-cpi` confere que a soma dos ciclos atribuídos pelos contadores de eventos fica a 1 % do `mcycle`, e falha do mesmo modo com o bitstream escrito à mão compilado da mesma árvore (a primeira palavra do resultado vem 0 onde o valor esperado é 1). Com o bitstream escrito à mão, a etapa SDRAM passa em 19 de 20 programas, e o `clint-mtip` é o que falha.
+O `hpm-cpi` confere que a soma dos ciclos atribuídos pelos contadores de eventos fica a 1 % do `mcycle`. Ele falhava com o bitstream gerado e com o escrito à mão porque o `csr_file` fazia o OU do registrador de saída do banco do Zihpm na leitura de qualquer CSR sem caso próprio, e o `csrr` de `instret` logo depois de um `csrr` de `mhpmcounterK` recebia os bits do contador. A saída do banco agora só entra quando o endereço é do banco, e o teste não mudou.
+
+## 6. Projetos que ficam com topo próprio
+
+| Projeto | Situação do gerador | O que falta para sair do topo escrito à mão |
+| :--- | :--- | :--- |
+| `external-data` | O `board generate` escreve topo, PLL, `.sdc`, `.qsf` e `.qpf` para a `platform.yaml` dele quando ela ganha `board: auto`, `boards: [de0-cv]`, `top` e `memory.ram.backend: dispositivo`; o gerador não precisa mudar | Um componente de `paths.yaml` cujo fecho de `requires` não traga a cache de instruções nem o chip de FLASH, e a medição do projeto gerado (síntese, tempo nas cinco sementes e os programas na placa), que a troca exige antes de apagar o topo, o `.sdc` e os scripts escritos à mão |
+| `core_fpga_test` (`internal-mem`) | O gerador só conhece os relógios `core`, `fetch` e `mem`; o topo usa o PLL de três saídas defasadas de 120 graus do núcleo de três estágios, e a `platform.yaml` não tem `clocks.core` nem `boards` | Um tipo de relógio de três fases no gerador de PLL, ou a aposentadoria desse topo de medida junto com o núcleo de três estágios |
 
 ---
 

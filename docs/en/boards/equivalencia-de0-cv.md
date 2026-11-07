@@ -61,15 +61,23 @@ The generated one closes setup and hold in every domain on the five seeds. The m
 
 ## 5. Board
 
-The programs of the tests repository ran on the DE0-CV board with the bitstream of the generated project (seed 5), through the board runner of the tests repository.
+The programs of the tests repository and the ACT4 ELFs ran on the DE0-CV board with the bitstream of the generated project (seed 5, setup slack +0.759 ns in the worst domain), through the board runner of the tests repository.
 
 | Stage | Programs | Passed | Failed |
 | :--- | ---: | ---: | :--- |
 | SDRAM | 20 | 20 | none |
 | Interrupts | 13 | 13 | none |
-| Regression | 128 | 127 | `hpm-cpi` |
+| Regression | 128 | 128 | none |
+| ACT4 (`rv32im_full_zifencei`) | 114 | 114 | none |
 
-`hpm-cpi` checks that the sum of the cycles attributed by the event counters is within 1 % of `mcycle`, and it fails the same way with the hand-written bitstream built from the same tree (the first result word is 0 where 1 is expected). With the hand-written bitstream the SDRAM stage passes 19 of 20 programs, and `clint-mtip` is the one that fails.
+`hpm-cpi` checks that the sum of the cycles attributed by the event counters is within 1 % of `mcycle`. It failed with the generated bitstream and with the hand-written one because `csr_file` ORed the output register of the Zihpm bank into the read of any CSR without its own case, so the `csrr` of `instret` right after a `csrr` of `mhpmcounterK` received the bits of the counter. The bank output now enters only when the address belongs to the bank, and the test did not change.
+
+## 6. Projects that keep their own top
+
+| Project | State of the generator | What is missing to leave the hand-written top |
+| :--- | :--- | :--- |
+| `external-data` | `board generate` writes the top, PLL, `.sdc`, `.qsf` and `.qpf` for its `platform.yaml` once it has `board: auto`, `boards: [de0-cv]`, `top` and `memory.ram.backend: dispositivo`; the generator does not need to change | A `paths.yaml` component whose `requires` closure brings neither the instruction cache nor the FLASH chip, and the measurement of the generated project (synthesis, timing on the five seeds and the programs on the board), which the swap needs before the hand-written top, `.sdc` and scripts are deleted |
+| `core_fpga_test` (`internal-mem`) | The generator only knows the `core`, `fetch` and `mem` clocks; the top uses the PLL with three outputs 120 degrees apart of the three-stage core, and its `platform.yaml` has neither `clocks.core` nor `boards` | A three-phase clock kind in the PLL generator, or the retirement of this measurement top together with the three-stage core |
 
 ---
 

@@ -77,6 +77,8 @@ entity soc is
     icache_size_bits    : positive := 4096;
     -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
     dcache_size_bits    : positive := 4096;
+    -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+    cache_window_bits   : natural range 26 to 29 := 26;
     -- Zicsr no núcleo (instruções CSR reais); falso mantém o comportamento de NOP.
     has_zicsr           : boolean := false;
     -- Contadores da extensão Zicntr (implica Zicsr).
@@ -1032,6 +1034,7 @@ begin
     u_dcache : entity work.dcache
       generic map (
         size_bits     => dcache_size_bits,
+        window_bits   => cache_window_bits,
         write_through => true,
         rom_base_kib  => BOOT_KIB,
         rom_end_kib   => rom_end_kib
@@ -1091,6 +1094,7 @@ begin
     u_icache : entity work.icache
       generic map (
         size_bits    => icache_size_bits,
+        window_bits  => cache_window_bits,
         rom_base_kib => BOOT_KIB,
         rom_end_kib  => rom_end_kib,
         sel_from_kib => ic_select_from(fast_icache_select, BOOT_KIB),
@@ -1125,6 +1129,7 @@ begin
     u_ifetch : entity work.ifetch_bridge
       generic map (
         fetch_line   => true,
+        window_bits  => cache_window_bits,
         rom_base_kib => BOOT_KIB,
         rom_end_kib  => rom_end_kib
       )

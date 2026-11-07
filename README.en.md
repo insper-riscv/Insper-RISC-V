@@ -11,9 +11,9 @@
 - [AUTHORS.en.md](AUTHORS.en.md): authors with commits in the repository, with name and GitHub account.
 - [CONTRIBUTING.en.md](CONTRIBUTING.en.md): mandatory contribution rules, the VHDL-2008, C23 and Python standards, documentation rules and the checks before opening a Pull Request.
 - [CITATION.cff](CITATION.cff): metadata to cite the software.
-- [docs/pt-br/guide/](docs/pt-br/guide/README.md): guides (board, simulation, KPIs and new architecture), in Portuguese.
+- [docs/pt-br/guide/](docs/pt-br/guide/README.md): guides (board, adding a new board, simulation, KPIs and new architecture), in Portuguese.
 - [docs/pt-br/platform/](docs/pt-br/platform/README.md): the five platforms and the ten (four for tests, four on the FPGA and two for the UART), with the memory map, boot, runtime and program update of each one, in Portuguese.
-- [docs/en/boards/](docs/en/boards/formato.md): the board package format (`boards/<board>/board.yaml` and `pins.yaml`) and the table of the six boards.
+- [docs/en/boards/](docs/en/boards/README.md): the multi-FPGA architecture, the board package format (`boards/<board>/board.yaml` and `pins.yaml`), project generation, JTAG identification, profile fit and the table of the seven boards.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): diagnosed defects, in Portuguese.
 - [docs/en/conformance/](docs/en/conformance/riscv-nao-privilegiado.md): the conformance report for chapters 1, 2 and 4 to 11 of the RISC-V unprivileged volume, with the evidence for each requirement, and [riscv-privilegiado.md](docs/en/conformance/riscv-privilegiado.md), the one for the privileged volume for the machine-mode-only hart.
 - [docs/en/interconnect/ext_interconnect.md](docs/en/interconnect/ext_interconnect.md): the external interconnect, which decodes the platform map between the SDRAM and the peripherals, its AXI4 variant and the integration tests.
@@ -80,7 +80,7 @@ Each repository runs only its own checks, tests and proofs; those of the submodu
 
 ## 5. Board
 
-The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is written by `riscv-tools board generate` in `build/de0-cv-de0-cv/de0_cv_de0_cv.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [placa.md](docs/pt-br/guide/placa.md) (in Portuguese).
+The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is written by `riscv-tools board generate` in `build/de0-cv-de0-cv/de0_cv_de0_cv.qpf`. Programming it and running tests on it is done by `riscv-tools run` from `Tests`, as described in [placa.md](docs/pt-br/guide/placa.md) (in Portuguese); other boards follow the same command, and a new board follows [adicionar-placa.md](docs/pt-br/guide/adicionar-placa.md) (in Portuguese).
 
 ## 6. KPIs
 

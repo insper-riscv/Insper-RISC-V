@@ -11,9 +11,9 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 - [AUTHORS.md](AUTHORS.md): autores com commits no repositório, com nome e conta do GitHub.
 - [CONTRIBUTING.md](CONTRIBUTING.md): regras obrigatórias de contribuição, normas VHDL-2008, C23 e Python, regras de documentação e verificação antes de abrir Pull Request.
 - [CITATION.cff](CITATION.cff): metadados para citação do software.
-- [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, simulação, KPIs e nova arquitetura).
+- [docs/pt-br/guide/](docs/pt-br/guide/README.md): guias (placa, adicionar uma placa nova, simulação, KPIs e nova arquitetura).
 - [docs/pt-br/platform/](docs/pt-br/platform/README.md): as cinco plataformas e as dez (quatro de teste, quatro na FPGA e duas de UART), com o mapa de memória, o boot, o runtime e a atualização de programa de cada uma.
-- [docs/pt-br/boards/](docs/pt-br/boards/formato.md): o formato do pacote de placa (`boards/<placa>/board.yaml` e `pins.yaml`) e a tabela das seis placas.
+- [docs/pt-br/boards/](docs/pt-br/boards/README.md): a arquitetura multi-FPGA, o formato do pacote de placa (`boards/<placa>/board.yaml` e `pins.yaml`), a geração do projeto, a identificação pelo JTAG, o cabimento do perfil e a tabela das sete placas.
 - [docs/pt-br/bugs/](docs/pt-br/bugs): defeitos já diagnosticados.
 - [docs/pt-br/conformance/](docs/pt-br/conformance/riscv-nao-privilegiado.md): o relatório de conformidade com os capítulos 1, 2 e 4 a 11 do volume não privilegiado do RISC-V, com a evidência de cada requisito, e [riscv-privilegiado.md](docs/pt-br/conformance/riscv-privilegiado.md), o do volume privilegiado para o hart só com o modo máquina.
 - [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md): o interconector externo, que decodifica o mapa da plataforma entre a SDRAM e os periféricos, a sua variante AXI4 e os testes de integração.
@@ -80,7 +80,7 @@ Cada repositório roda só as próprias verificações, testes e provas; as dos 
 
 ## 5. Placa
 
-O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools board generate` em `build/de0-cv-de0-cv/de0_cv_de0_cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [placa.md](docs/pt-br/guide/placa.md).
+O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools board generate` em `build/de0-cv-de0-cv/de0_cv_de0_cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [placa.md](docs/pt-br/guide/placa.md); outras placas seguem o mesmo comando, e uma placa nova segue [adicionar-placa.md](docs/pt-br/guide/adicionar-placa.md).
 
 ## 6. KPIs
 

@@ -2,7 +2,7 @@
 
 ## 1. Table
 
-Each board has its package in `boards/<board>/` and a research sheet in `Plans/Multi-FPGA/placas/<board>.md` of the Capstone repository, with the source and seal of each fact. The package format is in [formato.md](formato.md).
+Each board has its package in `boards/<board>/` and a research sheet in `Plans/Multi-FPGA/placas/<board>.md` of the Capstone repository, with the source and seal of each fact. The package format is in [formato.md](formato.md), and the step by step for a new board in [../guide/adicionar-placa.md](../guide/adicionar-placa.md).
 
 | Board | Device | Family | IDCODE | Cable | Memory outside the FPGA | Target level |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |
