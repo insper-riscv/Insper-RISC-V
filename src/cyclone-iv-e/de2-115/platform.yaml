@@ -16,13 +16,13 @@ profiles: ../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
   - {name: FLASH,    base: 0x00001000, size: 1024K, kind: rom, exec: true}   # the first 1 MiB of the NOR chip (the window of the region router): offset 0 of the chip is 0x1000
-  - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM (the first 64 MiB, the window of the cache tag)
+  - {name: RAM,      base: 0x40000000, size: 128M, kind: ram}   # the whole SDRAM; the generator widens the window of the cache tag to 128 MiB
 
 # Words at the top of RAM: the contract between the boot memory, the program and the host.
 reserved:
-  stdout:   {base: 0x43FFFBE0, size: 1K+8}
-  tohost:   {base: 0x43FFFFE8, size: 8}
-  fromhost: {base: 0x43FFFFF0, size: 8}
+  stdout:   {base: 0x47FFFBE0, size: 1K+8}
+  tohost:   {base: 0x47FFFFE8, size: 8}
+  fromhost: {base: 0x47FFFFF0, size: 8}
 
 boot:
   entry: 0x00001000

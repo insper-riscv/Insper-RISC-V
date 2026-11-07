@@ -58,14 +58,14 @@ package de2_115_map_pkg is
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1114112;
+	constant RAM_END_KIB         : natural  := 1179648;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
-	constant RAM_STORAGE_BYTES   : positive := 67108864;
+	constant RAM_STORAGE_BYTES   : positive := 134217728;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"43FFF";
+		x"47FFF";
 	-- A RAM fica fora do núcleo.
 	constant RAM_EXTERNAL        : boolean  := true;
 	-- Base da janela externa, em KiB; dali em diante é externo.
@@ -80,6 +80,8 @@ package de2_115_map_pkg is
 	constant ICACHE_SIZE_BITS    : positive := 32768;
 	-- Tamanho da cache de dados, em bits (256 se não existe).
 	constant DCACHE_SIZE_BITS    : positive := 32768;
+	-- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+	constant CACHE_WINDOW_BITS   : natural  := 27;
 	-- A ROM é alcançada pela porta do núcleo (externa ou com cache).
 	constant ROM_VIA_PORT        : boolean  := ROM_EXTERNAL or HAS_ICACHE;
 	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).

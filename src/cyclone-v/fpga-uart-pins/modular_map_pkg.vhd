@@ -80,6 +80,8 @@ package modular_map_pkg is
 	constant ICACHE_SIZE_BITS    : positive := 32768;
 	-- Tamanho da cache de dados, em bits (256 se não existe).
 	constant DCACHE_SIZE_BITS    : positive := 32768;
+	-- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+	constant CACHE_WINDOW_BITS   : natural  := 26;
 	-- A ROM é alcançada pela porta do núcleo (externa ou com cache).
 	constant ROM_VIA_PORT        : boolean  := ROM_EXTERNAL or HAS_ICACHE;
 	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).
