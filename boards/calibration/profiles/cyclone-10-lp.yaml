@@ -7,7 +7,6 @@ unit: le
 project:
   platform: src/calibration/mkr-vidor-4000/platform.yaml
   board: mkr-vidor-4000
-  targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_mkr_vidor_4000_map, cal_onchip_ram]
   seed: 5
 # A FLASH de 12 KiB e a RAM de 8 KiB deixam as memórias dentro dos 504 kbit do 10CL016: acima disso a síntese converte a RAM em lógica
 # e o custo das caches de 64 e 128 kbit deixa de ser o da cache.

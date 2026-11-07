@@ -46,7 +46,9 @@ entity core_fpga_test is
 		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 		HAS_INTERRUPTS : boolean := work.internal_mem_map_pkg.HAS_INTERRUPTS;
 		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_SSCOFPMF : boolean := work.internal_mem_map_pkg.HAS_SSCOFPMF
+		HAS_SSCOFPMF : boolean := work.internal_mem_map_pkg.HAS_SSCOFPMF;
+		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+		HAS_ACCESS_FAULTS : boolean := work.internal_mem_map_pkg.HAS_ACCESS_FAULTS
 	);
 	port (
 		-- Clock de 50 MHz da placa, entrada do PLL.
@@ -300,13 +302,13 @@ begin
 			o_ram_rden    => ram_rden,
 			o_ram_byteena => ram_byteena,
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata,
-			i_sdram_ready   => '1',
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata,
+			i_ext_ready   => '1',
 			o_mem_advance   => open,
 
 			o_trap_take     => core_trap

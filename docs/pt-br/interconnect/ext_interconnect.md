@@ -35,7 +35,7 @@ O CLINT (id 6) e o PLIC (id 7) entram como escravos pelo mesmo caminho dos outro
 | `o_irq_timer` do CLINT (`mtime >= mtimecmp`) | `i_irq_timer` | MTIP, bit 7 |
 | `o_meip` do PLIC | `i_irq_external` | MEIP, bit 11 |
 
-O `mtime` do CLINT é um contador próprio, que soma 1 a cada $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ ciclos do núcleo e é independente do CSR `time` da Zicntr, que o núcleo atende. A base do CLINT, o `mtime_hz` e o `clock_hz` saem da seção `interrupts` do `platform.yaml`, e nenhum endereço do CLINT é escrito à mão no topo nem no runtime. O núcleo só habilita as interrupções com `has_interrupts` e Zicsr, e as linhas do `EXT_IRQ` ficam em zero enquanto nenhum periférico do topo gera uma.
+O `mtime` do CLINT é um contador próprio, que soma 1 a cada $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ ciclos do núcleo e o CSR `time` da Zicntr, que o núcleo atende, é o sombreamento somente leitura dele: a saída `o_mtime` do CLINT chega à porta `i_mtime` do núcleo. A base do CLINT, o `mtime_hz` e o `clock_hz` saem da seção `interrupts` do `platform.yaml`, e nenhum endereço do CLINT é escrito à mão no topo nem no runtime. O núcleo só habilita as interrupções com `has_interrupts` e Zicsr, e as linhas do `EXT_IRQ` ficam em zero enquanto nenhum periférico do topo gera uma.
 
 ## 3. O handshake
 

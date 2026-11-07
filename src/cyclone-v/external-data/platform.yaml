@@ -48,19 +48,15 @@ memory:
   icache: {enabled: false}
   dcache: {enabled: true, size_bits: 32768}
 
-# The clock of the SDRAM controller and the phase of the DRAM_CLK pin against it: the single source of the PLL
-# (src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, tied to these values by the checks below) and of the period the controller
-# and the chip model convert the chip timings with (SDRAM_TCK_PS of the generated package). The controller runs at 100 MHz,
-# the clock of the core at its final frequency (a 1 to 1 ratio), so its pin paths have 10 ns instead of 7 ns.
-sdram:
-  clock_hz: 100000000
-  dram_clk_phase_ps: 4000
-
-# The phase of the core clock (PLL output 3) against the fetch clock (output 2), measured by the Quartus timing of the 5 seeds
-# and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
-# crossings (docs/pt-br/platform/timing/MARCOS.md).
-pll:
-  core_phase_ps: 8250
+# The clocks of the PLL (src/cyclone-v/external-data/pll/sdram_platform_pll.v, tied to these values by the checks below): the
+# SDRAM controller at 100 MHz and the core and the fetch at 76.923077 MHz (1000 MHz / 13), the frequency whose five seeds close
+# the timing (docs/pt-br/platform/timing/FRENTE-F-ONDA2.md). The period the controller and the chip model convert the chip
+# timings with is SDRAM_TCK_PS of the generated package. The phase of the core clock against the fetch clock is the 7500 ps
+# measured by the Quartus timing of the 5 seeds (docs/pt-br/platform/timing/MARCOS.md).
+clocks:
+  core:  {mhz: 76.923077, phase_ps: 7500}
+  fetch: {mhz: 76.923077, phase_ps: 0}
+  mem:   {mhz: 100}
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
 extras: [Zimop, Zicond]
@@ -91,7 +87,6 @@ checks:
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
 
   # --- the PLL of the SDRAM controller (shared by the de0-cv and external-data tops) -------------------------------
-  - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: SDRAM.clock_mhz}
-  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
-  - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}
-  - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: PLL.core_phase_ps}
+  - {name: PLL controller MHz, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: CLOCKS.mem_mhz}
+  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: CLOCKS.mem_mhz}
+  - {name: PLL core phase, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: CLOCKS.core_phase_ps}

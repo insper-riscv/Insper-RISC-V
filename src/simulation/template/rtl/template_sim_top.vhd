@@ -59,7 +59,9 @@ entity template_sim_top is
         -- Interrupções de máquina (as portas i_irq_* do núcleo; exige Zicsr)
         has_interrupts      : boolean  := HAS_INTERRUPTS;
         -- Interrupção de estouro de contador (Sscofpmf; exige Zihpm e as interrupções)
-        has_sscofpmf        : boolean  := HAS_SSCOFPMF
+        has_sscofpmf        : boolean  := HAS_SSCOFPMF;
+        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa (exige Zicsr)
+        has_access_faults   : boolean  := HAS_ACCESS_FAULTS
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -178,6 +180,8 @@ begin
             has_zihintpause => has_zihintpause,
             has_interrupts  => has_interrupts and has_zicsr,
             has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
+            has_access_faults => has_access_faults and has_zicsr,
+            periph_slots    => PERIPH_SLOTS,
             boot_memory_bits   => log2_exact(boot_memory_size_bytes),
             rom_end_kib     => ROM_END_KIB,
             rom_external    => ROM_EXTERNAL,
@@ -208,12 +212,12 @@ begin
             o_ram_wren      => ram_wren,
             o_ram_rden      => ram_rden,
             o_ram_byteena   => ram_byteena,
-            o_sdram_addr    => ext_addr,
-            o_sdram_wdata   => ext_wdata,
-            o_sdram_byteena => ext_byteena,
-            o_sdram_rden    => ext_rden,
-            o_sdram_wren    => ext_wren,
-            i_sdram_rdata   => ext_rdata
+            o_ext_addr    => ext_addr,
+            o_ext_wdata   => ext_wdata,
+            o_ext_byteena => ext_byteena,
+            o_ext_rden    => ext_rden,
+            o_ext_wren    => ext_wren,
+            i_ext_rdata   => ext_rdata
         );
 
     u_boot_memory : entity work.rom_simulation

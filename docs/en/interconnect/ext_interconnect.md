@@ -35,7 +35,7 @@ The CLINT (id 6) and the PLIC (id 7) enter as slaves by the same path as the oth
 | `o_irq_timer` of the CLINT (`mtime >= mtimecmp`) | `i_irq_timer` | MTIP, bit 7 |
 | `o_meip` of the PLIC | `i_irq_external` | MEIP, bit 11 |
 
-The `mtime` of the CLINT is a counter of its own, which adds 1 every $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ core cycles and is independent of the CSR `time` of Zicntr, which the core serves. The base of the CLINT, `mtime_hz` and `clock_hz` come from the `interrupts` section of `platform.yaml`, and no address of the CLINT is written by hand in the top or in the runtime. The core enables the interrupts only with `has_interrupts` and Zicsr, and the lines of `EXT_IRQ` stay at zero while no peripheral of the top raises one.
+The `mtime` of the CLINT is a counter of its own, which adds 1 every $\texttt{CLINT\_TICK\_CYCLES} = clock\_hz / mtime\_hz$ core cycles and the CSR `time` of Zicntr, which the core serves, is its read-only shadow: the `o_mtime` output of the CLINT reaches the `i_mtime` port of the core. The base of the CLINT, `mtime_hz` and `clock_hz` come from the `interrupts` section of `platform.yaml`, and no address of the CLINT is written by hand in the top or in the runtime. The core enables the interrupts only with `has_interrupts` and Zicsr, and the lines of `EXT_IRQ` stay at zero while no peripheral of the top raises one.
 
 ## 3. The handshake
 

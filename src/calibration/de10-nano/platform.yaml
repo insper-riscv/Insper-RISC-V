@@ -5,6 +5,8 @@
 platform: de10-nano
 board: auto
 boards: [de10-nano]
+# O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
+top: Insper-RISC-V/cal_de10_nano_board
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 regions:

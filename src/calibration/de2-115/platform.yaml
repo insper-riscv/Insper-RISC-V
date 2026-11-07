@@ -5,6 +5,8 @@
 platform: de2-115
 board: auto
 boards: [de2-115]
+# O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
+top: Insper-RISC-V/cal_de2_115_board
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 regions:

@@ -52,6 +52,19 @@ The switches and keys are GPIO blocks, and the display is the `seg_display` regi
 
 The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The SoC does not depend on that package. The core extensions (`has_*`), the caches (`has_icache`, `has_dcache` and the sizes), the interrupts (`has_interrupts`, `plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
 
+### 5.1. Critical path cuts and program update
+
+Five generics turn on what boards with a high clock need, all off by default so the simulation platforms stay as they were.
+
+| Generic | Effect |
+| :--- | :--- |
+| `registered_irqs` | The three interrupt lines enter the core through a register, one more cycle of latency, and leave the path that decides taking the interrupt |
+| `fast_icache_select` | The instruction cache picks the region from the registered address and does not check the address on every lookup; it needs the fetch clock to be staggered from the core clock |
+| `has_dcache_bypass` and `bypass_page` | The 4 KiB page given (the one at the top of the RAM) is never kept in the data cache, because the words the host shares with the program live there |
+| `has_flash_ctrl` and `flash_ctrl_id` | The program update FLASH controller sits in the given window, with the interrupt on line 6 and the chip commands on `o_flash_cmd_*` and `i_flash_cmd_*` |
+| `i_inval_valid`, `i_inval_first` and `i_inval_last` (ports) | The rewritten FLASH region, which drops the lines of both caches |
+| `i_display_*`, `o_display_tdo` and `o_display_fail` (ports) | The Virtual JTAG through which the host reads and writes the display register and the failure flag; the board top wires the node of index 2 |
+
 ## 6. PLIC lines
 
 Each peripheral connects its interrupt to a fixed PLIC line, the same on every platform.

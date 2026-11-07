@@ -59,6 +59,8 @@ entity rv32im_external_data_sim_test is
 		HAS_INTERRUPTS : boolean := false;
 		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 		HAS_SSCOFPMF : boolean := false;
+		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+		HAS_ACCESS_FAULTS : boolean := false;
 		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
 		HAS_ZIHPM : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
@@ -347,13 +349,13 @@ begin
 			o_ram_rden      => ram_rden,
 			o_ram_byteena   => ram_byteena,
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata,
-			i_sdram_ready   => sdram_ready,
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata,
+			i_ext_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,

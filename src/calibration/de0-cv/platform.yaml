@@ -5,6 +5,8 @@
 platform: de0-cv
 board: auto
 boards: [de0-cv]
+# O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
+top: Insper-RISC-V/cal_de0_cv_board
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 regions:

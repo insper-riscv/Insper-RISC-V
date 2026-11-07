@@ -7,7 +7,6 @@ unit: le
 project:
   platform: src/calibration/de2-115/platform.yaml
   board: de2-115
-  targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de2_115_map, cal_onchip_ram]
   seed: 5
 # Bits de um bloco M9K.
 bits_per_block: 9216

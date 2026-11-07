@@ -14,5 +14,5 @@ memory_ip: altsyncram
 virtual_jtag: true
 onchip_flash: null
 fmax:
-  core_mhz_by_grade: {I7: null}
+  core_mhz_by_grade: {I7: null, C6: null}
 calibration: null

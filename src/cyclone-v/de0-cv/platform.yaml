@@ -10,6 +10,11 @@
 # generated rv32_test.h) are not here: its memory section is this platform's
 # config.yaml, extended, and the header is generated from it.
 platform: de0-cv
+# The board of the platform: `auto` asks for the identification by the JTAG; `boards` lists the boards it is built on.
+board: auto
+boards: [de0-cv]
+# The component of paths.yaml whose closure of `requires` is the source list of the generated project.
+top: Insper-RISC-V/de0_cv_board
 # The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
 # `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
@@ -52,10 +57,11 @@ peripherals:
   - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
-# (50 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (50 cycles per tick) and is
-# independent of the CSR time of Zicntr, which the core serves.
+# (76.923077 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (77 cycles per tick) and is
+# mirrored by the CSR time of Zicntr, which the core serves (o_mtime of the CLINT into i_mtime of the core).
 interrupts:
-  clock_hz: 50000000
+  # `clock_hz` is left out: it is `clocks.core` (76.923077 MHz) rounded to a whole number of cycles per tick, 77 MHz, so the
+  # mtime counts 0.1 % slower than mtime_hz.
   mtime_hz: 1000000
   # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
   # FLASH controller (board and simulation).
@@ -64,30 +70,39 @@ interrupts:
     - {name: UART_JTAG, id: 2}
     - {name: FLASH,     id: 6}
 
-# The memory model: the FLASH and the SDRAM outside the core, behind the instruction and the data caches (32768 bits,
-# 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL, RAM_EXTERNAL and the caches from here.
+# The memory model: the FLASH is emulated in the M10K blocks with the latency of a serial chip (24 cycles for the first
+# word of a burst, 4 for each following) and the SDRAM is the device of the board, both outside the core behind the
+# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL,
+# RAM_EXTERNAL and the caches from here.
 memory:
-  rom:    {external: true}
-  ram:    {external: true}
+  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
+  ram:    {external: true, backend: dispositivo, device: sdram}
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 
-# The clock of the SDRAM controller and the phase of the DRAM_CLK pin against it: the single source of the PLL
-# (src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, tied to these values by the checks below) and of the period the controller
-# and the chip model convert the chip timings with (SDRAM_TCK_PS of the generated package). The controller runs at 100 MHz,
-# the clock of the core at its final frequency (a 1 to 1 ratio), so its pin paths have 10 ns instead of 7 ns.
-sdram:
-  clock_hz: 100000000
-  dram_clk_phase_ps: 4000
+# The clocks of the PLL, the single source of the generated PLL (`riscv-tools board generate`) and of the periods the
+# generated files convert with. `mem` is the clock of the SDRAM controller (the DRAM_CLK pin has the same frequency, its
+# phase comes from the board), at 100 MHz against the core, a 1.3 to 1 ratio, so its pin paths have 10 ns instead of 7 ns.
+# `core` and `fetch` run at 76.923077 MHz (1000 MHz / 13): the highest frequency whose five seeds close the setup at 85 C and
+# the hold at 0 C in every domain (docs/pt-br/platform/timing/FRENTE-F-ONDA2.md); `interrupts.clock_hz` rounds it to a
+# whole number of cycles per tick. The phase of the core (7500 ps) against the fetch clock was measured by the Quartus timing
+# of the 5 seeds: it splits the 20 ns of the loop through the instruction cache between its two crossings
+# (docs/pt-br/platform/timing/MARCOS.md).
+clocks:
+  core:  {mhz: 76.923077, phase_ps: 7500}
+  fetch: {mhz: 76.923077, phase_ps: 0}
+  mem:   {mhz: 100}
 
-# The phase of the core clock (PLL output 3) against the fetch clock (output 2), measured by the Quartus timing of the 5 seeds
-# and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
-# crossings (docs/pt-br/platform/timing/MARCOS.md).
-pll:
-  core_phase_ps: 8250
+# The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
+console: jtag
+io:
+  leds:     {count: 10, need: required}
+  switches: {count: 10, need: optional}
+  keys:     {count: 4,  need: optional}
+  display:  {count: 6,  need: optional}
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND, HAS_ZIHINTNTL, HAS_ZIHINTPAUSE and HAS_INTERRUPTS of the package).
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
+extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
@@ -134,9 +149,4 @@ checks:
   - {name: Tests header RV32_BANK_A_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.size}
   - {name: Tests header RV32_BANK_B_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.base}
   - {name: Tests header RV32_BANK_B_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.size}
-
-  # --- the PLL of the SDRAM controller (shared by the de0-cv and external-data tops) -------------------------------
-  - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: SDRAM.clock_mhz}
-  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: SDRAM.clock_mhz}
-  - {name: PLL DRAM_CLK phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift1\("(\d+) ps"', expect: SDRAM.dram_clk_phase_ps}
-  - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: PLL.core_phase_ps}
+  - {name: Tests header RV32_TICK_CYCLES, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_TICK_CYCLES\s+(\d+)', expect: INTERRUPTS.tick_cycles}

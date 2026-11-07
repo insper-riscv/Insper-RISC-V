@@ -66,6 +66,8 @@ entity rv32i3stage_core_sim_test is
 	  HAS_INTERRUPTS : boolean := false;
 	  -- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 	  HAS_SSCOFPMF : boolean := false;
+	  -- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+	  HAS_ACCESS_FAULTS : boolean := false;
 	  -- Zifencei no core (FENCE.I); false mantem o NOP.
 	  HAS_ZIFENCEI : boolean := false;
 	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
@@ -242,12 +244,12 @@ begin
 			o_ram_rden    => ram_rden,    -- read enable
 			o_ram_byteena => ram_byteena, 	-- máscara de bytes
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata
 	);
 
 	u_uart_peripheral : entity work.UART

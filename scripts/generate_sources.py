@@ -129,7 +129,6 @@ QSFS = (
         "src/simulation/internal-mem/quartus/core_fpga_test.qsf",
         ("pll_ip", "core_fpga_test"),
     ),
-    Saida("src/cyclone-v/de0-cv/de0-cv.qsf", ("de0_cv_top",)),
     Saida(
         "src/cyclone-v/external-data/external-data.qsf",
         ("external_data_top",),

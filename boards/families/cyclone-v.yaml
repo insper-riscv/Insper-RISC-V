@@ -14,5 +14,5 @@ memory_ip: altsyncram
 virtual_jtag: true
 onchip_flash: null
 fmax:
-  core_mhz_by_grade: {C7: 64}
+  core_mhz_by_grade: {C7: 76.923077}
 calibration: calibration/cyclone-v.yaml

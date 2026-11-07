@@ -6,7 +6,6 @@ unit: le
 project:
   platform: src/calibration/de0-nano/platform.yaml
   board: de0-nano
-  targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_de0_nano_map, Memory/sdram, Memory/sdram_debug, de0_cv_sdram_jtag_shell]
   seed: 5
 bits_per_block: 9216
 reference_kbit: 32

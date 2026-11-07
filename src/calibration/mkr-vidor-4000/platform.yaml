@@ -5,6 +5,8 @@
 platform: mkr-vidor-4000
 board: auto
 boards: [mkr-vidor-4000]
+# O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
+top: Insper-RISC-V/cal_mkr_vidor_4000_board
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 regions:
