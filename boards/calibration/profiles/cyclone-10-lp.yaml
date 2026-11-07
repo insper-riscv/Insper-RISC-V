@@ -1,6 +1,6 @@
 # Perfis da calibração da Cyclone 10 LP (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o `quartus_map` do projeto que o
 # `board generate` escreve para a mkr-vidor-4000 (10CL016). A calibração mede o dispositivo e não a placa. O topo da plataforma de calibração é fixo:
-# a FLASH emulada, o display, a JTAG UART, o controlador de FLASH e a RAM emulada em blocos (o controlador de SDRAM do Memory tem endereço de linha de 13 bits e a SDRAM da placa tem 12) existem em todos os
+# a FLASH emulada, o display, a JTAG UART, o controlador de FLASH e a RAM emulada em blocos de 8 KiB (o controlador de SDRAM do Memory tem endereço de linha de 13 bits e a SDRAM da placa tem 12) existem em todos os
 # perfis e ficam absorvidos no termo do núcleo (`fixed`); só o que o `platform.yaml` e os generics variam entra no ajuste.
 family: cyclone-10-lp
 unit: le
@@ -9,6 +9,8 @@ project:
   board: mkr-vidor-4000
   targets: [soc, Memory/boot_memory, Memory/flash, Memory/flash_chip, Memory/flash_jtag_shell, Memory/flash_loader, Common-Components/utils, cal_mkr_vidor_4000_map, cal_onchip_ram]
   seed: 5
+# A FLASH de 12 KiB e a RAM de 8 KiB deixam as memórias dentro dos 504 kbit do 10CL016: acima disso a síntese converte a RAM em lógica
+# e o custo das caches de 64 e 128 kbit deixa de ser o da cache.
 # Bits de um bloco M9K.
 bits_per_block: 9216
 # Tamanho das caches (kbit) que o termo do núcleo já contém; os termos de cache medem a diferença para ele.
