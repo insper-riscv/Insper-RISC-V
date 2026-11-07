@@ -42,7 +42,7 @@ SoC RISC-V de 32 bits em VHDL. O núcleo é um pipeline em ordem de cinco estág
 | `src/simulation/modular/` | Topo de simulação configurável, com a ROM e a RAM dentro ou fora do chip e as caches de instruções e de dados presentes ou não, nas 16 combinações, FLASH e RAM de 1 MB e caches de 4 kbit por padrão. Roda os programas do repositório Tests e é a base da simulação do ACT4 |
 | `src/simulation/template/` | Plataforma modelo mínima (RAM e ROM internas, UART sobre JTAG opcional, perfil `rv32i`), o ponto de partida do guia de nova arquitetura |
 | `src/cyclone-v/external-data/` | Plataforma da placa DE0-CV com a BOOT_MEMORY e a FLASH de duas portas dentro da FPGA (uma só cópia, regravada por JTAG) e a SDRAM atrás da cache de dados, mais JTAG UART e display. O topo do Quartus é `external-data_top.vhd` e o de simulação é `rv32im_external_data_sim_test` |
-| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_MEMORY no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é `de0-cv_top.vhd` e o de simulação é `rv32im_sdram_flash_sim_test` |
+| `src/cyclone-v/de0-cv/` | Plataforma da placa DE0-CV, com a BOOT_MEMORY no núcleo e a FLASH e a SDRAM atrás das caches, mais JTAG UART e display. O topo do Quartus é gerado por `riscv-tools board generate` (`build/de0-cv-de0-cv/`) e o de simulação é `rv32im_sdram_flash_sim_test` |
 
 Todas as plataformas têm o `platform.yaml` e o `runtime/`. A `internal-mem` separa o projeto do Quartus em `quartus/` e os módulos próprios em `rtl/`, a `template` tem só o `rtl/`, a `modular` tem só o topo de simulação e o pacote do mapa, e as da placa (`de0-cv` e `external-data`) guardam o projeto do Quartus, o topo e os scripts de síntese e programação na própria pasta.
 
@@ -80,7 +80,7 @@ Cada repositório roda só as próprias verificações, testes e provas; as dos 
 
 ## 5. Placa
 
-O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é `src/cyclone-v/de0-cv/de0-cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [placa.md](docs/pt-br/guide/placa.md).
+O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools board generate` em `build/de0-cv-de0-cv/de0_cv_de0_cv.qpf`. A programação e a execução de testes nela são feitas por `riscv-tools run` a partir do `Tests`, conforme [placa.md](docs/pt-br/guide/placa.md).
 
 ## 6. KPIs
 

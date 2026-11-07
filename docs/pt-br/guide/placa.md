@@ -14,16 +14,21 @@ O tempo de espera entre os dois não é a variável. A causa mecanística não f
 
 ## 2. Compilar e programar a de0-cv
 
-Dos scripts da plataforma, em um único comando.
+O projeto do Quartus não é um arquivo versionado: o `program` o escreve a partir do `platform.yaml` e do pacote da placa (`boards/de0-cv`) e o compila numa pasta de construção. Um único comando escreve, compila e programa.
 
 ```bash
-quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl && src/cyclone-v/de0-cv/de0-cv_program.sh
+uv run riscv-tools --config src/cyclone-v/de0-cv/config.yaml program <imagem.mif>
 ```
 
-| Script | O que faz |
+| Opção | O que faz |
 | :--- | :--- |
-| `de0-cv_synth.tcl [semente] [map] [GENERIC=valor ...]` | Fixa o modo `HIGH PERFORMANCE EFFORT` e a semente (padrão 5) e compila. Com `map` só a síntese roda, o que basta para conferir caminhos e entidades. Cada `GENERIC=valor` troca um generic do topo só nessa compilação (`HPM_COUNTERS=4 HPM_WIDTH=40` compila o Zihpm reduzido). Não grava as atribuições no `.qsf` |
-| `de0-cv_program.sh [arquivo.sof]` | Programa `output_files/de0-cv.sof` pelo primeiro cabo do `jtagconfig`. A variável `CABLE` escolhe outro cabo |
+| `--seed N` | Semente do posicionamento (padrão 5), com o modo `HIGH PERFORMANCE EFFORT` fixo |
+| `--stop-after map\|fit\|sta` | Para depois da etapa e não programa; `map` basta para conferir caminhos e entidades |
+| `--compile-only` | Compila sem programar a placa e sem exigir a imagem |
+| `--generic NOME=VALOR` | Troca um generic do topo só nessa compilação (`HPM_COUNTERS=4 HPM_WIDTH=40` compila o Zihpm reduzido), sem gravar nada no projeto |
+| `--board NOME` | Escolhe a placa pela identificação, no lugar do campo `board` da plataforma |
+
+O comando `riscv-tools board generate --platform src/cyclone-v/de0-cv/platform.yaml --out build` escreve só o projeto (`build/de0-cv-de0-cv/`) e os arquivos do mapa de memória, e com `--check` os confere sem escrever. A frequência do núcleo muda em `clocks.core.mhz` do `platform.yaml`, e o PLL, o `.sdc` e o pacote do mapa seguem dela.
 
 O cabo da bancada aparece como `USB-Blaster [3-6]`, com o dispositivo `5CE(BA4|FA4)`.
 

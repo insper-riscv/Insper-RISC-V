@@ -14,16 +14,21 @@ The wait between the two is not the variable. The mechanical cause was not confi
 
 ## 2. Compile and program the de0-cv
 
-From the platform scripts, in a single command.
+The Quartus project is not a versioned file: `program` writes it from the `platform.yaml` and the board package (`boards/de0-cv`) and compiles it in a build folder. A single command writes, compiles and programs.
 
 ```bash
-quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl && src/cyclone-v/de0-cv/de0-cv_program.sh
+uv run riscv-tools --config src/cyclone-v/de0-cv/config.yaml program <image.mif>
 ```
 
-| Script | What it does |
+| Option | What it does |
 | :--- | :--- |
-| `de0-cv_synth.tcl [seed] [map] [GENERIC=value ...]` | Fixes the `HIGH PERFORMANCE EFFORT` mode and the seed (default 5) and compiles. With `map` only synthesis runs, which is enough to check paths and entities. Each `GENERIC=value` replaces a generic of the top for this compilation only (`HPM_COUNTERS=4 HPM_WIDTH=40` compiles the reduced Zihpm). It does not write the assignments to the `.qsf` |
-| `de0-cv_program.sh [file.sof]` | Programs `output_files/de0-cv.sof` through the first cable `jtagconfig` lists. The `CABLE` variable picks another cable |
+| `--seed N` | Placement seed (default 5), with the `HIGH PERFORMANCE EFFORT` mode fixed |
+| `--stop-after map\|fit\|sta` | Stops after the stage and does not program; `map` is enough to check paths and entities |
+| `--compile-only` | Compiles without programming the board and without needing the image |
+| `--generic NAME=VALUE` | Changes a top generic for this compile only (`HPM_COUNTERS=4 HPM_WIDTH=40` compiles the reduced Zihpm), writing nothing to the project |
+| `--board NAME` | Picks the board by identification, in place of the `board` field of the platform |
+
+The command `riscv-tools board generate --platform src/cyclone-v/de0-cv/platform.yaml --out build` writes only the project (`build/de0-cv-de0-cv/`) and the memory map files, and with `--check` it compares them without writing. The core frequency changes in `clocks.core.mhz` of the `platform.yaml`, and the PLL, the `.sdc` and the map package follow from it.
 
 The bench cable shows up as `USB-Blaster [3-6]`, with the device `5CE(BA4|FA4)`.
 

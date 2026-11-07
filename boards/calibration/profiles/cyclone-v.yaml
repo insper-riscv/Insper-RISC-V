@@ -1,12 +1,11 @@
-# Perfis da calibração da Cyclone V (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o `de0-cv_synth.tcl map`.
+# Perfis da calibração da Cyclone V (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o projeto que o `board generate` escreve para a DE0-CV, compilado com `program --compile-only --stop-after map`.
 # A calibração mede o dispositivo (5CEBA4) e não a placa. O topo da DE0-CV é fixo: a SDRAM, a FLASH, o display, a JTAG UART e o controlador
 # de FLASH existem em todos os perfis e ficam absorvidos no termo do núcleo (`fixed`); só o que o `platform.yaml` e os generics variam entra no ajuste.
 family: cyclone-v
 unit: alm
 project:
   platform: src/cyclone-v/de0-cv/platform.yaml
-  synth: src/cyclone-v/de0-cv/de0-cv_synth.tcl
-  qsf: src/cyclone-v/de0-cv/de0-cv.qsf
+  board: de0-cv
   seed: 5
 # Bits de um bloco M10K.
 bits_per_block: 10240

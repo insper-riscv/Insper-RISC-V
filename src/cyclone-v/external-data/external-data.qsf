@@ -58,7 +58,7 @@ set_global_assignment -name NUM_PARALLEL_PROCESSORS ALL
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
-set_global_assignment -name VERILOG_FILE ../de0-cv/pll/sdram_platform_pll.v
+set_global_assignment -name VERILOG_FILE pll/sdram_platform_pll.v
 # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
 set_global_assignment -name VHDL_FILE external_data_map_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/synchronizer.vhd

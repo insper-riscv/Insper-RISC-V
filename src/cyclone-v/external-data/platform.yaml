@@ -48,7 +48,7 @@ memory:
   icache: {enabled: false}
   dcache: {enabled: true, size_bits: 32768}
 
-# The clocks of the PLL (src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, tied to these values by the checks below): the
+# The clocks of the PLL (src/cyclone-v/external-data/pll/sdram_platform_pll.v, tied to these values by the checks below): the
 # SDRAM controller at 100 MHz and the core and the fetch at 76.923077 MHz (1000 MHz / 13), the frequency whose five seeds close
 # the timing (docs/pt-br/platform/timing/FRENTE-F-ONDA2.md). The period the controller and the chip model convert the chip
 # timings with is SDRAM_TCK_PS of the generated package. The phase of the core clock against the fetch clock is the 7500 ps
@@ -87,6 +87,6 @@ checks:
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
 
   # --- the PLL of the SDRAM controller (shared by the de0-cv and external-data tops) -------------------------------
-  - {name: PLL controller MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: CLOCKS.mem_mhz}
-  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: CLOCKS.mem_mhz}
-  - {name: PLL core phase, file: src/cyclone-v/de0-cv/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: CLOCKS.core_phase_ps}
+  - {name: PLL controller MHz, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency0\("(\d+)\.', expect: CLOCKS.mem_mhz}
+  - {name: PLL DRAM_CLK MHz, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.output_clock_frequency1\("(\d+)\.', expect: CLOCKS.mem_mhz}
+  - {name: PLL core phase, file: src/cyclone-v/external-data/pll/sdram_platform_pll.v, pattern: '\.phase_shift3\("(\d+) ps"', expect: CLOCKS.core_phase_ps}
