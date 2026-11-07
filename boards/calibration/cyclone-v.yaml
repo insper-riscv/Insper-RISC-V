@@ -139,8 +139,16 @@ error:
   - p5_full
   - p7_ic64
   - p7_dc64
-  map_to_fit_ratio: null
-known_fit_check: null
+  map_to_fit_ratio: 0.9693
+known_fit_check:
+  profiles:
+    p1_rv32i: 0.9328
+    p3_zicntr_zifencei: 0.9809
+    p5_base: 0.9758
+    p5_full: 0.9879
+  ratio_low: 0.9328
+  ratio_high: 0.9879
+  ratio_mid: 0.9693
 fmax:
   core_mhz_by_grade:
     C7: null

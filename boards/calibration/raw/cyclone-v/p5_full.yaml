@@ -20,7 +20,7 @@ device: 5CEBA4F23C7
 measured_on: '2026-11-07'
 sources_hash: 829e375a1c5a5f1561418b2ba1cc010fea589de886b47fd81032fb02093442e3
 revisions:
-  .: 75fb44ade2c2d8bc42464d32a1cc1fb67646e09a
+  .: 0e0fe6563c76c3c93af0e66149023a86b3acc5d3
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
   Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
   Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
@@ -32,8 +32,8 @@ command:
 - compile.tcl
 - de0_cv_de0_cv
 - '5'
-- map
-elapsed_s: 33
+- fit
+elapsed_s: 168
 result:
   logic: 8199
   registers: 8816
@@ -122,3 +122,10 @@ entities:
   luts: 4
   registers: 0
   memory_bits: 0
+fit_result:
+  logic: 8100
+  registers: 9834
+  ram_bits: 368896
+  multipliers: 0
+  plls: 1
+  pins: 93
