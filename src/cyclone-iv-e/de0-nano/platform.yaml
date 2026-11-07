@@ -1,0 +1,82 @@
+# The memory map of the DE0-Nano platform: the reduced profile (RV32I with Zicsr) of the Terasic DE0-Nano (Cyclone IV E, EP4CE22,
+# 22,320 LEs and 608 kbit of M9K). The BOOT_MEMORY is inside the core, the FLASH is emulated in the M9K blocks (28 KiB, right after the
+# BOOT_MEMORY, so that the store is 32 KiB) and the RAM is the 32 MB SDRAM of the board (one 16-bit chip), both behind two small caches. The full DE0-CV profile
+# does not fit this device: `riscv-tools board generate` refuses it by the RAM bits and the LEs (docs/pt-br/boards/de0-nano.md).
+#
+#   uv run riscv-tools --root . check-memory-map --platform src/cyclone-iv-e/de0-nano/platform.yaml
+platform: de0-nano
+# The board of the platform: `auto` asks for the identification by the JTAG; `boards` lists the boards it is built on.
+board: auto
+boards: [de0-nano]
+# The component of paths.yaml whose closure of `requires` is the source list of the generated project.
+top: Insper-RISC-V/de0_nano_board
+# The reduced profile: RV32I with the Zicsr extension (no counters, no multiplier, no Zifencei, no interrupts).
+profile: rv32i_zicsr
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: FLASH,    base: 0x00001000, size: 28K, kind: rom, exec: true}
+  - {name: RAM,      base: 0x40000000, size: 32M, kind: ram}   # the SDRAM
+
+# Words at the top of RAM: the contract between the boot memory, the program and the host.
+reserved:
+  stdout:   {base: 0x41FFFBE0, size: 1K+8}
+  tohost:   {base: 0x41FFFFE8, size: 8}
+  fromhost: {base: 0x41FFFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# The two banks of the FLASH for the program update, each starting with the 256-byte header page of the image and aligned to the 4 KiB sector.
+flash:
+  region: FLASH
+  banks:
+    - {name: A, base: 0x00001000, size: 12K}
+    - {name: B, base: 0x00004000, size: 16K}
+
+# The slots of the external interconnect: the FLASH controller of the program update and the JTAG UART.
+peripherals:
+  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
+  - {name: UART,    base: 0xC0000000, id: 4}
+
+# The FLASH is emulated in the M9K blocks with the latency of a serial chip and the SDRAM is the device of the board, both behind
+# the instruction and the data caches (8192 bits each).
+memory:
+  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
+  ram:    {external: true, backend: dispositivo, device: sdram}
+  icache: {enabled: true, size_bits: 8192}
+  dcache: {enabled: true, size_bits: 8192}
+
+# The clocks of the PLL, the single source of the generated PLL. `mem` is the clock of the SDRAM controller.
+clocks:
+  core: {mhz: 50, phase_ps: 8250}
+  mem:  {mhz: 100}
+
+# The console is the JTAG UART (Virtual JTAG); the board has eight LEDs and no display. The four DIP switches and KEY[1] sit on
+# input-only pins of the EP4CE22, which a bidirectional GPIO cell cannot use, so the platform leaves the two roles out.
+console: jtag
+io:
+  leds: {count: 8, need: required}
+
+# The files written from this map by `riscv-tools generate-memory-map` (`make generate`).
+generate:
+  specs: {path: src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
+  bank_specs:
+    - {path: src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
+    - {path: src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
+  banks_h: {path: src/cyclone-iv-e/de0-nano/runtime/flash_banks.h}
+  boot_ld: {path: src/cyclone-iv-e/de0-nano/runtime/boot_memory.ld}
+  runtime: {path: src/cyclone-iv-e/de0-nano/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/cyclone-iv-e/de0-nano/de0_nano_map_pkg.vhd
+    package: de0_nano_map_pkg
+    rom: FLASH
+    ram: RAM
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
+config:
+  rom: FLASH
+  ram: RAM
+  addr_widths: [boot_memory, rom]

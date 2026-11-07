@@ -29,7 +29,7 @@ memories:
     chip: IS42S16160B-7
     chips: 1
     signals: DRAM
-    clk_phase_ps: null
+    clk_phase_ps: 7000
   serial_flash:
     chip: EPCS64
     bytes: 8388608
@@ -45,3 +45,4 @@ notes:
   - "Os multiplicadores sao contados em elementos de 9 bits (66 de 18x18)."
   - "Todos os bancos sao 3.3 V. DIP[3:0] leva nivel alto na posicao baixa (manual, tabela 3-3)."
   - "A identificacao da placa pelo IDCODE e inferida: 020F30DD e o do EP4CE22, e a DE0-Nano e a unica placa Terasic DE0 com esse dispositivo."
+  - "DIP[3:0] e KEY[1] ficam em pinos que o Quartus aceita so como entrada (erro 169009 numa celula de GPIO bidirecional): a plataforma da placa nao pede os papeis switches e keys, e KEY[0] segue como reset."

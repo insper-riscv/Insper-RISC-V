@@ -5,6 +5,8 @@ repository: Insper-RISC-V
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py, scripts/generate_sources.py]}
   - {name: board packages, paths: [boards/de0-cv/board.yaml, boards/de0-cv/pins.yaml, boards/de2-115/board.yaml, boards/de2-115/pins.yaml, boards/de0-nano/board.yaml, boards/de0-nano/pins.yaml, boards/de10-lite/board.yaml, boards/de10-lite/pins.yaml, boards/de10-nano/board.yaml, boards/de10-nano/pins.yaml, boards/mkr-vidor-4000/board.yaml, boards/mkr-vidor-4000/pins.yaml, docs/pt-br/boards/formato.md, docs/pt-br/boards/placas.md, docs/pt-br/boards/equivalencia-de0-cv.md, docs/en/boards/formato.md, docs/en/boards/placas.md, docs/en/boards/equivalencia-de0-cv.md]}
+  - {name: de0-nano platform, paths: [src/cyclone-iv-e/de0-nano/platform.yaml, src/cyclone-iv-e/de0-nano/config.yaml, src/cyclone-iv-e/de0-nano/de0_nano_map_pkg.vhd, src/cyclone-iv-e/de0-nano/runtime/boot_memory.S, src/cyclone-iv-e/de0-nano/runtime/boot_memory.ld, src/cyclone-iv-e/de0-nano/runtime/_exit.c, src/cyclone-iv-e/de0-nano/runtime/stdio.c, src/cyclone-iv-e/de0-nano/runtime/spike_exit.S, src/cyclone-iv-e/de0-nano/runtime/memory_map.h, src/cyclone-iv-e/de0-nano/runtime/flash_banks.h, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga.specs, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-a.specs, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/boards/de0-nano.md, docs/en/boards/de0-nano.md]}
+  - {name: de10-lite platform, paths: [src/max-10/de10-lite/platform.yaml, src/max-10/de10-lite/config.yaml, src/max-10/de10-lite/de10_lite_map_pkg.vhd, src/max-10/de10-lite/runtime/boot_memory.S, src/max-10/de10-lite/runtime/boot_memory.ld, src/max-10/de10-lite/runtime/_exit.c, src/max-10/de10-lite/runtime/stdio.c, src/max-10/de10-lite/runtime/spike_exit.S, src/max-10/de10-lite/runtime/memory_map.h, src/max-10/de10-lite/runtime/flash_banks.h, src/max-10/de10-lite/runtime/rv32im-fpga.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-a.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/boards/de10-lite.md, docs/en/boards/de10-lite.md]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
   - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
@@ -213,10 +215,28 @@ provides:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
-  # The components the generated top of the DE0-CV needs: `board generate` takes the sources of the board project from
-  # their closure (`top` of the platform), so the .qsf never carries a hand-written source list.
+  # What every generated top with a SDRAM needs apart from the package of its map: `board generate` takes the sources of the
+  # board project from the closure of `top` of the platform, so the .qsf never carries a hand-written source list. Each
+  # board adds only the package of the map of its platform.
+  sdram_board:
+    requires: [soc, de0_cv_sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
   de0_cv_board:
-    requires: [soc, de0_cv_map, de0_cv_sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    requires: [sdram_board, de0_cv_map]
+    sources: []
+  de0_nano_map:
+    requires: []
+    sources:
+      - src/cyclone-iv-e/de0-nano/de0_nano_map_pkg.vhd
+  de0_nano_board:
+    requires: [sdram_board, de0_nano_map]
+    sources: []
+  de10_lite_map:
+    requires: []
+    sources:
+      - src/max-10/de10-lite/de10_lite_map_pkg.vhd
+  de10_lite_board:
+    requires: [sdram_board, de10_lite_map]
     sources: []
   external_data_map:
     requires: []

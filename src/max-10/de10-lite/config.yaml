@@ -1,0 +1,30 @@
+# The de10-lite platform: the Terasic DE10-Lite (MAX 10) with the full profile, the FLASH emulated in the M9K blocks and the
+# 64 MB SDRAM as the RAM, behind the instruction and the data caches. It is the de0-cv platform with the other map
+# (platform.yaml), the other runtime and the project that `board generate` writes for the board.
+extends: ../../cyclone-v/de0-cv/config.yaml
+
+toolchain:
+  specs: src/max-10/de10-lite/runtime/rv32im-fpga-bank-a.specs
+
+# The addresses and the sizes come from the map of the platform.
+memory_map: platform.yaml
+
+paths:
+  sources:
+    - src/max-10/de10-lite/runtime/_exit.c
+    - src/max-10/de10-lite/runtime/stdio.c
+  boot_memory: src/max-10/de10-lite/runtime/boot_memory.S
+  boot_memory_linker_script: src/max-10/de10-lite/runtime/boot_memory.ld
+
+emulator:
+  sources:
+    - src/max-10/de10-lite/runtime/spike_exit.S
+
+quartus:
+  # The project is written by `board generate` from platform.yaml and the board package (boards/de10-lite).
+  generate: {platform: src/max-10/de10-lite/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
+  project_dir: build/de10-lite-de10-lite
+  project_name: de10_lite_de10_lite
+  sof_file: output_files/de10_lite_de10_lite.sof
+  # The device of the chain of the board, which the cable check compares with the IDCODE it reads.
+  jtag_device: '@1: 10M50DA(.|ES)/10M50DC (0x031050DD)'
