@@ -13,6 +13,8 @@ platform: de0-cv
 # The board of the platform: `auto` asks for the identification by the JTAG; `boards` lists the boards it is built on.
 board: auto
 boards: [de0-cv]
+# The component of paths.yaml whose closure of `requires` is the source list of the generated project.
+top: Insper-RISC-V/de0_cv_board
 # The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
 # `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
 profile: rv32im_zicclsm_zicntr_zihpm_zifencei

@@ -215,6 +215,11 @@ provides:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  # The components the generated top of the DE0-CV needs: `board generate` takes the sources of the board project from
+  # their closure (`top` of the platform), so the .qsf never carries a hand-written source list.
+  de0_cv_board:
+    requires: [soc, de0_cv_map, de0_cv_sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
   de0_cv_top:
     requires: [de0_cv_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart_shell, Peripherals/display_shell, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
