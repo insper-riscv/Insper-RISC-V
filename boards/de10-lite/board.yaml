@@ -32,7 +32,7 @@ memories:
     chip: IS42S16320D-7
     chips: 1
     signals: DRAM
-    clk_phase_ps: null
+    clk_phase_ps: 7000
   onchip_flash:
     kind: ufm
     user_bytes: 753664

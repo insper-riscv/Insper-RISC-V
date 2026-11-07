@@ -32,7 +32,7 @@ memories:
     chip: IS42S16320B-7
     chips: 2
     signals: DRAM
-    clk_phase_ps: null
+    clk_phase_ps: 6000
   sram:
     chip: IS61WV102416BLL-10
     bus_width: 16
@@ -53,3 +53,5 @@ notes:
   - "A FLASH NOR liga 8 bits (BYTE# em GND): uma palavra de 32 bits custa quatro leituras."
   - "A SDRAM tem dois chips de 16 bits com controle e endereco em comum e um unico DRAM_CLK; a largura efetiva e de 32 bits."
   - "O codigo do dispositivo na cadeia e compartilhado com o 10CL120 e o EP3C120; a placa e distinguida pelo inventario do host (documento 03 do plano)."
+  - "A fase do DRAM_CLK (6000 ps a 100 MHz) foi medida na placa: o teste de preenchimento e de pontos esparsos das 2^25 palavras pela porta de depuracao passa com 4000, 6000, 8000 e 0 ps e falha com 2000 ps; 6000 ps fica no meio da janela que passa."
+  - "O mapa da plataforma usa 64 MiB dos 128 MB da SDRAM: a tag das caches guarda os bits de endereco ate o 25. A porta de depuracao alcanca as 2^25 palavras."

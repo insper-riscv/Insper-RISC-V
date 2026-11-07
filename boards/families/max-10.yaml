@@ -18,3 +18,7 @@ fmax:
 calibration: calibration/max-10.yaml
 # O ajuste do Quartus recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL da MAX 10 (erro 169303), e o gerador de pinos a omite.
 slew_rate: false
+# O ajuste da MAX 10 só monta o arquivo de programação das memórias com conteúdo inicial (a boot memory e a FLASH emulada) no modo de configuração
+# de imagem única com a RAM de configuração, que o projeto gerado pede por esta atribuição.
+qsf:
+  - set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"

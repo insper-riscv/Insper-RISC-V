@@ -19,6 +19,7 @@ The `boards/families/<family>.yaml` file keeps what holds for every device of a 
 | `fmax.core_mhz_by_grade` | Core frequency measured for each grade, `null` without a measure |
 | `calibration` | Calibration file of the estimator, relative to `boards/`, or `null` |
 | `slew_rate` | Whether the fitter accepts `SLEW_RATE` on 3.3-V LVTTL pins; absent means `true`, and `cyclone-iv-e`, `max-10` and `cyclone-10-lp` refuse it (`false`) |
+| `qsf` | Lines that the `.qsf` of every project of the family gets, or absent; the `max-10` asks for the configuration mode of the memories with an initial content |
 
 ## 3. Families
 

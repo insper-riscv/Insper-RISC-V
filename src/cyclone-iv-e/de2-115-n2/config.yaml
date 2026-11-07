@@ -38,3 +38,4 @@ quartus:
   ram_mem_instance: 0
   rom_mem_instances: []
   rom_write_method: jtag_loader
+  display_digits: 8

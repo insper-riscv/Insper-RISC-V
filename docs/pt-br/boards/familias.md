@@ -19,6 +19,7 @@ O arquivo `boards/families/<família>.yaml` guarda o que vale para todo disposit
 | `fmax.core_mhz_by_grade` | Frequência de núcleo medida por grau, `null` sem medida |
 | `calibration` | Arquivo de calibração do estimador, relativo a `boards/`, ou `null` |
 | `slew_rate` | Se o ajuste aceita `SLEW_RATE` nos pinos 3.3-V LVTTL; ausente vale `true`, e a `cyclone-iv-e`, a `max-10` e a `cyclone-10-lp` o recusam (`false`) |
+| `qsf` | Linhas que o `.qsf` de todo projeto da família recebe, ou ausente; a `max-10` pede o modo de configuração das memórias com conteúdo inicial |
 
 ## 3. Famílias
 
