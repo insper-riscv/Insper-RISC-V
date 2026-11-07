@@ -1,0 +1,25 @@
+/* What the boot memory does at the end of a test, for the ELF Spike runs.
+ *
+ * On the hardware rv32_wait_restart is boot memory code at a fixed address
+ * (rv32im-fpga.specs) and a test's own image has nothing there. Spike runs
+ * the test's image alone, so this file, linked into that ELF only (built
+ * with -DRV32_SPIKE, which leaves the fixed address out of the link, see
+ * emulator.sources in config.yaml), provides the routine. The test has
+ * already written tohost, where Spike stops, so the routine only waits.
+ *
+ * tohost and fromhost, which Spike looks up by name, are the words the boot
+ * ROM reserves at the top of RAM (see boot_memory.S), as absolute symbols:
+ * this file takes no space in the ELF, so every address in it, and so in a
+ * golden, is the one the image the hardware loads has.
+ */
+#include "memory_map.h"
+
+    .equ tohost, RV32_TOHOST_ADDR
+    .equ fromhost, RV32_FROMHOST_ADDR
+    .global tohost
+    .global fromhost
+
+    .section .text
+    .global rv32_wait_restart
+rv32_wait_restart:
+1:  j    1b

@@ -7,7 +7,7 @@ references:
   - {name: board packages, paths: [boards/de0-cv/board.yaml, boards/de0-cv/pins.yaml, boards/de2-115/board.yaml, boards/de2-115/pins.yaml, boards/de0-nano/board.yaml, boards/de0-nano/pins.yaml, boards/de10-lite/board.yaml, boards/de10-lite/pins.yaml, boards/de10-nano/board.yaml, boards/de10-nano/pins.yaml, boards/mkr-vidor-4000/board.yaml, boards/mkr-vidor-4000/pins.yaml, docs/pt-br/boards/formato.md, docs/pt-br/boards/placas.md, docs/pt-br/boards/equivalencia-de0-cv.md, docs/en/boards/formato.md, docs/en/boards/placas.md, docs/en/boards/equivalencia-de0-cv.md]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
-  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
+  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
   # The platform configs are written relative to the root of this repository, `base: .`.
   - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: hardware-top sim sources, file: src/simulation/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: .}
@@ -205,10 +205,6 @@ provides:
     requires: []
     sources:
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
-  de0_cv_sdram_jtag_shell:
-    requires: [Memory/sdram_debug]
-    sources:
-      - src/cyclone-v/de0-cv/sdram_jtag_shell.vhd
   de0_cv_sim_top:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
@@ -216,8 +212,25 @@ provides:
   # The components the generated top of the DE0-CV needs: `board generate` takes the sources of the board project from
   # their closure (`top` of the platform), so the .qsf never carries a hand-written source list.
   de0_cv_board:
-    requires: [soc, de0_cv_map, de0_cv_sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    requires: [soc, de0_cv_map, Memory/sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
     sources: []
+  # The components the generated tops of the DE2-115 need: `board generate` takes the sources of the board project from their
+  # closure (`top` of the platform). At level N2 every memory is emulated in blocks of the FPGA; at level N4 the FLASH is the
+  # NOR chip and the RAM is the SDRAM of the board.
+  de2_115_n2_board:
+    requires: [soc, de2_115_n2_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  de2_115_n2_map:
+    requires: []
+    sources:
+      - src/cyclone-iv-e/de2-115-n2/de2_115_n2_map_pkg.vhd
+  de2_115_board:
+    requires: [soc, de2_115_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/sdram, Memory/sdram_debug, Memory/sdram_jtag_shell, Memory/nor_flash_ctrl]
+    sources: []
+  de2_115_map:
+    requires: []
+    sources:
+      - src/cyclone-iv-e/de2-115/de2_115_map_pkg.vhd
   external_data_map:
     requires: []
     sources:
@@ -227,7 +240,7 @@ provides:
     sources:
       - src/cyclone-v/external-data/external-data_sim_top.vhd
   external_data_top:
-    requires: [external_data_map, de0_cv_sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_jtag_shell, Memory/dcache, Peripherals/jtag_uart_shell, Peripherals/display_shell]
+    requires: [external_data_map, Memory/sdram_jtag_shell, ext_interconnect, Common-Components/utils, Core/core, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_jtag_shell, Memory/dcache, Peripherals/jtag_uart_shell, Peripherals/display_shell]
     sources:
       - src/cyclone-v/external-data/external-data_top.vhd
   modular_map:
