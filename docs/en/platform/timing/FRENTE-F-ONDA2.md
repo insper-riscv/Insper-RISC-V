@@ -191,16 +191,16 @@ The limit is the loop of stage EX: `r_we_ok` or `r_fwd_match_rs*` (forwarding se
 
 The highest frequency that the 1000 MHz PLL delivers and that closes the setup in the slow model at 85 °C and the hold in the fast model at 0 °C in every domain of the five seeds is 1000 / 13 = 76.923077 MHz, with the core phase at 7500 ps. It passes milestone M2 (66.7 MHz) and stays below M3 (80 MHz), which the PLL does not produce (80 MHz needs divider 12.5). The 83.333 MHz frequency (divider 12) does not close.
 
-Insper-RISC-V tree `b5a9169` (Core `07a1fbe`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), `HIGH PERFORMANCE EFFORT`.
+Insper-RISC-V tree `a612e9c` (Core `2ed0117`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), `HIGH PERFORMANCE EFFORT`.
 
-| Seed | Core (ns) | Fetch to core (ns) | Core to fetch (ns) | Core to core (ns) | SDRAM controller (ns) | `DRAM_CLK` (ns) | Lowest hold (ns) |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | +0.926 | +1.157 | +0.722 | +0.926 | +4.005 | +1.679 | +0.085 |
-| 2 | +0.469 | +0.469 | +0.880 | +1.072 | +3.452 | +1.123 | +0.110 |
-| 3 | +1.215 | +1.215 | +0.513 | +1.274 | +3.532 | +1.204 | +0.110 |
-| 4 | +1.026 | +1.344 | +0.097 | +1.026 | +3.393 | +1.172 | +0.115 |
-| 5 | +0.617 | +0.743 | +0.711 | +0.617 | +3.286 | +1.644 | +0.115 |
-| Worst | +0.469 | +0.469 | +0.097 | +0.617 | +3.286 | +1.123 | +0.085 |
+| Seed | Core (ns) | Fetch to core (ns) | Core to fetch (ns) | Core to core (ns) | SDRAM controller (ns) | `DRAM_CLK` (ns) | JTAG (ns) | Lowest hold (ns) | ALMs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | +0.692 | +0.752 | +0.474 | +0.692 | +3.360 | +1.679 | +11.684 | +0.093 | 10,374 |
+| 2 | +0.657 | +0.657 | +0.686 | +0.908 | +3.714 | +1.123 | +9.145 | +0.066 | 10,355 |
+| 3 | +0.634 | +1.311 | +0.225 | +0.634 | +3.910 | +1.204 | +10.564 | +0.092 | 10,322 |
+| 4 | +0.562 | +1.479 | +0.427 | +0.562 | +3.063 | +1.172 | +9.932 | +0.100 | 10,341 |
+| 5 | +0.707 | +0.707 | +0.710 | +1.063 | +4.022 | +1.660 | +10.494 | +0.108 | 10,333 |
+| Worst | +0.562 | +0.657 | +0.225 | +0.562 | +3.063 | +1.123 | +9.145 | +0.066 | 10,374 |
 
 At 83.333 MHz (phase 7000 ps, same tree) the core closes in four of the five seeds (worst -0.771 ns, seed 4, 12.6 ns of data) and the core to fetch pair fails in four (worst -1.268 ns). The frequency, the phase and the tick rounding are in `platform.yaml` (`pll.core_clock_hz`, `pll.core_phase_ps`, `interrupts.clock_hz`) and in the PLL file, which `check-memory-map` verifies.
 
