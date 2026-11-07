@@ -124,6 +124,22 @@ entity soc is
     plic_priority_bits  : positive range 1 to 32 := 3;
     -- Largura do endereço de palavra da janela do PLIC (a janela tem 2**(plic_addr_width + 2) bytes).
     plic_addr_width     : positive range 20 to 26 := 20;
+    -- As três linhas de interrupção entram no núcleo por um registrador (um ciclo de latência a mais), o que
+    -- tira o árbitro do PLIC e o comparador do mtime do caminho que decide a tomada da interrupção.
+    registered_irqs     : boolean := false;
+    -- A cache de instruções escolhe a região pelo endereço registrado, sem a porta de seleção e sem conferir o
+    -- endereço a cada consulta: tira a decodificação do PC do caminho até a cache (exige os dois clocks defasados).
+    fast_icache_select  : boolean := false;
+    -- A última página de 4 KiB da RAM (bits 31:12 em bypass_page) nunca é guardada na cache de dados: ali ficam as
+    -- palavras que o hospedeiro compartilha com o programa.
+    has_dcache_bypass   : boolean := false;
+    -- Página de 4 KiB, bits 31:12 do endereço, que a cache de dados não guarda com has_dcache_bypass.
+    bypass_page         : std_logic_vector(19 downto 0) := (others => '0');
+    -- Controlador de FLASH da atualização de programa: comandos do chip (apagar, gravar, proteger) pela janela
+    -- flash_ctrl_id, com a interrupção na linha LINE_FLASH e a invalidação das caches pela região gravada.
+    has_flash_ctrl      : boolean := false;
+    -- Índice da janela do controlador de FLASH.
+    flash_ctrl_id       : natural range 0 to 7 := 3;
     -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
     has_timer           : boolean := false;
     -- Índice da janela do temporizador.
@@ -218,6 +234,28 @@ entity soc is
     i_flash_rdata   : in  std_logic_vector(31 downto 0) := (others => '0');
     -- Chip de FLASH: linha lida, barramento largo de 96 bits.
     i_flash_rdata_x : in  std_logic_vector(95 downto 0) := (others => '0');
+    -- Controlador de FLASH: pulso que entrega um comando ao chip.
+    o_flash_cmd_valid : out std_logic;
+    -- Controlador de FLASH: código do comando (001 habilitar escrita, 010 apagar, 011 gravar, 100 proteger, 101 desproteger).
+    o_flash_cmd_op    : out std_logic_vector(2 downto 0);
+    -- Controlador de FLASH: endereço de byte do comando.
+    o_flash_cmd_addr  : out std_logic_vector(31 downto 0);
+    -- Controlador de FLASH: o chip executa um apagar ou uma gravação ('1' = ocupado).
+    i_flash_cmd_busy  : in  std_logic := '0';
+    -- Controlador de FLASH: o latch de escrita do chip está armado ('1').
+    i_flash_cmd_wel   : in  std_logic := '0';
+    -- Controlador de FLASH: o último apagar ou gravar foi recusado ('1').
+    i_flash_cmd_refused : in std_logic := '0';
+    -- Controlador de FLASH: índice da palavra do buffer de página lida pela gravação do chip.
+    i_flash_buf_idx   : in  std_logic_vector(5 downto 0) := (others => '0');
+    -- Controlador de FLASH: palavra do buffer de página, com leitura registrada.
+    o_flash_buf_data  : out std_logic_vector(31 downto 0);
+    -- Região da FLASH regravada: pulso que derruba as linhas das caches de i_inval_first a i_inval_last (bytes).
+    i_inval_valid     : in  std_logic := '0';
+    -- Região da FLASH regravada: primeiro endereço de byte.
+    i_inval_first     : in  std_logic_vector(31 downto 0) := (others => '0');
+    -- Região da FLASH regravada: último endereço de byte.
+    i_inval_last      : in  std_logic_vector(31 downto 0) := (others => '0');
     -- Chip de RAM, porta de dados: endereço de byte do acesso.
     o_ramd_addr     : out std_logic_vector(31 downto 0);
     -- Chip de RAM, porta de dados: dado de escrita.
@@ -332,6 +370,15 @@ architecture behaviour of soc is
     return b;
   end function pick;
 
+  -- Início, em KiB, da seleção pelo endereço registrado da cache de instruções; -1 usa a porta de seleção.
+  function ic_select_from(fast : boolean; boot_kib : natural) return integer is
+  begin
+    if fast then
+      return boot_kib;
+    end if;
+    return -1;
+  end function ic_select_from;
+
   -- Base da região da ROM, em KiB, nos endereços que o roteador dos dados vê: a cache de dados os
   -- troca pelos da região da FLASH (0x20000000), e sem ela chegam os do mapa.
   constant D_ROM_BASE_KIB : natural := pick(has_dcache, 524288, BOOT_KIB);
@@ -362,10 +409,14 @@ architecture behaviour of soc is
 
   -- Interrupções de máquina do núcleo: timer (MTIP) e software (MSIP) do CLINT, externa (MEIP) do controlador.
   signal irq_timer     : std_logic := '0';
+  -- Endereço de dado em uma página que a cache de dados não guarda (has_dcache_bypass).
+  signal dc_bypass     : std_logic := '0';
   -- mtime do CLINT, que o CSR time do núcleo espelha (zero sem CLINT).
   signal clint_mtime   : std_logic_vector(63 downto 0) := (others => '0');
   -- Interrupção de software de máquina (MSIP), saída do CLINT.
   signal irq_software  : std_logic := '0';
+  -- As três linhas de interrupção como o núcleo as recebe (direto, ou por um registrador com registered_irqs).
+  signal irq_timer_q, irq_software_q, irq_external_q : std_logic := '0';
   -- Interrupção externa de máquina (MEIP), saída do PLIC.
   signal irq_external  : std_logic := '0';
   -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
@@ -623,6 +674,25 @@ begin
 
   hpm_ext_events <= flash_busy & dc_miss & ic_miss;
 
+  g_irq_direct : if not registered_irqs generate
+  begin
+    irq_timer_q    <= irq_timer;
+    irq_software_q <= irq_software;
+    irq_external_q <= irq_external;
+  end generate g_irq_direct;
+
+  g_irq_registered : if registered_irqs generate
+  begin
+    process (i_clk_core)
+    begin
+      if rising_edge(i_clk_core) then
+        irq_timer_q    <= irq_timer;
+        irq_software_q <= irq_software;
+        irq_external_q <= irq_external;
+      end if;
+    end process;
+  end generate g_irq_registered;
+
   u_core : entity work.core
     generic map (
       has_m        => has_m,
@@ -683,10 +753,10 @@ begin
       i_sdram_ready    => sdram_ready,
       o_mem_advance    => mem_advance,
       i_hpm_ext_events => hpm_ext_events,
-      i_irq_software   => irq_software,
-      i_irq_timer      => irq_timer,
+      i_irq_software   => irq_software_q,
+      i_irq_timer      => irq_timer_q,
       i_mtime          => clint_mtime,
-      i_irq_external   => irq_external,
+      i_irq_external   => irq_external_q,
       i_ic_data        => ic_data,
       i_ic_ready       => ic_ready,
       o_ic_sel         => ic_sel,
@@ -860,6 +930,37 @@ begin
       );
   end generate g_uart_jtag;
 
+  g_flash_ctrl : if has_flash_ctrl generate
+  begin
+    u_flash_ctrl : entity work.flash_controller
+      port map (
+        i_clk       => i_clk_core,
+        i_rst       => i_rst,
+        i_data_in   => p_wdata,
+        i_address   => p_addr(2 downto 0),
+        i_write     => p_we(flash_ctrl_id),
+        i_read      => p_re(flash_ctrl_id),
+        o_data_out  => p_rdata(32 * flash_ctrl_id + 31 downto 32 * flash_ctrl_id),
+        o_irq       => irq_lines(LINE_FLASH),
+        o_cmd_valid => o_flash_cmd_valid,
+        o_cmd_op    => o_flash_cmd_op,
+        o_cmd_addr  => o_flash_cmd_addr,
+        i_busy      => i_flash_cmd_busy,
+        i_wel       => i_flash_cmd_wel,
+        i_refused   => i_flash_cmd_refused,
+        i_buf_idx   => i_flash_buf_idx,
+        o_buf_data  => o_flash_buf_data
+      );
+  end generate g_flash_ctrl;
+
+  g_no_flash_ctrl : if not has_flash_ctrl generate
+  begin
+    o_flash_cmd_valid <= '0';
+    o_flash_cmd_op    <= (others => '0');
+    o_flash_cmd_addr  <= (others => '0');
+    o_flash_buf_data  <= (others => '0');
+  end generate g_no_flash_ctrl;
+
   g_timer : if has_timer generate
   begin
     u_timer : entity work.timer
@@ -899,6 +1000,8 @@ begin
       );
   end generate g_uart_pins;
 
+  dc_bypass <= '1' when has_dcache_bypass and m_addr(31 downto 12) = bypass_page else '0';
+
   -- Com cache de dados, ela fica entre a interconexão e a memória.
   g_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate
   begin
@@ -922,10 +1025,13 @@ begin
         o_rdata       => m_rdata,
         i_flush       => ic_inval,
         i_invalidate  => '1',
+        i_inval_region => i_inval_valid,
+        i_inval_first => i_inval_first,
+        i_inval_last  => i_inval_last,
         o_flush_done  => dc_done,
         o_busy        => dc_busy,
         o_miss        => dc_miss,
-        i_bypass      => '0',
+        i_bypass      => dc_bypass,
         o_d_addr      => dd_addr,
         o_d_wdata     => dd_wdata,
         o_d_byteena   => dd_be,
@@ -962,7 +1068,9 @@ begin
       generic map (
         size_bits    => icache_size_bits,
         rom_base_kib => BOOT_KIB,
-        rom_end_kib  => rom_end_kib
+        rom_end_kib  => rom_end_kib,
+        sel_from_kib => ic_select_from(fast_icache_select, BOOT_KIB),
+        check_addr   => not fast_icache_select
       )
       port map (
         i_clk        => i_clk_fetch,
@@ -973,6 +1081,9 @@ begin
         o_ready      => ic_ready,
         o_data       => ic_data,
         i_invalidate => ic_inval,
+        i_inval_region => i_inval_valid,
+        i_inval_first => i_inval_first,
+        i_inval_last => i_inval_last,
         o_miss       => ic_miss,
         o_d_addr     => id_addr,
         o_d_rden     => id_rden,
