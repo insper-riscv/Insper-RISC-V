@@ -52,10 +52,12 @@ peripherals:
   - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
-# (50 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (50 cycles per tick) and is
+# (76.923077 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (77 cycles per tick) and is
 # mirrored by the CSR time of Zicntr, which the core serves (o_mtime of the CLINT into i_mtime of the core).
 interrupts:
-  clock_hz: 50000000
+  # 77 MHz so that the tick is a whole number of cycles (77); the real clock is 76.923077 MHz (`pll.core_clock_hz`), so the
+  # mtime counts 0.1 % slower than mtime_hz.
+  clock_hz: 77000000
   mtime_hz: 1000000
   # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
   # FLASH controller (board and simulation).
@@ -83,8 +85,11 @@ sdram:
 # The phase of the core clock (PLL output 3) against the fetch clock (output 2), measured by the Quartus timing of the 5 seeds
 # and tied to the PLL file by the check below: it splits the 20 ns of the loop through the instruction cache between its two
 # crossings (docs/pt-br/platform/timing/MARCOS.md).
+# The core and the fetch run at 76.923077 MHz (1000 MHz / 13): the highest frequency whose five seeds close the setup at
+# 85 C and the hold at 0 C in every domain (docs/pt-br/platform/timing/FRENTE-F-ONDA2.md); `interrupts.clock_hz` rounds it to a whole number of cycles per tick.
 pll:
-  core_phase_ps: 8250
+  core_clock_hz: 76923077
+  core_phase_ps: 7500
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND, HAS_ZIHINTNTL, HAS_ZIHINTPAUSE and HAS_INTERRUPTS of the package).
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]

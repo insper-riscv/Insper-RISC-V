@@ -282,7 +282,7 @@ begin
 			has_zmmul    => HAS_ZMMUL,
 			has_zicsr    => HAS_ZICSR or HAS_ZICNTR,
 			has_zicntr   => HAS_ZICNTR,
-			tick_cycles  => 50,
+			tick_cycles  => CLINT_TICK_CYCLES,
 			has_zifencei => HAS_ZIFENCEI,
 			has_zicclsm  => HAS_ZICCLSM,
 			has_e          => HAS_E,
