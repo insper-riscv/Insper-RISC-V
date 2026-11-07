@@ -2,7 +2,7 @@
 
 ## 1. Tabela
 
-Cada placa tem o pacote em `boards/<placa>/` e uma ficha de pesquisa em `Plans/Multi-FPGA/placas/<placa>.md` do repositório Capstone, com a fonte e o selo de cada fato. O formato do pacote está em [formato.md](formato.md).
+Cada placa tem o pacote em `boards/<placa>/` e uma ficha de pesquisa em `Plans/Multi-FPGA/placas/<placa>.md` do repositório Capstone, com a fonte e o selo de cada fato. O formato do pacote está em [formato.md](formato.md), e o passo a passo para uma placa nova em [../guide/adicionar-placa.md](../guide/adicionar-placa.md).
 
 | Placa | Dispositivo | Família | IDCODE | Cabo | Memória externa ao FPGA | Nível alvo |
 | :--- | :--- | :--- | :--- | :--- | :--- | :---: |

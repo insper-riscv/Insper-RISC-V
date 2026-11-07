@@ -747,6 +747,10 @@ riscv-tools --config src/cyclone-v/minhaplaca/config.yaml timing-paths --npaths 
 
 Um slack negativo de setup indica um caminho mais longo que o período do clock. O resultado muda de semente para semente, e o argumento do `<plataforma>_synth.tcl` escolhe a semente.
 
+### 10.7. Placa nova
+
+Uma placa que o repositório ainda não conhece não parte da cópia de uma plataforma de placa, e sim do pacote de placa (`boards/<placa>/`), que o `riscv-tools board generate` transforma no projeto do Quartus. O passo a passo, do `board.yaml` até o nível N2, está em [adicionar-placa.md](adicionar-placa.md); os capítulos 10.1 a 10.6 valem para os arquivos do projeto escritos à mão.
+
 ## 11. Adicionar um periférico novo
 
 O exemplo é um registrador de LEDs, `led_register`, com um registrador de 32 bits cujos bits baixos acendem os LEDs. Um periférico tem um lado `soc`, independente de família, e, quando precisa de uma casca de FPGA, um lado `<família>`. Os passos abaixo valem no repositório `Peripherals`, em `Insper-RISC-V/Peripherals` ou num clone próprio.
