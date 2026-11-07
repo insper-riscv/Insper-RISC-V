@@ -212,12 +212,12 @@ begin
             o_ram_wren      => ram_wren,
             o_ram_rden      => ram_rden,
             o_ram_byteena   => ram_byteena,
-            o_sdram_addr    => ext_addr,
-            o_sdram_wdata   => ext_wdata,
-            o_sdram_byteena => ext_byteena,
-            o_sdram_rden    => ext_rden,
-            o_sdram_wren    => ext_wren,
-            i_sdram_rdata   => ext_rdata
+            o_ext_addr    => ext_addr,
+            o_ext_wdata   => ext_wdata,
+            o_ext_byteena => ext_byteena,
+            o_ext_rden    => ext_rden,
+            o_ext_wren    => ext_wren,
+            i_ext_rdata   => ext_rdata
         );
 
     u_boot_memory : entity work.rom_simulation
