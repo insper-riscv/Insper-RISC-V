@@ -1,0 +1,110 @@
+id: p7_ic64
+group: 7
+family: cyclone-iv-e
+unit: le
+profile: rv32im_zicntr_zifencei
+extras: []
+icache_kbit: 64
+dcache_kbit: 32
+generics: {}
+holdout: true
+seed: 5
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+device: EP4CE115F29C7
+measured_on: '2026-11-07'
+sources_hash: 4c7ca68134ef7d17b1b6d7628e18097c6d8230f528c52dd05800cce9c86db04f
+revisions:
+  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
+  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
+  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
+  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+added_constants:
+- CLINT_BASE
+- CLINT_ID
+- PLIC_BASE
+- PLIC_ID
+- CLOCK_HZ
+- MTIME_HZ
+- CLINT_TICK_CYCLES
+- PLIC_N_SOURCES
+- PLIC_PRIORITY_BITS
+- PLIC_ADDR_WIDTH
+- IRQ_UART_JTAG
+- IRQ_FLASH
+command:
+- quartus_sh
+- -t
+- compile.tcl
+- de2_115_de2_115
+- '5'
+- map
+elapsed_s: 41
+result:
+  logic: 11228
+  registers: 5150
+  ram_bits: 929536
+  multipliers: 0
+  plls: 1
+  pins: 76
+entities:
+- name: de2_115_de2_115_top
+  depth: 0
+  luts: 8598
+  registers: 5150
+  memory_bits: 929536
+- name: boot_memory:boot_inst
+  depth: 1
+  luts: 0
+  registers: 0
+  memory_bits: 32768
+- name: de2_115_de2_115_pll:pll_inst
+  depth: 1
+  luts: 1
+  registers: 1
+  memory_bits: 0
+- name: flash:flash_store_inst
+  depth: 1
+  luts: 140
+  registers: 4
+  memory_bits: 262144
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 88
+  registers: 166
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 183
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 153
+  registers: 167
+  memory_bits: 0
+- name: onchip_ram_port:ram_port_inst
+  depth: 1
+  luts: 152
+  registers: 411
+  memory_bits: 0
+- name: ram:ram_store_inst
+  depth: 1
+  luts: 105
+  registers: 74
+  memory_bits: 524288
+- name: sld_hub:auto_hub
+  depth: 1
+  luts: 180
+  registers: 106
+  memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 7591
+  registers: 4058
+  memory_bits: 110336
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0

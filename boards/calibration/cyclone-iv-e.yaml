@@ -1,0 +1,314 @@
+family: cyclone-iv-e
+unit: le
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+unit_basis: quartus_map estimate
+fitted_on:
+- profile: p1_rv32i
+  seed: 5
+  sources_hash: 1c09807756a793b1302ce77b3e79ae3c1a8f8b0a16599536669928d42526388d
+- profile: p1_rv32e
+  seed: 5
+  sources_hash: 12cc9e6692767c33208ec17462c8ccfb20d84f8356206c3f4a1a86de2928490e
+- profile: p2_rv32im
+  seed: 5
+  sources_hash: 84ada45244456ba559d39d348064af2b22ee087cbc4dc552cfcdf0dad26f89ec
+- profile: p2_rv32i_zmmul
+  seed: 5
+  sources_hash: 9f73bbcd6d9074dafbf8cdc501af9e20d57f3d060a7be00b4e20dbf996344ecb
+- profile: p3_zicsr
+  seed: 5
+  sources_hash: a3b736c57a7265ffee2bd710c6788d377a88e310d28360bb1192c19b0477bba1
+- profile: p3_zicsr_zifencei
+  seed: 5
+  sources_hash: b41f23746527ff4f64a3f11899944031912c83b717499e9a36a08ccdfe1fb56d
+- profile: p3_zicntr_zifencei
+  seed: 5
+  sources_hash: 1e3e465fe06b9707c967b464e97ba41de4506ce2b18e1645373dfcfef80ac111
+- profile: p3_zicclsm_zicntr_zifencei
+  seed: 5
+  sources_hash: a67dd0500d93418d3a6f3b4bc26bac853c3d2f9e92689e852d0ddc9762e17e2c
+- profile: p4_hpm_4x40
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p4_hpm_4x64
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p4_hpm_29x40
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p4_hpm_0x64
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p4_hpm_8x32
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p5_base
+  seed: 5
+  sources_hash: f1ab0c68f4f3a1eab8f693cdfb58ca8654dc877fc23e3996a6d0a9b3f0347edb
+- profile: p6_zimop
+  seed: 5
+  sources_hash: 5d6ed397ec93ea73aa068a13b81529982436b1cffd6909fb272802f75909764d
+- profile: p6_zicond
+  seed: 5
+  sources_hash: bf3e374a0a12d11d9f5b0d95ca6969bfb83c0ea701928af7a5872f35798dfcf8
+- profile: p6_zihintntl
+  seed: 5
+  sources_hash: bcd2199f1020e30bd19496cc5e396b55012145ee71c3670726b081a0e848a157
+- profile: p6_zihintpause
+  seed: 5
+  sources_hash: 9899ef4043b3bc024cd5dba46336c0b73fb51441799a6971f5e5d36a05ec61fa
+- profile: p6_interrupts
+  seed: 5
+  sources_hash: d5cf580ed90f4f24f0f8d4d8e24faa3f1b5b2e2b3cd5765a0517e9f543d792ce
+- profile: p6_interrupts_sscofpmf
+  seed: 5
+  sources_hash: 1a259ca1d9716a36578f4adebead1dd7b49ba461b82e0288151c5c1b33c46346
+- profile: p7_ic8
+  seed: 5
+  sources_hash: 814b5cb296efc9040485f12f3f002d82ad4f692d2e02236911bd60ed68b6548f
+- profile: p7_ic128
+  seed: 5
+  sources_hash: 9baf9045ad2823ad839708f61b9eadb64a8142db33562e4e56dd14bd05d2f30d
+- profile: p7_dc8
+  seed: 5
+  sources_hash: 7706407bd91ab8d2ff65cdb57fd9899d6a1c4363f56e3afdf7f37394cb6f0c85
+- profile: p7_dc128
+  seed: 5
+  sources_hash: bfb182e481ab26f5889dc7dbf40c98cb38db430c0306c16fd6bc421caadc679e
+core_revisions:
+- 1057cbcc67ac3a82af4d314489e1eb840b84e12c
+reference_kbit: 32
+absorbed:
+- per_block_glue
+- peripherals.CLINT
+- peripherals.DISPLAY
+- peripherals.FLASH_CTRL
+- peripherals.PLIC_base
+- peripherals.PLIC_per_source
+- peripherals.UART
+unseparated: []
+coefficients:
+  backends:
+    nor: null
+    sdram_16: null
+    sdram_32: null
+    sram: null
+  cache:
+    dcache:
+      c0: -719.04
+      c1: 22.47
+    icache:
+      c0: -19.04
+      c1: 0.595
+  core:
+    rv32e: 7495.0
+    rv32i: 8819.0
+  extensions:
+    M: 346.0
+    Zicclsm: 123.522
+    Zicntr: 670.478
+    Zicond: 5.503
+    Zicsr: 570.0
+    Zifencei: 274.0
+    Zimop: -499.497
+    Zmmul: 596.0
+  extras:
+    Interrupts: 751.503
+    Sscofpmf: 572.0
+    Zihintntl: -22.497
+    Zihintpause: -12.497
+  per_block_glue: 0.0
+  peripherals:
+    CLINT: 0.0
+    DISPLAY: 0.0
+    FLASH_CTRL: 0.0
+    PLIC_base: 0.0
+    PLIC_per_source: 0.0
+    UART: 0.0
+  zihpm:
+    a0: 31.789
+    a1: -45.041
+    a2: 4.187
+error:
+  rms_pct: 0.35
+  max_fit_pct: 1.389
+  max_pct: 2.62
+  holdout:
+  - p4_hpm_16x52
+  - p5_full
+  - p7_ic64
+  - p7_dc64
+  map_to_fit_ratio: null
+known_fit_check: null
+fmax:
+  core_mhz_by_grade:
+    C7: null
+residuals:
+- id: p1_rv32i
+  holdout: false
+  measured: 8819.0
+  predicted: 8819.0
+  error_pct: 0.0
+  missing: []
+- id: p1_rv32e
+  holdout: false
+  measured: 7495.0
+  predicted: 7495.0
+  error_pct: 0.0
+  missing: []
+- id: p2_rv32im
+  holdout: false
+  measured: 9761.0
+  predicted: 9761.0
+  error_pct: 0.0
+  missing: []
+- id: p2_rv32i_zmmul
+  holdout: false
+  measured: 9415.0
+  predicted: 9415.0
+  error_pct: 0.0
+  missing: []
+- id: p3_zicsr
+  holdout: false
+  measured: 10331.0
+  predicted: 10331.0
+  error_pct: 0.0
+  missing: []
+- id: p3_zicsr_zifencei
+  holdout: false
+  measured: 10605.0
+  predicted: 10605.0
+  error_pct: 0.0
+  missing: []
+- id: p3_zicntr_zifencei
+  holdout: false
+  measured: 11311.0
+  predicted: 11275.5
+  error_pct: -0.314
+  missing: []
+- id: p3_zicclsm_zicntr_zifencei
+  holdout: false
+  measured: 11399.0
+  predicted: 11399.0
+  error_pct: 0.0
+  missing: []
+- id: p4_hpm_4x40
+  holdout: false
+  measured: 11937.0
+  predicted: 11920.5
+  error_pct: -0.138
+  missing: []
+- id: p4_hpm_4x64
+  holdout: false
+  measured: 12411.0
+  predicted: 12322.5
+  error_pct: -0.713
+  missing: []
+- id: p4_hpm_29x40
+  holdout: false
+  measured: 15041.0
+  predicted: 14981.5
+  error_pct: -0.395
+  missing: []
+- id: p4_hpm_0x64
+  holdout: false
+  measured: 11461.0
+  predicted: 11430.8
+  error_pct: -0.264
+  missing: []
+- id: p4_hpm_8x32
+  holdout: false
+  measured: 11976.0
+  predicted: 12142.3
+  error_pct: 1.389
+  missing: []
+- id: p4_hpm_16x52
+  holdout: true
+  measured: 14261.0
+  predicted: 14193.7
+  error_pct: -0.472
+  missing: []
+- id: p5_base
+  holdout: false
+  measured: 17869.0
+  predicted: 17895.7
+  error_pct: 0.149
+  missing: []
+- id: p5_full
+  holdout: true
+  measured: 19193.0
+  predicted: 18690.2
+  error_pct: -2.62
+  missing: []
+- id: p6_zimop
+  holdout: false
+  measured: 17397.0
+  predicted: 17396.2
+  error_pct: -0.005
+  missing: []
+- id: p6_zicond
+  holdout: false
+  measured: 17902.0
+  predicted: 17901.2
+  error_pct: -0.005
+  missing: []
+- id: p6_zihintntl
+  holdout: false
+  measured: 17874.0
+  predicted: 17873.2
+  error_pct: -0.005
+  missing: []
+- id: p6_zihintpause
+  holdout: false
+  measured: 17884.0
+  predicted: 17883.2
+  error_pct: -0.005
+  missing: []
+- id: p6_interrupts
+  holdout: false
+  measured: 18648.0
+  predicted: 18647.2
+  error_pct: -0.004
+  missing: []
+- id: p6_interrupts_sscofpmf
+  holdout: false
+  measured: 19220.0
+  predicted: 19219.2
+  error_pct: -0.004
+  missing: []
+- id: p7_ic8
+  holdout: false
+  measured: 11223.0
+  predicted: 11261.2
+  error_pct: 0.34
+  missing: []
+- id: p7_ic128
+  holdout: false
+  measured: 11323.0
+  predicted: 11332.6
+  error_pct: 0.085
+  missing: []
+- id: p7_dc8
+  holdout: false
+  measured: 10746.0
+  predicted: 10736.2
+  error_pct: -0.091
+  missing: []
+- id: p7_dc128
+  holdout: false
+  measured: 13435.0
+  predicted: 13432.6
+  error_pct: -0.018
+  missing: []
+- id: p7_ic64
+  holdout: true
+  measured: 11228.0
+  predicted: 11294.5
+  error_pct: 0.592
+  missing: []
+- id: p7_dc64
+  holdout: true
+  measured: 12058.0
+  predicted: 11994.5
+  error_pct: -0.526
+  missing: []
