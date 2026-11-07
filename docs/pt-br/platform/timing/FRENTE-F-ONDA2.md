@@ -200,16 +200,16 @@ O limite é o laço do estágio EX: `r_we_ok` ou `r_fwd_match_rs*` (seleção do
 
 A frequência mais alta que a PLL de 1000 MHz entrega e que fecha o setup no modelo lento a 85 °C e o hold no modelo rápido a 0 °C em todos os domínios das cinco sementes é 1000 / 13 = 76,923077 MHz, com a fase do núcleo em 7500 ps. Ela passa o marco M2 (66,7 MHz) e fica abaixo do M3 (80 MHz), que a PLL não produz (80 MHz pede o divisor 12,5). A frequência de 83,333 MHz (divisor 12) não fecha.
 
-Árvore Insper-RISC-V `b5a9169` (Core `07a1fbe`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), `HIGH PERFORMANCE EFFORT`.
+Árvore Insper-RISC-V `a612e9c` (Core `2ed0117`, Memory `768e81e`, Peripherals `ef0e3d6`, Common-Components `56c293e`), `HIGH PERFORMANCE EFFORT`.
 
-| Semente | Núcleo (ns) | Busca para núcleo (ns) | Núcleo para busca (ns) | Núcleo para núcleo (ns) | Controlador da SDRAM (ns) | `DRAM_CLK` (ns) | Hold mínimo (ns) |
-| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 1 | +0,926 | +1,157 | +0,722 | +0,926 | +4,005 | +1,679 | +0,085 |
-| 2 | +0,469 | +0,469 | +0,880 | +1,072 | +3,452 | +1,123 | +0,110 |
-| 3 | +1,215 | +1,215 | +0,513 | +1,274 | +3,532 | +1,204 | +0,110 |
-| 4 | +1,026 | +1,344 | +0,097 | +1,026 | +3,393 | +1,172 | +0,115 |
-| 5 | +0,617 | +0,743 | +0,711 | +0,617 | +3,286 | +1,644 | +0,115 |
-| Pior | +0,469 | +0,469 | +0,097 | +0,617 | +3,286 | +1,123 | +0,085 |
+| Semente | Núcleo (ns) | Busca para núcleo (ns) | Núcleo para busca (ns) | Núcleo para núcleo (ns) | Controlador da SDRAM (ns) | `DRAM_CLK` (ns) | JTAG (ns) | Hold mínimo (ns) | ALMs |
+| ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 1 | +0,692 | +0,752 | +0,474 | +0,692 | +3,360 | +1,679 | +11,684 | +0,093 | 10 374 |
+| 2 | +0,657 | +0,657 | +0,686 | +0,908 | +3,714 | +1,123 | +9,145 | +0,066 | 10 355 |
+| 3 | +0,634 | +1,311 | +0,225 | +0,634 | +3,910 | +1,204 | +10,564 | +0,092 | 10 322 |
+| 4 | +0,562 | +1,479 | +0,427 | +0,562 | +3,063 | +1,172 | +9,932 | +0,100 | 10 341 |
+| 5 | +0,707 | +0,707 | +0,710 | +1,063 | +4,022 | +1,660 | +10,494 | +0,108 | 10 333 |
+| Pior | +0,562 | +0,657 | +0,225 | +0,562 | +3,063 | +1,123 | +9,145 | +0,066 | 10 374 |
 
 A 83,333 MHz (fase 7000 ps, mesma árvore) o núcleo fecha em quatro das cinco sementes (pior -0,771 ns, semente 4, 12,6 ns de dados) e o par núcleo para busca falha em quatro (pior -1,268 ns). A frequência, a fase e o arredondamento do tick estão em `platform.yaml` (`pll.core_clock_hz`, `pll.core_phase_ps`, `interrupts.clock_hz`) e no arquivo da PLL, que o `check-memory-map` confere.
 

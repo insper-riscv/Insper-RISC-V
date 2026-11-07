@@ -149,3 +149,4 @@ checks:
   - {name: Tests header RV32_BANK_A_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.size}
   - {name: Tests header RV32_BANK_B_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.base}
   - {name: Tests header RV32_BANK_B_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.size}
+  - {name: Tests header RV32_TICK_CYCLES, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_TICK_CYCLES\s+(\d+)', expect: INTERRUPTS.tick_cycles}
