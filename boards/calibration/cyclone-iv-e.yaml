@@ -79,6 +79,7 @@ core_revisions:
 - 1057cbcc67ac3a82af4d314489e1eb840b84e12c
 reference_kbit: 32
 absorbed:
+- backends.sdram_16
 - per_block_glue
 - peripherals.CLINT
 - peripherals.DISPLAY
@@ -90,7 +91,7 @@ unseparated: []
 coefficients:
   backends:
     nor: null
-    sdram_16: null
+    sdram_16: 1449.0
     sdram_32: null
     sram: null
   cache:

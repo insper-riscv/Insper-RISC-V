@@ -21,6 +21,8 @@ fixed:
   peripherals.DISPLAY: 0.0
   peripherals.FLASH_CTRL: 0.0
   per_block_glue: 0.0
+  # Custo do controlador de SDRAM de 16 bits, medido pela diferença da DE0-Nano (verification/de0-nano.yaml, deslocamento do núcleo).
+  backends.sdram_16: 1449.0
 profiles:
   # 1. Núcleo mínimo.
   - {id: p1_rv32i, group: 1, profile: rv32i}

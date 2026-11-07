@@ -25,7 +25,7 @@ Each family is measured on its reference board with the same calibration platfor
 | MAX 10 | DE10-Lite | 10M50DA | LE | 16-bit SDRAM, with the controller inside the core term |
 | Cyclone 10 LP | MKR Vidor 4000 | 10CL016 | LE | emulated in 8 KiB blocks, because the SDRAM controller of the Memory has a 13-bit row address and the board SDRAM has 12 |
 
-The terms `backends.sdram_32`, `backends.nor` and `backends.sram` have no measurement and stay `null`, which makes the estimator emit V18 when a profile asks for them. The term `backends.sdram_16` is zero in the families whose platform has the SDRAM and stays `null` in the others. Each cache has the term $c_0 = -32\,c_1$, because the 32 kbit size is already in the core.
+The terms `backends.sdram_32`, `backends.nor` and `backends.sram` have no measurement and stay `null`, which makes the estimator emit V18 when a profile asks for them. The term `backends.sdram_16` is zero in the families whose platform has the SDRAM and is 1449 LEs on the Cyclone IV E, the difference measured on the DE0-Nano (cross verification section). Each cache has the term $c_0 = -32\,c_1$, because the 32 kbit size is already in the core.
 
 Each calibration platform lives in `src/calibration/<board>/` with its generated memory map package, and its `top` field names the `cal_<board>_board` component of `paths.yaml`, whose closure of `requires` is the list of sources of the project that `board generate` writes.
 
