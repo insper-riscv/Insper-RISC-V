@@ -157,7 +157,7 @@ sim:
 quartus:
   # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`
   # writes it before compiling: nothing under build/ is versioned.
-  generate: {platform: src/cyclone-v/de0-cv/platform.yaml, out: build}
+  generate: {platform: src/cyclone-v/de0-cv/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
   project_dir: build/de0-cv-de0-cv
   project_name: de0_cv_de0_cv
   sof_file: output_files/de0_cv_de0_cv.sof
