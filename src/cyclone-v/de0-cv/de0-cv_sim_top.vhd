@@ -166,6 +166,9 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 	-- the three machine interrupt lines of the core
 	signal irq_timer, irq_software, irq_external : std_logic := '0';
+	-- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do CLINT
+	-- ficam fora do caminho que decide a tomada da interrupção (um ciclo de latência a mais).
+	signal irq_timer_q, irq_software_q, irq_external_q : std_logic := '0';
 	-- mtime of the CLINT, which the CSR time of the core mirrors.
 	signal clint_mtime : std_logic_vector(63 downto 0) := (others => '0');
 
@@ -285,10 +288,10 @@ begin
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
-			i_irq_software => irq_software,
-			i_irq_timer    => irq_timer,
+			i_irq_software => irq_software_q,
+			i_irq_timer    => irq_timer_q,
 			i_mtime        => clint_mtime,
-			i_irq_external => irq_external,
+			i_irq_external => irq_external_q,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -451,6 +454,15 @@ begin
 	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
 	-- and the FLASH controller raise their lines (IRQ_UART_JTAG and IRQ_FLASH); the others stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
+	process (pll_clk_idexmem)
+	begin
+		if rising_edge(pll_clk_idexmem) then
+			irq_timer_q    <= irq_timer;
+			irq_software_q <= irq_software;
+			irq_external_q <= irq_external;
+		end if;
+	end process;
+
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
 		port map (
