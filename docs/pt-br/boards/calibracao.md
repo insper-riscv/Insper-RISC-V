@@ -27,6 +27,8 @@ Cada família é medida na sua placa de referência com a mesma plataforma de ca
 
 Os termos `backends.sdram_32`, `backends.nor` e `backends.sram` não têm medida e ficam `null`, o que faz o estimador emitir V18 quando um perfil os pede. O termo `backends.sdram_16` vale zero nas famílias cuja plataforma tem a SDRAM e fica `null` nas outras. Cada cache tem o termo $c_0 = -32\,c_1$, porque o tamanho de 32 kbit já está no núcleo.
 
+Cada plataforma de calibração fica em `src/calibration/<placa>/` com o pacote do mapa de memória gerado, e o campo `top` dela cita o componente `cal_<placa>_board` do `paths.yaml`, cujo fecho de `requires` é a lista de fontes do projeto que o `board generate` escreve.
+
 O Quartus é o 25.1std.0 Build 1129 Lite Edition, a semente é 5 e o núcleo é o commit `1057cbcc67ac3a82af4d314489e1eb840b84e12c` do Core. A frente F muda o núcleo, e o termo do núcleo (um perfil por família, `p1_rv32i`) é refeito depois do portão dela.
 
 ## 3. Cyclone V (DE0-CV, 5CEBA4)

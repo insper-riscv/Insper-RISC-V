@@ -27,6 +27,8 @@ Each family is measured on its reference board with the same calibration platfor
 
 The terms `backends.sdram_32`, `backends.nor` and `backends.sram` have no measurement and stay `null`, which makes the estimator emit V18 when a profile asks for them. The term `backends.sdram_16` is zero in the families whose platform has the SDRAM and stays `null` in the others. Each cache has the term $c_0 = -32\,c_1$, because the 32 kbit size is already in the core.
 
+Each calibration platform lives in `src/calibration/<board>/` with its generated memory map package, and its `top` field names the `cal_<board>_board` component of `paths.yaml`, whose closure of `requires` is the list of sources of the project that `board generate` writes.
+
 The Quartus is 25.1std.0 Build 1129 Lite Edition, the seed is 5 and the core is commit `1057cbcc67ac3a82af4d314489e1eb840b84e12c` of the Core. The F front changes the core, and the core term (one profile per family, `p1_rv32i`) is redone after its gate.
 
 ## 3. Cyclone V (DE0-CV, 5CEBA4)
