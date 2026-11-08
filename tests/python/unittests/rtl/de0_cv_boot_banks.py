@@ -1,16 +1,16 @@
 """A boot memory da DE0-CV escolhe a banca da FLASH pelo cabeçalho.
 
-O topo de simulação roda a `boot_memory.S` de verdade, cujas palavras estão
-em `data/de0_cv_boot/images.json`, geradas por
+O topo de simulação roda a `boot_memory.S` de verdade, cujas palavras
+estão em `data/de0_cv_boot/images.json`, geradas por
 `gen_de0_cv_boot_images.py`. Cada caso do arquivo é uma simulação:
-`cases` escreve a imagem da BOOT_MEMORY e a da FLASH do caso, com as duas
-bancas montadas pelo `riscv-tools flash-image pack` e estragadas como o
-caso pede (uma banca mais nova, uma carga corrompida, uma atualização
-interrompida com o cabeçalho apagado, as duas inválidas), e o runner as
-passa como genéricos do topo. O programa da banca que roda guarda uma
-marca na SDRAM, `a0 + 0x55` e `a1 + 0x66`; o teste confere a marca, os
-registradores de entrada e, quando nenhuma banca vale, que o núcleo
-fica parado no `rv32_wait_restart` sem rodar nada.
+`cases` escreve a imagem da BOOT_MEMORY e a da FLASH do caso, com as
+duas bancas montadas pelo `riscv-tools flash-image pack` e estragadas
+como o caso pede (uma banca mais nova, uma carga corrompida, uma
+atualização interrompida com o cabeçalho apagado, as duas inválidas), e
+o runner as passa como genéricos do topo. O programa da banca que roda
+guarda uma marca na SDRAM, `a0 + 0x55` e `a1 + 0x66`; o teste confere a
+marca, os registradores de entrada e, quando nenhuma banca vale, que o
+núcleo fica parado no `rv32_wait_restart` sem rodar nada.
 """
 
 import json

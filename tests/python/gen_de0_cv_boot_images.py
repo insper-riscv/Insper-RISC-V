@@ -1,4 +1,4 @@
-"""Gera as imagens do teste da escolha de banca da boot memory da DE0-CV.
+"""Gera as imagens do teste da escolha de banca da boot memory.
 
 Uso, da raiz do repositório, na imagem `dev_tools` (precisa do GCC de
 RISC-V e do `riscv-tools`):
@@ -7,18 +7,18 @@ RISC-V e do `riscv-tools`):
     python tests/python/gen_de0_cv_boot_images.py
     python tests/python/gen_de0_cv_boot_images.py --check
 
-A boot memory é a `boot_memory.S` de verdade, montada pelo mesmo caminho do
-`riscv-tools`. Cada banca recebe uma imagem montada por
+A boot memory é a `boot_memory.S` de verdade, montada pelo mesmo caminho
+do `riscv-tools`. Cada banca recebe uma imagem montada por
 `riscv_tools.flash_image.pack` (cabeçalho de 256 bytes e carga), e os
 casos estragados mexem nos bytes depois de montada. O programa de cada
 banca guarda uma marca na base da RAM, `a0 + 0x55` e `a1 + 0x66` nas
 duas palavras seguintes e escreve `tohost`; a marca diz qual banca
 rodou.
 
-O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot memory
-e, por caso, as palavras de cada banca a partir do índice de palavra
-dela na FLASH. O teste escreve a FLASH de cada caso com elas. Com
-`--check` o script só confere se o arquivo está em dia com a
+O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot
+memory e, por caso, as palavras de cada banca a partir do índice de
+palavra dela na FLASH. O teste escreve a FLASH de cada caso com elas.
+Com `--check` o script só confere se o arquivo está em dia com a
 `boot_memory.S` e o `pack`.
 """
 

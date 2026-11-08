@@ -63,8 +63,8 @@ from riscv_tools.mem_validator import compare_bytes, load_golden
 LOG = logging.getLogger("cocotb.testbench")
 
 # Must stay in sync with config.yaml's memory.tohost_addr and
-# boot_memory.S's own hardcoded tohost clear (the tohost write itself still
-# comes from the TEST's own RV32_PASS()/RV32_FAIL(), compiled into
+# boot_memory.S's own hardcoded tohost clear (the tohost write itself
+# still comes from the TEST's own RV32_PASS()/RV32_FAIL(), compiled into
 # FLASH; boot_memory.S only CLEARS it on _reset). Not sourced from
 # config.yaml here since ROM_simulation already takes its program image
 # via a VHDL generic, not env/argv (see module docstring).  dut.ram_addr

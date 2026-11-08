@@ -7,8 +7,8 @@ Uso, da raiz do repositório, com o ``riscv-tools`` da imagem
         tests/python/gen_platform_images.py
 
 Cada plataforma tem a sua pasta em
-``tests/python/unittests/rtl/data/platforms/``. A BOOT_MEMORY salta para o
-início da ROM (``boot_to_rom.hex``) e a ROM tem o programa a partir
+``tests/python/unittests/rtl/data/platforms/``. A BOOT_MEMORY salta para
+o início da ROM (``boot_to_rom.hex``) e a ROM tem o programa a partir
 dali. Todas rodam o programa mínimo (``rom_program.hex``), que guarda
 0x5A na base da RAM, lê de volta, soma 1 e guarda o resultado na palavra
 seguinte. As da FPGA com chaves, botões e display rodam também o

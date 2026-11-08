@@ -1,9 +1,9 @@
 """Teste do topo de simulação da plataforma internal-mem.
 
-O topo monta o núcleo com a BOOT_MEMORY, a FLASH, a RAM e a UART simuladas,
-alimentados pelo gerador de clock de três fases. A BOOT_MEMORY salta para a
-FLASH e o programa mínimo guarda 0x5A na base da RAM, lê de volta, soma
-1 e guarda o resultado na palavra seguinte.
+O topo monta o núcleo com a BOOT_MEMORY, a FLASH, a RAM e a UART
+simuladas, alimentados pelo gerador de clock de três fases. A
+BOOT_MEMORY salta para a FLASH e o programa mínimo guarda 0x5A na base
+da RAM, lê de volta, soma 1 e guarda o resultado na palavra seguinte.
 """
 
 from typing import Any

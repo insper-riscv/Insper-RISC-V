@@ -1,11 +1,12 @@
 """Confere os números das fontes do PLIC contra o SoC.
 
-O SoC (``soc.vhd``), que o topo modular instancia, liga cada periférico a uma linha
-do PLIC pelas constantes ``LINE_<NOME>``. As plataformas com PLIC listam
-as mesmas fontes em ``interrupts.sources`` do ``platform.yaml`` (de onde
-o ``generate-memory-map`` escreve ``IRQ_<NOME>`` e ``RV32_IRQ_<NOME>``).
-Este script falha quando um número do topo difere de uma lista, ou
-quando duas plataformas dão números diferentes à mesma fonte.
+O SoC (``soc.vhd``), que o topo modular instancia, liga cada periférico
+a uma linha do PLIC pelas constantes ``LINE_<NOME>``. As plataformas com
+PLIC listam as mesmas fontes em ``interrupts.sources`` do
+``platform.yaml`` (de onde o ``generate-memory-map`` escreve
+``IRQ_<NOME>`` e ``RV32_IRQ_<NOME>``). Este script falha quando um
+número do topo difere de uma lista, ou quando duas plataformas dão
+números diferentes à mesma fonte.
 """
 
 import re

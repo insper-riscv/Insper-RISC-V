@@ -9,9 +9,9 @@ O `riscv-tools` vem da imagem `ci-vhdl`, não das dependências do
 projeto, e o mapa é o de `src/simulation/modular/platform.yaml`.
 
 O programa guarda 0x5A na base da RAM, lê de volta, soma 1 e guarda o
-resultado na palavra seguinte. A BOOT_MEMORY salta para a ROM, que começa
-logo depois dela, e os quatro modelos usam as mesmas duas imagens, em
-tests/python/unittests/rtl/data/modular/.
+resultado na palavra seguinte. A BOOT_MEMORY salta para a ROM, que
+começa logo depois dela, e os quatro modelos usam as mesmas duas
+imagens, em tests/python/unittests/rtl/data/modular/.
 """
 
 from pathlib import Path

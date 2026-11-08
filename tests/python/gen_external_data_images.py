@@ -93,7 +93,8 @@ def real_boot_memory() -> list[int]:
     Returns
     -------
     list of int
-        The words of `runtime/boot_memory.S`, as `build_boot_memory` links it.
+        The words of `runtime/boot_memory.S`, linked by
+        `build_boot_memory`.
     """
     with tempfile.TemporaryDirectory() as directory:
         hex_path = boot_memory.build_boot_memory(

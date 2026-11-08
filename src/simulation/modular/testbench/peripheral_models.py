@@ -1,15 +1,18 @@
-"""O mundo externo dos periféricos do topo modular, para os programas de asm-plic/.
+"""O mundo externo dos periféricos do topo modular.
+
+Serve aos programas de ``asm-plic/``.
 
 Dois modelos rodam ao lado do núcleo:
 
-- a UART pelos pinos tem o transmissor ligado de volta ao receptor, então
+- a UART pelos pinos tem o transmissor ligado de volta ao receptor,
+  então
   um byte escrito em ``TX_DATA`` volta por ``RX_DATA``;
 - o hospedeiro da UART sobre JTAG varre o registrador de 48 bits da
   cadeia, como o programa ``riscv-tools console`` faz na placa. Ele só
   roda quando o programa pede, por uma palavra escrita em ``fromhost``:
   1 liga as varreduras e empurra um byte (0xA5) uma vez, 2 liga as
-  varreduras sem empurrar (o hospedeiro só esvazia a fila de transmissão)
-  e 0 as desliga.
+  varreduras sem empurrar (o hospedeiro só esvazia a fila de
+  transmissão) e 0 as desliga.
 
 O pino de uma GPIO é dirigido pela própria saída do bloco: o programa
 configura o pino como saída e o move, e a entrada sincronizada o
@@ -21,7 +24,7 @@ import os
 from typing import Any
 
 import cocotb
-from cocotb.triggers import Edge, First, Timer
+from cocotb.triggers import First, Timer
 
 LOG = logging.getLogger("cocotb.testbench")
 HALF_TCK_NS = 40
@@ -45,12 +48,12 @@ async def uart_loopback(dut: Any) -> None:
     """
     dut.i_uart_rx.value = 1
     while True:
-        await Edge(dut.o_uart_tx)
+        await dut.o_uart_tx.value_change
         dut.i_uart_rx.value = dut.o_uart_tx.value
 
 
 class JtagHost:
-    """O hospedeiro da UART sobre JTAG: varre a cadeia enquanto pedido."""
+    """O hospedeiro da UART sobre JTAG, que varre a cadeia se pedido."""
 
     def __init__(self, dut: Any) -> None:
         """Deixa a cadeia parada.
@@ -104,7 +107,7 @@ class JtagHost:
             getattr(self.dut, f"i_uart_state_{name}").value = 0
 
     async def _scan(self, command: int) -> None:
-        """Captura, desloca 48 bits do menos significativo ao mais e atualiza.
+        """Captura, desloca 48 bits (do menos significativo) e atualiza.
 
         Parameters
         ----------
@@ -119,7 +122,7 @@ class JtagHost:
         await self._tck(udr=True)
 
     async def run(self) -> None:
-        """Seleciona o registrador de dados e varre enquanto estiver ligado."""
+        """Seleciona o registrador de dados e varre enquanto ligado."""
         self.dut.i_uart_ir_in.value = 1
         await self._tck(uir=True)
         while True:
@@ -134,7 +137,9 @@ class JtagHost:
 
 
 async def trace_interrupts(dut: Any) -> None:
-    """Registra cada mudança das linhas do PLIC e do MEIP (SIM_TRACE_IRQ=1).
+    """Registra cada mudança das linhas do PLIC e do MEIP.
+
+    Só roda com ``SIM_TRACE_IRQ=1``.
 
     Parameters
     ----------
@@ -142,7 +147,7 @@ async def trace_interrupts(dut: Any) -> None:
         O topo sob teste.
     """
     while True:
-        await First(Edge(dut.irq_lines), Edge(dut.irq_external))
+        await First(dut.irq_lines.value_change, dut.irq_external.value_change)
         plic = dut.g_interrupts.u_plic
         LOG.info(
             "irq_lines=%s irq_external=%s pending=%s enable=%s "

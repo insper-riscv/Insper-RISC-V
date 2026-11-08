@@ -2,9 +2,9 @@
 
 O core_fpga_test é o topo que o Quartus sintetiza. Aqui ele elabora no
 GHDL com o PLL de simulação e com modelos em VHDL puro no lugar dos IPs
-da Intel (tests/vhdl/fpga_ip_models.vhd), sem alterar o topo. A BOOT_MEMORY
-salta para a FLASH e o programa mínimo guarda 0x5A na base da RAM, lê de
-volta, soma 1 e guarda o resultado na palavra seguinte.
+da Intel (tests/vhdl/fpga_ip_models.vhd), sem alterar o topo. A
+BOOT_MEMORY salta para a FLASH e o programa mínimo guarda 0x5A na base
+da RAM, lê de volta, soma 1 e guarda o resultado na palavra seguinte.
 """
 
 from typing import Any

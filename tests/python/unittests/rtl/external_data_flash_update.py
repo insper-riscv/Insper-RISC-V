@@ -7,10 +7,10 @@ deixa `tohost` em 1. O hospedeiro manda o comando de parada pela porta
 JTAG do carregador, o núcleo entra em reset e para (o contador que o
 programa incrementa não anda), o hospedeiro grava o programa novo no
 STREAM e confere a contagem e a soma do carregador, e o comando de
-liberação solta o reset para o núcleo partir do endereço 0. A boot memory
-zera `tohost` antes de saltar, então o programa novo lê zero e não o 1
-que o anterior deixou, e é ele que deixa a marca e o `tohost` novos. As
-imagens: o programa antigo e a boot memory saem de
+liberação solta o reset para o núcleo partir do endereço 0. A boot
+memory zera `tohost` antes de saltar, então o programa novo lê zero e
+não o 1 que o anterior deixou, e é ele que deixa a marca e o `tohost`
+novos. As imagens: o programa antigo e a boot memory saem de
 `gen_external_data_images.py`, e o novo é montado aqui.
 """
 
@@ -115,8 +115,8 @@ def new_program() -> list[int]:
     -------
     list of int
         It stores a mark, copies the `tohost` it finds into the SDRAM
-        (the boot memory must have cleared it), writes a new `tohost` and
-        loops.
+        (the boot memory must have cleared it), writes a new `tohost`
+        and loops.
     """
     ram_high, ram_low = high_low(RAM_BASE)
     host_high, host_low = high_low(TOHOST)

@@ -20,19 +20,25 @@ PHASE_NS = 10
 RAM_BASE = 0x100000
 NOP = 0x00000013
 # lui x1,0x90000; lw x2,0x24(x1); lui x3,0x100; sw x2,0(x3); jal x0,0
-PROGRAM = [NOP] * 24 + [0x900000B7, 0x0240A103, 0x001001B7, 0x0021A023, 0x0000006F]
+PROGRAM = [NOP] * 24 + [
+    0x900000B7,
+    0x0240A103,
+    0x001001B7,
+    0x0021A023,
+    0x0000006F,
+]
 SWITCHES_PHYSICAL = 0b0101
 SWITCHES_SEEN = 0b1010
 TIMEOUT_CYCLES = 600
 
 
 def high(signal: Any) -> bool:
-    """Say whether a signal is a resolved one; a signal not driven yet counts as low."""
+    """Say whether a signal is resolved and high."""
     return signal.value.is_resolvable and int(signal.value) == 1
 
 
 async def three_phase_clock(dut: Any) -> None:
-    """Drive the fetch and the core clocks, one third of the period each."""
+    """Drive the fetch and core clocks, one third of the period each."""
     dut.i_clk_fetch.value = 0
     dut.i_clk_core.value = 0
     while True:
@@ -76,8 +82,10 @@ async def start(dut: Any) -> dict[int, int]:
 
 
 @cocotb.test()
-async def test_active_low_switches_reach_the_program_inverted(dut: Any) -> None:
-    """The word the program stores is the switches in the program polarity."""
+async def test_active_low_switches_reach_the_program_inverted(
+    dut: Any,
+) -> None:
+    """The stored word is the switches in the program polarity."""
     writes = await start(dut)
     for _ in range(TIMEOUT_CYCLES):
         await Timer(3 * PHASE_NS, unit="ns")
