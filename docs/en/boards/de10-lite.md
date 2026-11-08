@@ -30,17 +30,31 @@ The chip is the ISSI IS42S16320D-7 (512 Mbit, 32M x 16), the same as the DE0-CV,
 
 ## 4. MAX 10 configuration
 
-The Quartus only assembles the programming file of a MAX 10 with memories that have an initial content (the `BOOT_MEMORY` and the emulated FLASH) in the single-image mode with the configuration RAM. The `max-10` family asks for that mode in the `qsf` key of `boards/families/max-10.yaml`, and the generated project carries it. The fitter also refuses `SLEW_RATE` on 3.3-V LVTTL pins, which the `slew_rate: false` key of the family handles.
+The Quartus only assembles the programming file of a MAX 10 with memories that have an initial content (the `BOOT_MEMORY` and the emulated FLASH) in the single-image mode with the configuration RAM. The `max-10` family asks for that mode (`INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"`) in the `qsf` key of `boards/families/max-10.yaml`, and the generated project carries it. The fitter also refuses `SLEW_RATE` on 3.3-V LVTTL pins, which the `slew_rate: false` key of the family handles.
 
 ## 5. Fit
 
 | Resource | Quartus fit | Capacity |
 | :--- | ---: | ---: |
-| Logic elements | 22,751 | 49,760 (46 %) |
-| Memory bits | 1,155,328 | 1,677,312 (69 %) |
+| Logic elements | 19,225 | 49,760 (39 %) |
+| Memory bits | 1,157,376 | 1,677,312 (69 %) |
 | RAM blocks estimated | 126 | 182 |
 | PLLs | 1 | 4 |
 | Pins | 104 | 360 |
+
+The fit closes the timing at 50 MHz with seed 5: the smallest setup slack is 0.45 ns (85 C, fetch clock) and the smallest hold slack is 0.15 ns. The core runs 8250 ps behind the fetch clock, as on the other boards.
+
+## 6. On the board
+
+`board_run.py --stages de10-lite-regression de10-lite-sdram de10-lite-irq` runs the programs of Tests of the full profile.
+
+| Stage | Programs | Result |
+| :--- | ---: | :--- |
+| `de10-lite-regression` | 128 | 128 pass |
+| `de10-lite-sdram` | 18 | 18 pass |
+| `de10-lite-irq` | 13 | 13 pass |
+
+Left out are `monitor`, `hex-id` and the three UART-on-pins programs, which the board lacks.
 
 ---
 

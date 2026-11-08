@@ -30,7 +30,7 @@ Os quatro `DIP` e o `KEY[1]` ficam em pinos que o Quartus aceita só como entrad
 
 O chip é o ISSI IS42S16160B-7 (256 Mbit, 16M x 16, 143 MHz, CL3), no catálogo `Memory/chips/IS42S16160B-7.yaml`. Os tempos são os da coluna `-7` do datasheet da ISSI (tRCD e tRP de 20 ns, tRAS de 45 ns, tRC de 67,5 ns, tDPL de 14 ns). O manual da placa não nomeia o chip, e o nome vem de uma porta VHDL de terceiros, de modo que a identificação continua inferida. A organização (13 bits de linha, 9 de coluna, 4 bancos) dá os 32 MiB, e o controlador é o mesmo da DE0-CV com esses valores nos generics.
 
-A fase do `DRAM_CLK` é de 7000 ps (a defasagem de -3 ns da demonstração da Terasic para 100 MHz).
+A fase do `DRAM_CLK` é de 7000 ps (a defasagem de -3 ns da demonstração da Terasic para 100 MHz), e o teste de memória da placa passou com ela.
 
 ## 4. Cabimento
 
@@ -38,16 +38,27 @@ O estimador roda no `board generate` e no `check-memory-map` e escreve `capacity
 
 | Recurso | Estimado | Ajuste do Quartus | Capacidade |
 | :--- | ---: | ---: | ---: |
-| Elementos lógicos | 8.835 | 9.013 | 22.320 |
+| Elementos lógicos | 7.465 | 8.992 | 22.320 |
 | Blocos de RAM | 35 | 316.096 bits | 66 blocos, 608.256 bits |
 | PLLs | 1 | 1 | 4 |
 | Pinos | | 49 | 154 |
 
-O perfil completo da DE0-CV nesta placa é recusado com o erro V11: precisa de 240 blocos de RAM, e a placa tem 66.
+A estimativa fica 17 % abaixo do ajuste, porque a razão ajuste sobre síntese da tabela da Cyclone IV E está invertida para a unidade de LE. O perfil completo da DE0-CV nesta placa é recusado com o erro V11: precisa de 240 blocos de RAM, e a placa tem 66.
 
 ## 5. Tempo
 
-Com a semente 5 e o núcleo a 50 MHz, a menor folga de setup é de 3,48 ns no relógio do núcleo e de 3,03 ns na saída da SDRAM, e todas as folgas de hold são positivas (menor, 0,29 ns).
+O núcleo anda 8250 ps atrás do relógio de busca, como na DE2-115 e na DE0-CV, porque as memórias de instrução leem no relógio de busca um ciclo à frente do núcleo, e sem a fase o núcleo salta instruções. Com a semente 5 e o núcleo a 50 MHz, a menor folga de setup é de 1,09 ns (85 C, relógio de busca) e a menor de hold, de 0,17 ns, ambas positivas.
+
+## 6. Na placa
+
+O bitstream sai do `program` com a boot memory embutida, e o `board_run.py --stages de0-nano-regression de0-nano-sdram` roda os programas do Tests que o perfil comporta (os de cabeçalho `RV32_EXT` com só Zicsr e Zifencei).
+
+| Etapa | Programas | Resultado |
+| :--- | ---: | :--- |
+| `de0-nano-regression` | 71 | 71 passam |
+| `de0-nano-sdram` | 7 | 7 passam |
+
+Ficam fora a `code-sweep` (17 KiB, mais que o banco A de 12 KiB), a `flash-const` (pede a falha de acesso, que é um extra que a plataforma não liga), a `monitor` e a `hex-id` (pedem uma pessoa), e as três de UART em pinos (a placa não tem UART). O teste de barramento de endereços da `sdram-memtest` para antes do fim da RAM de 32 MiB, e a janela de teste da SDRAM tem 8 MiB, a partir de 8 MiB acima da base.
 
 ---
 

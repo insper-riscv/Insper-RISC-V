@@ -30,7 +30,7 @@ The four `DIP` switches and `KEY[1]` sit on pins that the Quartus accepts only a
 
 The chip is the ISSI IS42S16160B-7 (256 Mbit, 16M x 16, 143 MHz, CL3), in the catalog `Memory/chips/IS42S16160B-7.yaml`. The timings are those of the `-7` column of the ISSI datasheet (tRCD and tRP of 20 ns, tRAS of 45 ns, tRC of 67.5 ns, tDPL of 14 ns). The manual of the board does not name the chip, and the name comes from a third-party VHDL port, so the identification remains inferred. The organization (13 row bits, 9 column bits, 4 banks) gives the 32 MiB, and the controller is the one of the DE0-CV with these values in its generics.
 
-The phase of `DRAM_CLK` is 7000 ps (the -3 ns shift of the Terasic demonstration for 100 MHz).
+The phase of `DRAM_CLK` is 7000 ps (the -3 ns shift of the Terasic demonstration for 100 MHz), and the memory tests on the board passed with it.
 
 ## 4. Fit
 
@@ -38,16 +38,27 @@ The estimator runs in `board generate` and in `check-memory-map` and writes `cap
 
 | Resource | Estimated | Quartus fit | Capacity |
 | :--- | ---: | ---: | ---: |
-| Logic elements | 8,835 | 9,013 | 22,320 |
+| Logic elements | 7,465 | 8,992 | 22,320 |
 | RAM blocks | 35 | 316,096 bits | 66 blocks, 608,256 bits |
 | PLLs | 1 | 1 | 4 |
 | Pins | | 49 | 154 |
 
-The full profile of the DE0-CV on this board is refused with error V11: it needs 240 RAM blocks, and the board has 66.
+The estimate is 17 % below the fit, because the fit over synthesis ratio of the Cyclone IV E table is inverted for the LE unit. The full profile of the DE0-CV on this board is refused with error V11: it needs 240 RAM blocks, and the board has 66.
 
 ## 5. Timing
 
-With seed 5 and the core at 50 MHz, the smallest setup slack is 3.48 ns on the core clock and 3.03 ns on the SDRAM output, and every hold slack is positive (the smallest, 0.29 ns).
+The core runs 8250 ps behind the fetch clock, as on the DE2-115 and on the DE0-CV, because the instruction memories read on the fetch clock one cycle ahead of the core, and without the phase the core skips instructions. With seed 5 and the core at 50 MHz, the smallest setup slack is 1.09 ns (85 C, fetch clock) and the smallest hold slack is 0.17 ns, both positive.
+
+## 6. On the board
+
+The bitstream comes out of `program` with the boot memory embedded, and `board_run.py --stages de0-nano-regression de0-nano-sdram` runs the programs of Tests that the profile can run (those whose `RV32_EXT` header has only Zicsr and Zifencei).
+
+| Stage | Programs | Result |
+| :--- | ---: | :--- |
+| `de0-nano-regression` | 71 | 71 pass |
+| `de0-nano-sdram` | 7 | 7 pass |
+
+Left out are `code-sweep` (17 KiB, more than the 12 KiB bank A), `flash-const` (it asks for the access fault, an extra that the platform does not turn on), `monitor` and `hex-id` (they need a person), and the three UART-on-pins programs (the board has no UART). The address bus test of `sdram-memtest` stops before the end of the 32 MiB RAM, and the SDRAM test window is 8 MiB, from 8 MiB above the base.
 
 ---
 
