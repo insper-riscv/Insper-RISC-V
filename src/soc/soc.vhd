@@ -391,10 +391,10 @@ architecture behaviour of soc is
   end function pick;
 
   -- Início, em KiB, da seleção pelo endereço registrado da cache de instruções; -1 usa a porta de seleção.
-  function ic_select_from(fast : boolean; boot_kib : natural) return integer is
+  function ic_select_from(fast : boolean; start_kib : natural) return integer is
   begin
     if fast then
-      return boot_kib;
+      return start_kib;
     end if;
     return -1;
   end function ic_select_from;
