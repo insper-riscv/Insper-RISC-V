@@ -126,6 +126,9 @@ UART_ERRORS_READY = b"O"
 UART_ERRORS_RX_INPUT = bytes(range(17))
 UART_BURST_PAYLOAD = bytes(range(32))
 UART_ERRORS_FINAL = b"P"
+UART_STDIO_PROMPT = b"READY\n"
+UART_STDIO_INPUT = b"UART 42\n"
+UART_STDIO_RESULT = b"Hello, UART! value=42\n"
 UART_BIT_TIME_NS = round(1_000_000_000 / 115_200)
 
 
@@ -222,6 +225,20 @@ async def exchange_uart_errors(uart_rx: Any, uart_tx: Any) -> bytes:
     return bytes(received)
 
 
+async def exchange_uart_stdio(uart_rx: Any, uart_tx: Any) -> bytes:
+    """Exercise picolibc printf and scanf through the serial UART."""
+    received = bytearray(
+        await receive_uart_message(uart_tx, len(UART_STDIO_PROMPT))
+    )
+
+    result_capture = cocotb.start_soon(
+        receive_uart_message(uart_tx, len(UART_STDIO_RESULT))
+    )
+    await send_uart_message(uart_rx, UART_STDIO_INPUT)
+    received.extend(await result_capture)
+    return bytes(received)
+
+
 def retired_now(dut: Any) -> int:
     """1 when an instruction retires on this clock edge, 0 otherwise.
 
@@ -256,12 +273,16 @@ def start_uart(
             + UART_BURST_PAYLOAD
             + UART_ERRORS_FINAL
         )
+    elif test_name == "uart-stdio":
+        expected = UART_STDIO_PROMPT + UART_STDIO_RESULT
     else:
         return None, None
     if test_name != "uart-tx":
         dut.i_uart_rx.value = 1
     if test_name == "uart-errors":
         capture = exchange_uart_errors(dut.i_uart_rx, dut.o_uart_tx)
+    elif test_name == "uart-stdio":
+        capture = exchange_uart_stdio(dut.i_uart_rx, dut.o_uart_tx)
     else:
         capture = receive_uart_message(dut.o_uart_tx, len(expected))
     return expected, cocotb.start_soon(capture)
@@ -352,9 +373,9 @@ async def finish_pass(
     """
     expected, capture, drive = uart
     if drive is not None:
-        await with_timeout(drive, 1, "ms")
+        await with_timeout(drive, 5, "ms")
     if capture is not None:
-        received = await with_timeout(capture, 1, "ms")
+        received = await with_timeout(capture, 5, "ms")
         check(
             received == expected,
             f"UART TX incorreto: esperado {expected!r}, recebido {received!r}",
