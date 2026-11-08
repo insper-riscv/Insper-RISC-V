@@ -112,25 +112,23 @@ architecture behaviour of core_fpga_test is
 	-- Dado de escrita da porta B da FLASH, vindo do carregador.
 	signal flash_data_b     : std_logic_vector(31 downto 0);
 
-	-- RAM's In-System Memory Content Editor (JTAG) addresses it as a
-	-- 0-based array relative to memory.ram_base (see
-	-- riscv_tools.htif.word_offset's own docstring: "relative=True
-	-- ... What mem_edit's JTAG primitives expect"), NOT the CPU's raw
-	-- absolute address. Every previous memory-map round got this for
-	-- free by accident (ram_base was always chosen as a power-of-two
-	-- exactly matching RAM's own address width, so truncating the raw
-	-- address to that width happened to equal subtracting ram_base) --
-	-- broke silently the first time that stopped being true (ram_base
-	-- = 0x11000 in that round, not aligned to RAM's 16-bit width), confirmed on
-	-- real hardware: a debug LED wired directly to the tohost write
-	-- (ram_addr = tohost_addr) lit up correctly, proving the CORE
-	-- writes the right byte address -- but JTAG reads (computed
-	-- RAM-relative, per mem_edit's own convention) always came back
-	-- 0, since RAM's OWN address port was indexing by the untranslated
-	-- raw address instead. GHDL sim never hit this: its own testbench
-	-- (test_c_program.py) snoops the raw ram_addr bus directly rather
-	-- than reading back RAM's internal array by JTAG-style 0-based
-	-- index, so this class of bug is invisible to it by construction.
+	-- O In-System Memory Content Editor (JTAG) da RAM a endereça como um vetor
+	-- iniciado em zero e relativo a memory.ram_base (ver a docstring de
+	-- riscv_tools.htif.word_offset: "relative=True ... o que as primitivas JTAG
+	-- do mem_edit esperam"), e não pelo endereço absoluto cru da CPU. Nas rodadas
+	-- anteriores do mapa de memória isso funcionava por acaso (ram_base era uma
+	-- potência de dois igual à largura de endereço da própria RAM, então truncar o
+	-- endereço cru àquela largura equivalia a subtrair ram_base) e quebrou em
+	-- silêncio quando deixou de valer (ram_base = 0x11000, desalinhado da largura
+	-- de 16 bits da RAM). Confirmado no hardware: um LED de depuração ligado
+	-- direto à escrita de tohost (ram_addr = tohost_addr) acendeu certo, o que
+	-- prova que o núcleo escreve o endereço de byte correto, mas as leituras JTAG
+	-- (relativas à RAM, pela convenção do mem_edit) voltavam sempre 0, porque a
+	-- porta de endereço da RAM indexava pelo endereço cru sem tradução. A
+	-- simulação no GHDL nunca viu isso: o testbench (test_c_program.py) espia o
+	-- barramento ram_addr cru em vez de reler o vetor interno da RAM por índice
+	-- relativo, então essa classe de erro é invisível a ele.
+	-- Base da RAM em palavras, subtraída do endereço cru para obter o endereço relativo que o JTAG usa.
 	constant RAM_BASE_WORD : unsigned(19 downto 0) := to_unsigned(RAM_BASE_KIB * 256, 20);
 	-- Endereço de palavra da RAM relativo à base da RAM, como o JTAG o enxerga.
 	signal ram_word_addr : unsigned(log2_exact(RAM_STORAGE_BYTES) - 3 downto 0);

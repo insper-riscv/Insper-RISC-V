@@ -140,7 +140,7 @@ A opção escolhida é o controlador a 100 MHz com a ponte de razão 1 para 1, e
 | :--- | :--- |
 | Compilar uma semente | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>`, numa cópia do repositório |
 | Mudar o relógio ou a fase do controlador | Editar `sdram.clock_hz` e `sdram.dram_clk_phase_ps` do `platform.yaml`, `output_clock_frequency0`, `output_clock_frequency1` e `phase_shift1` de `src/cyclone-v/de0-cv/pll/sdram_platform_pll.v`, e rodar `riscv-tools generate-memory-map`; o `check-memory-map` confere que os dois lados batem |
-| Simular com outro relógio | `SIM_CLOCK_PERIOD_NS` (período do `CLK`, três vezes o do núcleo) e `SIM_EXTRA_CLOCKS=CLK_MEM:<ns>` com o parâmetro `SDRAM_TCK_PS=<ps>` do topo de simulação |
+| Simular com outro relógio | `SIM_CLOCK_PERIOD_NS` (período do `i_clk`, três vezes o do núcleo) e `SIM_EXTRA_CLOCKS=i_clk_mem:<ns>` com o parâmetro `SDRAM_TCK_PS=<ps>` do topo de simulação |
 
 ## 9. Marcos M1 e M2 com o controlador a 100 MHz
 

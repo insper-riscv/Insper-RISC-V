@@ -64,14 +64,14 @@ RAM_BASE = int(os.environ.get("RAM_BASE", str(SDRAM_BASE)))
 _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
-SIM_CLOCK = os.environ.get("SIM_CLOCK", "CLK")
+SIM_CLOCK = os.environ.get("SIM_CLOCK", "i_clk")
 SIM_CLOCK_PERIOD_NS = float(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
-SIM_RESET = os.environ.get("SIM_RESET", "reset")
+SIM_RESET = os.environ.get("SIM_RESET", "i_rst")
 SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", "pll_clk_idexmem")
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "200000"))
 # More clocks the top has, "PORT:period_ns" separated by commas
-# (CLK_MEM:10 for the SDRAM clock)
+# (i_clk_mem:10 for the SDRAM clock)
 EXTRA_CLOCKS = [
     (name, float(period))
     for name, period in (
@@ -96,12 +96,12 @@ def retired_now(dut: Any) -> int:
 
 async def read_model_word(dut: Any, word_address: int) -> int:
     """Read the 32-bit word at a word address of the chip model."""
-    dut.DBG_WORD_ADDR.value = word_address
+    dut.i_dbg_word_addr.value = word_address
     mem_clock = getattr(dut, EXTRA_CLOCKS[0][0])
     for _ in range(3):
         await RisingEdge(mem_clock)
     await Timer(1, unit="ns")
-    return int(dut.DBG_WORD_DATA.value)
+    return int(dut.o_dbg_word_data.value)
 
 
 async def model_bytes(dut: Any, golden: dict[int, int]) -> dict[int, int]:
@@ -164,16 +164,16 @@ def script_path(variable: str, name: str) -> Path | None:
 async def uart_tck(dut: Any, **states: bool) -> None:
     """Clock the UART's Virtual JTAG with the given flags high."""
     for name in ("cdr", "sdr", "udr", "uir"):
-        getattr(dut, f"UART_STATE_{name.upper()}").value = (
+        getattr(dut, f"i_uart_state_{name}").value = (
             1 if states.get(name) else 0
         )
-    dut.UART_TCK.value = 0
+    dut.i_uart_tck.value = 0
     await Timer(HALF_TCK_NS, unit="ns")
-    dut.UART_TCK.value = 1
+    dut.i_uart_tck.value = 1
     await Timer(HALF_TCK_NS, unit="ns")
-    dut.UART_TCK.value = 0
+    dut.i_uart_tck.value = 0
     for name in ("cdr", "sdr", "udr", "uir"):
-        getattr(dut, f"UART_STATE_{name.upper()}").value = 0
+        getattr(dut, f"i_uart_state_{name}").value = 0
 
 
 async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
@@ -185,9 +185,9 @@ async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
     await uart_tck(dut, cdr=True)
     out = 0
     for i in range(48):
-        dut.UART_TDI.value = (value >> i) & 1
+        dut.i_uart_tdi.value = (value >> i) & 1
         await Timer(1, unit="ns")
-        out |= int(dut.UART_TDO.value) << i
+        out |= int(dut.o_uart_tdo.value) << i
         await uart_tck(dut, sdr=True)
     await uart_tck(dut, udr=True)
     count = (out >> 32) & 7
@@ -221,7 +221,7 @@ async def uart_console(
     The bytes of an interrupted scan are lost.
     """
     await wait_for_program(dut, stop)
-    dut.UART_IR_IN.value = 1
+    dut.i_uart_ir_in.value = 1
     await uart_tck(dut, uir=True)
     source = script_path("UART_INPUT_PATH", "uart_input.txt")
     pending: list[int] = list(source.read_bytes()) if source else []
