@@ -1,4 +1,4 @@
-# Pacote da Terasic DE10-Lite. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/de10-lite.md.
+# Pacote da Terasic DE10-Lite. Esquema: docs/pt-br/boards/formato.md.
 board: de10-lite
 name: Terasic DE10-Lite
 family: max-10

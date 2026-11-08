@@ -1,4 +1,4 @@
-# Pacote da Terasic DE2-115. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/de2-115.md.
+# Pacote da Terasic DE2-115. Esquema: docs/pt-br/boards/formato.md.
 board: de2-115
 name: Terasic DE2-115
 family: cyclone-iv-e

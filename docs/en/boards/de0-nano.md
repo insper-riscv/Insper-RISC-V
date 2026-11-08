@@ -24,6 +24,8 @@ The FLASH is 28 KiB because the block store takes the power of two that the addr
 | Console | JTAG UART, no pin |
 | Reset | `KEY[0]` |
 
+The polarity of `KEY[0]` (active low) is inferred from the Terasic button convention. Check in the board schematic that the button has a pull-up and closes to ground before relying on the reset.
+
 The four `DIP` switches and `KEY[1]` sit on pins that the Quartus accepts only as inputs, and the GPIO cell of the SoC is bidirectional (error 169009 in the fit). The platform therefore does not ask for the `switches` and `keys` roles.
 
 ## 3. SDRAM

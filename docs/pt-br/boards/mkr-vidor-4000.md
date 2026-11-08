@@ -2,7 +2,7 @@
 
 ## 1. Referência
 
-O pacote da placa está em `boards/mkr-vidor-4000/` e a ficha de pesquisa em `Plans/Multi-FPGA/placas/mkr-vidor-4000.md` do repositório Capstone. As fontes de hardware são o esquemático `ABX00022-schematics.pdf`, o datasheet e o `.qsf` oficial do VidorBitstream, todos citados na ficha. O formato do pacote está em [formato.md](formato.md).
+O pacote da placa está em `boards/mkr-vidor-4000/`. As fontes de hardware são o esquemático `ABX00022-schematics.pdf`, o datasheet e o `.qsf` oficial do VidorBitstream, todos citados nesta página. O formato do pacote está em [formato.md](formato.md).
 
 | Item | Valor |
 | :--- | :--- |
@@ -73,7 +73,7 @@ As ferramentas não gravam o sketch no SAMD21, porque uma gravação errada pode
 4. Conferir com `jtagconfig`, que deve listar um `USB-Blaster` com o IDCODE `020F20DD`.
 5. Para voltar a usar o SAMD21 como Arduino, carregar outro sketch pela IDE.
 
-O nome exato do exemplo na IDE vem da ficha da placa e deve ser conferido na primeira carga. O `.sof` carregado por JTAG é volátil e some ao religar a placa.
+O nome exato do exemplo na IDE deve ser conferido na primeira carga. O `.sof` carregado por JTAG é volátil e some ao religar a placa.
 
 ## 6. Níveis de suporte
 

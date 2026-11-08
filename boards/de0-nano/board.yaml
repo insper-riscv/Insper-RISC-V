@@ -1,4 +1,4 @@
-# Pacote da Terasic DE0-Nano. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/de0-nano.md.
+# Pacote da Terasic DE0-Nano. Esquema: docs/pt-br/boards/formato.md.
 board: de0-nano
 name: Terasic DE0-Nano
 family: cyclone-iv-e
@@ -38,6 +38,7 @@ console:
   default: jtag
 pins: pins.yaml
 notes:
+  - "A polaridade ativa em nivel baixo do KEY[0] e inferida: conferir no esquematico se o botao tem pull-up e fecha para o terra."
   - "Sem botao de reset dedicado: o reset do SoC e o KEY[0]. Sem display, VGA, SD nem UART; o unico console e a JTAG UART."
   - "O chip da SDRAM (IS42S16160B-7) e inferido de uma porta VHDL de terceiros; o manual so da 16M x 16."
   - "A capacidade do EPCS varia por revisao da placa (EPCS4, EPCS16 ou EPCS64); 8 MiB vale para o manual v1.9 e deve ser conferido pelo ID JEDEC. O EPCS guarda tambem o bitstream (cerca de 0,75 MB)."

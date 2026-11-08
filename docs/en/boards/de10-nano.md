@@ -2,7 +2,7 @@
 
 ## 1. Reference
 
-Both Terasic boards carry a Cyclone V SoC, with the ARM processor (HPS) beside the FPGA. The package of each is in `boards/de10-nano/` and `boards/de0-nano-soc/`, and the research sheet in `Plans/Multi-FPGA/placas/` of the Capstone repository. The package format is in [formato.md](formato.md) and the table of boards in [placas.md](placas.md).
+Both Terasic boards carry a Cyclone V SoC, with the ARM processor (HPS) beside the FPGA. The package of each is in `boards/de10-nano/` and `boards/de0-nano-soc/`. The package format is in [formato.md](formato.md) and the table of boards in [placas.md](placas.md).
 
 | Board | Device in Quartus | FPGA IDCODE | ALMs | M10K blocks |
 | :--- | :--- | :--- | ---: | ---: |

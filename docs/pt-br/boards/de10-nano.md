@@ -2,7 +2,7 @@
 
 ## 1. Referência
 
-As duas placas Terasic têm um Cyclone V SoC, com o processador ARM (HPS) ao lado do FPGA. O pacote de cada uma está em `boards/de10-nano/` e `boards/de0-nano-soc/`, e a ficha de pesquisa em `Plans/Multi-FPGA/placas/` do repositório Capstone. O formato do pacote está em [formato.md](formato.md) e a tabela das placas em [placas.md](placas.md).
+As duas placas Terasic têm um Cyclone V SoC, com o processador ARM (HPS) ao lado do FPGA. O pacote de cada uma está em `boards/de10-nano/` e `boards/de0-nano-soc/`. O formato do pacote está em [formato.md](formato.md) e a tabela das placas em [placas.md](placas.md).
 
 | Placa | Dispositivo no Quartus | IDCODE do FPGA | ALMs | Blocos M10K |
 | :--- | :--- | :--- | ---: | ---: |

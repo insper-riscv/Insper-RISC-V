@@ -1,4 +1,4 @@
-# Pacote da Terasic DE0-CV. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/de0-cv.md.
+# Pacote da Terasic DE0-CV. Esquema: docs/pt-br/boards/formato.md.
 board: de0-cv
 name: Terasic DE0-CV
 family: cyclone-v

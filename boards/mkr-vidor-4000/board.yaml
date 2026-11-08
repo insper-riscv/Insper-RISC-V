@@ -1,4 +1,4 @@
-# Pacote da Arduino MKR Vidor 4000. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/mkr-vidor-4000.md.
+# Pacote da Arduino MKR Vidor 4000. Esquema: docs/pt-br/boards/formato.md.
 # O JTAG do FPGA fica atras do SAMD21; este pacote nao foi validado em hardware.
 board: mkr-vidor-4000
 name: Arduino MKR Vidor 4000

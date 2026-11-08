@@ -1,4 +1,4 @@
-# Pacote da Terasic DE10-Nano. Esquema: docs/pt-br/boards/formato.md. Ficha: Plans/Multi-FPGA/placas/de10-nano.md.
+# Pacote da Terasic DE10-Nano. Esquema: docs/pt-br/boards/formato.md.
 # O cabo e o USB-Blaster II e nao enumera hoje em nenhuma estacao; este pacote nao foi validado em hardware.
 board: de10-nano
 name: Terasic DE10-Nano

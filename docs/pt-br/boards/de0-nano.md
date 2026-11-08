@@ -24,6 +24,8 @@ A FLASH tem 28 KiB porque a loja de blocos ocupa a potência de dois que o ender
 | Console | JTAG UART, sem pino |
 | Reset | `KEY[0]` |
 
+A polaridade do `KEY[0]` (ativo em nível baixo) é inferida da convenção dos botões da Terasic. Conferir no esquemático da placa se o botão tem pull-up e fecha para o terra, antes de contar com o reset.
+
 Os quatro `DIP` e o `KEY[1]` ficam em pinos que o Quartus aceita só como entrada, e a célula de GPIO do SoC é bidirecional (erro 169009 no ajuste). Por isso a plataforma não pede os papéis `switches` e `keys`.
 
 ## 3. SDRAM
