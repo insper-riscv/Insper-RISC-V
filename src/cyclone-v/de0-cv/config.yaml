@@ -1,5 +1,5 @@
 # The de0-cv platform: the DE0-CV board (Cyclone V) with the FLASH as a chip behind the caches (the
-# design of a real SoC). The core holds only the BOOT_ROM; the FLASH (254 KiB right after the BOOT_ROM) and the SDRAM
+# design of a real SoC). The core holds only the BOOT_MEMORY; the FLASH (254 KiB right after the BOOT_MEMORY) and the SDRAM
 # (64 MB at 0x40000000, 143 MHz) are reached through an instruction cache and a write-through data
 # cache, whose line requests a region router sends to the FLASH chip model (through its arbiter) or to
 # the SDRAM controller. The SDRAM is THE RAM: it holds .data, .bss, the heap, the stack and the words
@@ -8,7 +8,7 @@
 # written here.
 extends: ../../simulation/internal-mem/config.yaml
 
-# The tests are linked for bank A (from the end of its header page) and packed as its image: the boot ROM
+# The tests are linked for bank A (from the end of its header page) and packed as its image: the boot memory
 # only runs a bank whose header (magic, size and CRC-32s) is valid.
 toolchain:
   specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs
@@ -16,15 +16,15 @@ toolchain:
 flash_image: {bank: A, version: 1}
 
 # The addresses and the sizes come from the map of the platform (platform.yaml), as in internal-mem: the SDRAM is
-# the RAM and the FLASH sits right after the BOOT_ROM.
+# the RAM and the FLASH sits right after the BOOT_MEMORY.
 memory_map: platform.yaml
 
 paths:
   sources:
     - src/cyclone-v/de0-cv/runtime/_exit.c
     - src/cyclone-v/de0-cv/runtime/stdio.c
-  boot_rom: src/cyclone-v/de0-cv/runtime/boot_rom.S
-  boot_rom_linker_script: src/cyclone-v/de0-cv/runtime/boot_rom.ld
+  boot_memory: src/cyclone-v/de0-cv/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/de0-cv/runtime/boot_memory.ld
 
 emulator:
   sources:
@@ -123,6 +123,7 @@ sim:
     - Memory/src/RAM/SoC/sim/sdram_system.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/cache/SoC/flash_chip.vhd
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
@@ -133,8 +134,10 @@ sim:
     - Peripherals/src/CLINT/soc/clint_consts.vhd
     - Peripherals/src/CLINT/soc/clint_mtime.vhd
     - Peripherals/src/CLINT/soc/clint.vhd
-    - Peripherals/src/intc/soc/ext_irq_consts.vhd
-    - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Peripherals/src/PLIC/soc/plic_consts.vhd
+    - Peripherals/src/PLIC/soc/plic_gateway.vhd
+    - Peripherals/src/PLIC/soc/plic_arbiter.vhd
+    - Peripherals/src/PLIC/soc/plic.vhd
     - Peripherals/src/flash-controller/soc/flash_controller.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   test_module: testbench.test_c_program
@@ -142,26 +145,29 @@ sim:
     - src/cyclone-v/de0-cv
   # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
   # power-up wait (200 us) comes before the first access: ticks of CLK are counted for the timeout,
-  # so it is longer than internal-mem's. The boot ROM also checks the CRC-32 of the image before the
+  # so it is longer than internal-mem's. The boot memory also checks the CRC-32 of the image before the
   # jump, about 850 ticks of CLK for each word of the program (a program of 8 KiB takes 1.7 million).
   env:
-    SIM_EXTRA_CLOCKS: "CLK_MEM:7"
+    SIM_EXTRA_CLOCKS: "CLK_MEM:10"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "12000000"
     UART_START_ON_ACCESS: "1"
     UART_SLOT: "4"
 
 quartus:
-  project_dir: src/cyclone-v/de0-cv
-  project_name: de0-cv
-  sof_file: output_files/de0-cv.sof
-  rom_mif_target: flash_init.mif
-  boot_rom_mif_target: boot_rom_init.mif
+  # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`
+  # writes it before compiling: nothing under build/ is versioned.
+  generate: {platform: src/cyclone-v/de0-cv/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
+  project_dir: build/de0-cv-de0-cv
+  project_name: de0_cv_de0_cv
+  sof_file: output_files/de0_cv_de0_cv.sof
+  rom_mif_target: init.mif
+  boot_memory_mif_target: boot_memory_init.mif
   # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
   ram_backend: sdram_debug
-  # The memory editor sees only the FLASH storage (0), the one IP that declares ENABLE_RUNTIME_MOD; the BOOT_ROM is
-  # written once by the full compile and the SDRAM is reached through the debug port.
-  rom_mem_instances: [0]
-  # The de0-cv top has no JTAG loader (internal-mem has): the FLASH store is rewritten through the memory editor, so the
-  # method inherited from internal-mem (jtag_loader) must be overridden.
-  rom_write_method: mem_edit
+  # The FLASH is a two-port storage with no memory editor instance: the host rewrites it through the FLASH loader (a
+  # Virtual JTAG instance 0 that halts the core while it writes port B); the BOOT_MEMORY is written once by the full
+  # compile and the SDRAM is reached through the debug port (Virtual JTAG instance 3: the JTAG UART is 1, the display 2).
+  rom_mem_instances: []
+  rom_write_method: jtag_loader
+  sdram_debug_instance: 3

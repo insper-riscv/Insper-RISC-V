@@ -9,7 +9,7 @@ profile: rv32im_zicclsm_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K, kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
   - {name: ROM, base: 0x00001000, size: 1M-4K, kind: rom, exec: true}
   - {name: RAM, base: 0x00100000, size: 1M, kind: ram}
 
@@ -36,7 +36,7 @@ extras: [Zimop, Zicond]
 
 generate:
   specs: {path: src/simulation/test-external-instruction/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
-  boot_ld: {path: src/simulation/test-external-instruction/runtime/boot_rom.ld}
+  boot_ld: {path: src/simulation/test-external-instruction/runtime/boot_memory.ld}
   runtime: {path: src/simulation/test-external-instruction/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/test-external-instruction/modular_map_pkg.vhd

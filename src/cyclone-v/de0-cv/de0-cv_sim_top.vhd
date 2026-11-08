@@ -4,9 +4,9 @@ use ieee.numeric_std.all;
 use work.de0_cv_map_pkg.all;
 
 -- Simulation top of the SDRAM platform with the FLASH as a chip behind the caches: the core, the
--- BOOT_ROM (a VHDL array), the instruction and data caches, the FLASH chip model with its storage (a
+-- BOOT_MEMORY (a VHDL array), the instruction and data caches, the FLASH chip model with its storage (a
 -- VHDL array) and the SDRAM (bridge, arbiter, controller and chip model of the Memory repository) on
--- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH starts right after the BOOT_ROM and
+-- its own 143 MHz clock. The SDRAM is the RAM: there is no other data memory. The FLASH starts right after the BOOT_MEMORY and
 -- ends at 256 KiB, and the SDRAM is at 0x40000000; both are reached only through the caches, whose line
 -- requests a region router sends to the FLASH (through its arbiter) or to the SDRAM.
 --
@@ -21,9 +21,9 @@ use work.de0_cv_map_pkg.all;
 -- program prints.
 entity rv32im_sdram_flash_sim_test is
 	generic (
-	  BOOT_ROM_FILE : string := "default.hex";
+	  BOOT_MEMORY_FILE : string := "default.hex";
 	  ROM_FILE : string := "default.hex";
-	  boot_rom_addr_width : natural := 9;
+	  boot_memory_addr_width : natural := 9;
 	  rom_addr_width : natural := 18;
 	  -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
 	  FLASH_FIRST_LATENCY : natural := 24;
@@ -43,6 +43,10 @@ entity rv32im_sdram_flash_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Interrupcoes de maquina: o CLINT e o controlador externo na janela de periféricos, e as tres linhas no core.
 	  HAS_INTERRUPTS : boolean := true;
+	  -- Interrupcao de estouro de contador (Sscofpmf): exige Zihpm e as interrupcoes.
+	  HAS_SSCOFPMF : boolean := work.de0_cv_map_pkg.HAS_SSCOFPMF;
+	  -- Falhas de acesso (causas 1, 5 e 7) fora das regioes validas do mapa; exige Zicsr.
+	  HAS_ACCESS_FAULTS : boolean := work.de0_cv_map_pkg.HAS_ACCESS_FAULTS;
 	  -- Ciclos de clock do core por incremento do mtime do CLINT.
 	  CLINT_TICK_CYCLES : positive := work.de0_cv_map_pkg.CLINT_TICK_CYCLES;
 	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
@@ -82,7 +86,9 @@ entity rv32im_sdram_flash_sim_test is
 	  FLASH_PROGRAM_LATENCY : natural := 200;
 	  -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 	  -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
-	  SDRAM_FILE : string := ""
+	  SDRAM_FILE : string := "";
+	  -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+	  SDRAM_TCK_PS : natural := work.de0_cv_map_pkg.SDRAM_TCK_PS
   	);
 	port (
     	CLK     : in  std_logic;
@@ -119,7 +125,7 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 
 	signal if_addr : std_logic_vector(31 downto 0);
 	signal if_rden : std_logic;
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	signal flash_data : std_logic_vector(31 downto 0);
 
 	signal flash_addr2 : std_logic_vector(31 downto 0);
@@ -151,13 +157,20 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal m_rden    : std_logic;
 	signal m_wren    : std_logic;
 	signal m_ready   : std_logic;
-	signal p_addr    : std_logic_vector(13 downto 0);
+	signal p_addr    : std_logic_vector(PLIC_ADDR_WIDTH - 1 downto 0);
+	-- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
+	signal irq_lines : std_logic_vector(PLIC_N_SOURCES downto 1) := (others => '0');
 	signal p_wdata   : std_logic_vector(31 downto 0);
 	signal p_byteena : std_logic_vector(3 downto 0);
 	signal p_we, p_re : std_logic_vector(7 downto 0);
 	signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
 	-- the three machine interrupt lines of the core
 	signal irq_timer, irq_software, irq_external : std_logic := '0';
+	-- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do CLINT
+	-- ficam fora do caminho que decide a tomada da interrupção (um ciclo de latência a mais).
+	signal irq_timer_q, irq_software_q, irq_external_q : std_logic := '0';
+	-- mtime of the CLINT, which the CSR time of the core mirrors.
+	signal clint_mtime : std_logic_vector(63 downto 0) := (others => '0');
 
 	signal pll_clk_if     : std_logic;
 	signal pll_clk_idexmem: std_logic;
@@ -238,7 +251,7 @@ begin
     );
 
 	CORE : entity work.core
-		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM))
+		generic map (has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM, has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_interrupts => HAS_INTERRUPTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), has_sscofpmf => HAS_SSCOFPMF and HAS_ZIHPM and HAS_INTERRUPTS, time_external => HAS_INTERRUPTS, has_access_faults => HAS_ACCESS_FAULTS and (HAS_ZICSR or HAS_ZICNTR or HAS_ZIHPM), periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -250,7 +263,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2 => flash_addr2,
@@ -265,19 +278,20 @@ begin
 			o_ram_rden    => ram_rden,
 			o_ram_byteena => ram_byteena,
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata,
-			i_sdram_ready   => sdram_ready,
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata,
+			i_ext_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
-			i_irq_software => irq_software,
-			i_irq_timer    => irq_timer,
-			i_irq_external => irq_external,
+			i_irq_software => irq_software_q,
+			i_irq_timer    => irq_timer_q,
+			i_mtime        => clint_mtime,
+			i_irq_external => irq_external_q,
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
@@ -285,7 +299,7 @@ begin
 	);
 
 	ICACHE : entity work.icache
-		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => ICACHE_SIZE_BITS, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB, check_addr => false)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => reset,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -406,6 +420,7 @@ begin
 			i_data_in => p_wdata, i_address => p_addr(2 downto 0),
 			i_write => p_we(FLASH_CTRL_ID), i_read => p_re(FLASH_CTRL_ID),
 			o_data_out => p_rdata(32 * FLASH_CTRL_ID + 31 downto 32 * FLASH_CTRL_ID),
+			o_irq => irq_lines(IRQ_FLASH),
 			o_cmd_valid => fl_cmd_valid, o_cmd_op => fl_cmd_op, o_cmd_addr => fl_cmd_addr,
 			i_busy => fl_busy, i_wel => fl_wel, i_refused => fl_refused,
 			i_buf_idx => fl_buf_idx, o_buf_data => fl_buf_data
@@ -413,6 +428,7 @@ begin
 	end generate g_update;
 
 	INTERCONNECT : entity work.ext_interconnect
+		generic map (periph_addr_width => PLIC_ADDR_WIDTH)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
 			i_addr => sdram_addr, i_wdata => sdram_wdata, i_byteena => sdram_byteena,
@@ -428,32 +444,42 @@ begin
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
 			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(4), i_re => p_re(4),
-			o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4),
+			o_rdata => p_rdata(32 * 4 + 31 downto 32 * 4), o_irq => irq_lines(IRQ_UART_JTAG),
 			i_tck => UART_TCK, i_tdi => UART_TDI, o_tdo => UART_TDO, i_ir_in => UART_IR_IN,
 			i_state_cdr => UART_STATE_CDR, i_state_sdr => UART_STATE_SDR,
 			i_state_udr => UART_STATE_UDR, i_state_uir => UART_STATE_UIR
 		);
 
-	-- The CLINT (msip, mtimecmp, mtime) and the controller of the external interrupt lines, in the clock domain of
-	-- the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. No peripheral of this
-	-- top raises an interrupt line yet, so the lines of EXT_IRQ stay at zero.
+	-- The CLINT (msip, mtimecmp, mtime) and the PLIC (the controller of the external interrupt lines), in the clock
+	-- domain of the core: their outputs are the MSIP, MTIP and MEIP of the core, with no synchronizer. The JTAG UART
+	-- and the FLASH controller raise their lines (IRQ_UART_JTAG and IRQ_FLASH); the others stay at zero.
 	g_irq : if HAS_INTERRUPTS generate
+	process (pll_clk_idexmem)
+	begin
+		if rising_edge(pll_clk_idexmem) then
+			irq_timer_q    <= irq_timer;
+			irq_software_q <= irq_software;
+			irq_external_q <= irq_external;
+		end if;
+	end process;
+
 	CLINT : entity work.clint
 		generic map (tick_cycles => CLINT_TICK_CYCLES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_data_in => p_wdata, i_address => p_addr, i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
+			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
-			o_irq_timer => irq_timer, o_irq_software => irq_software
+			o_irq_timer => irq_timer, o_irq_software => irq_software, o_mtime => clint_mtime
 		);
 
-	EXT_IRQ : entity work.ext_irq_controller
+	PLIC : entity work.plic
+		generic map (n_sources => PLIC_N_SOURCES, priority_bits => PLIC_PRIORITY_BITS, addr_width => PLIC_ADDR_WIDTH)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => reset,
-			i_irq_lines => (others => '0'), i_data_in => p_wdata, i_address => p_addr(1 downto 0),
-			i_write => p_we(EXT_IRQ_ID), i_read => p_re(EXT_IRQ_ID),
-			o_data_out => p_rdata(32 * EXT_IRQ_ID + 31 downto 32 * EXT_IRQ_ID),
-			o_irq_external => irq_external
+			i_sources => irq_lines, i_data_in => p_wdata, i_address => p_addr,
+			i_write => p_we(PLIC_ID), i_read => p_re(PLIC_ID),
+			o_data_out => p_rdata(32 * PLIC_ID + 31 downto 32 * PLIC_ID),
+			o_meip => irq_external
 		);
 	end generate g_irq;
 
@@ -469,7 +495,10 @@ begin
 
 	-- the SDRAM and its chip model; the debug ports of the model stay unused here
 	SDRAM : entity work.sdram_system
-		generic map (init_file => SDRAM_FILE)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			init_file => SDRAM_FILE)
 		port map (
 			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
 			i_rst_mem => reset,   i_rst_cpu => reset,
@@ -485,13 +514,13 @@ begin
 			o_dbg_refreshes => dbg_refreshes, o_dbg_init_ok => dbg_init_ok
 	);
 
-	BOOT_ROM : entity work.ROM_simulation
-		generic map (rom_file => BOOT_ROM_FILE, size_bytes => 4 * 2 ** boot_rom_addr_width)
+	BOOT_MEMORY : entity work.ROM_simulation
+		generic map (rom_file => BOOT_MEMORY_FILE, size_bytes => 4 * 2 ** boot_memory_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,
 			i_re 		=> if_rden,
-			o_data	=> boot_rom_data
+			o_data	=> boot_memory_data
 	);
 
 end architecture;

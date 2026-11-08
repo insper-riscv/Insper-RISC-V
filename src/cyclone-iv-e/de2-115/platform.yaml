@@ -1,0 +1,103 @@
+# The memory map of the de2-115 platform: the DE2-115 board at level N4, with the FLASH NOR of the board behind the
+# instruction cache (8 MB, 8-bit bus, 64 KiB sectors) and the 128 MB SDRAM (two 16-bit chips side by side) behind the data
+# cache and the instruction cache. The BOOT_MEMORY is inside the core and the console is the JTAG UART.
+#
+#   uv run riscv-tools --root . check-memory-map --platform src/cyclone-iv-e/de2-115/platform.yaml
+platform: de2-115
+# The board of the platform: `auto` asks for the identification by the JTAG; `boards` lists the boards it is built on.
+board: auto
+boards: [de2-115]
+# The component of paths.yaml whose closure of `requires` is the source list of the generated project.
+top: Insper-RISC-V/de2_115_board
+# The profile of the platform: its base ISA and the extensions of the core.
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: FLASH,    base: 0x00001000, size: 1024K, kind: rom, exec: true}   # the first 1 MiB of the NOR chip (the window of the region router): offset 0 of the chip is 0x1000
+  - {name: RAM,      base: 0x40000000, size: 128M, kind: ram}   # the whole SDRAM; the generator widens the window of the cache tag to 128 MiB
+
+# Words at the top of RAM: the contract between the boot memory, the program and the host.
+reserved:
+  stdout:   {base: 0x47FFFBE0, size: 1K+8}
+  tohost:   {base: 0x47FFFFE8, size: 8}
+  fromhost: {base: 0x47FFFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# The two banks of the FLASH for the program update: each starts with the 256-byte header page of the image
+# (riscv-tools flash-image). The NOR sector is 64 KiB and the offset 0 of the chip is the start of the FLASH region, so bank A
+# [0x1000, 0x81000) and bank B [0x81000, 0x101000) start at offsets 0 and 0x80000, multiples of the sector.
+flash:
+  region: FLASH
+  banks:
+    - {name: A, base: 0x00001000, size: 512K}
+    - {name: B, base: 0x00081000, size: 512K}
+
+# The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update, the
+# JTAG UART, the seven-segment display, the CLINT and the PLIC.
+peripherals:
+  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
+  - {name: UART,    base: 0xC0000000, id: 4}
+  - {name: DISPLAY, base: 0xD0000000, id: 5}
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
+
+# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core.
+interrupts:
+  mtime_hz: 1000000
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART_JTAG, id: 2}
+    - {name: FLASH,     id: 6}
+
+# The memory model: the FLASH is the NOR chip of the board and the RAM is the 128 MB SDRAM, both outside the core behind the
+# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities).
+memory:
+  rom:    {external: true, backend: dispositivo, device: nor}
+  ram:    {external: true, backend: dispositivo, device: sdram}
+  icache: {enabled: true, size_bits: 32768}
+  dcache: {enabled: true, size_bits: 32768}
+
+# The clocks of the PLL (`riscv-tools board generate`). The core is delayed 8250 ps against the fetch clock (the phase measured at
+# 50 MHz in docs/pt-br/platform/timing/MARCOS.md): the instruction memories read on the fetch clock, one cycle ahead of the core.
+# `mem` is the clock of the SDRAM controller (the DRAM_CLK pin has the same frequency, its phase comes from the board).
+clocks:
+  core:  {mhz: 50, phase_ps: 8250}
+  fetch: {mhz: 50, phase_ps: 0}
+  mem:   {mhz: 100}
+
+# The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
+console: jtag
+io:
+  leds:     {count: 18, need: required}
+  switches: {count: 18, need: optional}
+  keys:     {count: 4,  need: optional}
+  display:  {count: 8,  need: optional}
+
+# Extensions outside the matrix of the Core that the platform turns on.
+extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]
+
+# The files written from this map by `riscv-tools generate-memory-map` (`make generate`).
+generate:
+  specs: {path: src/cyclone-iv-e/de2-115/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
+  bank_specs:
+    - {path: src/cyclone-iv-e/de2-115/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
+    - {path: src/cyclone-iv-e/de2-115/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
+  banks_h: {path: src/cyclone-iv-e/de2-115/runtime/flash_banks.h}
+  boot_ld: {path: src/cyclone-iv-e/de2-115/runtime/boot_memory.ld}
+  runtime: {path: src/cyclone-iv-e/de2-115/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/cyclone-iv-e/de2-115/de2_115_map_pkg.vhd
+    package: de2_115_map_pkg
+    rom: FLASH
+    ram: RAM
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
+config:
+  rom: FLASH
+  ram: RAM
+  addr_widths: [boot_memory]

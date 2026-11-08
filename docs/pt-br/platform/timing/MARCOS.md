@@ -18,7 +18,7 @@ Este documento mede a `de0-cv` com o núcleo final (Core `8a828cc`, que já traz
 | Relógios | Saídas 2 e 3 da PLL na frequência do marco (50 ou 66,666667 MHz) e fase da saída 3 (relógio do núcleo) indicada em cada tabela; só a cópia de trabalho do Quartus muda, o repositório não |
 | Contagem do tick do `time` | 50 ciclos nas duas frequências, o que não altera o tempo da compilação |
 
-Os resumos de cada semente estão em `dados/marcos/<frequência>-fase<fase>-semente-<n>.resumo.txt`; o relatório de tempo e o registro da compilação da semente de pior resultado de cada marco estão em `dados/marcos/*.relatorio.txt` e `dados/marcos/*.compilacao.log`.
+As folgas de cada semente estão em `dados/marcos/tabela-sementes.tsv` (seção 7). Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
 
 ## 3. Marco M1: 50 MHz
 
@@ -106,6 +106,72 @@ Os três passos já estão no RTL medido, então o Fmax e a folga por domínio d
 | Mudar frequência e fase | Editar `output_clock_frequency2`, `output_clock_frequency3` e `phase_shift3` de `src/cyclone-v/de0-cv/pll/sdram_platform_pll.v` na cópia |
 | Folga por domínio | `output_files/de0-cv.sta.summary` e `output_files/de0-cv.sta.rpt` |
 | Caminhos por par de relógios | `quartus_sta -t docs/pt-br/platform/timing/dados/pares-de-dominios.tcl de0-cv 300 slow` na pasta do projeto compilado |
+
+## 7. Tabelas por semente
+
+Os valores vêm de `dados/marcos/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados/marcos` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 7.1. `50mhz-fase6625`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,744 | mem | 0,295 | core |
+| 2 | -1,345 | core | 0,317 | core |
+| 3 | -0,350 | core | 0,306 | core |
+| 4 | -0,560 | core | 0,141 | jtag |
+| 5 | -1,001 | core | 0,280 | core |
+
+### 7.2. `50mhz-fase8250`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,745 | mem | 0,293 | core |
+| 2 | -0,255 | mem | 0,271 | core |
+| 3 | -0,205 | mem | 0,276 | core |
+| 4 | -0,173 | mem | 0,269 | core |
+| 5 | -0,713 | mem | 0,265 | core |
+
+### 7.3. `66mhz-fase7500`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -1,699 | core | 0,313 | core |
+| 2 | -1,380 | core | 0,268 | core |
+| 3 | -0,204 | mem | 0,268 | core |
+| 4 | -0,173 | mem | 0,279 | core |
+| 5 | -1,674 | core | 0,303 | core |
+
+### 7.4. `66mhz-fase8000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,744 | mem | 0,267 | core |
+| 2 | -0,882 | core | 0,304 | core |
+| 3 | -0,204 | mem | 0,267 | core |
+| 4 | -0,191 | mem | 0,261 | core |
+| 5 | -0,907 | core | 0,265 | core |
+
+### 7.5. `66mhz-fase8500`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,744 | mem | 0,306 | core |
+| 2 | -0,290 | core | 0,270 | core |
+| 3 | -0,205 | mem | 0,271 | core |
+| 4 | -0,173 | mem | 0,291 | core |
+| 5 | -0,713 | mem | 0,158 | jtag |
+
+### 7.6. `66mhz-fase9000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,745 | mem | 0,267 | core |
+| 2 | -0,255 | mem | 0,283 | core |
+| 3 | -0,339 | fetch | 0,279 | core |
+| 4 | -0,173 | mem | 0,277 | core |
+| 5 | -0,713 | mem | 0,258 | core |
 
 ---
 

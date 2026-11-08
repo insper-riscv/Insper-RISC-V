@@ -112,7 +112,95 @@ Na semente 5, as entradas presas a `0` dão 8 069 ALMs e 9 190 registradores, co
 
 ## 7. Dados brutos
 
-Em `dados/core-novo/`, para cada compilação `<topo>-semente-<n>`: `.quartus.log` (log do fluxo, com os caminhos locais trocados por `<caminho-local>`), `.sta.relatorio.txt` (o `.sta.rpt`), `.sta.resumo.txt` (o `.sta.summary`) e `.fit.resumo.txt` (o `.fit.summary`). Os topos são `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` com `has_interrupts`, sementes 1 a 5) e `irq0` (entradas em `0`, semente 5). As extensões `.rpt` e `.summary` foram trocadas por `.txt` porque o `.gitignore` as ignora.
+Em `dados/core-novo/` ficam `tabela-sementes.tsv` (o `.sta.summary` de cada compilação `<topo>-semente-<n>`) e `tabela-ocupacao.tsv` (o `.fit.summary`). Os topos são `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` com `has_interrupts`, sementes 1 a 5) e `irq0` (entradas em `0`, semente 5). As extensões `.rpt` e `.summary` foram trocadas por `.txt` porque o `.gitignore` as ignora. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
+
+## 8. Tabelas por semente
+
+Os valores vêm de `dados/core-novo/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão. A ocupação por semente está em `dados/core-novo/tabela-ocupacao.tsv`.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados/core-novo` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 8.1. `de0-cv`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,744 | mem | 0,295 | core |
+| 2 | -1,345 | core | 0,317 | core |
+| 3 | -0,350 | core | 0,306 | core |
+| 4 | -0,560 | core | 0,141 | jtag |
+| 5 | -1,001 | core | 0,280 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,058 / 18,480 ( 44 % ) | 9227 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 2 | 8,091 / 18,480 ( 44 % ) | 9267 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 3 | 8,084 / 18,480 ( 44 % ) | 9222 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 4 | 8,082 / 18,480 ( 44 % ) | 9222 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 5 | 8,095 / 18,480 ( 44 % ) | 9172 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+
+### 8.2. `external-data`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,731 | mem | 0,267 | core |
+| 2 | -0,203 | mem | 0,255 | core |
+| 3 | -0,730 | mem | 0,253 | core |
+| 4 | -0,191 | mem | 0,264 | core |
+| 5 | -0,743 | mem | 0,292 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,225 / 18,480 ( 45 % ) | 8452 | 93 / 224 ( 42 % ) | 234 / 308 ( 76 % ) |
+| 2 | 8,215 / 18,480 ( 44 % ) | 8461 | 93 / 224 ( 42 % ) | 234 / 308 ( 76 % ) |
+| 3 | 8,201 / 18,480 ( 44 % ) | 8564 | 93 / 224 ( 42 % ) | 234 / 308 ( 76 % ) |
+| 4 | 8,190 / 18,480 ( 44 % ) | 8448 | 93 / 224 ( 42 % ) | 234 / 308 ( 76 % ) |
+| 5 | 8,227 / 18,480 ( 45 % ) | 8480 | 93 / 224 ( 42 % ) | 234 / 308 ( 76 % ) |
+
+### 8.3. `core_fpga_test`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 1,412 | pll_c1 | 0,266 | pll_c1 |
+| 2 | 1,212 | pll_c1 | 0,304 | pll_c1 |
+| 3 | 1,140 | pll_c1 | 0,257 | pll_c1 |
+| 4 | 1,320 | pll_c1 | 0,351 | pll_c1 |
+| 5 | 1,122 | pll_c1 | 0,257 | pll_c1 |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 7,172 / 18,480 ( 39 % ) | 7987 | 14 / 224 ( 6 % ) | 288 / 308 ( 94 % ) |
+| 2 | 7,173 / 18,480 ( 39 % ) | 8005 | 14 / 224 ( 6 % ) | 288 / 308 ( 94 % ) |
+| 3 | 7,163 / 18,480 ( 39 % ) | 7821 | 14 / 224 ( 6 % ) | 288 / 308 ( 94 % ) |
+| 4 | 7,103 / 18,480 ( 38 % ) | 7804 | 14 / 224 ( 6 % ) | 288 / 308 ( 94 % ) |
+| 5 | 7,142 / 18,480 ( 39 % ) | 8019 | 14 / 224 ( 6 % ) | 288 / 308 ( 94 % ) |
+
+### 8.4. `irq`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,918 | core | 0,150 | jtag |
+| 2 | -1,702 | core | 0,266 | core |
+| 3 | -0,237 | core | 0,310 | core |
+| 4 | -0,380 | core | 0,318 | core |
+| 5 | -0,728 | mem | 0,301 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,060 / 18,480 ( 44 % ) | 9298 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 2 | 8,078 / 18,480 ( 44 % ) | 9245 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 3 | 8,078 / 18,480 ( 44 % ) | 9272 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 4 | 8,098 / 18,480 ( 44 % ) | 9180 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 5 | 8,078 / 18,480 ( 44 % ) | 9271 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+
+### 8.5. `irq0`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 5 | -1,229 | core | 0,273 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 5 | 8,069 / 18,480 ( 44 % ) | 9190 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
 
 ---
 

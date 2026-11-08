@@ -222,6 +222,7 @@ def fetch_user(user_id: str, include_roles: bool = False) -> User:
 5. **Tabelas e LaTeX sem redundância:** dados estruturados devem estar em tabelas Markdown e expressões matemáticas/lógicas em blocos LaTeX (`$$ ... $$` ou `$ ... $`), sem repetir em prosa o que a tabela ou equação já enuncia.
 6. **Sem histórico ou pendências na documentação técnica:** documentos de arquitetura e contratos descrevem exclusivamente o estado atual, sem changelogs internos nem listas de tarefas futuras.
 7. **Guias de uso apenas instruem:** instruções de instalação e execução dizem como fazer, sem justificar a escolha do método.
+8. **Sem logs de ferramentas:** nenhum log de ferramenta (Quartus, GHDL, sby) é versionado, só os scripts que o geram e os resumos (`*.resumo.txt`) que a documentação cita.
 
 ## 8. Verificação Obrigatória Antes de Abrir Pull Request
 
@@ -245,6 +246,8 @@ O job `formal` do CI roda as provas uma vez por engine (`formal - yices`, `forma
 Warning no formal é erro. O fluxo de verificação formal varre a saída do GHDL e os logs do Yosys e do SymbiYosys depois de cada passo, inclusive nos mutantes, e falha apontando o arquivo e a linha do aviso. A correção é sempre no código ou nas propriedades, nunca em uma opção que esconda o aviso (`-Wno-*`). Os detalhes estão em [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md).
 
 O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python, e o nome do job é o check que o ruleset da branch padrão exige, então não o renomeie.
+
+O job `boot-memory-images` do CI monta de novo, na imagem `ci-elf`, as imagens de teste da boot memory (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` e `external_data/boot_memory_real.hex`) a partir da `boot_memory.S` e falha se o resultado diferir do que está versionado. Depois de mudar a boot memory, regere os dois com `tests/python/gen_de0_cv_boot_images.py` e `tests/python/gen_external_data_images.py` e versione o resultado.
 
 Ao adicionar, renomear ou remover qualquer arquivo versionado, atualize imediatamente:
 - `paths.yaml`

@@ -1,14 +1,14 @@
 # Simulação do topo de hardware
 
-O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo feito para simulação, com as memórias como arrays VHDL simples. O perfil `config.fpga-sim.yaml` simula o **topo de hardware de verdade** (`core_fpga_test`), com as três memórias reais do Quartus (BOOT_ROM, FLASH e RAM) rodando nos modelos de simulação da própria Intel. Este guia explica o que o segundo perfil cobre a mais, como rodá-lo e o que continua só no hardware.
+O `riscv-tools sim` tem dois perfis. O padrão (`config.yaml`) simula um topo feito para simulação, com as memórias como arrays VHDL simples. O perfil `config.fpga-sim.yaml` simula o **topo de hardware de verdade** (`core_fpga_test`), com as três memórias reais do Quartus (BOOT_MEMORY, FLASH e RAM) rodando nos modelos de simulação da própria Intel. Este guia explica o que o segundo perfil cobre a mais, como rodá-lo e o que continua só no hardware.
 
 ## 1. O que muda em relação ao sim padrão
 
 | Peça | `config.yaml` (padrão) | `config.fpga-sim.yaml` |
 | :--- | :--- | :--- |
 | Topo | `rv32i3stage_core_sim_test` | `core_fpga_test`, o mesmo arquivo do projeto Quartus, sem alteração |
-| Memórias | `ROM_simulation` e `RAM_simulation` (arrays VHDL) | `boot_rom`, `flash` e `ram`, os wrappers do Quartus sobre o modelo `altsyncram`, mais o carregador da FLASH |
-| Imagem carregada | `.hex`, por um generic VHDL | `.mif`, pelo `init_file` da IP (`init.mif` e `boot_rom_init.mif`), as mesmas imagens do hardware |
+| Memórias | `ROM_simulation` e `RAM_simulation` (arrays VHDL) | `boot_memory`, `flash` e `ram`, os wrappers do Quartus sobre o modelo `altsyncram`, mais o carregador da FLASH |
+| Imagem carregada | `.hex`, por um generic VHDL | `.mif`, pelo `init_file` da IP (`init.mif` e `boot_memory_init.mif`), as mesmas imagens do hardware |
 | Endereço da RAM | Endereço absoluto do barramento | Endereço relativo a `ram_base`, como no hardware (veja `core_fpga_test.vhd`) |
 | Clock | `clk_gen_3way`: pulsos de um clock base três vezes mais rápido | `pll_sim.vhd`: três clocks de 50 MHz, ciclo de trabalho de 50%, defasados 0, 6667 e 13333 ps, como o PLL real |
 | Reset | Ativo em nível alto (`i_rst`) | `i_fpga_reset_n`, ativo em nível baixo, mais a espera pelo `locked` do PLL |
@@ -41,7 +41,7 @@ uv run riscv-tools --config tools/riscv_build/config.fpga-sim.yaml \
   sim --only uart-echo,uart-tx,uart-errors
 ```
 
-O `compile --emit mif` gera as imagens e os goldens em `build/real/`, e o `sim` com o perfil novo lê essas imagens, gera o `.mif` da BOOT_ROM e roda os testes. A biblioteca `altera_mf` é analisada uma vez por execução dentro de `build/sim/sim_work/<perfil-de-simulacao>/libraries`. O nome do perfil combina o topo com uma impressão digital estável da configuração completa, evitando reutilizar artefatos incompatíveis entre perfis.
+O `compile --emit mif` gera as imagens e os goldens em `build/real/`, e o `sim` com o perfil novo lê essas imagens, gera o `.mif` da BOOT_MEMORY e roda os testes. A biblioteca `altera_mf` é analisada uma vez por execução dentro de `build/sim/sim_work/<perfil-de-simulacao>/libraries`. O nome do perfil combina o topo com uma impressão digital estável da configuração completa, evitando reutilizar artefatos incompatíveis entre perfis.
 
 O workflow `sim-fpga.yml` faz o mesmo no runner self-hosted, dentro da imagem `ci-elf`, com o Quartus montado somente para leitura. Só roda manualmente e pede a mesma confirmação (`FPGA_RUN_SECRET`) do `real.yml`. Enquanto as mudanças da UART ainda estiverem nas branches de feature, execute-o com `peripherals_ref=UART` e `toplevel_ref=UART`; depois dos merges, mantenha os valores padrão `main`.
 

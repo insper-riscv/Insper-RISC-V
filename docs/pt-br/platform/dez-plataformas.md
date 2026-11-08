@@ -40,7 +40,7 @@ Todas ligam as extensões `Zimop` e `Zicond` pelo campo `extras`. As plataformas
 
 ## 4. Mapas de memória
 
-A BOOT_ROM de 4 KiB começa em `0x00000000` nas dez, e a ROM (ou a FLASH) começa logo depois dela.
+A BOOT_MEMORY de 4 KiB começa em `0x00000000` nas dez, e a ROM (ou a FLASH) começa logo depois dela.
 
 | Plataformas | ROM | RAM |
 | :--- | :--- | :--- |
@@ -67,10 +67,10 @@ Nas plataformas de teste a janela de periféricos não tem dispositivo: uma leit
 
 ## 6. Como são montadas
 
-1. O `riscv-tools generate-memory-map` escreve, de cada `platform.yaml`, o pacote `modular_map_pkg.vhd` da pasta da plataforma, o cabeçalho `runtime/memory_map.h`, o arquivo de specs do ligador e o script de ligação da BOOT_ROM (`make generate`, e `make generate-check` confere).
+1. O `riscv-tools generate-memory-map` escreve, de cada `platform.yaml`, o pacote `modular_map_pkg.vhd` da pasta da plataforma, o cabeçalho `runtime/memory_map.h`, o arquivo de specs do ligador e o script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere).
 2. O pacote de cada plataforma se chama `modular_map_pkg`, o nome que o topo usa, e a lista de fontes da plataforma traz o pacote da própria pasta. O componente `<nome>_sim_top` do `provides` (com o nome da plataforma em snake_case) lista as fontes na ordem certa.
-3. A combinação de memórias e os `HAS_*` do perfil chegam ao topo pelo pacote. Os periféricos entram pelos genéricos `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` e `has_uart_pins` do topo, que o `sim.parameters` do `config.yaml` de cada plataforma liga, e os índices das janelas são os genéricos `switches_id`, `keys_id`, `display_id`, `uart_jtag_id` e `uart_pins_id`.
-4. As portas dos periféricos no topo são `io_sw` e `io_key` (os GPIO), `o_display_hex` e `o_display_value`, as portas `i_uart_*` e `o_uart_tdo` do Virtual JTAG e os pinos `i_uart_rx` e `o_uart_tx`.
+3. A combinação de memórias e os `HAS_*` do perfil chegam ao topo pelo pacote. Os periféricos entram pelos genéricos `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` e `has_uart_pins` do topo, que o `sim.parameters` do `config.yaml` de cada plataforma liga, e os índices das janelas são os genéricos `switches_id`, `keys_id`, `display_id`, `uart_jtag_id` e `uart_pins_id`. As duas UART entram pela mesma entidade `console` do Peripherals (ver `Peripherals/docs/pt-br/UART/console.md`): `has_uart_jtag` instancia o backend `jtag` e `has_uart_pins` o backend `pinos`, e cada uma continua ligada à sua fonte do PLIC (`UART` no id 1 e `UART_JTAG` no id 2).
+4. As portas dos periféricos no topo são `io_sw` e `io_key` (os GPIO), `o_display_hex` e `o_display_value`, as portas `i_uart_*` e `o_uart_tdo` do Virtual JTAG e os pinos `i_uart_rx` e `o_uart_tx`. Os papéis de E/S têm a largura e a polaridade por generic (`switches_width`, `keys_width`, `display_digits`, `*_active_low`), com os valores da DE0-CV por padrão; largura zero omite o papel (documento do [SoC](../soc/soc.md)).
 
 ## 7. Como usar
 

@@ -7,8 +7,8 @@
  * RV32_UART_BASE (memory_map.h, generated from platform.yaml).
  *
  * The RAM copy is a fixed region at the top of RAM, just below the words
- * the boot ROM clears (tohost, fromhost). rv32im-fpga.specs leaves it out
- * of RAM's size, so the stack never reaches it. The boot ROM clears the
+ * the boot memory clears (tohost, fromhost). rv32im-fpga.specs leaves it out
+ * of RAM's size, so the stack never reaches it. The boot memory clears the
  * header on every start.
  *
  *   +0   length     bytes written, at most STDOUT_SIZE

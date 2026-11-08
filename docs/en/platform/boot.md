@@ -1,12 +1,12 @@
 # The reference boot state of this bare-metal RISC-V
 
-Booting on this core goes through two sides. The BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`) is fixed and shared, programmed once and never rewritten by a test. The picolibc `crt0` goes inside the image of each test in the FLASH. This project has no `crt0` or linker script of its own, see [runtime.md](runtime.md) for where they come from and how to use them. See [atualizacao-de-programa.md](atualizacao-de-programa.md) for how control passes from one side to the other at each test change.
+Booting on this core goes through two sides. The BOOT_MEMORY (`src/simulation/internal-mem/runtime/boot_memory.S`) is fixed and shared, programmed once and never rewritten by a test. The picolibc `crt0` goes inside the image of each test in the FLASH. This project has no `crt0` or linker script of its own, see [runtime.md](runtime.md) for where they come from and how to use them. See [atualizacao-de-programa.md](atualizacao-de-programa.md) for how control passes from one side to the other at each test change.
 
 This document describes, register by register and section by section, exactly what state exists at the instant `main()` is called and, just as important, what is **not** done. The state follows the official RISC-V ABI ([riscv-elf-psabi-doc](https://github.com/riscv-non-isa/riscv-elf-psabi-doc)).
 
 ## 1. The boot sequence
 
-1. Reset enters `_reset` (`0x0`, in the BOOT_ROM). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x1000` (`RV32_BOOT_ENTRY`) or, on `de0-cv`, to the program start of the valid bank with the larger version (`0x1100` or `0x20100`). It hands over `a0` and `a1` at `0`. It does not initialize `sp` or `gp` and copies nothing.
+1. Reset enters `_reset` (`0x0`, in the BOOT_MEMORY). It clears `tohost`, `fromhost` and the `stdout` header, and jumps to `0x1000` (`RV32_BOOT_ENTRY`) or, on `de0-cv`, to the program start of the valid bank with the larger version (`0x1100` or `0x20100`). It hands over `a0` and `a1` at `0`. It does not initialize `sp` or `gp` and copies nothing.
 2. At `0x1000` is the `_start` of the picolibc `crt0-hosted`. It sets `sp` (from `__stack`) and `gp` (from `__global_pointer$`) and calls `_cstart`.
 3. `_cstart` copies `.data` and `.tdata` from the FLASH to the RAM (with `memcpy`), zeroes `.bss` (with `memset`), prepares TLS (`_set_tls`) and runs the constructors (`__libc_init_array`).
 4. It calls `main(0, 0)` with `jal`, and whatever `main` returns goes to `exit`, which calls the project `_exit` (`src/simulation/internal-mem/runtime/_exit.c`). A test that ends with `RV32_PASS()` or `RV32_FAIL()` writes `tohost` and jumps straight to `rv32_wait_restart`, without going through `_exit`.
@@ -39,7 +39,7 @@ The addresses come from `picolibc.ld` and `rv32im-fpga.specs`, which `riscv-tool
 | `.bss` (includes `.sbss`), `.tbss` | RAM, after `.data` | Zeroed by `_cstart` |
 | heap | RAM, from `_end` to `__heap_end` | Managed by the picolibc `malloc`, through `sbrk` |
 | Stack | RAM, top at `0x0002FBE0` | Only the pointer (`sp`) is set, with 4 KB reserved |
-| `stdout` | RAM, `0x0002FBE0` to `0x0002FFE7` | Header zeroed by the BOOT_ROM (see [runtime.md](runtime.md)) |
+| `stdout` | RAM, `0x0002FBE0` to `0x0002FFE7` | Header zeroed by the BOOT_MEMORY (see [runtime.md](runtime.md)) |
 | `tohost` (`0x0002FFE8`) and `fromhost` (`0x0002FFF0`) | RAM | Zeroed on every entry to `_reset`, cold boot or restart, so the result of the previous test never leaks. HTIF convention, and only Spike uses it |
 
 ## 5. What this boot sequence deliberately does NOT do

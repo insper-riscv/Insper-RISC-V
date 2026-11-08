@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Topo da DE0-CV da plataforma external-data
 -- ============================================================================
--- O núcleo na placa com a ROM dentro do chip e a RAM fora dele. A BOOT_ROM e a
+-- O núcleo na placa com a ROM dentro do chip e a RAM fora dele. A BOOT_MEMORY e a
 -- FLASH ficam na FPGA; a FLASH é uma só cópia de uma memória de duas portas
 -- verdadeiras, a mesma da internal-mem: a porta A é lida pelo estágio IF, a
 -- porta B pelo estágio MEM (dado) e pelo carregador de FLASH, que a reescreve
@@ -11,7 +11,7 @@
 -- busca de instruções lê a FLASH direto. O hospedeiro lê e escreve a SDRAM pelo
 -- mestre de depuração e a UART, o display e o carregador da FLASH são instâncias
 -- do Virtual JTAG. O clock do núcleo é de 50 MHz; o controlador e o mestre de
--- depuração rodam no clock de 142,857 MHz do mesmo PLL.
+-- depuração rodam no clock de 100 MHz do mesmo PLL (SDRAM_TCK_PS do pacote do mapa).
 -- ============================================================================
 
 library ieee;
@@ -94,8 +94,8 @@ architecture behaviour of core_fpga_external_data is
 	signal if_addr : std_logic_vector(31 downto 0);
 	-- Habilita de leitura da busca de instrução.
 	signal if_rden : std_logic;
-	-- Palavra lida da BOOT_ROM.
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra lida da BOOT_MEMORY.
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	-- Palavra lida da porta A da FLASH, pelo estágio IF.
 	signal flash_data : std_logic_vector(31 downto 0);
 
@@ -338,7 +338,7 @@ begin
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
 			has_e           => HAS_E,
-			boot_rom_bits   => BOOT_ROM_BITS,
+			boot_memory_bits   => BOOT_MEMORY_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
 			ram_base_kib    => RAM_BASE_KIB,
@@ -360,7 +360,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2   => flash_addr2,
@@ -375,13 +375,13 @@ begin
 			o_ram_rden      => ram_rden,
 			o_ram_byteena   => ram_byteena,
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata,
-			i_sdram_ready   => sdram_ready,
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata,
+			i_ext_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
 			o_trap_take     => core_trap,
@@ -393,15 +393,15 @@ begin
 	-- Sem cache de instruções nem chip de FLASH, só a cache de dados conta eventos.
 	hpm_ext_events <= '0' & dc_miss & '0';
 
-	u_boot_rom : entity work.boot_rom
-    generic map (size_bytes => BOOT_ROM_SIZE_BYTES)
+	u_boot_memory : entity work.boot_memory
+    generic map (size_bytes => BOOT_MEMORY_SIZE_BYTES)
     port map (
-      i_address => if_addr(log2_exact(BOOT_ROM_SIZE_BYTES) - 1 downto 2),
+      i_address => if_addr(log2_exact(BOOT_MEMORY_SIZE_BYTES) - 1 downto 2),
       i_clk     => pll_clk_if,
       i_rden    => if_rden,
       i_wren    => '0',
       i_data    => (others => '0'),
-      o_q       => boot_rom_data
+      o_q       => boot_memory_data
     );
 
 	-- A FLASH, uma só cópia de duas portas: A para a busca, B para o dado do estágio MEM e para o carregador.
@@ -571,7 +571,10 @@ begin
 	u_sdram_ctrl : entity work.sdram_ctrl
 		-- Os pinos de dados passam por um registrador nas células de E/S (ver o projeto do Quartus); a fase do clock
 		-- do pino DRAM_CLK faz o dado lido chegar a tempo, sem o clock extra que a simulação modela.
-		generic map (capture_extra => 0, sync_req => false)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			capture_extra => 0, sync_req => false)
 		port map (
 			i_clk => pll_clk_mem, i_rst => rst_mem,
 			i_req_tog => req_tog, o_ack_tog => ack_tog, o_init_done => init_done,

@@ -1,4 +1,4 @@
-"""Gera as imagens do teste da escolha de banca da boot ROM da DE0-CV.
+"""Gera as imagens do teste da escolha de banca da boot memory.
 
 Uso, da raiz do repositório, na imagem `dev_tools` (precisa do GCC de
 RISC-V e do `riscv-tools`):
@@ -7,19 +7,19 @@ RISC-V e do `riscv-tools`):
     python tests/python/gen_de0_cv_boot_images.py
     python tests/python/gen_de0_cv_boot_images.py --check
 
-A boot ROM é a `boot_rom.S` de verdade, montada pelo mesmo caminho do
-`riscv-tools`. Cada banca recebe uma imagem montada por
+A boot memory é a `boot_memory.S` de verdade, montada pelo mesmo caminho
+do `riscv-tools`. Cada banca recebe uma imagem montada por
 `riscv_tools.flash_image.pack` (cabeçalho de 256 bytes e carga), e os
 casos estragados mexem nos bytes depois de montada. O programa de cada
 banca guarda uma marca na base da RAM, `a0 + 0x55` e `a1 + 0x66` nas
 duas palavras seguintes e escreve `tohost`; a marca diz qual banca
 rodou.
 
-O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot ROM
-e, por caso, as palavras de cada banca a partir do índice de palavra
-dela na FLASH. O teste escreve a FLASH de cada caso com elas. Com
-`--check` o script só confere se o arquivo está em dia com a
-`boot_rom.S` e o `pack`.
+O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot
+memory e, por caso, as palavras de cada banca a partir do índice de
+palavra dela na FLASH. O teste escreve a FLASH de cada caso com elas.
+Com `--check` o script só confere se o arquivo está em dia com a
+`boot_memory.S` e o `pack`.
 """
 
 import argparse
@@ -31,7 +31,7 @@ import zlib
 from pathlib import Path
 from typing import Any
 
-from riscv_tools import boot_rom, flash_image
+from riscv_tools import boot_memory, flash_image
 from riscv_tools.memory_map import load_platform, symbols
 
 from tests.python.gen_de0_cv_images import load_address
@@ -57,8 +57,8 @@ TOOLCHAIN = {
     "objcopy": "riscv32-unknown-elf-objcopy",
 }
 PATHS = {
-    "boot_rom": "src/cyclone-v/de0-cv/runtime/boot_rom.S",
-    "boot_rom_linker_script": "src/cyclone-v/de0-cv/runtime/boot_rom.ld",
+    "boot_memory": "src/cyclone-v/de0-cv/runtime/boot_memory.S",
+    "boot_memory_linker_script": "src/cyclone-v/de0-cv/runtime/boot_memory.ld",
 }
 # O espaço de marca: o caso e a banca dizem o que rodou.
 MARK_BASE = 0x5C000000
@@ -311,11 +311,11 @@ def build() -> dict[str, Any]:
     Returns
     -------
     dict of {str: Any}
-        The boot ROM words and, for each case, the words of each bank
+        The boot memory words and, for each case, the words of each bank
         by word index of the FLASH and the expected outcome.
     """
     with tempfile.TemporaryDirectory() as directory:
-        hex_path = boot_rom.build_boot_rom(
+        hex_path = boot_memory.build_boot_memory(
             TOOLCHAIN, PATHS, ROOT, Path(directory)
         )
         rom_words = [int(line, 16) for line in hex_path.read_text().split()]
@@ -337,7 +337,7 @@ def build() -> dict[str, Any]:
                 "mark": mark,
             }
         )
-    return {"boot_rom": rom_words, "cases": out_cases}
+    return {"boot_memory": rom_words, "cases": out_cases}
 
 
 def render(content: dict[str, Any]) -> str:

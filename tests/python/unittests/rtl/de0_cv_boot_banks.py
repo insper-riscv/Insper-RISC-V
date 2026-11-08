@@ -1,16 +1,16 @@
-"""A boot ROM da DE0-CV escolhe a banca da FLASH pelo cabeçalho.
+"""A boot memory da DE0-CV escolhe a banca da FLASH pelo cabeçalho.
 
-O topo de simulação roda a `boot_rom.S` de verdade, cujas palavras estão
-em `data/de0_cv_boot/images.json`, geradas por
+O topo de simulação roda a `boot_memory.S` de verdade, cujas palavras
+estão em `data/de0_cv_boot/images.json`, geradas por
 `gen_de0_cv_boot_images.py`. Cada caso do arquivo é uma simulação:
-`cases` escreve a imagem da BOOT_ROM e a da FLASH do caso, com as duas
-bancas montadas pelo `riscv-tools flash-image pack` e estragadas como o
-caso pede (uma banca mais nova, uma carga corrompida, uma atualização
-interrompida com o cabeçalho apagado, as duas inválidas), e o runner as
-passa como genéricos do topo. O programa da banca que roda guarda uma
-marca na SDRAM, `a0 + 0x55` e `a1 + 0x66`; o teste confere a marca, os
-registradores de entrada e, quando nenhuma banca vale, que o núcleo
-fica parado no `rv32_wait_restart` sem rodar nada.
+`cases` escreve a imagem da BOOT_MEMORY e a da FLASH do caso, com as
+duas bancas montadas pelo `riscv-tools flash-image pack` e estragadas
+como o caso pede (uma banca mais nova, uma carga corrompida, uma
+atualização interrompida com o cabeçalho apagado, as duas inválidas), e
+o runner as passa como genéricos do topo. O programa da banca que roda
+guarda uma marca na SDRAM, `a0 + 0x55` e `a1 + 0x66`; o teste confere a
+marca, os registradores de entrada e, quando nenhuma banca vale, que o
+núcleo fica parado no `rv32_wait_restart` sem rodar nada.
 """
 
 import json
@@ -58,8 +58,8 @@ def cases(build_dir: Path) -> list[dict[str, Any]]:
         and the case in the environment.
     """
     content = json.loads(IMAGES.read_text())
-    boot_path = build_dir / "boot_rom.hex"
-    boot_path.write_text(hex_text(content["boot_rom"]))
+    boot_path = build_dir / "boot_memory.hex"
+    boot_path.write_text(hex_text(content["boot_memory"]))
     runs: list[dict[str, Any]] = []
     for case in content["cases"]:
         words: list[int] = []
@@ -72,7 +72,7 @@ def cases(build_dir: Path) -> list[dict[str, Any]]:
             {
                 "name": case["name"],
                 "parameters": {
-                    "BOOT_ROM_FILE": str(boot_path),
+                    "BOOT_MEMORY_FILE": str(boot_path),
                     "ROM_FILE": str(flash_path),
                 },
                 "env": {"BOOT_CASE": case["name"]},
@@ -146,7 +146,7 @@ async def check_parked(dut: Any, name: str) -> None:
 
 
 @cocotb.test()
-async def test_the_boot_rom_chooses_the_bank(dut: Any) -> None:
+async def test_the_boot_memory_chooses_the_bank(dut: Any) -> None:
     """The case of the environment boots the bank the policy says."""
     name = os.environ["BOOT_CASE"]
     case = next(

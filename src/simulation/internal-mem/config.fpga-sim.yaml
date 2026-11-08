@@ -27,11 +27,11 @@ sim:
   # initial content from the files named below.
   parameters: null
   # altsyncram's init_file is "./init.mif" (FLASH) and
-  # "./boot_rom_init.mif" (BOOT_ROM), read from the simulator's working
+  # "./boot_memory_init.mif" (BOOT_MEMORY), read from the simulator's working
   # directory at time zero; the same names the Quartus flow uses.
   run_files:
     init.mif: "{mif_path}"
-    boot_rom_init.mif: "{boot_rom_mif_path}"
+    boot_memory_init.mif: "{boot_memory_mif_path}"
   test_module: testbench.test_c_program
   # What test_c_program.py drives: the hardware top's ports, not the
   # simulation top's i_clk/i_rst.
@@ -129,11 +129,13 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
+    - Memory/src/block_ram/altera/block_ram.vhd
     - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
-    - Memory/src/ROM/Cyclone-V/boot_rom.vhd
+    - Memory/src/ROM/Cyclone-V/boot_memory.vhd
     - Memory/src/ROM/Cyclone-V/flash.vhd
     - Memory/src/ROM/SoC/flash_jtag_core.vhd
     - Memory/src/ROM/SoC/flash_loader.vhd
+    - Common-Components/src/altera/virtual_jtag.vhd
     - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd

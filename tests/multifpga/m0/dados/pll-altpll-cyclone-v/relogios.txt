@@ -1,0 +1,4 @@
+RELOGIO refclk refclk
+RELOGIO pll_inst|altpll_component|auto_generated|generic_pll1~FRACTIONAL_PLL|vcoph[0] {pll_inst|altpll_component|auto_generated|generic_pll1~FRACTIONAL_PLL|vcoph[0]}
+RELOGIO pll_inst|altpll_component|auto_generated|generic_pll1~PLL_OUTPUT_COUNTER|divclk pll_inst|altpll_component|auto_generated|generic_pll1~PLL_OUTPUT_COUNTER|divclk
+RELOGIO pll_inst|altpll_component|auto_generated|generic_pll2~PLL_OUTPUT_COUNTER|divclk pll_inst|altpll_component|auto_generated|generic_pll2~PLL_OUTPUT_COUNTER|divclk

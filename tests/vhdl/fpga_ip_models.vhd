@@ -1,14 +1,14 @@
 -- =============================================================================
 -- Modelos comportamentais dos IPs da Intel do topo de hardware internal-mem
 --
--- O core_fpga_test instancia a BOOT_ROM, a FLASH, a RAM e o invólucro do
+-- O core_fpga_test instancia a BOOT_MEMORY, a FLASH, a RAM e o invólucro do
 -- Virtual JTAG da FLASH, que são IPs da Intel (altsyncram e sld_virtual_jtag)
 -- e só analisam com a biblioteca altera_mf do Quartus, que a imagem de
 -- ferramentas não tem. Estas quatro entidades têm os mesmos nomes, genéricos e
 -- portas dos invólucros de Memory/src/*/Cyclone-V, em VHDL puro, para o
 -- GHDL elaborar e simular o topo de hardware real, sem alterá-lo.
 --
--- A BOOT_ROM guarda o salto para a entrada da FLASH (0x1000) e a FLASH guarda
+-- A BOOT_MEMORY guarda o salto para a entrada da FLASH (0x1000) e a FLASH guarda
 -- o programa mínimo nessa entrada: guarda 0x5A na base da RAM (0x8000), lê de
 -- volta, soma 1 e guarda o resultado na palavra seguinte. O invólucro do
 -- Virtual JTAG fica sem hospedeiro: nenhum comando chega ao carregador.
@@ -41,13 +41,13 @@ package fpga_ip_models_pkg is
     x"0000006F"
   );
 
-  -- Instrução jal x0, 0x1000 da BOOT_ROM.
+  -- Instrução jal x0, 0x1000 da BOOT_MEMORY.
   constant BOOT_JUMP : std_logic_vector(31 downto 0) := x"0000106F";
 
 end package fpga_ip_models_pkg;
 
 -- -----------------------------------------------------------------------------
--- BOOT_ROM de uma porta com leitura registrada
+-- BOOT_MEMORY de uma porta com leitura registrada
 -- -----------------------------------------------------------------------------
 
 library ieee;
@@ -56,7 +56,7 @@ use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.fpga_ip_models_pkg.all;
 
-entity boot_rom is
+entity boot_memory is
   generic (
     -- Tamanho da memória em bytes, uma potência de dois.
     size_bytes : positive := 4096
@@ -68,21 +68,21 @@ entity boot_rom is
     i_clk     : in  std_logic := '1';
     -- Habilita a leitura.
     i_rden    : in  std_logic := '1';
-    -- Habilita a escrita (a BOOT_ROM não escreve).
+    -- Habilita a escrita (a BOOT_MEMORY não escreve).
     i_wren    : in  std_logic := '0';
     -- Dado de escrita (não usado).
     i_data    : in  std_logic_vector(31 downto 0) := (others => '0');
     -- Palavra lida, um ciclo depois do endereço.
     o_q       : out std_logic_vector(31 downto 0)
   );
-end entity boot_rom;
+end entity boot_memory;
 
-architecture sim of boot_rom is
+architecture sim of boot_memory is
 
-  -- Vetor de palavras da BOOT_ROM.
+  -- Vetor de palavras da BOOT_MEMORY.
   type words_t is array (0 to size_bytes / 4 - 1) of std_logic_vector(31 downto 0);
 
-  -- Conteúdo da BOOT_ROM: o salto para a FLASH na palavra 0.
+  -- Conteúdo da BOOT_MEMORY: o salto para a FLASH na palavra 0.
   constant CONTENT : words_t := (0 => BOOT_JUMP, others => (others => '0'));
 
   -- Registrador de saída.

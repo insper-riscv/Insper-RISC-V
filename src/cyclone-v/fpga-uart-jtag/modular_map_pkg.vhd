@@ -38,11 +38,15 @@ package modular_map_pkg is
 	constant HAS_ZICCLSM         : boolean  := true;
 	-- A extensão Interrupts está no perfil.
 	constant HAS_INTERRUPTS      : boolean  := false;
-	-- Expoente do tamanho da BOOT_ROM, que ocupa [0, 2**BOOT_ROM_BITS).
-	constant BOOT_ROM_BITS       : natural  := 12;
-	-- Tamanho da BOOT_ROM, em bytes.
-	constant BOOT_ROM_SIZE_BYTES : positive := 4096;
-	-- Base da ROM, em KiB, logo depois da BOOT_ROM.
+	-- A extensão Sscofpmf está no perfil.
+	constant HAS_SSCOFPMF        : boolean  := false;
+	-- A extensão Access_faults está no perfil.
+	constant HAS_ACCESS_FAULTS   : boolean  := false;
+	-- Expoente do tamanho da BOOT_MEMORY, em [0, 2**BOOT_MEMORY_BITS).
+	constant BOOT_MEMORY_BITS       : natural  := 12;
+	-- Tamanho da BOOT_MEMORY, em bytes.
+	constant BOOT_MEMORY_SIZE_BYTES : positive := 4096;
+	-- Base da ROM, em KiB, logo depois da BOOT_MEMORY.
 	constant ROM_BASE_KIB        : natural  := 4;
 	-- Fim exclusivo da ROM, em KiB.
 	constant ROM_END_KIB         : natural  := 256;
@@ -76,10 +80,15 @@ package modular_map_pkg is
 	constant ICACHE_SIZE_BITS    : positive := 32768;
 	-- Tamanho da cache de dados, em bits (256 se não existe).
 	constant DCACHE_SIZE_BITS    : positive := 32768;
+	-- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+	constant CACHE_WINDOW_BITS   : natural  := 26;
 	-- A ROM é alcançada pela porta do núcleo (externa ou com cache).
 	constant ROM_VIA_PORT        : boolean  := ROM_EXTERNAL or HAS_ICACHE;
 	-- A RAM é alcançada pela porta do núcleo (externa ou com cache).
 	constant RAM_VIA_PORT        : boolean  := RAM_EXTERNAL or HAS_DCACHE;
+
+	-- Janelas de 256 MiB do barramento de periféricos que têm periférico (bit n para o índice n, bits 30:28 do endereço).
+	constant PERIPH_SLOTS : std_logic_vector(7 downto 0) := "00010000";
 
 	-- Endereço base do periférico UART.
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";

@@ -21,9 +21,9 @@ paths:
   sources:
     - src/cyclone-v/fpga-external-data/runtime/_exit.c
     - src/cyclone-v/fpga-external-data/runtime/stdio.c
-  # O carregador fixo, construído uma vez para a BOOT_ROM.
-  boot_rom: src/cyclone-v/fpga-external-data/runtime/boot_rom.S
-  boot_rom_linker_script: src/cyclone-v/fpga-external-data/runtime/boot_rom.ld
+  # O carregador fixo, construído uma vez para a BOOT_MEMORY.
+  boot_memory: src/cyclone-v/fpga-external-data/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/fpga-external-data/runtime/boot_memory.ld
 
 sim:
   toplevel: modular_sim_top
@@ -31,7 +31,6 @@ sim:
   vhdl_sources:
     - src/cyclone-v/fpga-external-data/modular_map_pkg.vhd
     - src/interconnect/ext_interconnect.vhd
-    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Common-Components/src/utils_pkg.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
@@ -104,13 +103,8 @@ sim:
     - Core/src/core/stage_mem.vhd
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
-    - Memory/src/RAM/SoC/ram_chip.vhd
-    - Memory/src/RAM/SoC/onchip_ram_port.vhd
-    - Memory/src/RAM/SoC/ram_simulation.vhd
-    - Memory/src/ROM/SoC/rom_simulation.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Memory/src/cache/SoC/icache.vhd
-    - Memory/src/cache/SoC/flash_chip.vhd
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
     - Memory/src/cache/SoC/ifetch_bridge.vhd
@@ -118,16 +112,21 @@ sim:
     - Peripherals/src/CLINT/soc/clint_consts.vhd
     - Peripherals/src/CLINT/soc/clint_mtime.vhd
     - Peripherals/src/CLINT/soc/clint.vhd
-    - Common-Components/src/synchronizer.vhd
-    - Peripherals/src/intc/soc/ext_irq_consts.vhd
-    - Peripherals/src/intc/soc/ext_irq_controller.vhd
+    - Peripherals/src/PLIC/soc/plic_consts.vhd
+    - Peripherals/src/PLIC/soc/plic_gateway.vhd
+    - Peripherals/src/PLIC/soc/plic_arbiter.vhd
+    - Peripherals/src/PLIC/soc/plic.vhd
     - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/TIMER/soc/counter_overflow.vhd
+    - Peripherals/src/TIMER/soc/clock_prescaler.vhd
+    - Peripherals/src/TIMER/soc/timer_operation_decoder.vhd
+    - Peripherals/src/TIMER/soc/timer.vhd
+    - Common-Components/src/synchronizer.vhd
     - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
     - Peripherals/src/GPIO/soc/gpio_cell.vhd
     - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
-    - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
@@ -135,6 +134,17 @@ sim:
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
     - Peripherals/src/UART/serial/uart_fifo.vhd
     - Peripherals/src/UART/serial/uart.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/UART/console/console.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
+    - src/soc/soc.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
+    - Memory/src/RAM/SoC/onchip_ram_port.vhd
+    - Memory/src/RAM/SoC/ram_chip.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/cache/SoC/flash_chip.vhd
     - src/simulation/modular/modular_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:
@@ -145,10 +155,10 @@ sim:
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "2000000"
   ghdl_std: "08"
-  # As imagens: a BOOT_ROM é construída uma vez e a ROM vem do programa de cada teste. Os tamanhos das
+  # As imagens: a BOOT_MEMORY é construída uma vez e a ROM vem do programa de cada teste. Os tamanhos das
   # memórias são os genéricos do topo, cujo padrão vem de modular_map_pkg.
   parameters:
-    BOOT_ROM_FILE: "{boot_rom_hex_path}"
+    BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
     ROM_FILE: "{hex_path}"
     HAS_SWITCHES: "true"
     HAS_KEYS: "true"

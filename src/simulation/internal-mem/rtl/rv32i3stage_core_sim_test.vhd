@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Topo de simulação da plataforma internal-mem
 --
--- Monta o núcleo com as memórias simuladas (BOOT_ROM, FLASH e RAM) e a UART mapeada em
+-- Monta o núcleo com as memórias simuladas (BOOT_MEMORY, FLASH e RAM) e a UART mapeada em
 -- 0xC0000000, alimentados pelo gerador de clock de três fases. As larguras de endereço das
 -- memórias e as extensões do núcleo são genéricos, para o testbench dimensionar a plataforma.
 -- =============================================================================
@@ -13,12 +13,12 @@ use work.internal_mem_map_pkg.all;
 
 entity rv32i3stage_core_sim_test is
 	generic (
-	  -- BOOT_ROM_FILE is built ONCE per test run (see
-	  -- riscv_tools.boot_rom.build_boot_rom), not per test like
+	  -- BOOT_MEMORY_FILE is built ONCE per test run (see
+	  -- riscv_tools.boot_memory.build_boot_memory), not per test like
 	  -- ROM_FILE (FLASH's own image) is -- see config.yaml's
 	  -- sim.parameters. Both default to "default.hex" for existing
 	  -- callers (e.g. tests/python/tests.json) that don't set them.
-	  BOOT_ROM_FILE : string := "default.hex";
+	  BOOT_MEMORY_FILE : string := "default.hex";
 	  -- Imagem da FLASH, uma palavra de 32 bits por linha em hexadecimal.
 	  ROM_FILE : string := "default.hex";
 	  -- Initial contents of the RAM, same format as ROM_FILE; empty: zero.
@@ -27,13 +27,13 @@ entity rv32i3stage_core_sim_test is
 	  -- memory array (depth = 2**width words) — all three default to
 	  -- 9 (512 words) inside ROM_simulation/RAM_simulation themselves,
 	  -- too small for a program/tohost address sized for the real
-	  -- BOOT_ROM/FLASH/RAM1PORT hardware. Exposed here so a
+	  -- BOOT_MEMORY/FLASH/RAM1PORT hardware. Exposed here so a
 	  -- full-pipeline testbench can size these to match whatever
 	  -- memory map its own tests were compiled against, without
 	  -- editing this file. Left at the same 9/9/9 default so existing
 	  -- callers (e.g. tests/python/tests.json's instruction-level
 	  -- tests) are unaffected.
-	  boot_rom_addr_width : natural := 9;
+	  boot_memory_addr_width : natural := 9;
 	  -- Largura, em bits, do endereço de palavra da FLASH simulada (profundidade 2**largura).
 	  rom_addr_width : natural := 9;
 	  -- Largura, em bits, do endereço de palavra da RAM simulada (profundidade 2**largura).
@@ -64,6 +64,10 @@ entity rv32i3stage_core_sim_test is
 	  HAS_ZICCLSM : boolean := true;
 	  -- Interrupcoes de maquina do platform.yaml; este topo nao tem CLINT, o generico existe porque o gerador o passa a todos.
 	  HAS_INTERRUPTS : boolean := false;
+	  -- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
+	  HAS_SSCOFPMF : boolean := false;
+	  -- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+	  HAS_ACCESS_FAULTS : boolean := false;
 	  -- Zifencei no core (FENCE.I); false mantem o NOP.
 	  HAS_ZIFENCEI : boolean := false;
 	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
@@ -106,20 +110,20 @@ architecture behaviour of rv32i3stage_core_sim_test is
 	-- PC da instrução que gerou a exceção sinalizada.
 	signal core_trap_pc    : std_logic_vector(31 downto 0);
 
-	-- IF stage: barramento UNICO compartilhado por BOOT_ROM e FLASH
-	-- (ver rv32im_pipeline_core.vhd is_boot_rom_if/is_boot_rom_d) --
+	-- IF stage: barramento UNICO compartilhado por BOOT_MEMORY e FLASH
+	-- (ver rv32im_pipeline_core.vhd is_boot_memory_if/is_boot_memory_d) --
 	-- ambas as ROM_simulation instancias abaixo recebem o MESMO
 	-- if_addr/if_rden, cada uma devolvendo seu proprio dado.
 	signal if_addr : std_logic_vector(31 downto 0);
 	-- Habilitação de leitura da busca de instrução ('1' = lê).
 	signal if_rden : std_logic;
-	-- Palavra de instrução lida da BOOT_ROM.
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra de instrução lida da BOOT_MEMORY.
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	-- Palavra de instrução lida da FLASH.
 	signal flash_data : std_logic_vector(31 downto 0);
 
 	-- Estagio MEM: segunda porta da FLASH, so' para o copy-loop de
-	-- .data em boot_rom.S (ver rv32im_pipeline_core.vhd flash_addr2).
+	-- .data em boot_memory.S (ver rv32im_pipeline_core.vhd flash_addr2).
 	signal flash_addr2 : std_logic_vector(31 downto 0);
 	-- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
 	signal flash_rden2 : std_logic;
@@ -205,7 +209,7 @@ begin
     );
 
 	u_core : entity work.core
-		generic map (has_e => HAS_E, boot_rom_bits => BOOT_ROM_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
+		generic map (has_e => HAS_E, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => ROM_EXTERNAL, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => RAM_EXTERNAL, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_m => HAS_M, has_zmmul => HAS_ZMMUL, has_zicsr => HAS_ZICSR, has_zicntr => HAS_ZICNTR, has_zihpm => HAS_ZIHPM, hpm_counters => HPM_COUNTERS, hpm_width => HPM_WIDTH, has_zimop => HAS_ZIMOP, has_zicond => HAS_ZICOND, has_zihintntl => HAS_ZIHINTNTL, has_zihintpause => HAS_ZIHINTPAUSE, has_zifencei => HAS_ZIFENCEI, has_zicclsm => HAS_ZICCLSM)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -217,12 +221,12 @@ begin
 
 			----------------------------------------------------------------------
 			-- Interface de busca de instrucao -- barramento unico
-			-- compartilhado por BOOT_ROM e FLASH (ver
+			-- compartilhado por BOOT_MEMORY e FLASH (ver
 			-- rv32im_pipeline_core.vhd)
 			----------------------------------------------------------------------
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2 => flash_addr2,
@@ -240,12 +244,12 @@ begin
 			o_ram_rden    => ram_rden,    -- read enable
 			o_ram_byteena => ram_byteena, 	-- máscara de bytes
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata
 	);
 
 	u_uart_peripheral : entity work.UART
@@ -289,19 +293,19 @@ begin
 	sdram_rdata <= uart_rdata_d;
 	ram_rdata   <= ram_memory_rdata;
 
-	-- BOOT_ROM e FLASH: duas instancias separadas da MESMA entidade
+	-- BOOT_MEMORY e FLASH: duas instancias separadas da MESMA entidade
 	-- ROM_simulation, cada uma com seu proprio arquivo/largura.
-	-- BOOT_ROM: so' porta 1 (nunca tem .data proprio, addr2/clk2/re2
+	-- BOOT_MEMORY: so' porta 1 (nunca tem .data proprio, addr2/clk2/re2
 	-- ficam nos valores default). FLASH: porta 2 tambem usada, pelo
 	-- estagio MEM (ver rv32im_pipeline_core.vhd flash_addr2 -- o
-	-- copy-loop de .data em boot_rom.S le FLASH como dado).
-	u_boot_rom : entity work.ROM_simulation
-		generic map (rom_file => BOOT_ROM_FILE, size_bytes => 4 * 2 ** boot_rom_addr_width)
+	-- copy-loop de .data em boot_memory.S le FLASH como dado).
+	u_boot_memory : entity work.ROM_simulation
+		generic map (rom_file => BOOT_MEMORY_FILE, size_bytes => 4 * 2 ** boot_memory_addr_width)
 		port map (
 			i_addr 	=> if_addr(31 downto 2),
 			i_clk 	=> pll_clk_if,
 			i_re 		=> if_rden,
-			o_data	=> boot_rom_data
+			o_data	=> boot_memory_data
 	);
 
 	u_flash : entity work.ROM_simulation

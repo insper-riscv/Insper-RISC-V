@@ -3,10 +3,10 @@
 Trocar de teste na placa combina dois mecanismos distintos: um
 genérico, do próprio `riscv-tools` (reescrever uma memória via JTAG
 sem recompilar/reprogramar a FPGA inteira), e um específico deste
-projeto (como o controle chega da BOOT_ROM fixa até o programa recém
+projeto (como o controle chega da BOOT_MEMORY fixa até o programa recém
 escrito em FLASH). O segundo é o mesmo problema que qualquer sistema
 de atualização remota de firmware precisa resolver (ver "O que a
-BOOT_ROM e o programa combinam" abaixo): quem recebe a atualização já
+BOOT_MEMORY e o programa combinam" abaixo): quem recebe a atualização já
 está rodando código compilado **antes** da atualização existir, então
 os dois lados (o que atualiza e o que é atualizado) precisam
 concordar de antemão sobre onde tudo mora.
@@ -15,15 +15,15 @@ concordar de antemão sobre onde tudo mora.
 
 1. **Programação inicial (uma única vez)**: `quartus_sh --flow compile`
    + `quartus_pgm` carrega o bitstream inteiro, incluindo o conteúdo
-   inicial de BOOT_ROM (`src/simulation/internal-mem/runtime/boot_rom.S`) e da primeira FLASH/RAM.
-   BOOT_ROM nunca mais é tocada depois disso.
+   inicial de BOOT_MEMORY (`src/simulation/internal-mem/runtime/boot_memory.S`) e da primeira FLASH/RAM.
+   BOOT_MEMORY nunca mais é tocada depois disso.
 2. **Troca de teste (caminho rápido)**: `riscv-tools run` reescreve
    a FLASH, que tem uma só cópia, pelo carregador JTAG (`quartus.rom_write_method:
    jtag_loader`): para o core, grava a imagem, confere a contagem e a soma de
-   verificação e solta o core, que reinicia pela BOOT_ROM no passo 5, sem
+   verificação e solta o core, que reinicia pela BOOT_MEMORY no passo 5, sem
    recompilar nem reprogramar a FPGA e sem escrever `fromhost`.
 3. **O core, do lado de dentro**: entre um teste e outro, o core fica
-   parado em `rv32_wait_restart` (endereço fixo `0x100` em BOOT_ROM),
+   parado em `rv32_wait_restart` (endereço fixo `0x100` em BOOT_MEMORY),
    num loop que só faz `lw` de `fromhost_addr` até ler não-zero.
 4. Ao ver `fromhost` diferente de zero, `rv32_wait_restart` salta pra
    `_reset` (endereço fixo `0x0`). O teste anterior já escreveu o resultado
@@ -31,7 +31,7 @@ concordar de antemão sobre onde tudo mora.
 5. `_reset` zera `tohost`, `fromhost` e o cabeçalho do
    `stdout` (pra não vazar o resultado nem a saída do teste anterior) e
    salta pra `FLASH_BASE` (`0x00001000`). Na `de0-cv`, que tem duas bancas, a
-   BOOT_ROM antes confere o cabeçalho e o CRC-32 de cada banca e salta pro
+   BOOT_MEMORY antes confere o cabeçalho e o CRC-32 de cada banca e salta pro
    início do programa da banca válida de maior versão (seção 5).
 6. No início do programa (`0x1000` nas plataformas sem bancas, `0x1100` na
    banca A da `de0-cv`) está o `_start` do `crt0` da picolibc, dentro da imagem do
@@ -42,36 +42,36 @@ concordar de antemão sobre onde tudo mora.
    em `rv32_test.h`, ou o retorno de `main` via `_exit`) e chama
    `rv32_wait_restart`, voltando ao passo 3.
 
-O contato entre a BOOT_ROM e a FLASH é o salto do passo 5 (BOOT_ROM
+O contato entre a BOOT_MEMORY e a FLASH é o salto do passo 5 (BOOT_MEMORY
 para a FLASH) e o salto do passo 7 (programa para `0x100`). Nas
-plataformas sem bancas a BOOT_ROM não lê nada da FLASH. Na `de0-cv` ela
+plataformas sem bancas a BOOT_MEMORY não lê nada da FLASH. Na `de0-cv` ela
 lê o cabeçalho e a carga das duas bancas para conferir os CRC-32 antes
 do salto.
 
-## 2. Por que a BOOT_ROM nunca é reescrita por teste
+## 2. Por que a BOOT_MEMORY nunca é reescrita por teste
 
 `_reset` e `rv32_wait_restart` são endereços fixos (`0x0`, `0x100`,
-ver `src/simulation/internal-mem/runtime/boot_rom.ld`), resolvidos no link **único e separado** de
-`src/simulation/internal-mem/runtime/boot_rom.S`, não no link de cada teste. Se BOOT_ROM fosse
+ver `src/simulation/internal-mem/runtime/boot_memory.ld`), resolvidos no link **único e separado** de
+`src/simulation/internal-mem/runtime/boot_memory.S`, não no link de cada teste. Se BOOT_MEMORY fosse
 reescrita por teste como FLASH é, cada nova compilação poderia mover
 esses offsets, e todo teste que já tem esses mesmos endereços fixos
 embutidos no próprio binário (via `--defsym=rv32_wait_restart=0x100`
 em `rv32im-fpga.specs`) ficaria chamando um endereço errado sem nenhum
 erro de link avisando, já que os dois lados são compilados e
-linkados completamente separados. Manter BOOT_ROM congelada depois da
+linkados completamente separados. Manter BOOT_MEMORY congelada depois da
 programação inicial é isso: sem ela fixa, não haveria endereço estável
 pro handoff funcionar.
 
-A escolha da banca pelo cabeçalho (seção 5) entra na BOOT_ROM da `de0-cv` numa única regravação, junto do bitstream de uma compilação completa do Quartus. Depois dela a BOOT_ROM volta a ficar congelada, e é por isso que a política cabe inteira nela: a atualização em campo só troca o conteúdo das bancas.
+A escolha da banca pelo cabeçalho (seção 5) entra na BOOT_MEMORY da `de0-cv` numa única regravação, junto do bitstream de uma compilação completa do Quartus. Depois dela a BOOT_MEMORY volta a ficar congelada, e é por isso que a política cabe inteira nela: a atualização em campo só troca o conteúdo das bancas.
 
 `rv32_wait_restart` também não pode ficar em FLASH: é nele que o core
 espera enquanto o host reescreve a FLASH, então ele precisa estar numa
 memória que ninguém reescreve, senão o core executaria instruções de uma
 memória em reescrita.
 
-## 3. O que a BOOT_ROM e o programa combinam
+## 3. O que a BOOT_MEMORY e o programa combinam
 
-`src/simulation/internal-mem/runtime/boot_rom.S` é compilado e linkado **antes** de qualquer teste
+`src/simulation/internal-mem/runtime/boot_memory.S` é compilado e linkado **antes** de qualquer teste
 existir: seu binário não pode conter nada de um teste específico. Esse é o
 problema que qualquer atualização remota de firmware enfrenta: um bootloader
 fixo, que não pode ser regravado remotamente (o risco de travar o dispositivo
@@ -81,13 +81,13 @@ mínimo é:
 
 | Combinado | Valor | Quem usa |
 | :--- | :--- | :--- |
-| Entrada do programa | `0x1000`, o `_start` da picolibc (o `picolibc.ld` põe `.init` no começo da FLASH); na `de0-cv`, `0x1100` ou `0x20100`, o início do programa de cada banca | BOOT_ROM salta pra lá |
+| Entrada do programa | `0x1000`, o `_start` da picolibc (o `picolibc.ld` põe `.init` no começo da FLASH); na `de0-cv`, `0x1100` ou `0x20100`, o início do programa de cada banca | BOOT_MEMORY salta pra lá |
 | `rv32_wait_restart` | `0x100` | o programa salta pra lá ao terminar |
-| Palavras do topo da RAM | `fromhost` `0x2FFF0`, `tohost` `0x2FFE8`, cabeçalho do `stdout` `0x2FBE0` (gerados do `platform.yaml` em `memory_map.h`) | BOOT_ROM as zera, o programa e o host as usam |
+| Palavras do topo da RAM | `fromhost` `0x2FFF0`, `tohost` `0x2FFE8`, cabeçalho do `stdout` `0x2FBE0` (gerados do `platform.yaml` em `memory_map.h`) | BOOT_MEMORY as zera, o programa e o host as usam |
 
 Tudo o mais (onde ficam `.data`, `.bss`, heap e pilha, o tamanho de cada
 seção) é decidido no link de cada teste pelo linker script da toolchain, a
-partir dos endereços de `rv32im-fpga.specs`; a BOOT_ROM não sabe de nada
+partir dos endereços de `rv32im-fpga.specs`; a BOOT_MEMORY não sabe de nada
 disso, porque quem copia o `.data` e zera o `.bss` é o `crt0` do próprio
 programa. Por isso a imagem de um teste carrega tudo o que varia nela.
 
@@ -100,7 +100,7 @@ RAM, ver [memoria.md](memoria.md)).
 
 Nas plataformas sem bancas nada verifica a integridade da imagem antes de
 saltar pra ela, porque o JTAG é um link local, físico e confiável. Na `de0-cv`
-a BOOT_ROM confere a magia, os dois CRC-32 e o tamanho de cada banca (seção 5),
+a BOOT_MEMORY confere a magia, os dois CRC-32 e o tamanho de cada banca (seção 5),
 como um sistema que recebe atualizações por um link não confiável precisa fazer.
 Uma assinatura continua fora do escopo: o CRC-32 detecta imagem interrompida ou
 corrompida, não imagem forjada.
@@ -123,14 +123,14 @@ A FLASH da `de0-cv` tem duas bancas para a atualização de programa em campo, d
 | A | `0x00001000` | 124 KiB | `0x00001100` |
 | B | `0x00020000` | 128 KiB | `0x00020100` |
 
-Cada banca começa por uma página de cabeçalho de 256 bytes (magia, tamanho, CRC-32 da carga, versão e CRC do cabeçalho; o formato está no módulo `flash_image` do Tools), e o programa vem logo depois. A rotina de atualização grava a carga primeiro e o cabeçalho por último, então um cabeçalho válido indica uma banca cuja atualização terminou. A boot ROM confere o cabeçalho e o CRC-32 da carga de cada banca e salta para a válida de maior versão, com a banca A vencendo um empate e a espera no `rv32_wait_restart` quando nenhuma vale. A política e o custo da conferência estão no [contrato de entrada](contrato-de-entrada.md), seção 6.6.
+Cada banca começa por uma página de cabeçalho de 256 bytes (magia, tamanho, CRC-32 da carga, versão e CRC do cabeçalho; o formato está no módulo `flash_image` do Tools), e o programa vem logo depois. A rotina de atualização grava a carga primeiro e o cabeçalho por último, então um cabeçalho válido indica uma banca cuja atualização terminou. A memória de boot confere o cabeçalho e o CRC-32 da carga de cada banca e salta para a válida de maior versão, com a banca A vencendo um empate e a espera no `rv32_wait_restart` quando nenhuma vale. A política e o custo da conferência estão no [contrato de entrada](contrato-de-entrada.md), seção 6.6.
 
 O `make generate` escreve, a partir das bancas, os arquivos abaixo.
 
 | Arquivo | Conteúdo |
 | :--- | :--- |
 | `runtime/rv32im-fpga-bank-a.specs` e `runtime/rv32im-fpga-bank-b.specs` | Flags do linker de um programa para cada banca, com `__flash` no início do programa e `__flash_size` sem a página do cabeçalho |
-| `runtime/flash_banks.h` | Magia da imagem, tamanho da página do cabeçalho e, de cada banca, `RV32_BANK_<NOME>_BASE`, `_SIZE` e `_ENTRY`, para a boot ROM e para a rotina de atualização |
+| `runtime/flash_banks.h` | Magia da imagem, tamanho da página do cabeçalho e, de cada banca, `RV32_BANK_<NOME>_BASE`, `_SIZE` e `_ENTRY`, para a memória de boot e para a rotina de atualização |
 
 Um programa para a banca B compila com `--specs` apontando para o arquivo de specs dela, e `riscv-tools flash-image pack programa.bin --output imagem.bin --version N --platform src/cyclone-v/de0-cv/platform.yaml --bank B` monta a imagem e confere que cabe. O `riscv-tools check-memory-map` valida as bancas (alinhadas ao setor de 4 KiB, dentro da FLASH, sem sobreposição).
 
@@ -145,22 +145,44 @@ O hospedeiro empacota o programa com `riscv-tools flash-image pack` e o envia pe
 | 3 | Copia a rotina de atualização para a SDRAM e executa `fence.i`, porque o código que apaga a FLASH não deve depender de uma região dela |
 | 4 | Para cada setor da banca de destino, habilita a escrita, apaga e espera o chip ficar livre |
 | 5 | Grava as páginas da carga, uma de 256 bytes por vez pelo buffer do controlador, e por último a página do cabeçalho |
-| 6 | Lê a banca de volta, compara com a imagem recebida e reinicia pela BOOT_ROM, que escolhe a imagem de maior versão |
+| 6 | Lê a banca de volta, compara com a imagem recebida e reinicia pela BOOT_MEMORY, que escolhe a imagem de maior versão |
 
 O controlador de FLASH ([flash_controller](https://github.com/insper-riscv/Peripherals/blob/main/docs/pt-br/flash-controller/flash_controller.md)) fica no periférico `FLASH_CTRL` do `platform.yaml`, e a rotina lê o estado do chip a cada comando porque o chip ignora um comando que chega ocupado. Uma recusa do chip (setor protegido, endereço fora da janela) encerra a rotina com um código de erro. As caches recebem do chip o pulso de invalidação da região alterada, então a leitura de volta já vê a FLASH nova.
 
-Uma atualização interrompida antes do passo 5 terminar deixa o cabeçalho da banca apagado, e a BOOT_ROM ignora a banca. O firmware pode simular esse corte com a opção de não gravar o cabeçalho, que é o que o teste de atualização interrompida usa.
+Uma atualização interrompida antes do passo 5 terminar deixa o cabeçalho da banca apagado, e a BOOT_MEMORY ignora a banca. O firmware pode simular esse corte com a opção de não gravar o cabeçalho, que é o que o teste de atualização interrompida usa.
 
 ## 7. Os testes
 
 | Teste | Onde | O que prova |
 | :--- | :--- | :--- |
-| Escolha da banca | `tests/python/unittests/rtl/de0_cv_boot_banks.py`, entrada `De0CvBootBanks` | Com a `boot_rom.S` real, a banca mais nova roda, uma carga corrompida ou um cabeçalho apagado, adulterado ou com tamanho absurdo faz a BOOT_ROM voltar para a outra banca, e sem banca válida o núcleo fica no `rv32_wait_restart`. Os registradores `a0` e `a1` chegam em `0` |
+| Escolha da banca | `tests/python/unittests/rtl/de0_cv_boot_banks.py`, entrada `De0CvBootBanks` | Com a `boot_memory.S` real, a banca mais nova roda, uma carga corrompida ou um cabeçalho apagado, adulterado ou com tamanho absurdo faz a BOOT_MEMORY voltar para a outra banca, e sem banca válida o núcleo fica no `rv32_wait_restart`. Os registradores `a0` e `a1` chegam em `0` |
 | Troca pelo carregador | `tests/python/unittests/rtl/external_data_flash_update.py`, entrada `ExternalDataFlashUpdate` | A sequência da seção 6.2 do contrato: parada, gravação pelo STREAM, conferência da soma, liberação, e o programa novo rodando depois do `_reset`, que zerou `tohost` |
-| Atualização completa | `c-sdram-update/flash-update` do repositório Tests | O programa da banca A recebe a imagem da banca B, atualiza, reinicia e a BOOT_ROM executa a banca B |
-| Atualização interrompida | `c-sdram-update/flash-update-interrupted` | O cabeçalho da banca B não é gravado e a BOOT_ROM volta para a banca A |
+| Atualização completa | `c-sdram-update/flash-update` do repositório Tests | O programa da banca A recebe a imagem da banca B, atualiza, reinicia e a BOOT_MEMORY executa a banca B |
+| Atualização interrompida | `c-sdram-update/flash-update-interrupted` | O cabeçalho da banca B não é gravado e a BOOT_MEMORY volta para a banca A |
 
 Os programas de atualização rodam no topo de simulação da `de0-cv` com `HAS_FLASH_CONTROLLER`, que acrescenta o controlador, o armazenamento de duas portas e o chip de comandos, com as esperas de apagar e de gravar nos genéricos `FLASH_ERASE_LATENCY` e `FLASH_PROGRAM_LATENCY`. O repositório Tests os roda com um chip rápido e com um lento.
+
+## 8. Na placa
+
+O topo da placa tem o controlador, o armazenamento de duas portas e a porta de comandos do chip, os mesmos da simulação. O carregador JTAG e a porta de comandos dividem a porta B do armazenamento: com o núcleo parado a porta é do carregador, e com o núcleo em execução é da porta de comandos. As duas caches recebem a invalidação por região, e a linha `FLASH` (fonte 6) do PLIC sinaliza o fim ou a recusa de um comando.
+
+| Instância do Virtual JTAG | Dono |
+| :--- | :--- |
+| 0 | Carregador da FLASH |
+| 1 | UART sobre JTAG |
+| 2 | Display |
+| 3 | Porta de depuração da SDRAM (`quartus.sdram_debug_instance`) |
+
+O `riscv-tools run` não envia bytes pela UART, então o `tools/board/board_update.py` do repositório Tests conduz os três programas de atualização.
+
+| Passo | O que acontece |
+| :--- | :--- |
+| 1 | Zera a palavra de sobrevivência da SDRAM e o `tohost`, porque a placa não zera a SDRAM entre programas |
+| 2 | Grava a FLASH inteira pelo carregador, o que deixa a banca B zerada e inválida, e solta o núcleo |
+| 3 | Espera o programa chegar à leitura da UART e envia a imagem da banca B com `riscv-tools flash-image send` |
+| 4 | Espera o `tohost` e confere o texto do buffer de `stdout` com o `uart_expected.txt` |
+
+O `update-new` roda sozinho, gravado na banca B. O `plic-flash` roda com o console ligado, porque a UART só esvazia enquanto um hospedeiro a varre.
 
 ---
 

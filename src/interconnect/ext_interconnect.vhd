@@ -8,7 +8,8 @@
 --                direto, com os pulsos de leitura e escrita retidos enquanto outro
 --                escravo está selecionado
 --   bit 31 = 1   uma janela de periféricos: os bits 30:28 são o id do periférico
---                e os bits 15:2 (janela de 64 KiB) o deslocamento de palavra dentro dele
+--                e os bits periph_addr_width+1:2 (janela de 64 KiB com o valor padrão 14, 4 MiB
+--                com 20, o que o PLIC pede) o deslocamento de palavra dentro dele
 --
 -- Um acesso a periférico leva um ciclo do core: um único pulso de we ou re
 -- (mesmo enquanto o core espera outra coisa), com ready em nível até mem_advance,
@@ -26,6 +27,10 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity ext_interconnect is
+  generic (
+    -- Largura do deslocamento de palavra entregue ao periférico (14 é a janela de 64 KiB; o PLIC pede 20).
+    periph_addr_width : positive range 14 to 26 := 14
+  );
   port (
     -- Clock do módulo.
     i_clk         : in  std_logic;
@@ -65,7 +70,7 @@ entity ext_interconnect is
     i_m_rdata     : in  std_logic_vector(31 downto 0);
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico.
-    o_p_addr      : out std_logic_vector(13 downto 0);
+    o_p_addr      : out std_logic_vector(periph_addr_width - 1 downto 0);
     -- Janela de periféricos: dado de escrita.
     o_p_wdata     : out std_logic_vector(31 downto 0);
     -- Janela de periféricos: habilita de bytes da escrita.
@@ -112,7 +117,7 @@ begin
   o_m_rden    <= i_rden and not is_periph;
   o_m_wren    <= i_wren and not is_periph;
 
-  o_p_addr    <= i_addr(15 downto 2);
+  o_p_addr    <= i_addr(periph_addr_width + 1 downto 2);
   o_p_wdata   <= i_wdata;
   o_p_byteena <= i_byteena;
 

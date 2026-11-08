@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Topo de simulação da plataforma modelo
 -- ============================================================================
--- Liga o núcleo (perfil rv32i) à BOOT_ROM, à ROM e à RAM de simulação, todas
+-- Liga o núcleo (perfil rv32i) à BOOT_MEMORY, à ROM e à RAM de simulação, todas
 -- dentro do chip, e, quando has_uart é verdadeiro, a uma UART sobre JTAG na
 -- janela de periféricos do núcleo. O mapa vem dos genéricos, cujo valor padrão
 -- é o do pacote template_map_pkg, gerado do platform.yaml.
@@ -18,14 +18,14 @@ use work.template_map_pkg.all;
 
 entity template_sim_top is
     generic(
-        -- Imagem da BOOT_ROM, uma palavra de 32 bits por linha em hexadecimal
-        boot_rom_file       : string   := "default.hex";
+        -- Imagem da BOOT_MEMORY, uma palavra de 32 bits por linha em hexadecimal
+        boot_memory_file       : string   := "default.hex";
         -- Imagem da ROM, a partir do seu início
         rom_file            : string   := "default.hex";
         -- Imagem inicial da RAM; vazio deixa tudo em zero
         ram_file            : string   := "";
-        -- Tamanho da BOOT_ROM em bytes, uma potência de dois
-        boot_rom_size_bytes : positive := BOOT_ROM_SIZE_BYTES;
+        -- Tamanho da BOOT_MEMORY em bytes, uma potência de dois
+        boot_memory_size_bytes : positive := BOOT_MEMORY_SIZE_BYTES;
         -- Tamanho do armazenamento da ROM em bytes, uma potência de dois
         rom_size_bytes      : positive := ROM_STORAGE_BYTES;
         -- Tamanho da RAM em bytes, uma potência de dois
@@ -55,7 +55,13 @@ entity template_sim_top is
         -- Extensão Zifencei (fence.i)
         has_zifencei        : boolean  := HAS_ZIFENCEI;
         -- Extensão Zicclsm (acessos desalinhados)
-        has_zicclsm         : boolean  := HAS_ZICCLSM
+        has_zicclsm         : boolean  := HAS_ZICCLSM;
+        -- Interrupções de máquina (as portas i_irq_* do núcleo; exige Zicsr)
+        has_interrupts      : boolean  := HAS_INTERRUPTS;
+        -- Interrupção de estouro de contador (Sscofpmf; exige Zihpm e as interrupções)
+        has_sscofpmf        : boolean  := HAS_SSCOFPMF;
+        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa (exige Zicsr)
+        has_access_faults   : boolean  := HAS_ACCESS_FAULTS
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -94,8 +100,8 @@ architecture behaviour of template_sim_top is
     signal if_addr         : std_logic_vector(31 downto 0);
     -- Habilitação de leitura da busca de instrução
     signal if_rden         : std_logic;
-    -- Palavra lida da BOOT_ROM
-    signal boot_rom_data   : std_logic_vector(31 downto 0);
+    -- Palavra lida da BOOT_MEMORY
+    signal boot_memory_data   : std_logic_vector(31 downto 0);
     -- Palavra de instrução lida da ROM
     signal rom_data        : std_logic_vector(31 downto 0);
     -- Endereço de byte da segunda porta da ROM (estágio MEM)
@@ -172,7 +178,11 @@ begin
             has_zicond      => has_zicond,
             has_zihintntl   => has_zihintntl,
             has_zihintpause => has_zihintpause,
-            boot_rom_bits   => log2_exact(boot_rom_size_bytes),
+            has_interrupts  => has_interrupts and has_zicsr,
+            has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
+            has_access_faults => has_access_faults and has_zicsr,
+            periph_slots    => PERIPH_SLOTS,
+            boot_memory_bits   => log2_exact(boot_memory_size_bytes),
             rom_end_kib     => ROM_END_KIB,
             rom_external    => ROM_EXTERNAL,
             ram_base_kib    => RAM_BASE_KIB,
@@ -190,7 +200,7 @@ begin
             i_rst           => i_rst,
             o_if_addr       => if_addr,
             o_if_rden       => if_rden,
-            i_boot_rom_data => boot_rom_data,
+            i_boot_memory_data => boot_memory_data,
             i_flash_data    => rom_data,
             o_flash_addr2   => rom_addr2,
             o_flash_rden2   => rom_rden2,
@@ -202,21 +212,21 @@ begin
             o_ram_wren      => ram_wren,
             o_ram_rden      => ram_rden,
             o_ram_byteena   => ram_byteena,
-            o_sdram_addr    => ext_addr,
-            o_sdram_wdata   => ext_wdata,
-            o_sdram_byteena => ext_byteena,
-            o_sdram_rden    => ext_rden,
-            o_sdram_wren    => ext_wren,
-            i_sdram_rdata   => ext_rdata
+            o_ext_addr    => ext_addr,
+            o_ext_wdata   => ext_wdata,
+            o_ext_byteena => ext_byteena,
+            o_ext_rden    => ext_rden,
+            o_ext_wren    => ext_wren,
+            i_ext_rdata   => ext_rdata
         );
 
-    u_boot_rom : entity work.rom_simulation
-        generic map(rom_file => boot_rom_file, size_bytes => boot_rom_size_bytes)
+    u_boot_memory : entity work.rom_simulation
+        generic map(rom_file => boot_memory_file, size_bytes => boot_memory_size_bytes)
         port map(
             i_addr => if_addr(31 downto 2),
             i_clk  => pll_clk_if,
             i_re   => if_rden,
-            o_data => boot_rom_data
+            o_data => boot_memory_data
         );
 
     -- A ROM tem duas portas: instruções e dados de somente leitura

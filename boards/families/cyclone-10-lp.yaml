@@ -1,0 +1,20 @@
+# Família de dispositivos Cyclone 10 LP. Esquema: docs/pt-br/boards/familias.md.
+# A faixa do oscilador e o número de saídas do PLL vêm do manual da família; o Fmax é a frequência de núcleo medida por grau
+# (null quando não há medida) e a calibração é o arquivo medido pelo estimador de cabimento (null até existir).
+family: cyclone-10-lp
+quartus_family: Cyclone 10 LP
+logic_unit: le
+pll:
+  ip: altpll
+  vco_mhz: [600, 1300]
+  clock_node_pattern: "<instance>|altpll_component|auto_generated|pll1|clk[N]"
+  outputs_max: 5
+block_ram: {kind: m9k, bits_per_block: 9216}
+memory_ip: altsyncram
+virtual_jtag: true
+onchip_flash: null
+fmax:
+  core_mhz_by_grade: {C8: null}
+calibration: calibration/cyclone-10-lp.yaml
+# A Cyclone 10 LP é da mesma tecnologia da Cyclone IV E, que recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL (erro 169303); o gerador de pinos a omite (a Vidor não tem LED nem display, de modo que não há teste).
+slew_rate: false

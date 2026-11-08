@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Topo de simulação da plataforma external-data
 -- ============================================================================
--- O núcleo, a BOOT_ROM e a FLASH (vetores VHDL) dentro do chip e a SDRAM fora
+-- O núcleo, a BOOT_MEMORY e a FLASH (vetores VHDL) dentro do chip e a SDRAM fora
 -- dele, atrás da cache de dados. A FLASH é uma só cópia de duas portas, como na
 -- placa: a porta A é lida pela busca de instrução e a porta B pelo estágio MEM,
 -- por meio do carregador de FLASH. O hospedeiro da simulação grava a imagem na
@@ -9,7 +9,7 @@
 -- instância do Virtual JTAG do carregador: com eles o testbench para o núcleo,
 -- grava uma imagem nova e o libera, como o hospedeiro da placa. A SDRAM, com a
 -- ponte, o árbitro, o controlador e o modelo de chip do repositório Memory, roda
--- em clock próprio. A FLASH começa logo depois da BOOT_ROM e termina em 256 KiB,
+-- em clock próprio. A FLASH começa logo depois da BOOT_MEMORY e termina em 256 KiB,
 -- e a SDRAM fica em 0x40000000.
 --
 -- CLK é o clock base do núcleo (um gerador de clock o divide por três, como na
@@ -33,12 +33,12 @@ use work.external_data_map_pkg.all;
 
 entity rv32im_external_data_sim_test is
 	generic (
-		-- Arquivo com a imagem da BOOT_ROM, uma palavra de 32 bits por linha em hexadecimal.
-		BOOT_ROM_FILE : string := "default.hex";
+		-- Arquivo com a imagem da BOOT_MEMORY, uma palavra de 32 bits por linha em hexadecimal.
+		BOOT_MEMORY_FILE : string := "default.hex";
 		-- Arquivo com a imagem da FLASH, uma palavra de 32 bits por linha em hexadecimal.
 		ROM_FILE : string := "default.hex";
-		-- Largura do endereço de palavra da BOOT_ROM.
-		boot_rom_addr_width : natural := 9;
+		-- Largura do endereço de palavra da BOOT_MEMORY.
+		boot_memory_addr_width : natural := 9;
 		-- Largura do endereço de palavra da FLASH.
 		rom_addr_width : natural := 16;
 		-- Largura do endereço de palavra da RAM; a RAM é a SDRAM, então a largura não dimensiona nada aqui.
@@ -57,6 +57,10 @@ entity rv32im_external_data_sim_test is
 		HAS_ZICCLSM : boolean := true;
 		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
 		HAS_INTERRUPTS : boolean := false;
+		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
+		HAS_SSCOFPMF : boolean := false;
+		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
+		HAS_ACCESS_FAULTS : boolean := false;
 		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
 		HAS_ZIHPM : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
@@ -87,7 +91,9 @@ entity rv32im_external_data_sim_test is
 		HAS_E : boolean := work.external_data_map_pkg.HAS_E;
 		-- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 		-- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de depuração.
-		SDRAM_FILE : string := ""
+		SDRAM_FILE : string := "";
+		-- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+		SDRAM_TCK_PS : natural := work.external_data_map_pkg.SDRAM_TCK_PS
 	);
 	port (
 		-- Clock base do núcleo.
@@ -143,8 +149,8 @@ architecture behaviour of rv32im_external_data_sim_test is
 
 	-- Bytes da FLASH, uma potência de dois.
 	constant ROM_BYTES : positive := 4 * 2 ** rom_addr_width;
-	-- Bytes da BOOT_ROM, uma potência de dois.
-	constant BOOT_BYTES : positive := 4 * 2 ** boot_rom_addr_width;
+	-- Bytes da BOOT_MEMORY, uma potência de dois.
+	constant BOOT_BYTES : positive := 4 * 2 ** boot_memory_addr_width;
 
 	-- Exceção sinalizada pelo núcleo sem Zicsr (um ciclo em '1'); com Zicsr fica em '0'.
 	signal core_trap       : std_logic;
@@ -159,8 +165,8 @@ architecture behaviour of rv32im_external_data_sim_test is
 	signal if_addr : std_logic_vector(31 downto 0);
 	-- Habilita de leitura da busca de instrução.
 	signal if_rden : std_logic;
-	-- Palavra lida da BOOT_ROM.
-	signal boot_rom_data : std_logic_vector(31 downto 0);
+	-- Palavra lida da BOOT_MEMORY.
+	signal boot_memory_data : std_logic_vector(31 downto 0);
 	-- Palavra lida da porta A da FLASH, pelo estágio IF.
 	signal flash_data : std_logic_vector(31 downto 0);
 	-- Endereço de byte da leitura de dado do estágio MEM na FLASH.
@@ -302,7 +308,7 @@ begin
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
 			has_e           => HAS_E,
-			boot_rom_bits   => BOOT_ROM_BITS,
+			boot_memory_bits   => BOOT_MEMORY_BITS,
 			rom_end_kib     => ROM_END_KIB,
 			rom_external    => ROM_EXTERNAL,
 			ram_base_kib    => RAM_BASE_KIB,
@@ -328,7 +334,7 @@ begin
 
 			o_if_addr       => if_addr,
 			o_if_rden       => if_rden,
-			i_boot_rom_data => boot_rom_data,
+			i_boot_memory_data => boot_memory_data,
 			i_flash_data    => flash_data,
 
 			o_flash_addr2   => flash_addr2,
@@ -343,13 +349,13 @@ begin
 			o_ram_rden      => ram_rden,
 			o_ram_byteena   => ram_byteena,
 
-			o_sdram_addr    => sdram_addr,
-			o_sdram_wdata   => sdram_wdata,
-			o_sdram_byteena => sdram_byteena,
-			o_sdram_rden    => sdram_rden,
-			o_sdram_wren    => sdram_wren,
-			i_sdram_rdata   => sdram_rdata,
-			i_sdram_ready   => sdram_ready,
+			o_ext_addr    => sdram_addr,
+			o_ext_wdata   => sdram_wdata,
+			o_ext_byteena => sdram_byteena,
+			o_ext_rden    => sdram_rden,
+			o_ext_wren    => sdram_wren,
+			i_ext_rdata   => sdram_rdata,
+			i_ext_ready   => sdram_ready,
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
@@ -359,13 +365,13 @@ begin
 	-- Sem cache de instruções nem chip de FLASH, só a cache de dados conta eventos.
 	hpm_ext_events <= '0' & dc_miss & '0';
 
-	u_boot_rom : entity work.rom_simulation
-		generic map (rom_file => BOOT_ROM_FILE, size_bytes => BOOT_BYTES)
+	u_boot_memory : entity work.rom_simulation
+		generic map (rom_file => BOOT_MEMORY_FILE, size_bytes => BOOT_BYTES)
 		port map (
 			i_addr => if_addr(31 downto 2),
 			i_clk  => pll_clk_if,
 			i_re   => if_rden,
-			o_data => boot_rom_data
+			o_data => boot_memory_data
 		);
 
 	-- A FLASH, uma só cópia de duas portas: A para a busca, B para o dado do estágio MEM e para o carregador.
@@ -472,7 +478,10 @@ begin
 
 	-- A SDRAM e o modelo do chip; as portas de depuração do modelo ficam sem uso aqui e a porta de instruções fica ociosa.
 	u_sdram : entity work.sdram_system
-		generic map (init_file => SDRAM_FILE)
+		generic map (tck_ps => SDRAM_TCK_PS,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
+			init_file => SDRAM_FILE)
 		port map (
 			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
 			i_rst_mem => reset,   i_rst_cpu => core_reset,

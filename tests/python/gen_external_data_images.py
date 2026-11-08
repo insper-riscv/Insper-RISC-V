@@ -5,7 +5,7 @@ Uso, da raiz do repositório:
     PYTHONPATH=. /opt/riscv-tools/riscv-tools/bin/python \
         tests/python/gen_external_data_images.py
 
-O mapa é o de `src/cyclone-v/external-data/platform.yaml`. A BOOT_ROM
+O mapa é o de `src/cyclone-v/external-data/platform.yaml`. A BOOT_MEMORY
 guarda `BOOT_MARK` na palavra 0 da SDRAM e salta para a FLASH. A FLASH
 guarda `FLASH_MARK` na palavra 3, lê de volta, como dado, uma palavra
 que ela mesma guarda (`FLASH_DATA`, pela segunda porta) e a copia para
@@ -19,7 +19,7 @@ As imagens ficam em tests/python/unittests/rtl/data/external_data/.
 import tempfile
 from pathlib import Path
 
-from riscv_tools import boot_rom
+from riscv_tools import boot_memory
 from riscv_tools.memory_map import load_platform, symbols
 
 from tests.python.gen_de0_cv_images import load_address, store_value
@@ -59,9 +59,9 @@ TOOLCHAIN = {
     "objcopy": "riscv32-unknown-elf-objcopy",
 }
 BOOT_PATHS = {
-    "boot_rom": "src/cyclone-v/external-data/runtime/boot_rom.S",
-    "boot_rom_linker_script": (
-        "src/cyclone-v/external-data/runtime/boot_rom.ld"
+    "boot_memory": "src/cyclone-v/external-data/runtime/boot_memory.S",
+    "boot_memory_linker_script": (
+        "src/cyclone-v/external-data/runtime/boot_memory.ld"
     ),
 }
 
@@ -87,16 +87,17 @@ def loader_program() -> list[int]:
     ]
 
 
-def real_boot_rom() -> list[int]:
-    """Assemble the boot ROM of the platform from its source.
+def real_boot_memory() -> list[int]:
+    """Assemble the boot memory of the platform from its source.
 
     Returns
     -------
     list of int
-        The words of `runtime/boot_rom.S`, as `build_boot_rom` links it.
+        The words of `runtime/boot_memory.S`, linked by
+        `build_boot_memory`.
     """
     with tempfile.TemporaryDirectory() as directory:
-        hex_path = boot_rom.build_boot_rom(
+        hex_path = boot_memory.build_boot_memory(
             TOOLCHAIN, BOOT_PATHS, ROOT, Path(directory)
         )
         return [int(line, 16) for line in hex_path.read_text().split()]
@@ -121,11 +122,11 @@ def main() -> None:
     data_word = (FLASH_BASE + FLASH_DATA_OFFSET) // 4
     image += [0] * (data_word - len(image)) + [FLASH_DATA]
     DATA.mkdir(parents=True, exist_ok=True)
-    (DATA / "boot_rom.hex").write_text(hex_lines(boot))
+    (DATA / "boot_memory.hex").write_text(hex_lines(boot))
     (DATA / "flash.hex").write_text(hex_lines(image))
     loader = [0] * (FLASH_BASE // 4) + loader_program()
     (DATA / "loader_flash.hex").write_text(hex_lines(loader))
-    (DATA / "boot_rom_real.hex").write_text(hex_lines(real_boot_rom()))
+    (DATA / "boot_memory_real.hex").write_text(hex_lines(real_boot_memory()))
 
 
 if __name__ == "__main__":

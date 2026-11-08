@@ -14,6 +14,9 @@ PF := src/cyclone-v/de0-cv
 PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
+# The platforms of the two small boards: the reduced profile of the DE0-Nano and the full profile of the DE10-Lite.
+PN := src/cyclone-iv-e/de0-nano
+PL := src/max-10/de10-lite
 # The ten platforms of the family (four for the tests, four on the board, two for the UART): one directory each, with its
 # platform.yaml, and all of them run the same modular_sim_top (the sources of one are `sources <name>_map modular_sim_top`).
 TEN := test-integrated test-external-data test-external-instruction test-external \
@@ -29,7 +32,7 @@ SOURCES := riscv-tools --root . sources
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-generics check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
+.PHONY: all sync paths check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -42,11 +45,12 @@ sync:
 paths:
 	riscv-tools --root . check-paths --manifest paths.yaml
 	riscv-tools --root . check-tree --kind top
+	riscv-tools --root . check-boards
 
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: sources-check check-tops check-generics check-unique
+check: sources-check check-tops check-generics check-unique check-irq-sources
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -80,6 +84,10 @@ check-tops:
 check-generics:
 	python3 scripts/check_top_generics.py
 
+# The numbers of the PLIC sources of the modular top and of every platform.yaml agree.
+check-irq-sources:
+	uv run --no-project --with pyyaml python scripts/check_irq_sources.py
+
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
 check-unique:
@@ -90,7 +98,7 @@ check-unique:
 	if [ -n "$$dups" ]; then echo "defined more than once:"; echo "$$dups"; exit 1; fi; \
 	echo "no entity or package is defined twice"
 
-# Every copy of the memory map (config, linker flags, boot ROM, runtime, the core's VHDL, the Quartus IPs)
+# Every copy of the memory map (config, linker flags, boot memory, runtime, the core's VHDL, the Quartus IPs)
 # agrees with platform.yaml, in each platform.
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
@@ -98,10 +106,12 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PN)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
 	$(MAKE) generate-check sources-check
 
-# The files written from the map of each platform (the linker flags, the linker script of the boot ROM and
+# The files written from the map of each platform (the linker flags, the linker script of the boot memory and
 # the VHDL package of the generics): `make generate` writes them and `make generate-check` fails when one
 # is out of date.
 generate:
@@ -110,6 +120,8 @@ generate:
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
 
 generate-check:
@@ -118,6 +130,8 @@ generate-check:
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml --check
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml --check || exit 1; done
 
 # The source lists of the tops (the config*.yaml, tests/python/tests.json and the .qsf files) come from the

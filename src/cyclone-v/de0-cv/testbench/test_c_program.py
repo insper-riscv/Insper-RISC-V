@@ -65,15 +65,15 @@ _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
 SIM_CLOCK = os.environ.get("SIM_CLOCK", "CLK")
-SIM_CLOCK_PERIOD_NS = int(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
+SIM_CLOCK_PERIOD_NS = float(os.environ.get("SIM_CLOCK_PERIOD_NS", "10"))
 SIM_RESET = os.environ.get("SIM_RESET", "reset")
 SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", "pll_clk_idexmem")
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "200000"))
 # More clocks the top has, "PORT:period_ns" separated by commas
-# (CLK_MEM:7 for the SDRAM clock)
+# (CLK_MEM:10 for the SDRAM clock)
 EXTRA_CLOCKS = [
-    (name, int(period))
+    (name, float(period))
     for name, period in (
         item.split(":")
         for item in os.environ.get("SIM_EXTRA_CLOCKS", "").split(",")
@@ -129,8 +129,8 @@ HALF_TCK_NS = 40
 # update, takes the bytes faster: UART_SCANS_PER_BYTE sets the scans
 # between two bytes.
 SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
-# The boot ROM checks the images before it jumps to the program, and the
-# startup of the program clears its .bss through the SDRAM, which
+# The boot memory checks the images before it jumps to the program, and
+# the startup of the program clears its .bss through the SDRAM, which
 # together take much longer than the 64-place receive queue holds the
 # bytes of a console that is already sending. With UART_START_ON_ACCESS
 # the console starts at the first access of the core to the UART slot

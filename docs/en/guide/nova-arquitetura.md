@@ -9,7 +9,7 @@ This guide takes a clean clone of `Insper-RISC-V` to a new platform running in s
 | Block | Repository | What it provides |
 | :--- | :--- | :--- |
 | Core | `Core` | The processor, chosen by a profile (base `rv32i` or `rv32e` plus the extensions) |
-| Memory | `Memory` | BOOT_ROM, ROM and FLASH (including the two-port FLASH), RAM and SDRAM, caches, FLASH chip and region router |
+| Memory | `Memory` | BOOT_MEMORY, ROM and FLASH (including the two-port FLASH), RAM and SDRAM, caches, FLASH chip and region router |
 | Peripherals | `Peripherals` | UART, GPIO, timer, CLINT, external interrupt controller, FLASH controller and display, each with a `soc` side (family independent) and, when needed, a per-family side |
 | Common-Components | `Common-Components` | Multiplexers, registers and utility packages, present as a submodule in the other three |
 | Insper-RISC-V | this repository | Pins the version of each submodule and holds the platforms, which connect the blocks |
@@ -20,9 +20,9 @@ This guide takes a clean clone of `Insper-RISC-V` to a new platform running in s
 | :--- | :--- | :--- |
 | `platform.yaml` | Person | Source of the memory map, the Core profile, the reserved words and the peripherals, and the list of files to generate |
 | `rtl/<platform>_map_pkg.vhd` | `riscv-tools generate-memory-map` | VHDL constants of the map and the profile |
-| `runtime/rv32im-fpga.specs`, `runtime/boot_rom.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Linker parameters, BOOT_ROM linker script and runtime addresses |
+| `runtime/rv32im-fpga.specs`, `runtime/boot_memory.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Linker parameters, BOOT_MEMORY linker script and runtime addresses |
 | `rtl/<platform>_sim_top.vhd` | Person | Simulation top, which only instantiates and connects the blocks |
-| `runtime/boot_rom.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Person | What the program finds on start and on exit |
+| `runtime/boot_memory.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Person | What the program finds on start and on exit |
 | `config.yaml` | Person | `riscv-tools` configuration to compile and simulate, which reads the map from `platform.yaml` |
 
 No number of the map is written in two places. What the `config.yaml` and `Tests` need from the map reaches them through the `platform.yaml`.
@@ -31,14 +31,14 @@ No number of the map is written in two places. What the `config.yaml` and `Tests
 
 | Platform | Path | When to copy |
 | :--- | :--- | :--- |
-| `template` | `src/simulation/template/` | Starting point of a simulation-only platform, with BOOT_ROM, ROM and RAM inside the chip |
+| `template` | `src/simulation/template/` | Starting point of a simulation-only platform, with BOOT_MEMORY, ROM and RAM inside the chip |
 | `external-data` | `src/cyclone-v/external-data/` | Starting point of a DE0-CV board, with the two-port FLASH inside the FPGA and the SDRAM behind the data cache |
 | `de0-cv` | `src/cyclone-v/de0-cv/` | Complete DE0-CV board, with the FLASH as a chip behind the instruction and data caches |
 
 The model platform has this shape.
 
 ```text
-  BOOT_ROM 4 KiB  --+
+  BOOT_MEMORY 4 KiB  --+
   ROM 28 KiB      --+--  núcleo (perfil do platform.yaml)  --  RAM 32 KiB
   (duas portas)                     |
                                     +-- janela de periféricos (bit 31 = 1) -- UART sobre JTAG (id 4)
@@ -134,7 +134,7 @@ For the example, the RAM goes to 64 KiB and the profile to `rv32im`. The RAM sta
 platform: exemplo
 profile: rv32im
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
   - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
 reserved:
@@ -154,7 +154,7 @@ riscv-tools --root . check-memory-map --platform src/simulation/exemplo/platform
 
 | Expected output | Common error and cause |
 | :--- | :--- |
-| Four `generated:` lines (specs, `boot_rom.ld`, `memory_map.h`, VHDL package) and `memory map OK` | `reserved stdout ... is not inside a RAM region`, because the reserved addresses ended up outside the RAM after changing the size |
+| Four `generated:` lines (specs, `boot_memory.ld`, `memory_map.h`, VHDL package) and `memory map OK` | `reserved stdout ... is not inside a RAM region`, because the reserved addresses ended up outside the RAM after changing the size |
 | `HAS_M` true and `RAM_END_KIB` equal to 96 in the generated package | `profile` with a name that is not in `matrix.yaml` |
 
 When the map changes, run the first command again. With `--check` at the end, the same command writes nothing and fails if any generated file is out of date.
@@ -191,29 +191,53 @@ EOF
 
 The test reads the RAM base in `RAM_BASE`, at the start of `exemplo_sim_top.py`, and this value changes together with the RAM region of the `platform.yaml`.
 
-The `Makefile` gets the lines below, each one next to its equivalent of the model platform.
-
-| Where | What to add |
-| :--- | :--- |
-| Variables at the top, after `PT :=` | `PX := src/simulation/exemplo` |
-| After the definition of `TEMPLATE_VHDL` | `EXEMPLO_VHDL := $(subst template,exemplo,$(TEMPLATE_VHDL))` |
-| Rule `check-tops`, after the lines of `template_sim_top` | Three lines, one analysis line with `$(EXEMPLO_VHDL)`, one elaboration line of `exemplo_sim_top` and an `echo` |
-| Rules `memory-map`, `generate` and `generate-check` | The same line of each one, replacing `$(PT)` with `$(PX)` |
-
-The documentation gets one document per language and the line in the table of the `README.md` of the folder.
+`paths.yaml` still has to declare the top and the map package as components (`provides`), which is where `make generate-sources` takes the source list of `config.yaml` and `tests.json` from.
 
 ```bash
-for l in pt-br en; do sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md; done
+python3 - <<'EOF2'
+texto = open("paths.yaml").read()
+inicio = texto.index("  template_map:")
+fim = texto.index("\n", texto.index("template_sim_top.vhd", inicio))
+bloco = texto[inicio:fim]
+texto = texto[:fim] + "\n" + bloco.replace("template", "exemplo") + texto[fim:]
+open("paths.yaml", "w").write(texto)
+EOF2
 ```
 
-| File | What to add |
-| :--- | :--- |
-| `paths.yaml` | The platform files in the `references` list and the path fields of `config.yaml` |
-| `Makefile` | The variable `P<x> := src/simulation/example`, the lines of `memory-map`, `generate` and `generate-check` and the top elaboration in `check-tops`, which reads the sources from `riscv-tools sources` |
-| `paths.yaml` (`provides`) | The component of the top, with its sources and what it requires; `scripts/generate_sources.py` gains the list file of the platform |
-| `docs/pt-br/platform/` | An `example.md` document and the row in the folder `README.md` table, with the mirror in `docs/en/` |
+`scripts/generate_sources.py` and `scripts/check_top_generics.py` gain one line each, next to those of `template`.
 
 ```bash
+sed -i 's#^    Saida("src/simulation/template/config.yaml", ("template_sim_top",)),#&\n    Saida("src/simulation/exemplo/config.yaml", ("exemplo_sim_top",)),#' scripts/generate_sources.py
+sed -i 's#^    Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),#&\n    Saida(TESTS_JSON, ("exemplo_sim_top",), "ExemploSimTop"),#' scripts/generate_sources.py
+sed -i 's#^    "src/simulation/template/rtl/template_map_pkg.vhd": \[#    "src/simulation/exemplo/rtl/exemplo_map_pkg.vhd": [\n        "src/simulation/exemplo/rtl/exemplo_sim_top.vhd",\n    ],\n&#' scripts/check_top_generics.py
+```
+
+The `Makefile` gets a variable and a copy of every line that mentions the model platform.
+
+```bash
+sed -i 's#^PT := src/simulation/template$#&\nPX := src/simulation/exemplo#' Makefile
+sed -i -E 's#^(\t.*)\$\(PT\)(.*)$#\1$(PT)\2\n\1$(PX)\2#' Makefile
+python3 - <<'EOF2'
+texto = open("Makefile").read()
+linhas = [l for l in texto.split("\n") if "template" in l and l.startswith("\t@")]
+texto = texto.replace(linhas[-1], linhas[-1] + "\n" + "\n".join(l.replace("template", "exemplo") for l in linhas), 1)
+open("Makefile", "w").write(texto)
+EOF2
+```
+
+The documentation gets one document per language and the row in the table of the `README.md` of the folder.
+
+```bash
+for l in pt-br en; do
+    sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md
+    sed -i '/^| \[template\]/{p;s/template/exemplo/g}' docs/$l/platform/README.md
+done
+```
+
+Generate the source lists and check.
+
+```bash
+make generate-sources
 make paths
 make memory-map
 ```
@@ -268,22 +292,22 @@ The simulation top of the model platform has six blocks, which the example keeps
 | :--- | :--- | :--- |
 | `u_clock` | `clk_gen_3way` | `src/simulation/internal-mem/rtl/` |
 | `u_core` | `core` | `Core/src/core/` |
-| `u_boot_rom` | `rom_simulation` | `Memory/src/ROM/SoC/` |
+| `u_boot_memory` | `rom_simulation` | `Memory/src/ROM/SoC/` |
 | `u_rom` | `rom_simulation` (two ports) | `Memory/src/ROM/SoC/` |
 | `u_ram` | `ram_simulation` | `Memory/src/RAM/SoC/` |
 | `u_uart` (optional) | `jtag_uart` | `Peripherals/src/UART/jtag/` |
 
-The core has three memory outputs: the instruction fetch (BOOT_ROM and ROM), the data port of the ROM and the RAM, and the external bus, through which the peripherals pass.
+The core has three memory outputs: the instruction fetch (BOOT_MEMORY and ROM), the data port of the ROM and the RAM, and the external bus, through which the peripherals pass.
 
 ### 6.2. Size generics
 
-The memory sizes are power-of-two generics whose default value comes from the generated package (`BOOT_ROM_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). No size is written in the top.
+The memory sizes are power-of-two generics whose default value comes from the generated package (`BOOT_MEMORY_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). No size is written in the top.
 
 ### 6.3. Profile and map in the `core`
 
-The top declares one `has_*` generic per extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` and `has_zicclsm`), each with the `HAS_*` constant of the package as default value. In the `generic map` of the `core`, each `has_*` of the core receives the generic of the same name of the top, and the region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
+The top declares one `has_*` generic per extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei`, `has_zicclsm` and `has_interrupts`), each with the `HAS_*` constant of the package as default value. In the `generic map` of the `core`, each `has_*` of the core receives the generic of the same name of the top, and the `has_interrupts` of the core receives `has_interrupts and has_zicsr`. The region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
 
-`riscv-tools` passes the simulator one `-g has_*` per extension of the profile. Every top it simulates must declare the twelve generics, and a top that does not declare one of them fails at elaboration with `cannot find in top entity generic`.
+`riscv-tools` passes the simulator one `-g has_*` per extension of the profile. Every top it simulates must declare the thirteen generics, and a top that does not declare one of them fails at elaboration with `cannot find in top entity generic`.
 
 ### 6.4. Window of each peripheral
 
@@ -291,7 +315,7 @@ The external bus of the core delivers to the top the address, the write data and
 
 ### 6.5. Interrupts
 
-The core receives the machine interrupts through three level ports, `i_irq_software`, `i_irq_timer` and `i_irq_external`, all with default value `'0'`. They only have effect with the `has_interrupts` generic true and `has_zicsr` on, and then `mip` mirrors the three ports and `mie` masks them. The CLINT (`Peripherals/src/CLINT/soc/`) delivers `o_irq_timer` and `o_irq_software`, and the external interrupt controller (`Peripherals/src/intc/soc/`) gathers the peripheral lines into `o_irq_external`. Each one is an ordinary peripheral, with its own window (step 6.4), and its outputs connect directly to the ports of the core.
+The core receives the machine interrupts through three level ports, `i_irq_software`, `i_irq_timer` and `i_irq_external`, all with default value `'0'`. They only have effect with the `has_interrupts` generic true and `has_zicsr` on, and then `mip` mirrors the three ports and `mie` masks them. The CLINT (`Peripherals/src/CLINT/soc/`) delivers `o_irq_timer` and `o_irq_software`, and the PLIC (`Peripherals/src/PLIC/soc/`) gathers the peripheral lines into `o_meip`. Each one is an ordinary peripheral, with its own window (step 6.4), and its outputs connect directly to the ports of the core.
 
 ### 6.6. CONTRIBUTING conventions
 
@@ -340,8 +364,8 @@ The runtime is what the program finds on start and on exit. The four hand-writte
 
 | File | What it does | What changes with the map |
 | :--- | :--- | :--- |
-| `runtime/boot_rom.S` | `_reset` clears `stdout`, `tohost` and `fromhost` and jumps to `RV32_BOOT_ENTRY`; `rv32_wait_restart` waits for `fromhost` | Nothing, it reads the addresses from `memory_map.h` |
-| `runtime/boot_rom.ld` | BOOT_ROM linker script, with `rv32_wait_restart` at `0x100` | Generated |
+| `runtime/boot_memory.S` | `_reset` clears `stdout`, `tohost` and `fromhost` and jumps to `RV32_BOOT_ENTRY`; `rv32_wait_restart` waits for `fromhost` | Nothing, it reads the addresses from `memory_map.h` |
+| `runtime/boot_memory.ld` | BOOT_MEMORY linker script, with `rv32_wait_restart` at `0x100` | Generated |
 | `runtime/rv32im-fpga.specs` | Linker parameters (`__flash`, `__flash_size`, `__ram`, `__ram_size`) and the crt0 of picolibc | Generated |
 | `runtime/memory_map.h` | Addresses of RAM, `tohost`, `fromhost`, `stdout`, boot entry and the base of each peripheral | Generated |
 | `runtime/_exit.c` | Writes the result to `tohost` and enters `rv32_wait_restart` | Nothing |
@@ -378,11 +402,11 @@ It gathers, for `riscv-tools`, what belongs to the platform. No address or memor
 | :--- | :--- |
 | `toolchain` | GCC, `objcopy` and the `rv32im-fpga.specs` of the platform |
 | `memory_map` | The `platform.yaml`, where the bases, `tohost`, `fromhost` and the profile come from |
-| `paths` | Runtime sources (`_exit.c`, `stdio.c`), `boot_rom.S` and `boot_rom.ld` |
+| `paths` | Runtime sources (`_exit.c`, `stdio.c`), `boot_memory.S` and `boot_memory.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
 | `sim.vhdl_sources` | All sources, in dependency order, written by `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | The cocotb testbench, `testbench.test_c_program` of the `internal-mem` platform |
-| `sim.parameters` | `BOOT_ROM_FILE` and `ROM_FILE` with the images of each program |
+| `sim.parameters` | `BOOT_MEMORY_FILE` and `ROM_FILE` with the images of each program |
 | `emulator.sources` | `spike_exit.S` |
 
 The `sim.vhdl_sources` list is not edited by hand. It comes from the component of the top in the `provides` of the platform `paths.yaml`, which declares the components the top requires, and `make generate-sources` writes it in analysis order. If the top gains a peripheral, its component enters the `requires` of the top and the list is regenerated.
@@ -404,7 +428,7 @@ The programs live in the `Tests` repository (`asm/` and `c/`). `Tests` carries `
 First, the platform must be in a commit of the clone, and the submodule of `Tests` starts pointing to it.
 
 ```bash
-git add src/simulation/exemplo paths.yaml Makefile tests docs
+git add src/simulation/exemplo paths.yaml Makefile tests docs scripts
 git commit -m "feat: plataforma exemplo"
 cd ..
 git clone --recurse-submodules git@github.com:insper-riscv/Tests.git
@@ -414,7 +438,7 @@ git -C Insper-RISC-V checkout FETCH_HEAD
 git -C Insper-RISC-V submodule update --init --recursive
 ```
 
-Then `platform sync` writes the platform configuration already resolved against the `platform.yaml`, with the paths preceded by the submodule folder.
+The `Tests` clone sits next to the `Insper-RISC-V` one, in `../Tests`, which is where `check-memory-map` looks for it. Then `platform sync` writes the platform configuration already resolved against the `platform.yaml`, with the paths preceded by the submodule folder.
 
 ```bash
 riscv-tools platform sync --prefix Insper-RISC-V \
@@ -472,7 +496,7 @@ riscv-tools --config tools/riscv_build/config.exemplo.yaml sim
 | Expected output | Common error and cause |
 | :--- | :--- |
 | `arithmetic-add: PASS`, `multiply: PASS` and `stdout-printf: PASS`, with the label `(rv32im)` on the last two | `timed out after ... cycles without a result`, when `rv32_platform.h` kept the addresses of another platform and the program writes `tohost` where the testbench does not look |
-| `compile` generates `manifest.json` with the programs | `cannot find in top entity generic 'has_e'`, when the top does not declare the `has_*` generics of step 6.3 |
+| `compile` generates `manifest.json` with the programs | `cannot find in top entity generic 'has_interrupts'`, when the top does not declare the `has_*` generics of step 6.3 (the name changes with the missing generic) |
 | | `rv32_test.h: No such file or directory`, from skipping `generate-header` |
 | | `region ... overflowed` at link time, when the program does not fit in the 28 KiB ROM |
 
@@ -517,83 +541,57 @@ uv run python tools/riscv_build/gen_flash_profiles.py
 
 ## 10. Board
 
-This chapter only applies if the platform has an FPGA. `external-data` is the smallest board platform and serves as a starting point; `de0-cv` is the complete reference.
+This chapter applies only if the platform has an FPGA. The Quartus project of a board platform is neither written nor copied by hand: `riscv-tools board generate` writes it from the `platform.yaml` of the platform and from the board package in `boards/<board>/`. The complete step by step, from the board package to running programs, is in [adicionar-placa.md](adicionar-placa.md), and this chapter shows only what a new platform does in it.
 
-### 10.1. Copy and rename
+### 10.1. Declare the board in `platform.yaml`
 
-```bash
-cp -r src/cyclone-v/external-data src/cyclone-v/minhaplaca
-cd src/cyclone-v/minhaplaca
-for f in $(find . -name '*external*data*' -type f); do
-    mv "$f" "$(echo $f | sed 's/external-data/minhaplaca/;s/external_data/minhaplaca/')"
-done
-grep -rl "external[-_]data" . | xargs sed -i 's/external-data/minhaplaca/g;s/external_data/minhaplaca/g'
-cd ../../..
-```
+The new platform starts from a copy of the nearest board platform (`src/cyclone-v/de0-cv` for the full profile, `src/cyclone-iv-e/de0-nano` for a reduced profile). In `platform.yaml`, the `board` field (or the `boards` list) chooses the board, the `clocks` and `io` fields say what the SoC asks for, and each external region chooses its backend. Step 6 of [adicionar-placa.md](adicionar-placa.md) describes the fields, and step 7 the validator that compares the request with what the board offers.
 
-After the copy, register the platform as in step 4.4, using the `external-data` lines of `paths.yaml`, of the `Makefile` and of `tests/python/tests.json` as the model in place of those of the model platform.
-
-### 10.2. Quartus project files
-
-| File | Content |
-| :--- | :--- |
-| `<platform>.qpf` | The project, with the revision |
-| `<platform>.qsf` | Device, pins and the list of VHDL and IP sources, written by `make generate-sources` and checked against the disk by `check-paths` |
-| `<platform>.sdc` | The clocks and the input, output and clock domain crossing constraints |
-| `<platform>_assignment_defaults.qdf` | Default assignments of the project |
-| `../de0-cv/pll/` | The PLL IP that generates the core and SDRAM clocks, shared among the DE0-CV platforms |
-| `<platform>_synth.tcl` | Compiles with the chosen seed; with the `map` argument it only synthesizes |
-| `<platform>_program.sh` | Programs the `.sof` through the first cable of `jtagconfig` |
-| `<platform>_top.vhd` | The board top, which connects the PLL, the core, the board memories and the peripherals |
-| `<platform>_map_pkg.vhd` | Map package, generated from the `platform.yaml` |
-| `boot_rom_init.mif`, `init.mif` | Initial images of the BOOT_ROM and the FLASH |
-
-### 10.3. Edit the `.qsf` and the `.sdc`
-
-The `.qsf` has a source list written by `make generate-sources`, with paths relative to the platform folder (`../../../Core/src/...`). The sources of the core, in dependency order, come from:
+### 10.2. Generate and check the project
 
 ```bash
-riscv-tools --root . sources Core/core
+riscv-tools --root . generate-memory-map --platform src/<family>/<platform>/platform.yaml
+riscv-tools --root . --board <board> board generate --platform src/<family>/<platform>/platform.yaml --out build
+riscv-tools --root . --board <board> board generate --platform src/<family>/<platform>/platform.yaml --out build --check
 ```
 
-The `.sdc` declares the input clock (`create_clock`), the PLL clocks (`derive_pll_clocks`) and the uncertainty (`derive_clock_uncertainty`). Each generated external clock, such as the SDRAM one, gets its own `create_generated_clock` and the input and output delays from the chip datasheet. Each crossing among the core, SDRAM and JTAG domains has its `set_max_delay` and `set_min_delay` constraint, and the slow buttons, LEDs and displays have `set_false_path`.
-
-With the list ready, check the paths.
-
-```bash
-make paths
-```
-
-### 10.4. Compile and program
-
-```bash
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl map
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl && src/cyclone-v/minhaplaca/minhaplaca_program.sh
-```
-
-The first command only synthesizes and checks that the paths and entities resolve. The second compiles and programs the board, and both commands must run in the same shell (`&&`). The guide [placa.md](placa.md) explains the rule and what to do when the board does not answer.
+`board generate` writes the board top, the PLL, the `.qpf`, the `.qsf`, the `.sdc` and the `capacity.json` into `build/<platform>-<board>/`, and the `build` folder is not versioned. The files written and what each contains are in [../boards/geracao.md](../boards/geracao.md). A fit or pin error comes out of the validator before any compilation.
 
 | Expected output | Common error and cause |
 | :--- | :--- |
-| `Analysis & Synthesis was successful. 0 errors` | `design library "work" does not contain primary unit ...`, from a file missing in the `.qsf` (a `sdram_jtag_shell.vhd` from `../de0-cv/`, for example) |
-| `output_files/minhaplaca.sof` after the complete compilation | `Can't scan JTAG chain` in the programmer, from compiling and programming in different shells |
+| The project files in `build/<platform>-<board>/` and `--check` with no difference | `profile does not fit` (V11 or V12), from a profile larger than the device; the fix is to reduce the profile, the caches or the emulated memory |
 
-### 10.5. Programs and certification on the board
+### 10.3. Register the platform in the repository
 
-With the bitstream programmed, `Tests` writes each program to the BOOT_ROM and the FLASH through JTAG and checks the result, without recompiling the FPGA. The board configuration in `Tests` is generated as in step 8.3, from the `config.yaml` of the board platform.
+The platform enters `paths.yaml`, the `Makefile` lists that run `generate` and `generate-check`, and `scripts/generate_sources.py`, as in step 4.4. Then check.
 
 ```bash
-riscv-tools platform sync --prefix Insper-RISC-V \
-    --source Insper-RISC-V/src/cyclone-v/minhaplaca/config.yaml \
-    --output tools/riscv_build/config.platform-minhaplaca.yaml
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add
+make generate-sources
+make paths
+make memory-map
 ```
 
-The `config.minhaplaca.yaml` extends the generated file, as in step 8.3, with the `include_dir` of the platform. `certify-board` runs the ACT4 of the chosen profile on the board, with the `config.flash-board-<profile>.yaml` configuration of the `Certification` repository.
+### 10.4. Compile, program and run programs
 
-### 10.6. Timing report
+Compiling up to `map` (N0) and up to `sta` (N1), programming (N2) and the programs of the Tests repository (N3) follow chapter 10 of [adicionar-placa.md](adicionar-placa.md), with the board lock and the warning about compiling and programming in the same shell in [placa.md](placa.md). `riscv-tools platform sync` writes, in the `Tests` clone, the configuration derived from the `config.yaml` of the platform, as in step 8.3.
 
-After the compilation, the Timing Analyzer report is at `output_files/<platform>.sta.rpt`. The numbers of interest are the Fmax of each clock and the worst setup and hold slack. A negative setup slack indicates a path longer than the clock period. To list the critical paths, use `riscv-tools timing-paths` in the folder of the compiled project.
+### 10.5. Timing report
+
+After compilation, the Timing Analyzer report is in `output_files/` of the generated project. To list the critical paths of each domain, run `timing-paths` with the `config.yaml` of the platform and the project already compiled.
+
+```bash
+riscv-tools --config src/<family>/<platform>/config.yaml timing-paths --npaths 2
+```
+
+| Expected output | Common error and cause |
+| :--- | :--- |
+| A Markdown table with one path per row: clock, source, destination, width, slack and delay | `quartus_sta failed` with `Fitter (quartus_fit) failed or was not run`, from running before the full compilation |
+
+A negative setup slack means a path longer than the clock period, and the result changes from seed to seed.
+
+### 10.6. New board
+
+A board the repository does not know yet starts from the board package (`boards/<board>/`), not from a copy of a platform. The step by step, from `board.yaml` to level N2, is in [adicionar-placa.md](adicionar-placa.md).
 
 ## 11. Add a new peripheral
 
@@ -975,8 +973,8 @@ In a pull request from someone outside the project, the CI only starts after a m
 | :--- | :--- |
 | `reserved stdout ... is not inside a RAM region` | The reserved words ended up outside the RAM after changing the size or the base |
 | `generated files are out of date` | The `platform.yaml` changed without running `generate-memory-map` |
-| `cannot find in top entity generic 'has_e'` | The simulated top does not declare the twelve `has_*` generics |
-| `timed out after ... cycles without a result` | The `rv32_platform.h` header of the test project has the `tohost` of another platform, or the BOOT_ROM does not jump to the start of the ROM |
+| `cannot find in top entity generic 'has_e'` | The simulated top does not declare the thirteen `has_*` generics |
+| `timed out after ... cycles without a result` | The `rv32_platform.h` header of the test project has the `tohost` of another platform, or the BOOT_MEMORY does not jump to the start of the ROM |
 | `rv32_test.h: No such file or directory` | `generate-header` did not run for the platform configuration |
 | `unit "..." not found` | A source is missing in the `ghdl` list, or the list is out of order |
 | `missing docs/...` in `make paths` | The platform, peripheral or memory document is missing in one of the languages |

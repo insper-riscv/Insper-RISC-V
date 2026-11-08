@@ -9,7 +9,7 @@ Este guia leva a partir de um clone limpo do `Insper-RISC-V` até uma plataforma
 | Bloco | Repositório | O que entrega |
 | :--- | :--- | :--- |
 | Core | `Core` | O processador, escolhido por um perfil (base `rv32i` ou `rv32e` mais as extensões) |
-| Memory | `Memory` | BOOT_ROM, ROM e FLASH (inclusive a FLASH de duas portas), RAM e SDRAM, caches, chip de FLASH e roteador de regiões |
+| Memory | `Memory` | BOOT_MEMORY, ROM e FLASH (inclusive a FLASH de duas portas), RAM e SDRAM, caches, chip de FLASH e roteador de regiões |
 | Peripherals | `Peripherals` | UART, GPIO, temporizador, CLINT, controlador de interrupção externa, controlador de FLASH e display, cada um com um lado `soc` (independente de família) e, quando precisa, um lado por família |
 | Common-Components | `Common-Components` | Multiplexadores, registradores e pacotes de utilidades, presentes como submódulo nos outros três |
 | Insper-RISC-V | este repositório | Fixa a versão de cada submódulo e traz as plataformas, que ligam os blocos |
@@ -20,9 +20,9 @@ Este guia leva a partir de um clone limpo do `Insper-RISC-V` até uma plataforma
 | :--- | :--- | :--- |
 | `platform.yaml` | Pessoa | Fonte do mapa de memória, do perfil do Core, das palavras reservadas e dos periféricos, e a lista dos arquivos a gerar |
 | `rtl/<plataforma>_map_pkg.vhd` | `riscv-tools generate-memory-map` | Constantes VHDL do mapa e do perfil |
-| `runtime/rv32im-fpga.specs`, `runtime/boot_rom.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Parâmetros do linker, script de ligação da BOOT_ROM e endereços do runtime |
+| `runtime/rv32im-fpga.specs`, `runtime/boot_memory.ld`, `runtime/memory_map.h` | `riscv-tools generate-memory-map` | Parâmetros do linker, script de ligação da BOOT_MEMORY e endereços do runtime |
 | `rtl/<plataforma>_sim_top.vhd` | Pessoa | Topo de simulação, que só instancia e conecta os blocos |
-| `runtime/boot_rom.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Pessoa | O que o programa encontra ao iniciar e ao terminar |
+| `runtime/boot_memory.S`, `_exit.c`, `stdio.c`, `spike_exit.S` | Pessoa | O que o programa encontra ao iniciar e ao terminar |
 | `config.yaml` | Pessoa | Configuração do `riscv-tools` para compilar e simular, que lê o mapa do `platform.yaml` |
 
 Nenhum número do mapa se escreve em dois lugares. O que o `config.yaml` e o `Tests` precisam do mapa chega a eles pelo `platform.yaml`.
@@ -31,14 +31,14 @@ Nenhum número do mapa se escreve em dois lugares. O que o `config.yaml` e o `Te
 
 | Plataforma | Caminho | Quando copiar |
 | :--- | :--- | :--- |
-| `template` | `src/simulation/template/` | Ponto de partida de uma plataforma só de simulação, com BOOT_ROM, ROM e RAM dentro do chip |
+| `template` | `src/simulation/template/` | Ponto de partida de uma plataforma só de simulação, com BOOT_MEMORY, ROM e RAM dentro do chip |
 | `external-data` | `src/cyclone-v/external-data/` | Ponto de partida de uma placa DE0-CV, com a FLASH de duas portas dentro da FPGA e a SDRAM atrás da cache de dados |
 | `de0-cv` | `src/cyclone-v/de0-cv/` | Placa DE0-CV completa, com a FLASH como chip atrás das caches de instruções e de dados |
 
 A plataforma modelo tem esta forma.
 
 ```text
-  BOOT_ROM 4 KiB  --+
+  BOOT_MEMORY 4 KiB  --+
   ROM 28 KiB      --+--  núcleo (perfil do platform.yaml)  --  RAM 32 KiB
   (duas portas)                     |
                                     +-- janela de periféricos (bit 31 = 1) -- UART sobre JTAG (id 4)
@@ -134,7 +134,7 @@ Para o exemplo, a RAM passa a 64 KiB e o perfil a `rv32im`. A RAM começa em `0x
 platform: exemplo
 profile: rv32im
 regions:
-  - {name: BOOT_ROM, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
   - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
 reserved:
@@ -154,7 +154,7 @@ riscv-tools --root . check-memory-map --platform src/simulation/exemplo/platform
 
 | Saída esperada | Erro comum e causa |
 | :--- | :--- |
-| Quatro linhas `generated:` (specs, `boot_rom.ld`, `memory_map.h`, pacote VHDL) e `memory map OK` | `reserved stdout ... is not inside a RAM region`, porque os endereços reservados ficaram fora da RAM depois de mudar o tamanho |
+| Quatro linhas `generated:` (specs, `boot_memory.ld`, `memory_map.h`, pacote VHDL) e `memory map OK` | `reserved stdout ... is not inside a RAM region`, porque os endereços reservados ficaram fora da RAM depois de mudar o tamanho |
 | `HAS_M` verdadeiro e `RAM_END_KIB` igual a 96 no pacote gerado | `profile` com nome que não está em `matrix.yaml` |
 
 Quando o mapa mudar, rode o primeiro comando de novo. Com `--check` no fim, o mesmo comando não escreve nada e falha se algum arquivo gerado estiver fora de data.
@@ -191,29 +191,53 @@ EOF
 
 O teste lê a base da RAM em `RAM_BASE`, no começo de `exemplo_sim_top.py`, e esse valor muda junto com a região de RAM do `platform.yaml`.
 
-O `Makefile` ganha as linhas abaixo, cada uma ao lado da sua equivalente da plataforma modelo.
+O `paths.yaml` ainda precisa declarar o topo e o pacote do mapa como componentes (`provides`), que são de onde o `make generate-sources` tira a lista de fontes do `config.yaml` e do `tests.json`.
 
-| Onde | O que acrescentar |
-| :--- | :--- |
-| Variáveis do início, depois de `PT :=` | `PX := src/simulation/exemplo` |
-| Depois da definição de `TEMPLATE_VHDL` | `EXEMPLO_VHDL := $(subst template,exemplo,$(TEMPLATE_VHDL))` |
-| Regra `check-tops`, depois das linhas do `template_sim_top` | Três linhas, uma de análise com `$(EXEMPLO_VHDL)`, uma de elaboração de `exemplo_sim_top` e um `echo` |
-| Regras `memory-map`, `generate` e `generate-check` | A mesma linha de cada uma trocando `$(PT)` por `$(PX)` |
+```bash
+python3 - <<'EOF2'
+texto = open("paths.yaml").read()
+inicio = texto.index("  template_map:")
+fim = texto.index("\n", texto.index("template_sim_top.vhd", inicio))
+bloco = texto[inicio:fim]
+texto = texto[:fim] + "\n" + bloco.replace("template", "exemplo") + texto[fim:]
+open("paths.yaml", "w").write(texto)
+EOF2
+```
+
+O `scripts/generate_sources.py` e o `scripts/check_top_generics.py` ganham uma linha cada, ao lado das do `template`.
+
+```bash
+sed -i 's#^    Saida("src/simulation/template/config.yaml", ("template_sim_top",)),#&\n    Saida("src/simulation/exemplo/config.yaml", ("exemplo_sim_top",)),#' scripts/generate_sources.py
+sed -i 's#^    Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),#&\n    Saida(TESTS_JSON, ("exemplo_sim_top",), "ExemploSimTop"),#' scripts/generate_sources.py
+sed -i 's#^    "src/simulation/template/rtl/template_map_pkg.vhd": \[#    "src/simulation/exemplo/rtl/exemplo_map_pkg.vhd": [\n        "src/simulation/exemplo/rtl/exemplo_sim_top.vhd",\n    ],\n&#' scripts/check_top_generics.py
+```
+
+O `Makefile` ganha uma variável e uma cópia de cada linha que cita a plataforma modelo.
+
+```bash
+sed -i 's#^PT := src/simulation/template$#&\nPX := src/simulation/exemplo#' Makefile
+sed -i -E 's#^(\t.*)\$\(PT\)(.*)$#\1$(PT)\2\n\1$(PX)\2#' Makefile
+python3 - <<'EOF2'
+texto = open("Makefile").read()
+linhas = [l for l in texto.split("\n") if "template" in l and l.startswith("\t@")]
+texto = texto.replace(linhas[-1], linhas[-1] + "\n" + "\n".join(l.replace("template", "exemplo") for l in linhas), 1)
+open("Makefile", "w").write(texto)
+EOF2
+```
 
 A documentação ganha um documento por idioma e a linha na tabela do `README.md` da pasta.
 
 ```bash
-for l in pt-br en; do sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md; done
+for l in pt-br en; do
+    sed 's/template/exemplo/g' docs/$l/platform/template.md > docs/$l/platform/exemplo.md
+    sed -i '/^| \[template\]/{p;s/template/exemplo/g}' docs/$l/platform/README.md
+done
 ```
 
-| Arquivo | O que acrescentar |
-| :--- | :--- |
-| `paths.yaml` | Os arquivos da plataforma na lista `references` e os campos de caminho do `config.yaml` |
-| `Makefile` | A variável `P<x> := src/simulation/exemplo`, as linhas de `memory-map`, `generate` e `generate-check` e a elaboração do topo em `check-tops`, que lê as fontes do `riscv-tools sources` |
-| `paths.yaml` (`provides`) | O componente do topo, com as fontes e o que ele requer; o `scripts/generate_sources.py` ganha o arquivo de lista da plataforma |
-| `docs/pt-br/platform/` | Um documento `exemplo.md` e a linha na tabela do `README.md` da pasta, com o espelho em `docs/en/` |
+Gere as listas de fontes e confira.
 
 ```bash
+make generate-sources
 make paths
 make memory-map
 ```
@@ -268,22 +292,22 @@ O topo de simulação da plataforma modelo tem seis blocos, que o exemplo manté
 | :--- | :--- | :--- |
 | `u_clock` | `clk_gen_3way` | `src/simulation/internal-mem/rtl/` |
 | `u_core` | `core` | `Core/src/core/` |
-| `u_boot_rom` | `rom_simulation` | `Memory/src/ROM/SoC/` |
+| `u_boot_memory` | `rom_simulation` | `Memory/src/ROM/SoC/` |
 | `u_rom` | `rom_simulation` (duas portas) | `Memory/src/ROM/SoC/` |
 | `u_ram` | `ram_simulation` | `Memory/src/RAM/SoC/` |
 | `u_uart` (opcional) | `jtag_uart` | `Peripherals/src/UART/jtag/` |
 
-O núcleo tem três saídas de memória: a busca de instrução (BOOT_ROM e ROM), a porta de dados da ROM e da RAM, e o barramento externo, por onde passam os periféricos.
+O núcleo tem três saídas de memória: a busca de instrução (BOOT_MEMORY e ROM), a porta de dados da ROM e da RAM, e o barramento externo, por onde passam os periféricos.
 
 ### 6.2. Genéricos de tamanho
 
-Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_ROM_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
+Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_MEMORY_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
 
 ### 6.3. Perfil e mapa no `core`
 
-O topo declara um genérico `has_*` por extensão (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` e `has_zicclsm`), cada um com a constante `HAS_*` do pacote como valor padrão. No `generic map` do `core`, cada `has_*` do núcleo recebe o genérico de mesmo nome do topo, e os limites das regiões (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
+O topo declara um genérico `has_*` por extensão (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei`, `has_zicclsm` e `has_interrupts`), cada um com a constante `HAS_*` do pacote como valor padrão. No `generic map` do `core`, cada `has_*` do núcleo recebe o genérico de mesmo nome do topo, e o `has_interrupts` do núcleo recebe `has_interrupts and has_zicsr`. Os limites das regiões (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
 
-O `riscv-tools` passa ao simulador um `-g has_*` por extensão do perfil. Todo topo que ele simula precisa declarar os doze genéricos, e o topo que não declara um deles falha na elaboração com `cannot find in top entity generic`.
+O `riscv-tools` passa ao simulador um `-g has_*` por extensão do perfil. Todo topo que ele simula precisa declarar os treze genéricos, e o topo que não declara um deles falha na elaboração com `cannot find in top entity generic`.
 
 ### 6.4. Janela de cada periférico
 
@@ -291,7 +315,7 @@ O barramento externo do núcleo entrega ao topo o endereço, o dado de escrita e
 
 ### 6.5. Interrupções
 
-O núcleo recebe as interrupções de máquina por três portas de nível, `i_irq_software`, `i_irq_timer` e `i_irq_external`, todas com valor padrão `'0'`. Elas só têm efeito com o genérico `has_interrupts` verdadeiro e `has_zicsr` ligado, e então o `mip` espelha as três portas e o `mie` as mascara. O CLINT (`Peripherals/src/CLINT/soc/`) entrega `o_irq_timer` e `o_irq_software`, e o controlador de interrupção externa (`Peripherals/src/intc/soc/`) reúne as linhas dos periféricos em `o_irq_external`. Cada um é um periférico comum, com janela própria (passo 6.4), e as suas saídas ligam diretamente às portas do núcleo.
+O núcleo recebe as interrupções de máquina por três portas de nível, `i_irq_software`, `i_irq_timer` e `i_irq_external`, todas com valor padrão `'0'`. Elas só têm efeito com o genérico `has_interrupts` verdadeiro e `has_zicsr` ligado, e então o `mip` espelha as três portas e o `mie` as mascara. O CLINT (`Peripherals/src/CLINT/soc/`) entrega `o_irq_timer` e `o_irq_software`, e o PLIC (`Peripherals/src/PLIC/soc/`) reúne as linhas dos periféricos em `o_meip`. Cada um é um periférico comum, com janela própria (passo 6.4), e as suas saídas ligam diretamente às portas do núcleo.
 
 ### 6.6. Convenções do CONTRIBUTING
 
@@ -340,8 +364,8 @@ O runtime é o que o programa encontra ao iniciar e ao terminar. Os quatro arqui
 
 | Arquivo | O que faz | O que muda com o mapa |
 | :--- | :--- | :--- |
-| `runtime/boot_rom.S` | `_reset` zera `stdout`, `tohost` e `fromhost` e salta para `RV32_BOOT_ENTRY`; `rv32_wait_restart` espera o `fromhost` | Nada, lê os endereços de `memory_map.h` |
-| `runtime/boot_rom.ld` | Script de ligação da BOOT_ROM, com `rv32_wait_restart` em `0x100` | Gerado |
+| `runtime/boot_memory.S` | `_reset` zera `stdout`, `tohost` e `fromhost` e salta para `RV32_BOOT_ENTRY`; `rv32_wait_restart` espera o `fromhost` | Nada, lê os endereços de `memory_map.h` |
+| `runtime/boot_memory.ld` | Script de ligação da BOOT_MEMORY, com `rv32_wait_restart` em `0x100` | Gerado |
 | `runtime/rv32im-fpga.specs` | Parâmetros do linker (`__flash`, `__flash_size`, `__ram`, `__ram_size`) e o crt0 da picolibc | Gerado |
 | `runtime/memory_map.h` | Endereços de RAM, `tohost`, `fromhost`, `stdout`, entrada de boot e base de cada periférico | Gerado |
 | `runtime/_exit.c` | Escreve o resultado em `tohost` e entra em `rv32_wait_restart` | Nada |
@@ -378,11 +402,11 @@ Ele reúne, para o `riscv-tools`, o que é da plataforma. Nenhum endereço nem t
 | :--- | :--- |
 | `toolchain` | GCC, `objcopy` e o `rv32im-fpga.specs` da plataforma |
 | `memory_map` | O `platform.yaml`, de onde vêm as bases, o `tohost`, o `fromhost` e o perfil |
-| `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_rom.S` e `boot_rom.ld` |
+| `paths` | Fontes do runtime (`_exit.c`, `stdio.c`), `boot_memory.S` e `boot_memory.ld` |
 | `sim.toplevel` | `exemplo_sim_top` |
 | `sim.vhdl_sources` | Todas as fontes, em ordem de dependência, escritas pelo `make generate-sources` |
 | `sim.test_module`, `sim.python_path` | O testbench cocotb, `testbench.test_c_program` da plataforma `internal-mem` |
-| `sim.parameters` | `BOOT_ROM_FILE` e `ROM_FILE` com as imagens de cada programa |
+| `sim.parameters` | `BOOT_MEMORY_FILE` e `ROM_FILE` com as imagens de cada programa |
 | `emulator.sources` | `spike_exit.S` |
 
 A lista `sim.vhdl_sources` não se edita à mão. Ela vem do componente do topo no `provides` do `paths.yaml` da plataforma, que declara os componentes que o topo requer, e o `make generate-sources` a escreve na ordem de análise. Se o topo ganhar um periférico, o componente dele entra no `requires` do topo e a lista é regenerada.
@@ -404,7 +428,7 @@ Os programas ficam no repositório `Tests` (`asm/` e `c/`). O `Tests` traz o `In
 Primeiro, a plataforma precisa estar em um commit do clone, e o submódulo do `Tests` passa a apontar para ele.
 
 ```bash
-git add src/simulation/exemplo paths.yaml Makefile tests docs
+git add src/simulation/exemplo paths.yaml Makefile tests docs scripts
 git commit -m "feat: plataforma exemplo"
 cd ..
 git clone --recurse-submodules git@github.com:insper-riscv/Tests.git
@@ -414,7 +438,7 @@ git -C Insper-RISC-V checkout FETCH_HEAD
 git -C Insper-RISC-V submodule update --init --recursive
 ```
 
-Depois, o `platform sync` grava a configuração da plataforma já resolvida contra o `platform.yaml`, com os caminhos precedidos pela pasta do submódulo.
+O clone do `Tests` fica ao lado do `Insper-RISC-V`, em `../Tests`, que é onde o `check-memory-map` o procura. Depois, o `platform sync` grava a configuração da plataforma já resolvida contra o `platform.yaml`, com os caminhos precedidos pela pasta do submódulo.
 
 ```bash
 riscv-tools platform sync --prefix Insper-RISC-V \
@@ -472,7 +496,7 @@ riscv-tools --config tools/riscv_build/config.exemplo.yaml sim
 | Saída esperada | Erro comum e causa |
 | :--- | :--- |
 | `arithmetic-add: PASS`, `multiply: PASS` e `stdout-printf: PASS`, com o rótulo `(rv32im)` nos dois últimos | `timed out after ... cycles without a result`, quando o `rv32_platform.h` ficou com os endereços de outra plataforma e o programa escreve o `tohost` onde o testbench não olha |
-| `compile` gera `manifest.json` com os programas | `cannot find in top entity generic 'has_e'`, quando o topo não declara os genéricos `has_*` do passo 6.3 |
+| `compile` gera `manifest.json` com os programas | `cannot find in top entity generic 'has_interrupts'`, quando o topo não declara os genéricos `has_*` do passo 6.3 (o nome muda com o genérico que falta) |
 | | `rv32_test.h: No such file or directory`, por pular o `generate-header` |
 | | `region ... overflowed` na ligação, quando o programa não cabe na ROM de 28 KiB |
 
@@ -517,83 +541,57 @@ uv run python tools/riscv_build/gen_flash_profiles.py
 
 ## 10. Placa
 
-Este capítulo vale só se a plataforma tem uma FPGA. A `external-data` é a menor plataforma de placa e serve de ponto de partida; a `de0-cv` é a referência completa.
+Este capítulo vale só se a plataforma tem uma FPGA. O projeto do Quartus de uma plataforma de placa não se escreve nem se copia à mão: o `riscv-tools board generate` o escreve a partir do `platform.yaml` da plataforma e do pacote da placa em `boards/<placa>/`. O passo a passo completo, do pacote de placa até a execução de programas, está em [adicionar-placa.md](adicionar-placa.md), e este capítulo mostra só o que a plataforma nova faz nele.
 
-### 10.1. Copiar e renomear
+### 10.1. Declarar a placa no `platform.yaml`
 
-```bash
-cp -r src/cyclone-v/external-data src/cyclone-v/minhaplaca
-cd src/cyclone-v/minhaplaca
-for f in $(find . -name '*external*data*' -type f); do
-    mv "$f" "$(echo $f | sed 's/external-data/minhaplaca/;s/external_data/minhaplaca/')"
-done
-grep -rl "external[-_]data" . | xargs sed -i 's/external-data/minhaplaca/g;s/external_data/minhaplaca/g'
-cd ../../..
-```
+A plataforma nova parte da cópia da plataforma de placa mais próxima (`src/cyclone-v/de0-cv` para o perfil completo, `src/cyclone-iv-e/de0-nano` para um perfil reduzido). No `platform.yaml`, o campo `board` (ou a lista `boards`) escolhe a placa, os campos `clocks` e `io` dizem o que o SoC pede, e cada região externa escolhe o seu backend. O passo 6 de [adicionar-placa.md](adicionar-placa.md) descreve os campos, e o passo 7 o validador que compara o pedido com o que a placa oferece.
 
-Depois da cópia, registre a plataforma como no passo 4.4, usando as linhas `external-data` do `paths.yaml`, do `Makefile` e do `tests/python/tests.json` como modelo no lugar das da plataforma modelo.
-
-### 10.2. Arquivos do projeto do Quartus
-
-| Arquivo | Conteúdo |
-| :--- | :--- |
-| `<plataforma>.qpf` | O projeto, com a revisão |
-| `<plataforma>.qsf` | Dispositivo, pinos e a lista de fontes VHDL e IP, escrita pelo `make generate-sources` e conferida contra o disco pelo `check-paths` |
-| `<plataforma>.sdc` | Os clocks e as restrições de entrada, saída e cruzamento de domínio |
-| `<plataforma>_assignment_defaults.qdf` | Atribuições padrão do projeto |
-| `../de0-cv/pll/` | A IP do PLL que gera os clocks do núcleo e da SDRAM, compartilhada entre as plataformas da DE0-CV |
-| `<plataforma>_synth.tcl` | Compila com a semente escolhida; com o argumento `map` só sintetiza |
-| `<plataforma>_program.sh` | Programa o `.sof` pelo primeiro cabo do `jtagconfig` |
-| `<plataforma>_top.vhd` | O topo da placa, que liga o PLL, o núcleo, as memórias da placa e os periféricos |
-| `<plataforma>_map_pkg.vhd` | Pacote do mapa, gerado do `platform.yaml` |
-| `boot_rom_init.mif`, `init.mif` | Imagens iniciais da BOOT_ROM e da FLASH |
-
-### 10.3. Editar o `.qsf` e o `.sdc`
-
-O `.qsf` tem a lista de fontes escrita pelo `make generate-sources`, com caminhos relativos à pasta da plataforma (`../../../Core/src/...`). As fontes do núcleo, em ordem de dependência, saem de:
+### 10.2. Gerar e conferir o projeto
 
 ```bash
-riscv-tools --root . sources Core/core
+riscv-tools --root . generate-memory-map --platform src/<família>/<plataforma>/platform.yaml
+riscv-tools --root . --board <placa> board generate --platform src/<família>/<plataforma>/platform.yaml --out build
+riscv-tools --root . --board <placa> board generate --platform src/<família>/<plataforma>/platform.yaml --out build --check
 ```
 
-O `.sdc` declara o clock de entrada (`create_clock`), os clocks do PLL (`derive_pll_clocks`) e a incerteza (`derive_clock_uncertainty`). Cada clock externo gerado, como o da SDRAM, ganha o seu `create_generated_clock` e os atrasos de entrada e saída do datasheet do chip. Cada cruzamento entre os domínios do núcleo, da SDRAM e do JTAG tem a sua restrição `set_max_delay` e `set_min_delay`, e os botões, LEDs e displays lentos têm `set_false_path`.
-
-Com a lista pronta, confira os caminhos.
-
-```bash
-make paths
-```
-
-### 10.4. Compilar e programar
-
-```bash
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl map
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl && src/cyclone-v/minhaplaca/minhaplaca_program.sh
-```
-
-O primeiro comando só sintetiza e confere que os caminhos e as entidades resolvem. O segundo compila e programa a placa, e os dois comandos precisam sair no mesmo shell (`&&`). O guia [placa.md](placa.md) explica a regra e o que fazer quando a placa não responde.
+O `board generate` escreve em `build/<plataforma>-<placa>/` o topo da placa, o PLL, o `.qpf`, o `.qsf`, o `.sdc` e o `capacity.json`, e a pasta `build` não é versionada. Os arquivos escritos e o que cada um contém estão em [../boards/geracao.md](../boards/geracao.md). Um erro de cabimento ou de pino sai do validador antes de qualquer compilação.
 
 | Saída esperada | Erro comum e causa |
 | :--- | :--- |
-| `Analysis & Synthesis was successful. 0 errors` | `design library "work" does not contain primary unit ...`, por faltar um arquivo no `.qsf` (um `sdram_jtag_shell.vhd` de `../de0-cv/`, por exemplo) |
-| `output_files/minhaplaca.sof` depois da compilação completa | `Can't scan JTAG chain` no programador, por compilar e programar em shells diferentes |
+| Os arquivos do projeto em `build/<plataforma>-<placa>/` e o `--check` sem diferença | `perfil não cabe` (V11 ou V12), por um perfil maior que o dispositivo; a correção é reduzir o perfil, as caches ou a memória emulada |
 
-### 10.5. Programas e certificação na placa
+### 10.3. Registrar a plataforma no repositório
 
-Com o bitstream programado, o `Tests` escreve cada programa na BOOT_ROM e na FLASH por JTAG e confere o resultado, sem recompilar a FPGA. A configuração da placa no `Tests` é gerada como no passo 8.3, a partir do `config.yaml` da plataforma de placa.
+A plataforma entra no `paths.yaml`, nas listas do `Makefile` que rodam `generate` e `generate-check` e no `scripts/generate_sources.py`, como no passo 4.4. Depois, confira.
 
 ```bash
-riscv-tools platform sync --prefix Insper-RISC-V \
-    --source Insper-RISC-V/src/cyclone-v/minhaplaca/config.yaml \
-    --output tools/riscv_build/config.platform-minhaplaca.yaml
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add
+make generate-sources
+make paths
+make memory-map
 ```
 
-O `config.minhaplaca.yaml` estende o arquivo gerado, como no passo 8.3, com o `include_dir` da plataforma. O `certify-board` roda o ACT4 do perfil escolhido na placa, com a configuração `config.flash-board-<perfil>.yaml` do repositório `Certification`.
+### 10.4. Compilar, programar e rodar programas
 
-### 10.6. Relatório de tempo
+A compilação até `map` (N0) e até `sta` (N1), a programação (N2) e os programas do repositório Tests (N3) seguem o capítulo 10 de [adicionar-placa.md](adicionar-placa.md), com o travamento da placa e o aviso sobre compilar e programar no mesmo shell em [placa.md](placa.md). O `riscv-tools platform sync` escreve, no clone do `Tests`, a configuração derivada do `config.yaml` da plataforma, como no passo 8.3.
 
-Depois da compilação, o relatório do Timing Analyzer fica em `output_files/<plataforma>.sta.rpt`. Os números de interesse são o Fmax de cada clock e o pior slack de setup e de hold. Um slack negativo de setup indica um caminho mais longo que o período do clock. Para listar os caminhos críticos, use o `riscv-tools timing-paths` na pasta do projeto compilado.
+### 10.5. Relatório de tempo
+
+Depois da compilação, o relatório do Timing Analyzer fica em `output_files/` do projeto gerado. Para listar os caminhos críticos de cada domínio, rode o `timing-paths` com o `config.yaml` da plataforma e o projeto já compilado.
+
+```bash
+riscv-tools --config src/<família>/<plataforma>/config.yaml timing-paths --npaths 2
+```
+
+| Saída esperada | Erro comum e causa |
+| :--- | :--- |
+| Uma tabela Markdown com um caminho por linha: clock, origem, destino, largura, slack e atraso | `quartus_sta failed` com `Fitter (quartus_fit) failed or was not run`, por rodar antes da compilação completa |
+
+Um slack negativo de setup indica um caminho mais longo que o período do clock, e o resultado muda de semente para semente.
+
+### 10.6. Placa nova
+
+Uma placa que o repositório ainda não conhece parte do pacote de placa (`boards/<placa>/`) e não da cópia de uma plataforma. O passo a passo, do `board.yaml` até o nível N2, está em [adicionar-placa.md](adicionar-placa.md).
 
 ## 11. Adicionar um periférico novo
 
@@ -975,8 +973,8 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | :--- | :--- |
 | `reserved stdout ... is not inside a RAM region` | As palavras reservadas ficaram fora da RAM depois de mudar o tamanho ou a base |
 | `generated files are out of date` | O `platform.yaml` mudou sem rodar `generate-memory-map` |
-| `cannot find in top entity generic 'has_e'` | O topo simulado não declara os doze genéricos `has_*` |
-| `timed out after ... cycles without a result` | O cabeçalho `rv32_platform.h` do projeto de testes tem o `tohost` de outra plataforma, ou a BOOT_ROM não salta para o início da ROM |
+| `cannot find in top entity generic 'has_e'` | O topo simulado não declara os treze genéricos `has_*` |
+| `timed out after ... cycles without a result` | O cabeçalho `rv32_platform.h` do projeto de testes tem o `tohost` de outra plataforma, ou a BOOT_MEMORY não salta para o início da ROM |
 | `rv32_test.h: No such file or directory` | O `generate-header` não rodou para a configuração da plataforma |
 | `unit "..." not found` | Falta uma fonte na lista do `ghdl`, ou a lista está fora de ordem |
 | `missing docs/...` no `make paths` | Falta o documento da plataforma, do periférico ou da memória em um dos idiomas |

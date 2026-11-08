@@ -2,11 +2,11 @@
 
 ## 1. O que ela é
 
-Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), monta o núcleo com quatro escolhas independentes: a ROM e a RAM dentro ou fora do chip, e a cache de instruções e a de dados presentes ou não. Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de uma cache) fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
+Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), instancia o [SoC](../soc/soc.md) e lhe acrescenta o relógio de três fases e os modelos de chip. O SoC monta o núcleo com quatro escolhas independentes: a ROM e a RAM dentro ou fora do chip, e a cache de instruções e a de dados presentes ou não. Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de uma cache) fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
 
 O topo liga também, por genéricos, periféricos opcionais da placa (chaves, botões, displays e as duas UART) que as [dez plataformas](dez-plataformas.md) usam; sem eles a janela de periféricos tem só o CLINT e o controlador externo, quando as interrupções estão ligadas.
 
-Todas as combinações têm a BOOT_ROM, a memória de inicialização que deixa a CPU num estado conhecido, e a ROM sempre começa logo depois dela.
+Todas as combinações têm a BOOT_MEMORY, a memória de inicialização que deixa a CPU num estado conhecido, e a ROM sempre começa logo depois dela.
 
 ## 2. As escolhas e as arquiteturas
 
@@ -76,16 +76,16 @@ Os dois chips simulados atendem pedidos de palavra sem cache. A FLASH e a SDRAM 
 
 ## 4. Mapa de memória
 
-O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_ROM (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que são o padrão dos genéricos `has_*`, além de `BOOT_ROM_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP` e `HAS_ZICOND` vêm do pacote, ligados pelo campo `extras` do `platform.yaml`.
+O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que são o padrão dos genéricos `has_*`, além de `BOOT_MEMORY_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP`, `HAS_ZICOND` e `HAS_SSCOFPMF` vêm do pacote, ligados pelo campo `extras` do `platform.yaml`; o último exige o Zihpm no perfil e `Interrupts` nos `extras`.
 
 | Região | Início | Fim | Genéricos |
 | :--- | :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000` | `0x00001000` | `boot_rom_size_bytes` |
-| ROM | logo depois da BOOT_ROM, `0x00001000` | `0x00100000` | `rom_end_kib` |
+| BOOT_MEMORY | `0x00000000` | `0x00001000` | `boot_memory_size_bytes` |
+| ROM | logo depois da BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
 | Janela externa e periféricos | `0x80000000` | | `ext_base_kib`, `periph_base_kib` |
 
-Os limites estão em KiB. As palavras que o hospedeiro e o programa compartilham (a saída padrão, `tohost` e `fromhost`) ficam no topo da RAM, na última página de 4 KiB, que as caches contornam. A BOOT_ROM zera essas palavras e salta para o início da ROM.
+Os limites estão em KiB. As palavras que o hospedeiro e o programa compartilham (a saída padrão, `tohost` e `fromhost`) ficam no topo da RAM, na última página de 4 KiB, que as caches contornam. A BOOT_MEMORY zera essas palavras e salta para o início da ROM.
 
 ## 5. Tamanhos
 
@@ -93,7 +93,7 @@ Todo tamanho é uma potência de dois, verificada em tempo de elaboração pelo 
 
 | Genérico | Unidade | Padrão |
 | :--- | :--- | :--- |
-| `boot_rom_size_bytes` | bytes | 4096, múltiplo de 1 KiB |
+| `boot_memory_size_bytes` | bytes | 4096, múltiplo de 1 KiB |
 | `rom_size_bytes` | bytes | 1048576 (1 MB) |
 | `ram_size_bytes` | bytes | 1048576 (1 MB) |
 | `icache_size_bits` | bits | 4096 (4 kbit) |
@@ -103,7 +103,7 @@ Os genéricos `flash_first_latency`, `flash_next_latency` e `ext_ram_latency` d�
 
 ## 6. Como usar
 
-As imagens entram pelos genéricos `boot_rom_file`, `rom_file` e `ram_file`, uma palavra de 32 bits por linha em hexadecimal.
+As imagens entram pelos genéricos `boot_memory_file`, `rom_file` e `ram_file`, uma palavra de 32 bits por linha em hexadecimal.
 
 | Porta | Uso |
 | :--- | :--- |
@@ -115,7 +115,7 @@ O GHDL aloca os arrays das memórias na pilha, então a simulação de memórias
 
 ## 7. Programas dos repositórios de teste
 
-O `src/simulation/modular/config.yaml` leva a plataforma ao `riscv-tools`: o runtime (`boot_rom.S`, `_exit.c`, `stdio.c`, `spike_exit.S`), o script de ligação e o arquivo de specs gerados do mapa, o testbench cocotb e a lista de fontes VHDL. Nada do mapa é escrito nele. O perfil e as memórias de uma execução vêm da linha de comando, sem alterar arquivo versionado.
+O `src/simulation/modular/config.yaml` leva a plataforma ao `riscv-tools`: o runtime (`boot_memory.S`, `_exit.c`, `stdio.c`, `spike_exit.S`), o script de ligação e o arquivo de specs gerados do mapa, o testbench cocotb e a lista de fontes VHDL. Nada do mapa é escrito nele. O perfil e as memórias de uma execução vêm da linha de comando, sem alterar arquivo versionado.
 
 ```bash
 ulimit -s unlimited
@@ -130,7 +130,7 @@ O comando escreve, no repositório de teste, o `config.generated.yaml` com os ge
 
 | Item | Comportamento na plataforma modular |
 | :--- | :--- |
-| BOOT_ROM | Zera o cabeçalho da saída padrão, `tohost` e `fromhost` e salta para a ROM; não executa `fence.i`, porque a simulação parte de caches vazias |
+| BOOT_MEMORY | Zera o cabeçalho da saída padrão, `tohost` e `fromhost` e salta para a ROM; não executa `fence.i`, porque a simulação parte de caches vazias |
 | Saída padrão | Buffer linear de 1 KiB no topo da RAM |
 | UART e display | Sem periférico ligado: os programas `uart-echo`, `uart-tx` e `uart-errors` não se aplicam |
 | Testbench | Vigia o barramento da RAM do núcleo e o barramento externo ao mesmo tempo, detecta a escrita de `tohost` e, nos testes com `golden.json`, confere a RAM reconstruída das escritas |

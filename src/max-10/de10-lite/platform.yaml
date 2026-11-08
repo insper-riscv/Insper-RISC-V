@@ -1,0 +1,99 @@
+# The memory map of the DE10-Lite platform: the full profile of the DE0-CV on the Terasic DE10-Lite (MAX 10, 10M50DA, 49,760 LEs
+# and 182 M9K blocks). The BOOT_MEMORY is inside the core, the FLASH is emulated in the M9K blocks (124 KiB, right after the
+# BOOT_MEMORY, so that the store is 128 KiB) and the RAM is the 64 MB SDRAM of the board, both behind the instruction and the data
+# caches.
+#
+#   uv run riscv-tools --root . check-memory-map --platform src/max-10/de10-lite/platform.yaml
+platform: de10-lite
+# The board of the platform: `auto` asks for the identification by the JTAG; `boards` lists the boards it is built on.
+board: auto
+boards: [de10-lite]
+# The component of paths.yaml whose closure of `requires` is the source list of the generated project.
+top: Insper-RISC-V/de10_lite_board
+# The profile of the platform and its specification.
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
+  - {name: FLASH,    base: 0x00001000, size: 124K, kind: rom, exec: true}
+  - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
+
+# Words at the top of RAM: the contract between the boot memory, the program and the host.
+reserved:
+  stdout:   {base: 0x43FFFBE0, size: 1K+8}
+  tohost:   {base: 0x43FFFFE8, size: 8}
+  fromhost: {base: 0x43FFFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# The two banks of the FLASH for the program update, each starting with the 256-byte header page of the image and aligned to the 4 KiB sector.
+flash:
+  region: FLASH
+  banks:
+    - {name: A, base: 0x00001000, size: 60K}
+    - {name: B, base: 0x00010000, size: 64K}
+
+# The slots of the external interconnect (bits 30:28 of the address).
+peripherals:
+  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
+  - {name: UART,    base: 0xC0000000, id: 4}
+  - {name: DISPLAY, base: 0xD0000000, id: 5}
+  - {name: CLINT,   base: 0xE0000000, id: 6}
+  - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
+
+# The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core.
+interrupts:
+  mtime_hz: 1000000
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART_JTAG, id: 2}
+    - {name: FLASH,     id: 6}
+
+# The FLASH is emulated in the M9K blocks with the latency of a serial chip and the SDRAM is the device of the board.
+memory:
+  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
+  ram:    {external: true, backend: dispositivo, device: sdram}
+  icache: {enabled: true, size_bits: 32768}
+  dcache: {enabled: true, size_bits: 32768}
+
+# The clocks of the PLL, the single source of the generated PLL. The core is delayed 8250 ps against the fetch clock (the phase measured
+# at 50 MHz in docs/pt-br/platform/timing/MARCOS.md): the instruction memories read on the fetch clock, one cycle ahead of the core. `mem` is the clock of the SDRAM controller.
+clocks:
+  core:  {mhz: 50, phase_ps: 8250}
+  fetch: {mhz: 50, phase_ps: 0}
+  mem:  {mhz: 100}
+
+# The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
+console: jtag
+io:
+  leds:     {count: 10, need: required}
+  switches: {count: 10, need: optional}
+  keys:     {count: 2,  need: optional}
+  display:  {count: 6,  need: optional}
+
+# Extensions outside the matrix of the Core that the platform turns on.
+extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]
+
+# The files written from this map by `riscv-tools generate-memory-map` (`make generate`).
+generate:
+  specs: {path: src/max-10/de10-lite/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
+  bank_specs:
+    - {path: src/max-10/de10-lite/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
+    - {path: src/max-10/de10-lite/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
+  banks_h: {path: src/max-10/de10-lite/runtime/flash_banks.h}
+  boot_ld: {path: src/max-10/de10-lite/runtime/boot_memory.ld}
+  runtime: {path: src/max-10/de10-lite/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/max-10/de10-lite/de10_lite_map_pkg.vhd
+    package: de10_lite_map_pkg
+    rom: FLASH
+    ram: RAM
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
+config:
+  rom: FLASH
+  ram: RAM
+  addr_widths: [boot_memory, rom]

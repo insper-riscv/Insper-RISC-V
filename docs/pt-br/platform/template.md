@@ -2,15 +2,15 @@
 
 ## 1. O que ela é
 
-A menor plataforma de simulação do repositório (`src/simulation/template/`): o núcleo no perfil `rv32i`, a BOOT_ROM, a ROM e a RAM de simulação dentro do chip e, opcionalmente, uma UART sobre JTAG. É o ponto de partida do guia de nova arquitetura, que a copia para `src/<família>/<plataforma>/`, e o CI a mantém compilando e executando um programa mínimo.
+A menor plataforma de simulação do repositório (`src/simulation/template/`): o núcleo no perfil `rv32i`, a BOOT_MEMORY, a ROM e a RAM de simulação dentro do chip e, opcionalmente, uma UART sobre JTAG. É o ponto de partida do guia de nova arquitetura, que a copia para `src/<família>/<plataforma>/`, e o CI a mantém compilando e executando um programa mínimo.
 
 ## 2. Mapa de memória
 
-O mapa está em `src/simulation/template/platform.yaml`, a fonte de todo valor, e `riscv-tools generate-memory-map` o leva ao pacote VHDL, ao arquivo de specs do linker, ao script da BOOT_ROM e ao cabeçalho do runtime.
+O mapa está em `src/simulation/template/platform.yaml`, a fonte de todo valor, e `riscv-tools generate-memory-map` o leva ao pacote VHDL, ao arquivo de specs do linker, ao script da BOOT_MEMORY e ao cabeçalho do runtime.
 
 | Região | Início | Tamanho | Tipo |
 | :--- | :--- | :--- | :--- |
-| BOOT_ROM | `0x00000000` | 4 KiB | ROM executável |
+| BOOT_MEMORY | `0x00000000` | 4 KiB | ROM executável |
 | ROM | `0x00001000` | 28 KiB | ROM executável |
 | RAM | `0x00008000` | 32 KiB | RAM |
 | UART sobre JTAG (opcional) | `0xC0000000` | janela de 256 MiB | periférico |
@@ -25,15 +25,15 @@ Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0
 | `config.yaml` | Configuração do `riscv-tools` para compilar e simular: toolchain, runtime, fontes VHDL e módulo de teste |
 | `rtl/template_map_pkg.vhd` | Pacote de constantes gerado do `platform.yaml` (não se edita à mão) |
 | `rtl/template_sim_top.vhd` | Topo de simulação, que só liga o gerador de clock, o núcleo, as memórias e a UART |
-| `runtime/boot_rom.S` | Carregador fixo da BOOT_ROM e rotina `rv32_wait_restart` |
+| `runtime/boot_memory.S` | Carregador fixo da BOOT_MEMORY e rotina `rv32_wait_restart` |
 | `runtime/_exit.c` | Fim do programa, que informa o resultado em `tohost` |
 | `runtime/stdio.c` | Saída padrão num buffer da RAM |
 | `runtime/spike_exit.S` | Substituto de `rv32_wait_restart` para o ELF do Spike |
-| `runtime/rv32im-fpga.specs`, `runtime/boot_rom.ld`, `runtime/memory_map.h` | Gerados do `platform.yaml` |
+| `runtime/rv32im-fpga.specs`, `runtime/boot_memory.ld`, `runtime/memory_map.h` | Gerados do `platform.yaml` |
 
 ## 4. O topo
 
-`template_sim_top` tem os genéricos de arquivo (`boot_rom_file`, `rom_file`, `ram_file`), os de tamanho (`boot_rom_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa), `has_uart` e um genérico `has_*` por extensão do núcleo (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` e `has_zicclsm`), cujo padrão é a constante `HAS_*` do pacote e que o topo liga ao núcleo.
+`template_sim_top` tem os genéricos de arquivo (`boot_memory_file`, `rom_file`, `ram_file`), os de tamanho (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa), `has_uart` e um genérico `has_*` por extensão do núcleo (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` e `has_zicclsm`), cujo padrão é a constante `HAS_*` do pacote e que o topo liga ao núcleo.
 
 | Porta | Uso |
 | :--- | :--- |

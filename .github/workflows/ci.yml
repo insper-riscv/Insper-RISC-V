@@ -274,3 +274,20 @@ jobs:
       - name: uv audit
         if: ${{ !cancelled() }}
         run: uv audit
+
+  boot-memory-images:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/insper-riscv/ci-elf:latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: The boot memory images of the tests are the ones the sources build
+        run: |
+          export PYTHONPATH=.
+          /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_de0_cv_boot_images.py --check
+          /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_external_data_images.py
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --exit-code tests/python/unittests/rtl/data

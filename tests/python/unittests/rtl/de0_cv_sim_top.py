@@ -1,11 +1,12 @@
-"""O topo de simulação da DE0-CV: BOOT_ROM, FLASH, SDRAM e `tohost`.
+"""O topo de simulação da DE0-CV: BOOT_MEMORY, FLASH, SDRAM e `tohost`.
 
-O programa tem um pedaço em cada região do mapa. A BOOT_ROM guarda uma
-marca na SDRAM e salta para a FLASH; a FLASH guarda outra marca, escreve
-no registrador do display e salta para o código que a SDRAM já tem desde
-o tempo zero; esse guarda a terceira marca e escreve em `tohost`. O
-teste lê a SDRAM pela porta de depuração do chip e confere as marcas, o
-display e a parada. As imagens saem de `gen_de0_cv_images.py`.
+O programa tem um pedaço em cada região do mapa. A BOOT_MEMORY guarda
+uma marca na SDRAM e salta para a FLASH; a FLASH guarda outra marca,
+escreve no registrador do display e salta para o código que a SDRAM já
+tem desde o tempo zero; esse guarda a terceira marca e escreve em
+`tohost`. O teste lê a SDRAM pela porta de depuração do chip e confere
+as marcas, o display e a parada. As imagens saem de
+`gen_de0_cv_images.py`.
 """
 
 from typing import Any
@@ -17,7 +18,7 @@ from cocotb.triggers import ClockCycles, Timer
 from tests.python.utils.checks import check
 
 CLK_NS = 10  # clock base do núcleo (dividido por três dentro do topo)
-CLK_MEM_NS = 7  # clock da SDRAM, sem relação fixa com o do núcleo
+CLK_MEM_NS = 10  # clock da SDRAM, sem relação fixa com o do núcleo
 RESET_CYCLES = 5
 POLL_CYCLES = 500
 TIMEOUT_CYCLES = 400_000
@@ -99,7 +100,7 @@ async def test_boot_flash_and_sdram_code_run_and_stop_on_tohost(
     flash = await sdram_word(dut, FLASH_WORD)
     sdram = await sdram_word(dut, SDRAM_WORD)
     tohost = await sdram_word(dut, TOHOST_WORD)
-    check(boot == BOOT_MARK, f"BOOT_ROM mark {boot:#x}")
+    check(boot == BOOT_MARK, f"BOOT_MEMORY mark {boot:#x}")
     check(flash == FLASH_MARK, f"FLASH mark {flash:#x}")
     check(sdram == SDRAM_MARK, f"SDRAM mark {sdram:#x}")
     check(tohost == 1, f"tohost {tohost:#x}")
