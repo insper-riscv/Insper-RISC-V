@@ -272,7 +272,8 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	-- Eventos das caches e da FLASH para os contadores do Zihpm: falha da cache de instrucoes, falha da cache de
 	-- dados e ciclo de espera do chip de FLASH.
 	signal ic_miss, dc_miss, flash_busy : std_logic;
-	-- Eventos externos para os contadores do Zihpm: falha da cache de instruções, falha da cache de dados e espera da FLASH.
+	-- Eventos externos para os contadores do Zihpm: falha da cache de instruções, falha da cache de dados e espera da
+	-- FLASH.
 	signal hpm_ext_events : std_logic_vector(2 downto 0);
 
 	-- Roteador da cache de instruções: lado da SDRAM (porta de instruções do sdram_system)
@@ -281,7 +282,8 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal si_wdata  : std_logic_vector(31 downto 0);
 	-- Roteador de instruções, lado da SDRAM: habilita de bytes.
 	signal si_be     : std_logic_vector(3 downto 0);
-	-- Roteador de instruções, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a próxima palavra da linha, acesso concluído.
+	-- Roteador de instruções, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
+	-- para a próxima palavra da linha, acesso concluído.
 	signal si_rden, si_wren, si_line, si_adv, si_ready : std_logic;
 	-- Roteador de instruções, lado da SDRAM: linha larga de escrita de 96 bits.
 	signal si_wdx    : std_logic_vector(95 downto 0);
@@ -296,7 +298,8 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal dd_addr, dd_wdata, dd_rdata : std_logic_vector(31 downto 0);
 	-- Porta de memória da cache de dados: habilita de bytes.
 	signal dd_be     : std_logic_vector(3 downto 0);
-	-- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a próxima palavra da linha, acesso concluído.
+	-- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+	-- a próxima palavra da linha, acesso concluído.
 	signal dd_rden, dd_wren, dd_line, dd_adv, dd_ready : std_logic;
 	-- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
 	signal dd_wdx, dd_rdx : std_logic_vector(95 downto 0);
@@ -307,18 +310,25 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal sd_addr, sd_wdata, sd_rdata : std_logic_vector(31 downto 0);
 	-- Roteador de dados, lado da SDRAM: habilita de bytes.
 	signal sd_be     : std_logic_vector(3 downto 0);
-	-- Roteador de dados, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a próxima palavra da linha, acesso concluído.
+	-- Roteador de dados, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a
+	-- próxima palavra da linha, acesso concluído.
 	signal sd_rden, sd_wren, sd_line, sd_adv, sd_ready : std_logic;
 	-- Roteador de dados, lado da SDRAM: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
 	signal sd_wdx, sd_rdx : std_logic_vector(95 downto 0);
 
 	-- Lado da FLASH dos dois roteadores, o árbitro e o chip
 	signal fa_addr, fa_rdata, fb_addr, fb_rdata, fc_addr, fc_rdata : std_logic_vector(31 downto 0);
-	-- Roteador de instruções, lado da FLASH: habilita de leitura; Roteador de instruções, lado da FLASH: pedido de linha de cache; Roteador de instruções, lado da FLASH: avanço para a próxima palavra da linha; Roteador de instruções, lado da FLASH: acesso concluído; Roteador de dados, lado da FLASH: habilita de leitura; Roteador de dados, lado da FLASH: pedido de linha de cache; Roteador de dados, lado da FLASH: avanço para a próxima palavra da linha; Roteador de dados, lado da FLASH: acesso concluído.
+	-- Roteador de instruções, lado da FLASH: habilita de leitura; Roteador de instruções, lado da FLASH: pedido de linha
+	-- de cache; Roteador de instruções, lado da FLASH: avanço para a próxima palavra da linha; Roteador de instruções,
+	-- lado da FLASH: acesso concluído; Roteador de dados, lado da FLASH: habilita de leitura; Roteador de dados, lado da
+	-- FLASH: pedido de linha de cache; Roteador de dados, lado da FLASH: avanço para a próxima palavra da linha; Roteador
+	-- de dados, lado da FLASH: acesso concluído.
 	signal fa_rden, fa_line, fa_adv, fa_ready, fb_rden, fb_line, fb_adv, fb_ready : std_logic;
-	-- Árbitro, lado do chip de FLASH: habilita de leitura, pedido de linha de cache, avanço para a próxima palavra da linha, acesso concluído.
+	-- Árbitro, lado do chip de FLASH: habilita de leitura, pedido de linha de cache, avanço para a próxima palavra da
+	-- linha, acesso concluído.
 	signal fc_rden, fc_line, fc_adv, fc_ready : std_logic;
-	-- Roteador de instruções, lado da FLASH: linha larga lida de 96 bits; Roteador de dados, lado da FLASH: linha larga lida de 96 bits; Árbitro, lado do chip de FLASH: linha larga lida de 96 bits.
+	-- Roteador de instruções, lado da FLASH: linha larga lida de 96 bits; Roteador de dados, lado da FLASH: linha larga
+	-- lida de 96 bits; Árbitro, lado do chip de FLASH: linha larga lida de 96 bits.
 	signal fa_rdx, fb_rdx, fc_rdx : std_logic_vector(95 downto 0);
 	-- Endereço de byte do pedido do árbitro ao chip de FLASH; Palavra lida do chip de FLASH pelo árbitro.
 	signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
@@ -334,7 +344,8 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal fl_buf_idx      : std_logic_vector(5 downto 0);
 	-- Controlador de FLASH: palavra do buffer de página.
 	signal fl_buf_data     : std_logic_vector(31 downto 0);
-	-- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado lido da porta B do armazenamento.
+	-- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado lido
+	-- da porta B do armazenamento.
 	signal fl_b_addr, fl_b_wdata, fl_b_data : std_logic_vector(31 downto 0) := (others => '0');
 	-- Controlador de FLASH: escrita na porta B do armazenamento.
 	signal fl_b_we         : std_logic := '0';
@@ -355,7 +366,16 @@ begin
     );
 
 	u_core : entity work.core
-		generic map (has_m => has_m, has_zmmul => has_zmmul, has_zicsr => has_zicsr, has_zicntr => has_zicntr, has_zifencei => has_zifencei, has_zicclsm => has_zicclsm, has_e => has_e, boot_memory_bits => BOOT_MEMORY_BITS, rom_end_kib => ROM_END_KIB, rom_external => rom_external, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB, ram_external => ram_external, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB, has_zihpm => has_zihpm, hpm_counters => hpm_counters, hpm_width => hpm_width, has_zimop => has_zimop, has_zicond => has_zicond, has_zihintntl => has_zihintntl, has_zihintpause => has_zihintpause, has_interrupts => has_interrupts and (has_zicsr or has_zicntr or has_zihpm), has_sscofpmf => has_sscofpmf and has_zihpm and has_interrupts, time_external => has_interrupts, has_access_faults => has_access_faults and (has_zicsr or has_zicntr or has_zihpm), periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS)
+		generic map (has_m => has_m, has_zmmul => has_zmmul, has_zicsr => has_zicsr, has_zicntr => has_zicntr,
+			has_zifencei => has_zifencei, has_zicclsm => has_zicclsm, has_e => has_e, boot_memory_bits => BOOT_MEMORY_BITS,
+			rom_end_kib => ROM_END_KIB, rom_external => rom_external, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB,
+			ram_external => ram_external, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB,
+			has_zihpm => has_zihpm, hpm_counters => hpm_counters, hpm_width => hpm_width, has_zimop => has_zimop,
+			has_zicond => has_zicond, has_zihintntl => has_zihintntl, has_zihintpause => has_zihintpause,
+			has_interrupts => has_interrupts and (has_zicsr or has_zicntr or has_zihpm),
+			has_sscofpmf => has_sscofpmf and has_zihpm and has_interrupts, time_external => has_interrupts,
+			has_access_faults => has_access_faults and (has_zicsr or has_zicntr or has_zihpm),
+			periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS)
 		port map (
 			o_trap       => core_trap,
 			o_retire     => core_retire,
@@ -403,7 +423,8 @@ begin
 	);
 
 	u_icache : entity work.icache
-		generic map (size_bits => icache_size_bits, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB, sel_from_kib => ROM_BASE_KIB, check_addr => false)
+		generic map (size_bits => icache_size_bits, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB,
+			sel_from_kib => ROM_BASE_KIB, check_addr => false)
 		port map (
 			i_clk => pll_clk_if, i_clk_cpu => pll_clk_idexmem, i_rst => i_rst,
 			i_addr => if_addr, i_sel => ic_sel, o_ready => ic_ready, o_data => ic_data,
@@ -431,7 +452,8 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	u_dcache : entity work.dcache
-		generic map (size_bits => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB,
+			rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => i_rst,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -472,7 +494,8 @@ begin
 	);
 
 	u_flash_chip : entity work.flash_chip
-		generic map (first_latency => flash_first_latency, next_latency => flash_next_latency, size_bytes => ROM_STORAGE_BYTES)
+		generic map (first_latency => flash_first_latency, next_latency => flash_next_latency,
+			size_bytes => ROM_STORAGE_BYTES)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => i_rst,
 			i_addr => fc_addr, i_rden => fc_rden, i_line => fc_line, i_advance => fc_adv,

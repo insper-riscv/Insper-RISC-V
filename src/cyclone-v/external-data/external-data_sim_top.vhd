@@ -288,7 +288,8 @@ architecture behaviour of rv32im_external_data_sim_test is
 	signal dd_addr, dd_wdata, dd_rdata : std_logic_vector(31 downto 0);
 	-- Porta de memória da cache de dados: habilita de bytes.
 	signal dd_be     : std_logic_vector(3 downto 0);
-	-- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a próxima palavra da linha, acesso concluído.
+	-- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+	-- a próxima palavra da linha, acesso concluído.
 	signal dd_rden, dd_wren, dd_line, dd_adv, dd_ready : std_logic;
 	-- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
 	signal dd_wdx, dd_rdx : std_logic_vector(95 downto 0);
@@ -440,7 +441,8 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	u_dcache : entity work.dcache
-		generic map (size_bits => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB,
+			rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
