@@ -18,7 +18,7 @@ A board without a cable at hand stays at N0 or N1; the package enters with the n
 
 ## 2. Research sheet
 
-The sheet is one document per board in `Plans/Multi-FPGA/placas/<board>.md` of the Capstone repository, which gathers the facts before any data file. Each fact carries its source and a certainty seal.
+The sheet is the research section of the page of the board, `docs/en/boards/<board>.md` with its mirror in `docs/pt-br/boards/<board>.md`, which gathers the facts before any data file. Each fact carries its source and a certainty seal.
 
 | Seal | Meaning |
 | :--- | :--- |

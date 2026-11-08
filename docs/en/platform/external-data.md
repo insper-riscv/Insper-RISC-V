@@ -51,7 +51,7 @@ Because the instruction fetch does not reach the SDRAM, no code runs from it. Th
 | :--- | :--- |
 | Compile the board | `quartus_sh -t src/cyclone-v/external-data/external-data_synth.tcl` |
 | Program the board | `src/cyclone-v/external-data/external-data_program.sh`, in the same shell as the compilation (`&&`) |
-| Simulation and programs on the board | In the Tests repository, with the `config.platform-external-data.yaml` that `riscv-tools platform sync` writes from the `config.yaml` of this platform, as in steps 8.3 and 10.5 of the [new architecture guide](../guide/nova-arquitetura.md): `compile --emit hex` and `sim`, or `compile --emit mif` and `run --skip-reconfigure --skip-recompile` |
+| Simulation and programs on the board | In the Tests repository, with the `config.platform-external-data.yaml` that `riscv-tools platform sync` writes from the `config.yaml` of this platform, as in step 8.3 of the [new architecture guide](../guide/nova-arquitetura.md) and chapter 10 of the [new board guide](../guide/adicionar-placa.md): `compile --emit hex` and `sim`, or `compile --emit mif` and `run --skip-reconfigure --skip-recompile` |
 | Simulation top test | `make test TEST=ExternalDataSimTop` |
 
 The `platform.yaml` is the single source of the map, and `make generate` writes from it the `external_data_map_pkg.vhd` package, the link flags, the BOOT_MEMORY linker script and `memory_map.h`. The `config.yaml` holds `quartus.sdram_debug_instance`, the Virtual JTAG index of the SDRAM debug port, which `riscv-tools` passes to the port script.

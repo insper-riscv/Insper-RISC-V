@@ -541,215 +541,57 @@ uv run python tools/riscv_build/gen_flash_profiles.py
 
 ## 10. Board
 
-This chapter only applies if the platform has an FPGA. `external-data` is the smallest board platform and serves as a starting point; `de0-cv` is the complete reference.
+This chapter applies only if the platform has an FPGA. The Quartus project of a board platform is neither written nor copied by hand: `riscv-tools board generate` writes it from the `platform.yaml` of the platform and from the board package in `boards/<board>/`. The complete step by step, from the board package to running programs, is in [adicionar-placa.md](adicionar-placa.md), and this chapter shows only what a new platform does in it.
 
-### 10.1. Copy and rename
+### 10.1. Declare the board in `platform.yaml`
 
-```bash
-cp -r src/cyclone-v/external-data src/cyclone-v/minhaplaca
-cd src/cyclone-v/minhaplaca
-for f in $(find . -name '*external*data*' -type f); do
-    mv "$f" "$(echo $f | sed 's/external-data/minhaplaca/;s/external_data/minhaplaca/')"
-done
-grep -rl "external[-_]data" . | xargs sed -i 's/external-data/minhaplaca/g;s/external_data/minhaplaca/g'
-cd ../../..
-```
+The new platform starts from a copy of the nearest board platform (`src/cyclone-v/de0-cv` for the full profile, `src/cyclone-iv-e/de0-nano` for a reduced profile). In `platform.yaml`, the `board` field (or the `boards` list) chooses the board, the `clocks` and `io` fields say what the SoC asks for, and each external region chooses its backend. Step 6 of [adicionar-placa.md](adicionar-placa.md) describes the fields, and step 7 the validator that compares the request with what the board offers.
 
-After the copy, the platform goes into the same lists as in step 4.4, copying what `external-data` has in each one. The script below does the copies and can be saved as `registrar.py` outside the repository.
-
-```python
-import json
-import os
-import re
-
-NOVO = "minhaplaca"
-
-
-def troca(texto):
-    return texto.replace("external-data", NOVO).replace("external_data", NOVO)
-
-
-linhas = open("paths.yaml").read().split("\n")
-saida = []
-for i, linha in enumerate(linhas):
-    saida.append(linha)
-    if linha.startswith("  - {name: external-data ") and not linhas[i + 1].startswith("  - {name: external-data "):
-        j = i
-        while linhas[j].startswith("  - {name: external-data "):
-            j -= 1
-        saida += [troca(x) for x in linhas[j + 1:i + 1]]
-    if linha.startswith("      - src/cyclone-v/external-data/external-data_top.vhd"):
-        j = i
-        while not linhas[j].startswith("  external_data_map:"):
-            j -= 1
-        saida += [troca(x) for x in linhas[j:i + 1]]
-texto = "\n".join(saida).replace(
-    "src/cyclone-v/external-data/platform.yaml,",
-    f"src/cyclone-v/external-data/platform.yaml, src/cyclone-v/{NOVO}/platform.yaml,", 1)
-open("paths.yaml", "w").write(texto)
-
-make = open("Makefile").read()
-make = make.replace("PE := src/cyclone-v/external-data\n",
-                    f"PE := src/cyclone-v/external-data\nPB := src/cyclone-v/{NOVO}\n", 1)
-make = re.sub(r"(\triscv-tools[^\n]*\$\(PE\)[^\n]*\n)",
-              lambda m: m.group(1) + m.group(1).replace("$(PE)", "$(PB)"), make)
-copiar = [l for l in make.split("\n") if "external_data_sim_top)" in l
-          or "rv32im_external_data_sim_test" in l
-          or 'echo "the simulation top of the external-data' in l]
-make = make.replace(copiar[-1], copiar[-1] + "\n" + "\n".join(troca(l) for l in copiar), 1)
-open("Makefile", "w").write(make)
-
-gerador = open("scripts/generate_sources.py").read()
-gerador = gerador.replace(
-    '    Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),\n',
-    '    Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),\n'
-    f'    Saida(TESTS_JSON, ("{NOVO}_sim_top",), "MinhaplacaSimTop"),\n')
-gerador = gerador.replace(
-    '    Saida(\n        "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)\n    ),\n',
-    '    Saida(\n        "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)\n    ),\n'
-    f'    Saida("src/cyclone-v/{NOVO}/config.yaml", ("{NOVO}_sim_top",)),\n')
-gerador = gerador.replace(
-    '    Saida(\n        "src/cyclone-v/external-data/external-data.qsf",\n        ("external_data_top",),\n    ),\n',
-    '    Saida(\n        "src/cyclone-v/external-data/external-data.qsf",\n        ("external_data_top",),\n    ),\n'
-    f'    Saida("src/cyclone-v/{NOVO}/{NOVO}.qsf", ("{NOVO}_top",)),\n')
-open("scripts/generate_sources.py", "w").write(gerador)
-
-conf = open("scripts/check_top_generics.py").read()
-conf = conf.replace(
-    '    "src/simulation/modular/modular_map_pkg.vhd": [',
-    f'    "src/cyclone-v/{NOVO}/{NOVO}_map_pkg.vhd": [\n        "src/cyclone-v/{NOVO}/{NOVO}_sim_top.vhd",\n    ],\n'
-    '    "src/simulation/modular/modular_map_pkg.vhd": [', 1)
-open("scripts/check_top_generics.py", "w").write(conf)
-
-for velho in ("tests/python/gen_external_data_images.py",
-              "tests/python/unittests/rtl/external_data_sim_top.py",
-              "tests/python/unittests/rtl/external_data_flash_update.py"):
-    open(troca(velho), "w").write(troca(open(velho).read()))
-os.makedirs(f"tests/python/unittests/rtl/data/{NOVO}", exist_ok=True)
-dados = json.load(open("tests/python/tests.json"))
-dados["MinhaplacaSimTop"] = json.loads(troca(json.dumps(dados["ExternalDataSimTop"])))
-json.dump(dados, open("tests/python/tests.json", "w"), indent=4)
-open("tests/python/tests.json", "a").write("\n")
-for idioma in ("pt-br", "en"):
-    open(f"docs/{idioma}/platform/{NOVO}.md", "w").write(
-        troca(open(f"docs/{idioma}/platform/external-data.md").read()))
-```
-
-Run the script at the root of the clone, generate the images of the simulation top test and the source lists, and check.
+### 10.2. Generate and check the project
 
 ```bash
-python3 registrar.py
-PYTHONPATH=. /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_minhaplaca_images.py
+riscv-tools --root . generate-memory-map --platform src/<family>/<platform>/platform.yaml
+riscv-tools --root . --board <board> board generate --platform src/<family>/<platform>/platform.yaml --out build
+riscv-tools --root . --board <board> board generate --platform src/<family>/<platform>/platform.yaml --out build --check
+```
+
+`board generate` writes the board top, the PLL, the `.qpf`, the `.qsf`, the `.sdc` and the `capacity.json` into `build/<platform>-<board>/`, and the `build` folder is not versioned. The files written and what each contains are in [../boards/geracao.md](../boards/geracao.md). A fit or pin error comes out of the validator before any compilation.
+
+| Expected output | Common error and cause |
+| :--- | :--- |
+| The project files in `build/<platform>-<board>/` and `--check` with no difference | `profile does not fit` (V11 or V12), from a profile larger than the device; the fix is to reduce the profile, the caches or the emulated memory |
+
+### 10.3. Register the platform in the repository
+
+The platform enters `paths.yaml`, the `Makefile` lists that run `generate` and `generate-check`, and `scripts/generate_sources.py`, as in step 4.4. Then check.
+
+```bash
 make generate-sources
 make paths
 make memory-map
 ```
 
-| Expected output | Common error and cause |
-| :--- | :--- |
-| `paths OK`, `tree OK` and `generated files OK` | `missing tests/python/unittests/rtl/data/minhaplaca/flash.hex`, from skipping `gen_minhaplaca_images.py` |
+### 10.4. Compile, program and run programs
 
-### 10.2. Quartus project files
+Compiling up to `map` (N0) and up to `sta` (N1), programming (N2) and the programs of the Tests repository (N3) follow chapter 10 of [adicionar-placa.md](adicionar-placa.md), with the board lock and the warning about compiling and programming in the same shell in [placa.md](placa.md). `riscv-tools platform sync` writes, in the `Tests` clone, the configuration derived from the `config.yaml` of the platform, as in step 8.3.
 
-| File | Content |
-| :--- | :--- |
-| `<platform>.qpf` | The project, with the revision |
-| `<platform>.qsf` | Device, pins and the list of VHDL and IP sources, written by `make generate-sources` and checked against the disk by `check-paths` |
-| `<platform>.sdc` | The clocks and the input, output and clock domain crossing constraints |
-| `<platform>_assignment_defaults.qdf` | Default assignments of the project |
-| `../de0-cv/pll/` | The PLL IP that generates the core and SDRAM clocks, shared among the DE0-CV platforms |
-| `<platform>_synth.tcl` | Compiles with the chosen seed; with the `map` argument it only synthesizes |
-| `<platform>_program.sh` | Programs the `.sof` through the first cable of `jtagconfig` |
-| `<platform>_top.vhd` | The board top, which connects the PLL, the core, the board memories and the peripherals |
-| `<platform>_map_pkg.vhd` | Map package, generated from the `platform.yaml` |
-| `boot_memory_init.mif`, `init.mif` | Initial images of the BOOT_MEMORY and the FLASH |
+### 10.5. Timing report
 
-### 10.3. Edit the `.qsf` and the `.sdc`
-
-The `.qsf` has a source list written by `make generate-sources`, with paths relative to the platform folder (`../../../Core/src/...`). The sources of the core, in dependency order, come from:
+After compilation, the Timing Analyzer report is in `output_files/` of the generated project. To list the critical paths of each domain, run `timing-paths` with the `config.yaml` of the platform and the project already compiled.
 
 ```bash
-riscv-tools --root . sources Core/core
-```
-
-The `.sdc` declares the input clock (`create_clock`), the PLL clocks (`derive_pll_clocks`) and the uncertainty (`derive_clock_uncertainty`). Each generated external clock, such as the SDRAM one, gets its own `create_generated_clock` and the input and output delays from the chip datasheet. Each crossing among the core, SDRAM and JTAG domains has its `set_max_delay` and `set_min_delay` constraint, and the slow buttons, LEDs and displays have `set_false_path`.
-
-With the list ready, check the paths.
-
-```bash
-make paths
-```
-
-### 10.4. Compile and program
-
-```bash
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl map
-quartus_sh -t src/cyclone-v/minhaplaca/minhaplaca_synth.tcl && src/cyclone-v/minhaplaca/minhaplaca_program.sh
-```
-
-The first command only synthesizes and checks that the paths and entities resolve. The second compiles and programs the board, and both commands must run in the same shell (`&&`). The guide [placa.md](placa.md) explains the rule and what to do when the board does not answer.
-
-| Expected output | Common error and cause |
-| :--- | :--- |
-| `Quartus Prime Analysis & Synthesis was successful. 0 errors` from the first command, and `Quartus Prime Shell was successful. 0 errors` at the end of the second | `design library "work" does not contain primary unit ...`, from a file missing in the `.qsf` (a `sdram_jtag_shell.vhd` from `../de0-cv/`, for example) |
-| `output_files/minhaplaca.sof` after the complete compilation (about 5 minutes on a free machine) and `Configuration succeeded -- 1 device(s) configured` from the programmer | `Can't scan JTAG chain` in the programmer, from compiling and programming in different shells |
-
-### 10.5. Programs on the board
-
-With the bitstream programmed, `Tests` writes each program to the FLASH over JTAG and checks the result, without recompiling the FPGA. In the `Tests` clone, the `Insper-RISC-V` submodule points to the commit that has the platform (step 8.3). The header of the programs comes from the copied `include-sdram` folder, because `minhaplaca` inherits the map of `external-data`, with the RAM in the SDRAM at `0x40000000`.
-
-```bash
-cp -r tools/riscv_build/include-sdram tools/riscv_build/include-minhaplaca
-echo "tools/riscv_build/include-minhaplaca/rv32_test.h" >> .gitignore
-riscv-tools platform sync --prefix Insper-RISC-V \
-    --source Insper-RISC-V/src/cyclone-v/minhaplaca/config.yaml \
-    --output tools/riscv_build/config.platform-minhaplaca.yaml
-```
-
-Create `tools/riscv_build/config.minhaplaca.yaml` with the content below.
-
-```yaml
-extends: config.platform-minhaplaca.yaml
-paths:
-  include_dir: tools/riscv_build/include-minhaplaca
-  build_dir: build-minhaplaca
-  c_dir: c-sdram
-  asm_dir: asm
-```
-
-Compile the programs to the FLASH format (inside the `dev_tools` image), and run them on the host, which has Quartus and the board cable. The `riscv-tools` of the host comes from `Tools`, and `flock` stops another person from using the board in the middle of the test.
-
-```bash
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml generate-header
-riscv-tools --config tools/riscv_build/config.minhaplaca.yaml compile --emit mif --only arithmetic-add,hello
-flock /tmp/de0cv.lock \
-    uvx --from git+https://github.com/insper-riscv/Tools riscv-tools \
-    --config tools/riscv_build/config.minhaplaca.yaml run --skip-reconfigure --skip-recompile --only arithmetic-add,hello
+riscv-tools --config src/<family>/<platform>/config.yaml timing-paths --npaths 2
 ```
 
 | Expected output | Common error and cause |
 | :--- | :--- |
-| `arithmetic-add: PASS` and `hello: PASS`, with the `PASS` summary of both | `no tohost result after 15.0s` followed by `soft restart` and `plain reprogram`, when the `.sof` was not programmed first (`minhaplaca_program.sh`) or when the board has the bitstream of another platform |
-| | `no tohost result` with the right board, when the `config.yaml` of the platform inherits `flash_image` from `de0-cv`: the program goes to the FLASH with the bank header (first word `0x52564946`) and the boot, which jumps straight to `0x1000`, does not run it. `external-data` already carries `flash_image: null` |
-| | `Can't scan JTAG chain`, from compiling and programming in different shells (guide [placa.md](placa.md)) |
+| A Markdown table with one path per row: clock, source, destination, width, slack and delay | `quartus_sta failed` with `Fitter (quartus_fit) failed or was not run`, from running before the full compilation |
 
-### 10.6. Timing report
+A negative setup slack means a path longer than the clock period, and the result changes from seed to seed.
 
-After the compilation, the Timing Analyzer report is in `output_files/<platform>.sta.rpt`, and the summary in `output_files/<platform>.sta.summary`. The numbers of interest are the worst setup and hold slack of each clock. To list the critical paths of each domain, run `timing-paths` at the root of the clone, with the `config.yaml` of the platform and the project already compiled.
+### 10.6. New board
 
-```bash
-riscv-tools --config src/cyclone-v/minhaplaca/config.yaml timing-paths --npaths 2
-```
-
-| Expected output | Common error and cause |
-| :--- | :--- |
-| A Markdown table with one path per row: clock, source, destination, width, slack and delay. In `external-data` the core clock (`general[3]`, 50 MHz) has positive slack and the SDRAM clock (`general[0]`, 143 MHz) has the small known violation of about -0.74 ns on the `DRAM_DQ` path, described in [timing/core-novo.md](../platform/timing/core-novo.md) | `quartus_sta failed` with `Fitter (quartus_fit) failed or was not run`, from running before the complete compilation |
-
-A negative setup slack indicates a path longer than the clock period. The result changes from seed to seed, and the argument of `<platform>_synth.tcl` chooses the seed.
-
-### 10.7. New board
-
-A board the repository does not know yet does not start from a copy of a board platform, but from the board package (`boards/<board>/`), which `riscv-tools board generate` turns into the Quartus project. The step by step, from the `board.yaml` to level N2, is in [adicionar-placa.md](adicionar-placa.md); sections 10.1 to 10.6 hold for the hand-written project files.
+A board the repository does not know yet starts from the board package (`boards/<board>/`), not from a copy of a platform. The step by step, from `board.yaml` to level N2, is in [adicionar-placa.md](adicionar-placa.md).
 
 ## 11. Add a new peripheral
 

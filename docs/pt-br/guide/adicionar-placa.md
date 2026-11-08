@@ -18,7 +18,7 @@ Uma placa sem cabo à mão fica em N0 ou N1; o pacote entra com a nota de que n�
 
 ## 2. Ficha de pesquisa
 
-A ficha é um documento por placa em `Plans/Multi-FPGA/placas/<placa>.md` do repositório Capstone, que reúne os fatos antes de qualquer arquivo de dados. Cada fato traz a fonte e um selo de certeza.
+A ficha é a seção de pesquisa da página da placa, `docs/pt-br/boards/<placa>.md` com o espelho em `docs/en/boards/<placa>.md`, que reúne os fatos antes de qualquer arquivo de dados. Cada fato traz a fonte e um selo de certeza.
 
 | Selo | Significado |
 | :--- | :--- |
