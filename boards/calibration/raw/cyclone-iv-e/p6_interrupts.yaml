@@ -13,13 +13,13 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: EP4CE115F29C7
 measured_on: '2026-11-07'
-sources_hash: d5cf580ed90f4f24f0f8d4d8e24faa3f1b5b2e2b3cd5765a0517e9f543d792ce
+sources_hash: e5315e592be163c9351863bede69beb988d080bff57977468f0ab0b99d689947
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
-  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
-  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
 added_constants: []
 command:
 - quartus_sh
@@ -28,20 +28,20 @@ command:
 - de2_115_de2_115
 - '5'
 - map
-elapsed_s: 54
+elapsed_s: 59
 result:
-  logic: 18648
-  registers: 8593
-  ram_bits: 893184
+  logic: 19385
+  registers: 8981
+  ram_bits: 895232
   multipliers: 0
   plls: 1
   pins: 76
 entities:
 - name: de2_115_de2_115_top
   depth: 0
-  luts: 14809
-  registers: 8593
-  memory_bits: 893184
+  luts: 15390
+  registers: 8981
+  memory_bits: 895232
 - name: boot_memory:boot_inst
   depth: 1
   luts: 0
@@ -62,6 +62,11 @@ entities:
   luts: 88
   registers: 166
   memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 140
+  registers: 102
+  memory_bits: 0
 - name: flash_jtag_shell:flash_jtag_inst
   depth: 1
   luts: 183
@@ -69,7 +74,7 @@ entities:
   memory_bits: 0
 - name: flash_loader:flash_loader_inst
   depth: 1
-  luts: 153
+  luts: 172
   registers: 167
   memory_bits: 0
 - name: onchip_ram_port:ram_port_inst
@@ -84,14 +89,19 @@ entities:
   memory_bits: 524288
 - name: sld_hub:auto_hub
   depth: 1
-  luts: 180
-  registers: 106
+  luts: 189
+  registers: 112
   memory_bits: 0
 - name: soc:soc_inst
   depth: 1
-  luts: 13801
-  registers: 7501
-  memory_bits: 73984
+  luts: 14164
+  registers: 7781
+  memory_bits: 76032
+- name: virtual_jtag:display_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
 - name: virtual_jtag:uart_vjtag
   depth: 1
   luts: 2

@@ -1,92 +1,80 @@
 family: cyclone-iv-e
 anchor: p1_rv32i
-shift: 1449.0
-profiles: 14
-max_pct: 16.694
-anchored_max_pct: 5.519
-anchored_rms_pct: 2.35
+shift: -436.0
+profiles: 12
+max_pct: 4.503
+anchored_max_pct: 2.016
+anchored_rms_pct: 1.106
 residuals:
 - id: p1_rv32i
-  measured: 10268.0
-  predicted: 8819.0
-  error_pct: -14.112
-  anchored_predicted: 10268.0
+  measured: 9290.0
+  predicted: 9726.0
+  error_pct: 4.693
+  anchored_predicted: 9290.0
   anchored_error_pct: 0.0
 - id: p1_rv32e
-  measured: 8997.0
-  predicted: 7495.0
-  error_pct: -16.694
-  anchored_predicted: 8944.0
-  anchored_error_pct: -0.589
+  measured: 8039.0
+  predicted: 8401.0
+  error_pct: 4.503
+  anchored_predicted: 7965.0
+  anchored_error_pct: -0.921
 - id: p2_rv32im
-  measured: 11249.0
-  predicted: 9761.0
-  error_pct: -13.228
-  anchored_predicted: 11210.0
-  anchored_error_pct: -0.347
+  measured: 10318.0
+  predicted: 10546.0
+  error_pct: 2.21
+  anchored_predicted: 10110.0
+  anchored_error_pct: -2.016
 - id: p3_zicntr_zifencei
-  measured: 12623.0
-  predicted: 11275.5
-  error_pct: -10.675
-  anchored_predicted: 12724.5
-  anchored_error_pct: 0.804
+  measured: 11723.0
+  predicted: 12066.0
+  error_pct: 2.926
+  anchored_predicted: 11630.0
+  anchored_error_pct: -0.793
 - id: p3_zicclsm_zicntr_zifencei
-  measured: 12873.0
-  predicted: 11399.0
-  error_pct: -11.45
-  anchored_predicted: 12848.0
-  anchored_error_pct: -0.194
+  measured: 11992.0
+  predicted: 12372.0
+  error_pct: 3.169
+  anchored_predicted: 11936.0
+  anchored_error_pct: -0.467
 - id: p4_hpm_4x40
-  measured: 13314.0
-  predicted: 11920.5
-  error_pct: -10.466
-  anchored_predicted: 13369.5
-  anchored_error_pct: 0.417
+  measured: 12544.0
+  predicted: 12834.0
+  error_pct: 2.312
+  anchored_predicted: 12398.0
+  anchored_error_pct: -1.164
 - id: p4_hpm_16x52
-  measured: 15320.0
-  predicted: 14193.7
-  error_pct: -7.352
-  anchored_predicted: 15642.7
-  anchored_error_pct: 2.107
+  measured: 14852.0
+  predicted: 15170.6
+  error_pct: 2.145
+  anchored_predicted: 14734.6
+  anchored_error_pct: -0.79
 - id: p5_base
-  measured: 18422.0
-  predicted: 17895.7
-  error_pct: -2.857
-  anchored_predicted: 19344.7
-  anchored_error_pct: 5.009
+  measured: 18613.0
+  predicted: 19032.8
+  error_pct: 2.255
+  anchored_predicted: 18596.8
+  anchored_error_pct: -0.087
 - id: p5_full
-  measured: 19585.0
-  predicted: 18690.2
-  error_pct: -4.569
-  anchored_predicted: 20139.2
-  anchored_error_pct: 2.83
+  measured: 19615.0
+  predicted: 19685.5
+  error_pct: 0.359
+  anchored_predicted: 19249.5
+  anchored_error_pct: -1.863
 - id: p6_interrupts
-  measured: 19045.0
-  predicted: 18647.2
-  error_pct: -2.089
-  anchored_predicted: 20096.2
-  anchored_error_pct: 5.519
+  measured: 18792.0
+  predicted: 19385.5
+  error_pct: 3.158
+  anchored_predicted: 18949.5
+  anchored_error_pct: 0.838
 - id: p7_ic8
-  measured: 12616.0
-  predicted: 11261.2
-  error_pct: -10.739
-  anchored_predicted: 12710.2
-  anchored_error_pct: 0.747
+  measured: 11712.0
+  predicted: 12062.0
+  error_pct: 2.988
+  anchored_predicted: 11626.0
+  anchored_error_pct: -0.734
 - id: p7_dc8
-  measured: 12089.0
-  predicted: 10736.2
-  error_pct: -11.19
-  anchored_predicted: 12185.2
-  anchored_error_pct: 0.796
-- id: p7_ic64
-  measured: 12627.0
-  predicted: 11294.5
-  error_pct: -10.553
-  anchored_predicted: 12743.5
-  anchored_error_pct: 0.923
-- id: p7_dc64
-  measured: 13357.0
-  predicted: 11994.5
-  error_pct: -10.201
-  anchored_predicted: 13443.5
-  anchored_error_pct: 0.648
+  measured: 11096.0
+  predicted: 11421.0
+  error_pct: 2.929
+  anchored_predicted: 10985.0
+  anchored_error_pct: -1.0

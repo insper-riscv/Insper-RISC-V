@@ -56,6 +56,6 @@ profiles:
   - {id: p7_ic8, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 8}
   - {id: p7_ic128, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 128}
   - {id: p7_dc8, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 8}
-  - {id: p7_dc128, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 128}
+  - {id: p7_dc128, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 128, outside: true}
   - {id: p7_ic64, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 64, holdout: true}
   - {id: p7_dc64, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 64, holdout: true}

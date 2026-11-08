@@ -49,23 +49,23 @@ package de0_nano_map_pkg is
 	-- Base da ROM, em KiB, logo depois da BOOT_MEMORY.
 	constant ROM_BASE_KIB        : natural  := 4;
 	-- Fim exclusivo da ROM, em KiB.
-	constant ROM_END_KIB         : natural  := 32;
+	constant ROM_END_KIB         : natural  := 16;
 	-- Armazenamento da ROM, em bytes: a menor potência de dois que cobre
 	-- [0, fim da ROM).
-	constant ROM_STORAGE_BYTES   : positive := 32768;
+	constant ROM_STORAGE_BYTES   : positive := 16384;
 	-- A ROM fica fora do núcleo.
 	constant ROM_EXTERNAL        : boolean  := true;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1064960;
+	constant RAM_END_KIB         : natural  := 1048584;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
-	constant RAM_STORAGE_BYTES   : positive := 16777216;
+	constant RAM_STORAGE_BYTES   : positive := 8192;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"40FFF";
+		x"40001";
 	-- A RAM fica fora do núcleo.
 	constant RAM_EXTERNAL        : boolean  := true;
 	-- Base da janela externa, em KiB; dali em diante é externo.

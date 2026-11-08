@@ -218,6 +218,13 @@ provides:
     requires: []
     sources:
       - src/calibration/mkr-vidor-4000/mkr_vidor_4000_map_pkg.vhd
+  cal_de10_lite_emulated_board:
+    requires: [soc, cal_de10_lite_emulated_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  cal_de10_lite_emulated_map:
+    requires: []
+    sources:
+      - src/calibration/de10-lite-emulated/de10_lite_emulated_map_pkg.vhd
   cal_de0_nano_map:
     requires: []
     sources:
@@ -240,7 +247,7 @@ provides:
     requires: [soc, cal_de10_lite_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
     sources: []
   cal_de0_nano_board:
-    requires: [soc, cal_de0_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    requires: [soc, cal_de0_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
     sources: []
   cal_de2_115_board:
     requires: [soc, cal_de2_115_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]

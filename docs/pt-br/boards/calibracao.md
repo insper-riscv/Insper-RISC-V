@@ -11,6 +11,7 @@ A calibração mede, por família, o custo em lógica de cada bloco do perfil co
 | `boards/calibration/raw/<família>/<perfil>.yaml` | Dado bruto de uma síntese, com semente, hash das fontes, versão do Quartus e commits do projeto e dos submódulos |
 | `boards/calibration/<família>.yaml` | Tabela ajustada, com o erro registrado e os resíduos de cada perfil |
 | `boards/calibration/profiles/verify-<placa>.yaml` | Perfis medidos em outro dispositivo da família, para a verificação cruzada |
+| `boards/calibration/profiles/sdram-cost-max-10.yaml` | Perfis do custo do controlador de SDRAM de 16 bits, na plataforma `src/calibration/de10-lite-emulated` |
 | `boards/calibration/verification/<placa>.yaml` | Comparação da tabela da família com esses perfis |
 | `boards/calibration/cyclone-v-manual.yaml` e `raw/cyclone-v-manual/` | Medidas do topo da DE0-CV escrito à mão, com o ponto conhecido de 8058 a 8095 ALMs |
 
@@ -21,183 +22,184 @@ Cada família é medida na sua placa de referência com a mesma plataforma de ca
 | Família | Placa de medida | Dispositivo | Unidade | RAM da plataforma |
 | :--- | :--- | :--- | :--- | :--- |
 | Cyclone V | DE0-CV | 5CEBA4 | ALM | SDRAM de 16 bits, com o controlador dentro do termo do núcleo |
-| Cyclone IV E | DE2-115 | EP4CE115 | LE | emulada em blocos de 64 KiB, porque a SDRAM tem 32 bits e o Memory não tem controlador dessa largura |
+| Cyclone IV E | DE2-115 | EP4CE115 | LE | emulada em blocos de 64 KiB, para o topo ser o mesmo da DE0-Nano e da Vidor |
 | MAX 10 | DE10-Lite | 10M50DA | LE | SDRAM de 16 bits, com o controlador dentro do termo do núcleo |
 | Cyclone 10 LP | MKR Vidor 4000 | 10CL016 | LE | emulada em blocos de 8 KiB, porque o controlador de SDRAM do Memory tem endereço de linha de 13 bits e a SDRAM da placa tem 12 |
 
-Os termos `backends.sdram_32`, `backends.nor` e `backends.sram` não têm medida e ficam `null`, o que faz o estimador emitir V18 quando um perfil os pede. O termo `backends.sdram_16` vale zero nas famílias cuja plataforma tem a SDRAM e vale 1449 LEs na Cyclone IV E, a diferença medida na DE0-Nano (seção de verificação cruzada). Cada cache tem o termo $c_0 = -32\,c_1$, porque o tamanho de 32 kbit já está no núcleo.
+Os termos `backends.sdram_32`, `backends.nor` e `backends.sram` não têm medida e ficam `null`, o que faz o estimador emitir V18 quando um perfil os pede. O termo `backends.sdram_16` vale zero nas famílias cuja plataforma tem a SDRAM e vale 1185,3 LEs na Cyclone IV E, a média da diferença medida na 10M50DA entre a plataforma com a SDRAM e a emulada (`raw/sdram-cost-max-10`, de 598 a 1660 LEs conforme o perfil), porque o `sdram_dbg_master` do Memory não aceita o chip da DE0-Nano. Cada cache tem o termo $c_0 = -32\,c_1$, porque o tamanho de 32 kbit já está no núcleo.
 
 Cada plataforma de calibração fica em `src/calibration/<placa>/` com o pacote do mapa de memória gerado, e o campo `top` dela cita o componente `cal_<placa>_board` do `paths.yaml`, cujo fecho de `requires` é a lista de fontes do projeto que o `board generate` escreve.
 
-O Quartus é o 25.1std.0 Build 1129 Lite Edition, a semente é 5 e o núcleo é o commit `1057cbcc67ac3a82af4d314489e1eb840b84e12c` do Core. A frente F muda o núcleo, e o termo do núcleo (um perfil por família, `p1_rv32i`) é refeito depois do portão dela.
+O Quartus é o 25.1std.0 Build 1129 Lite Edition, a semente é 5 e o núcleo é o commit `451f5fcceb4bd2aef6cf4f9046a59d30961d40a0` do Core. A cache de dados de 128 kbit (`p7_dc128`) é medida e fica fora do ajuste e dos erros (`outside`), porque a síntese a converte em registradores e o custo deixa de ser linear: as tabelas valem até 64 kbit de cache de dados.
 
 ## 3. Cyclone V (DE0-CV, 5CEBA4)
 
 | Coeficiente | ALMs |
 | :--- | ---: |
-| `cache.dcache.c0` | -202,27 |
-| `cache.dcache.c1` | 6,32 |
-| `cache.icache.c0` | -0,16 |
-| `cache.icache.c1` | 0,01 |
-| `core.rv32e` | 3.756,00 |
-| `core.rv32i` | 4.122,00 |
-| `extensions.M` | 153,00 |
-| `extensions.Zicclsm` | 114,70 |
-| `extensions.Zicntr` | 314,30 |
-| `extensions.Zicond` | 6,60 |
-| `extensions.Zicsr` | 175,00 |
-| `extensions.Zifencei` | 1,00 |
-| `extensions.Zimop` | -4,40 |
-| `extensions.Zmmul` | 161,00 |
-| `extras.Interrupts` | 236,60 |
-| `extras.Sscofpmf` | 108,00 |
-| `extras.Zihintntl` | -2,40 |
-| `extras.Zihintpause` | -1,40 |
-| `zihpm.a0` | -15,62 |
-| `zihpm.a1` | -9,95 |
-| `zihpm.a2` | 1,67 |
+| `cache.dcache.c0` | -351,46 |
+| `cache.dcache.c1` | 10,98 |
+| `cache.icache.c0` | -4,10 |
+| `cache.icache.c1` | 0,13 |
+| `core.rv32e` | 3.965,00 |
+| `core.rv32i` | 4.343,00 |
+| `extensions.M` | 148,00 |
+| `extensions.Zicclsm` | 84,41 |
+| `extensions.Zicntr` | 304,60 |
+| `extensions.Zicond` | 5,00 |
+| `extensions.Zicsr` | 166,00 |
+| `extensions.Zifencei` | 137,00 |
+| `extensions.Zimop` | 87,00 |
+| `extensions.Zmmul` | 166,00 |
+| `extras.Interrupts` | 104,00 |
+| `extras.Sscofpmf` | 236,00 |
+| `extras.Zihintntl` | 1,00 |
+| `extras.Zihintpause` | -1,00 |
+| `zihpm.a0` | -11,76 |
+| `zihpm.a1` | -10,58 |
+| `zihpm.a2` | 1,70 |
 
 | Medida | Valor |
 | :--- | ---: |
 | Erro médio quadrático no ajuste | 0,18 % |
-| Maior erro no ajuste | 0,68 % |
-| Maior erro nos perfis de validação | 0,27 % |
-| Razão ajuste sobre síntese | 0,9693 |
+| Maior erro no ajuste | 0,73 % |
+| Maior erro nos perfis de validação | 0,97 % |
+| Razão ajuste sobre síntese | 0,9642 |
 
-Resíduos dos perfis de validação (os outros 24 perfis estão em `boards/calibration/cyclone-v.yaml`):
+Resíduos dos perfis de validação (os outros perfis estão em `boards/calibration/cyclone-v.yaml`):
 
 | Perfil | Medido | Previsto | Erro (%) |
 | :--- | ---: | ---: | ---: |
-| `p4_hpm_16x52` | 6.275 | 6.258,1 | -0,27 |
-| `p5_full` | 8.199 | 8.185,0 | -0,17 |
-| `p7_ic64` | 4.927 | 4.926,5 | -0,01 |
-| `p7_dc64` | 5.129 | 5.128,6 | -0,01 |
+| `p4_hpm_16x52` | 6.597 | 6.579,9 | -0,26 |
+| `p5_full` | 8.532 | 8.612,2 | 0,94 |
+| `p7_ic64` | 5.273 | 5.268,7 | -0,08 |
+| `p7_dc64` | 5.671 | 5.616,1 | -0,97 |
 
 ## 4. Cyclone IV E (DE2-115, EP4CE115)
 
 | Coeficiente | LEs |
 | :--- | ---: |
-| `cache.dcache.c0` | -719,04 |
-| `cache.dcache.c1` | 22,47 |
-| `cache.icache.c0` | -19,04 |
-| `cache.icache.c1` | 0,59 |
-| `core.rv32e` | 7.495,00 |
-| `core.rv32i` | 8.819,00 |
-| `extensions.M` | 346,00 |
-| `extensions.Zicclsm` | 123,52 |
-| `extensions.Zicntr` | 670,48 |
-| `extensions.Zicond` | 5,50 |
-| `extensions.Zicsr` | 570,00 |
-| `extensions.Zifencei` | 274,00 |
-| `extensions.Zimop` | -499,50 |
-| `extensions.Zmmul` | 596,00 |
-| `extras.Interrupts` | 751,50 |
-| `extras.Sscofpmf` | 572,00 |
-| `extras.Zihintntl` | -22,50 |
-| `extras.Zihintpause` | -12,50 |
-| `zihpm.a0` | 31,79 |
-| `zihpm.a1` | -45,04 |
-| `zihpm.a2` | 4,19 |
+| `backends.sdram_16` | 1.185,30 |
+| `cache.dcache.c0` | -860,00 |
+| `cache.dcache.c1` | 26,88 |
+| `cache.icache.c0` | -5,34 |
+| `cache.icache.c1` | 0,17 |
+| `core.rv32e` | 8.401,00 |
+| `core.rv32i` | 9.726,00 |
+| `extensions.M` | 386,00 |
+| `extensions.Zicclsm` | 306,00 |
+| `extensions.Zicntr` | 711,00 |
+| `extensions.Zicond` | -80,25 |
+| `extensions.Zicsr` | 610,00 |
+| `extensions.Zifencei` | 199,00 |
+| `extensions.Zimop` | -66,25 |
+| `extensions.Zmmul` | 434,00 |
+| `extras.Interrupts` | 352,75 |
+| `extras.Sscofpmf` | 601,00 |
+| `extras.Zihintntl` | -60,26 |
+| `extras.Zihintpause` | -94,25 |
+| `zihpm.a0` | -29,18 |
+| `zihpm.a1` | -57,06 |
+| `zihpm.a2` | 4,50 |
 
 | Medida | Valor |
 | :--- | ---: |
-| Erro médio quadrático no ajuste | 0,35 % |
-| Maior erro no ajuste | 1,39 % |
-| Maior erro nos perfis de validação | 2,62 % |
-| Razão ajuste sobre síntese | 0,8449 |
+| Erro médio quadrático no ajuste | 0,38 % |
+| Maior erro no ajuste | 1,10 % |
+| Maior erro nos perfis de validação | 3,39 % |
+| Razão ajuste sobre síntese | 0,8418 |
 
-Resíduos dos perfis de validação (os outros 24 perfis estão em `boards/calibration/cyclone-iv-e.yaml`):
+Resíduos dos perfis de validação (os outros perfis estão em `boards/calibration/cyclone-iv-e.yaml`):
 
 | Perfil | Medido | Previsto | Erro (%) |
 | :--- | ---: | ---: | ---: |
-| `p4_hpm_16x52` | 14.261 | 14.193,7 | -0,47 |
-| `p5_full` | 19.193 | 18.690,2 | -2,62 |
-| `p7_ic64` | 11.228 | 11.294,5 | 0,59 |
-| `p7_dc64` | 12.058 | 11.994,5 | -0,53 |
+| `p4_hpm_16x52` | 15.192 | 15.170,6 | -0,14 |
+| `p5_full` | 20.015 | 19.685,5 | -1,65 |
+| `p7_ic64` | 12.094 | 12.071,3 | -0,19 |
+| `p7_dc64` | 13.379 | 12.926,0 | -3,39 |
 
 ## 5. MAX 10 (DE10-Lite, 10M50DA)
 
 | Coeficiente | LEs |
 | :--- | ---: |
-| `cache.dcache.c0` | -724,61 |
-| `cache.dcache.c1` | 22,64 |
-| `cache.icache.c0` | -3,74 |
-| `cache.icache.c1` | 0,12 |
-| `core.rv32e` | 9.138,00 |
-| `core.rv32i` | 10.404,00 |
-| `extensions.M` | 387,00 |
-| `extensions.Zicclsm` | 245,55 |
-| `extensions.Zicntr` | 660,45 |
-| `extensions.Zicond` | 57,78 |
-| `extensions.Zicsr` | 408,00 |
-| `extensions.Zifencei` | 331,00 |
-| `extensions.Zimop` | -4,21 |
-| `extensions.Zmmul` | 541,00 |
-| `extras.Interrupts` | 624,78 |
-| `extras.Sscofpmf` | 482,00 |
-| `extras.Zihintntl` | -4,21 |
-| `extras.Zihintpause` | -6,21 |
-| `zihpm.a0` | -17,73 |
-| `zihpm.a1` | -23,86 |
+| `cache.dcache.c0` | -884,22 |
+| `cache.dcache.c1` | 27,63 |
+| `cache.icache.c0` | -14,02 |
+| `cache.icache.c1` | 0,44 |
+| `core.rv32e` | 9.929,00 |
+| `core.rv32i` | 11.194,00 |
+| `extensions.M` | 383,00 |
+| `extensions.Zicclsm` | 415,83 |
+| `extensions.Zicntr` | 674,17 |
+| `extensions.Zicond` | 34,76 |
+| `extensions.Zicsr` | 573,00 |
+| `extensions.Zifencei` | -87,00 |
+| `extensions.Zimop` | -11,24 |
+| `extensions.Zmmul` | 639,00 |
+| `extras.Interrupts` | 498,76 |
+| `extras.Sscofpmf` | 414,00 |
+| `extras.Zihintntl` | -14,24 |
+| `extras.Zihintpause` | -32,24 |
+| `zihpm.a0` | 62,33 |
+| `zihpm.a1` | -30,06 |
 | `zihpm.a2` | 3,37 |
 
 | Medida | Valor |
 | :--- | ---: |
-| Erro médio quadrático no ajuste | 0,14 % |
-| Maior erro no ajuste | 0,60 % |
-| Maior erro nos perfis de validação | 0,63 % |
-| Razão ajuste sobre síntese | 0,8800 |
+| Erro médio quadrático no ajuste | 0,31 % |
+| Maior erro no ajuste | 0,96 % |
+| Maior erro nos perfis de validação | 2,80 % |
+| Razão ajuste sobre síntese | 0,8797 |
 
-Resíduos dos perfis de validação (os outros 24 perfis estão em `boards/calibration/max-10.yaml`):
+Resíduos dos perfis de validação (os outros perfis estão em `boards/calibration/max-10.yaml`):
 
 | Perfil | Medido | Previsto | Erro (%) |
 | :--- | ---: | ---: | ---: |
-| `p4_hpm_16x52` | 15.423 | 15.378,1 | -0,29 |
-| `p5_full` | 19.662 | 19.664,6 | 0,01 |
-| `p7_ic64` | 12.771 | 12.735,2 | -0,28 |
-| `p7_dc64` | 13.541 | 13.456,1 | -0,63 |
+| `p4_hpm_16x52` | 16.213 | 16.175,5 | -0,23 |
+| `p5_full` | 20.262 | 20.123,4 | -0,68 |
+| `p7_ic64` | 13.422 | 13.390,2 | -0,24 |
+| `p7_dc64` | 14.671 | 14.260,4 | -2,80 |
 
 ## 6. Cyclone 10 LP (MKR Vidor 4000, 10CL016)
 
 | Coeficiente | LEs |
 | :--- | ---: |
-| `cache.dcache.c0` | -747,97 |
-| `cache.dcache.c1` | 23,37 |
-| `cache.icache.c0` | -0,51 |
-| `cache.icache.c1` | 0,02 |
-| `core.rv32e` | 7.261,00 |
-| `core.rv32i` | 8.540,00 |
-| `extensions.M` | 386,00 |
-| `extensions.Zicclsm` | 327,22 |
-| `extensions.Zicntr` | 636,78 |
-| `extensions.Zicond` | 193,94 |
-| `extensions.Zicsr` | 556,00 |
-| `extensions.Zifencei` | 244,00 |
-| `extensions.Zimop` | 204,94 |
-| `extensions.Zmmul` | 606,00 |
-| `extras.Interrupts` | 704,94 |
-| `extras.Sscofpmf` | -612,00 |
-| `extras.Zihintntl` | 5,94 |
-| `extras.Zihintpause` | -206,06 |
-| `zihpm.a0` | 54,69 |
-| `zihpm.a1` | -81,94 |
-| `zihpm.a2` | 4,66 |
+| `cache.dcache.c0` | -820,26 |
+| `cache.dcache.c1` | 25,63 |
+| `cache.icache.c0` | -5,54 |
+| `cache.icache.c1` | 0,17 |
+| `core.rv32e` | 8.032,00 |
+| `core.rv32i` | 9.296,00 |
+| `extensions.M` | 375,00 |
+| `extensions.Zicclsm` | 256,81 |
+| `extensions.Zicntr` | 736,19 |
+| `extensions.Zicond` | -25,52 |
+| `extensions.Zicsr` | 478,00 |
+| `extensions.Zifencei` | 185,00 |
+| `extensions.Zimop` | -58,52 |
+| `extensions.Zmmul` | 635,00 |
+| `extras.Interrupts` | -833,52 |
+| `extras.Sscofpmf` | 535,00 |
+| `extras.Zihintntl` | -66,52 |
+| `extras.Zihintpause` | -13,52 |
+| `zihpm.a0` | 67,76 |
+| `zihpm.a1` | -49,81 |
+| `zihpm.a2` | 4,25 |
 
 | Medida | Valor |
 | :--- | ---: |
-| Erro médio quadrático no ajuste | 0,35 % |
-| Maior erro no ajuste | 1,14 % |
-| Maior erro nos perfis de validação | 0,95 % |
-| Razão ajuste sobre síntese | 0,8356 |
+| Erro médio quadrático no ajuste | 0,20 % |
+| Maior erro no ajuste | 0,81 % |
+| Maior erro nos perfis de validação | 3,76 % |
+| Razão ajuste sobre síntese | 0,8390 |
 
-Resíduos dos perfis de validação (os outros 24 perfis estão em `boards/calibration/cyclone-10-lp.yaml`):
+Resíduos dos perfis de validação (os outros perfis estão em `boards/calibration/cyclone-10-lp.yaml`):
 
 | Perfil | Medido | Previsto | Erro (%) |
 | :--- | ---: | ---: | ---: |
-| `p4_hpm_16x52` | 14.008 | 13.918,5 | -0,64 |
-| `p5_full` | 17.750 | 17.918,9 | 0,95 |
-| `p7_ic64` | 10.962 | 10.969,3 | 0,07 |
-| `p7_dc64` | 11.748 | 11.716,7 | -0,27 |
+| `p4_hpm_16x52` | 14.857 | 14.771,3 | -0,58 |
+| `p5_full` | 18.220 | 18.016,2 | -1,12 |
+| `p7_ic64` | 11.714 | 11.710,7 | -0,03 |
+| `p7_dc64` | 13.015 | 12.525,4 | -3,76 |
 
 ## 7. Razão ajuste sobre síntese
 
@@ -205,93 +207,80 @@ O estimador soma os termos da tabela, que são estimativas do `quartus_map`, e m
 
 | Família | Perfil | Síntese | Ajuste | Ajuste sobre síntese | Tabela vezes razão | Erro (%) |
 | :--- | :--- | ---: | ---: | ---: | ---: | ---: |
-| Cyclone V | `p1_rv32i` | 4.122 | 3.845 | 0,9328 | 3.995 | 3,9 |
-| Cyclone V | `p3_zicntr_zifencei` | 4.926 | 4.832 | 0,9809 | 4.775 | -1,2 |
-| Cyclone V | `p5_base` | 7.837 | 7.647 | 0,9758 | 7.601 | -0,6 |
-| Cyclone V | `p5_full` | 8.199 | 8.100 | 0,9879 | 7.934 | -2,1 |
-| Cyclone IV E | `p1_rv32i` | 8.819 | 7.191 | 0,8154 | 7.451 | 3,6 |
-| Cyclone IV E | `p3_zicntr_zifencei` | 11.311 | 9.616 | 0,8501 | 9.527 | -0,9 |
-| Cyclone IV E | `p5_base` | 17.869 | 15.290 | 0,8557 | 15.120 | -1,1 |
-| Cyclone IV E | `p5_full` | 19.193 | 16.474 | 0,8583 | 15.791 | -4,1 |
-| MAX 10 | `p1_rv32i` | 10.404 | 8.709 | 0,8371 | 9.156 | 5,1 |
-| MAX 10 | `p3_zicntr_zifencei` | 12.726 | 11.055 | 0,8687 | 11.204 | 1,3 |
-| MAX 10 | `p5_base` | 18.502 | 16.760 | 0,9058 | 16.293 | -2,8 |
-| MAX 10 | `p5_full` | 19.662 | 17.865 | 0,9086 | 17.305 | -3,1 |
-| Cyclone 10 LP | `p1_rv32i` | 8.540 | 6.882 | 0,8059 | 7.136 | 3,7 |
-| Cyclone 10 LP | `p2_rv32im` | 9.532 | 7.965 | 0,8356 | 7.965 | -0,0 |
-| Cyclone 10 LP | `p3_zicntr_zifencei` | 10.959 | 9.281 | 0,8469 | 9.166 | -1,2 |
-| Cyclone 10 LP | `p4_hpm_4x40` | 11.903 | 10.164 | 0,8539 | 9.834 | -3,2 |
+| Cyclone V | `p1_rv32i` | 4.343 | 4.087 | 0,9411 | 4.188 | 2,5 |
+| Cyclone V | `p3_zicntr_zifencei` | 5.269 | 5.072 | 0,9626 | 5.076 | 0,1 |
+| Cyclone V | `p5_base` | 8.177 | 7.944 | 0,9715 | 7.887 | -0,7 |
+| Cyclone V | `p5_full` | 8.532 | 8.373 | 0,9814 | 8.304 | -0,8 |
+| Cyclone IV E | `p1_rv32i` | 9.726 | 7.958 | 0,8182 | 8.187 | 2,9 |
+| Cyclone IV E | `p3_zicntr_zifencei` | 12.076 | 10.255 | 0,8492 | 10.157 | -1,0 |
+| Cyclone IV E | `p5_base` | 19.006 | 16.059 | 0,8449 | 16.022 | -0,2 |
+| Cyclone IV E | `p5_full` | 20.015 | 17.111 | 0,8549 | 16.571 | -3,2 |
+| MAX 10 | `p1_rv32i` | 11.194 | 9.400 | 0,8397 | 9.847 | 4,8 |
+| MAX 10 | `p3_zicntr_zifencei` | 13.352 | 11.587 | 0,8678 | 11.767 | 1,6 |
+| MAX 10 | `p5_base` | 19.201 | 17.377 | 0,9050 | 16.920 | -2,6 |
+| MAX 10 | `p5_full` | 20.262 | 18.365 | 0,9064 | 17.703 | -3,6 |
+| Cyclone 10 LP | `p1_rv32i` | 9.296 | 7.599 | 0,8174 | 7.799 | 2,6 |
+| Cyclone 10 LP | `p2_rv32im` | 10.306 | 8.638 | 0,8382 | 8.647 | 0,1 |
+| Cyclone 10 LP | `p3_zicntr_zifencei` | 11.709 | 9.855 | 0,8417 | 9.821 | -0,3 |
+| Cyclone 10 LP | `p4_hpm_4x40` | 12.562 | 10.786 | 0,8586 | 10.497 | -2,7 |
 
 | Família | Razão usada | Menor | Maior |
 | :--- | ---: | ---: | ---: |
-| Cyclone V | 0,9693 | 0,9328 | 0,9879 |
-| Cyclone IV E | 0,8449 | 0,8154 | 0,8583 |
-| MAX 10 | 0,8800 | 0,8371 | 0,9086 |
-| Cyclone 10 LP | 0,8356 | 0,8059 | 0,8539 |
+| Cyclone V | 0,9642 | 0,9411 | 0,9814 |
+| Cyclone IV E | 0,8418 | 0,8182 | 0,8549 |
+| MAX 10 | 0,8797 | 0,8397 | 0,9064 |
+| Cyclone 10 LP | 0,8390 | 0,8174 | 0,8586 |
 
-O perfil completo da Cyclone V (`p5_full`) dá 8100 ALMs no ajuste, a 5 ALMs do limite da faixa de 8058 a 8095 ALMs que o `core-novo.md` registra para o topo escrito à mão. Na Vidor os perfis do ajuste vão até o `p4_hpm_4x40`, porque os perfis maiores passam dos 15408 LEs do 10CL016.
+Na Vidor os perfis do ajuste vão até o `p4_hpm_4x40`, porque os perfis maiores passam dos 15408 LEs do 10CL016.
 
 ## 8. Verificação cruzada
 
-A verificação mede 14 perfis em outro dispositivo da mesma família e compara com a tabela, com `riscv-tools calibrate verify`. O topo de cada placa difere do topo da placa de medida (a DE10-Nano e a DE2-115 têm a RAM emulada, a DE0-Nano tem a SDRAM de 16 bits), e por isso a comparação vem em duas colunas. A primeira usa a tabela como está. A segunda desloca o termo do núcleo pela diferença medida no perfil `p1_rv32i`, de modo que a parte do topo que muda sai da conta e sobram os incrementos das extensões e das caches, que são o que a tabela precisa acertar em outro dispositivo.
+A verificação mede 14 perfis (12 na DE0-Nano, sem as caches de 64 kbit, que não cabem nos blocos dela) em outro dispositivo da mesma família e compara com a tabela, com `riscv-tools calibrate verify`. O topo de cada placa difere do topo da placa de medida (a DE10-Nano tem a RAM emulada e a DE0-Nano tem memórias menores), e por isso a comparação vem em duas colunas. A primeira usa a tabela como está. A segunda desloca o termo do núcleo pela diferença medida no perfil `p1_rv32i`, de modo que a parte do topo que muda sai da conta e sobram os incrementos das extensões e das caches, que são o que a tabela precisa acertar em outro dispositivo.
 
 | Placa | Família | Dispositivo | Deslocamento do núcleo | Maior erro | Maior erro deslocado | Erro médio quadrático deslocado |
 | :--- | :--- | :--- | ---: | ---: | ---: | ---: |
-| DE10-Nano | Cyclone V | 5CSEBA6 | -628 | 20,39 % | 4,04 % | 3,13 % |
-| DE0-Nano | Cyclone IV E | EP4CE22 | 1.449 | 16,69 % | 5,52 % | 2,35 % |
+| DE10-Nano | Cyclone V | 5CSEBA6 | -633 | 18,64 % | 4,63 % | 3,20 % |
+| DE0-Nano | Cyclone IV E | EP4CE22 | -436 | 4,50 % | 2,02 % | 1,11 % |
 
-O deslocamento da DE10-Nano (-628 ALMs) é o que o topo da DE0-CV carrega a mais, com o controlador de SDRAM de 16 bits, e o da DE0-Nano (+1449 LEs) é o custo desse controlador na Cyclone IV E, que a DE2-115 não tem. As duas tabelas valem em outro dispositivo da família com erro abaixo de 10 % depois do deslocamento do núcleo, que é o termo que o perfil de cada família refaz.
+O deslocamento da DE10-Nano (-633 ALMs) é o que o topo da DE0-CV carrega a mais, com o controlador de SDRAM de 16 bits, e o da DE0-Nano (-436 LEs) vem das memórias menores da plataforma dela (FLASH de 12 KiB e RAM de 8 KiB, que cabem nos 66 blocos da EP4CE22). As duas tabelas valem em outro dispositivo da família com erro abaixo de 10 % depois do deslocamento do núcleo.
 
 ### DE10-Nano
 
 | Perfil | Medido | Previsto | Erro (%) | Previsto deslocado | Erro deslocado (%) |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| `p1_rv32i` | 3.494 | 4.122,0 | 17,97 | 3.494,0 | 0,00 |
-| `p1_rv32e` | 3.120 | 3.756,0 | 20,39 | 3.128,0 | 0,26 |
-| `p2_rv32im` | 3.909 | 4.436,0 | 13,48 | 3.808,0 | -2,58 |
-| `p3_zicntr_zifencei` | 4.464 | 4.926,3 | 10,36 | 4.298,3 | -3,71 |
-| `p3_zicclsm_zicntr_zifencei` | 4.588 | 5.041,0 | 9,87 | 4.413,0 | -3,81 |
-| `p4_hpm_4x40` | 4.790 | 5.253,3 | 9,67 | 4.625,3 | -3,44 |
-| `p4_hpm_16x52` | 5.851 | 6.258,1 | 6,96 | 5.630,1 | -3,77 |
-| `p5_base` | 7.420 | 7.842,0 | 5,69 | 7.214,0 | -2,78 |
-| `p5_full` | 7.643 | 8.185,0 | 7,09 | 7.557,0 | -1,13 |
-| `p6_interrupts` | 7.392 | 8.078,6 | 9,29 | 7.450,6 | 0,79 |
-| `p7_ic8` | 4.464 | 4.926,2 | 10,35 | 4.298,2 | -3,71 |
-| `p7_dc8` | 4.302 | 4.774,6 | 10,98 | 4.146,6 | -3,61 |
-| `p7_ic64` | 4.464 | 4.926,5 | 10,36 | 4.298,5 | -3,71 |
-| `p7_dc64` | 4.690 | 5.128,6 | 9,35 | 4.500,6 | -4,04 |
+| `p1_rv32i` | 3.710 | 4.343,0 | 17,06 | 3.710,0 | 0,00 |
+| `p1_rv32e` | 3.342 | 3.965,0 | 18,64 | 3.332,0 | -0,30 |
+| `p2_rv32im` | 4.137 | 4.657,0 | 12,57 | 4.024,0 | -2,73 |
+| `p3_zicntr_zifencei` | 4.806 | 5.264,6 | 9,54 | 4.631,6 | -3,63 |
+| `p3_zicclsm_zicntr_zifencei` | 4.921 | 5.349,0 | 8,70 | 4.716,0 | -4,17 |
+| `p4_hpm_4x40` | 5.144 | 5.566,5 | 8,21 | 4.933,5 | -4,09 |
+| `p4_hpm_16x52` | 6.162 | 6.579,9 | 6,78 | 5.946,9 | -3,49 |
+| `p5_base` | 7.735 | 8.180,2 | 5,75 | 7.547,2 | -2,43 |
+| `p5_full` | 8.045 | 8.612,2 | 7,05 | 7.979,2 | -0,82 |
+| `p6_interrupts` | 7.786 | 8.284,2 | 6,40 | 7.651,2 | -1,73 |
+| `p7_ic8` | 4.798 | 5.261,5 | 9,66 | 4.628,5 | -3,53 |
+| `p7_dc8` | 4.506 | 5.001,0 | 10,98 | 4.368,0 | -3,06 |
+| `p7_ic64` | 4.812 | 5.268,7 | 9,49 | 4.635,7 | -3,66 |
+| `p7_dc64` | 5.225 | 5.616,1 | 7,48 | 4.983,1 | -4,63 |
 
 ### DE0-Nano
 
 | Perfil | Medido | Previsto | Erro (%) | Previsto deslocado | Erro deslocado (%) |
 | :--- | ---: | ---: | ---: | ---: | ---: |
-| `p1_rv32i` | 10.268 | 8.819,0 | -14,11 | 10.268,0 | 0,00 |
-| `p1_rv32e` | 8.997 | 7.495,0 | -16,69 | 8.944,0 | -0,59 |
-| `p2_rv32im` | 11.249 | 9.761,0 | -13,23 | 11.210,0 | -0,35 |
-| `p3_zicntr_zifencei` | 12.623 | 11.275,5 | -10,68 | 12.724,5 | 0,80 |
-| `p3_zicclsm_zicntr_zifencei` | 12.873 | 11.399,0 | -11,45 | 12.848,0 | -0,19 |
-| `p4_hpm_4x40` | 13.314 | 11.920,5 | -10,47 | 13.369,5 | 0,42 |
-| `p4_hpm_16x52` | 15.320 | 14.193,7 | -7,35 | 15.642,7 | 2,11 |
-| `p5_base` | 18.422 | 17.895,7 | -2,86 | 19.344,7 | 5,01 |
-| `p5_full` | 19.585 | 18.690,2 | -4,57 | 20.139,2 | 2,83 |
-| `p6_interrupts` | 19.045 | 18.647,2 | -2,09 | 20.096,2 | 5,52 |
-| `p7_ic8` | 12.616 | 11.261,2 | -10,74 | 12.710,2 | 0,75 |
-| `p7_dc8` | 12.089 | 10.736,2 | -11,19 | 12.185,2 | 0,80 |
-| `p7_ic64` | 12.627 | 11.294,5 | -10,55 | 12.743,5 | 0,92 |
-| `p7_dc64` | 13.357 | 11.994,5 | -10,20 | 13.443,5 | 0,65 |
+| `p1_rv32i` | 9.290 | 9.726,0 | 4,69 | 9.290,0 | 0,00 |
+| `p1_rv32e` | 8.039 | 8.401,0 | 4,50 | 7.965,0 | -0,92 |
+| `p2_rv32im` | 10.318 | 10.546,0 | 2,21 | 10.110,0 | -2,02 |
+| `p3_zicntr_zifencei` | 11.723 | 12.066,0 | 2,93 | 11.630,0 | -0,79 |
+| `p3_zicclsm_zicntr_zifencei` | 11.992 | 12.372,0 | 3,17 | 11.936,0 | -0,47 |
+| `p4_hpm_4x40` | 12.544 | 12.834,0 | 2,31 | 12.398,0 | -1,16 |
+| `p4_hpm_16x52` | 14.852 | 15.170,6 | 2,15 | 14.734,6 | -0,79 |
+| `p5_base` | 18.613 | 19.032,8 | 2,25 | 18.596,8 | -0,09 |
+| `p5_full` | 19.615 | 19.685,5 | 0,36 | 19.249,5 | -1,86 |
+| `p6_interrupts` | 18.792 | 19.385,5 | 3,16 | 18.949,5 | 0,84 |
+| `p7_ic8` | 11.712 | 12.062,0 | 2,99 | 11.626,0 | -0,73 |
+| `p7_dc8` | 11.096 | 11.421,0 | 2,93 | 10.985,0 | -1,00 |
 
-## 9. Portão GMC
-
-O portão pede uma tabela por família com os dados brutos versionados, o erro registrado e o erro máximo de validação menor ou igual a 10 %. Uma família acima de 10 % não habilita o erro de lógica (V12) e fica em aviso (V18).
-
-| Família | Perfis medidos | Erro médio quadrático | Maior erro de validação | Razão ajuste sobre síntese | Erro de lógica habilitado |
-| :--- | ---: | ---: | ---: | ---: | :--- |
-| Cyclone V | 28 | 0,18 % | 0,27 % | 0,9693 | sim |
-| Cyclone IV E | 28 | 0,35 % | 2,62 % | 0,8449 | sim |
-| MAX 10 | 28 | 0,14 % | 0,63 % | 0,8800 | sim |
-| Cyclone 10 LP | 28 | 0,35 % | 0,95 % | 0,8356 | sim |
-
-## 10. Como refazer
+## 9. Como refazer
 
 Cada família roda no Tools, sob o `flock` da máquina com o Quartus, e a tabela sai do ajuste dos registros. Os perfis de uma família rodam em sequência, e a Cyclone V roda no notebook ou na PC1, enquanto as outras famílias só rodam na PC1.
 

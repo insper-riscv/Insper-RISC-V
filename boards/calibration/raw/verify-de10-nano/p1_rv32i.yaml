@@ -12,13 +12,13 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: 5CSEBA6U23I7
 measured_on: '2026-11-07'
-sources_hash: f65c7b3d603dd46d7aa96475584a28cd35e0603a5947613807fd79d6a7ae2b3a
+sources_hash: df3b5e35a993243f16c69d2b50229f56045c2ce815be1b705cb4924524102d5c
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
-  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
-  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
 added_constants:
 - CLINT_BASE
 - CLINT_ID
@@ -39,20 +39,20 @@ command:
 - de10_nano_de10_nano
 - '5'
 - map
-elapsed_s: 27
+elapsed_s: 28
 result:
-  logic: 3494
-  registers: 4135
-  ram_bits: 893184
+  logic: 3710
+  registers: 4351
+  ram_bits: 895232
   multipliers: 0
   plls: 1
   pins: 10
 entities:
 - name: de10_nano_de10_nano_top
   depth: 0
-  luts: 4289
-  registers: 4135
-  memory_bits: 893184
+  luts: 4685
+  registers: 4351
+  memory_bits: 895232
 - name: boot_memory:boot_inst
   depth: 1
   luts: 0
@@ -65,13 +65,18 @@ entities:
   memory_bits: 0
 - name: flash:flash_store_inst
   depth: 1
-  luts: 12
+  luts: 44
   registers: 4
   memory_bits: 262144
 - name: flash_chip:flash_chip_inst
   depth: 1
   luts: 78
   registers: 166
+  memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 138
+  registers: 114
   memory_bits: 0
 - name: flash_jtag_shell:flash_jtag_inst
   depth: 1
@@ -80,12 +85,12 @@ entities:
   memory_bits: 0
 - name: flash_loader:flash_loader_inst
   depth: 1
-  luts: 146
+  luts: 91
   registers: 167
   memory_bits: 0
 - name: onchip_ram_port:ram_port_inst
   depth: 1
-  luts: 116
+  luts: 117
   registers: 411
   memory_bits: 0
 - name: ram:ram_store_inst
@@ -100,9 +105,9 @@ entities:
   memory_bits: 0
 - name: soc:soc_inst
   depth: 1
-  luts: 3617
-  registers: 3046
-  memory_bits: 73984
+  luts: 3852
+  registers: 3148
+  memory_bits: 76032
 - name: virtual_jtag:uart_vjtag
   depth: 1
   luts: 4

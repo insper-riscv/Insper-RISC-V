@@ -1,4 +1,4 @@
-# Perfis da verificação cruzada da tabela da família cyclone-iv-e na de0-nano (EP4CE22), um subconjunto da lista de calibração (documento 02,
+# Perfis da verificação cruzada da tabela da família cyclone-iv-e na de0-nano (EP4CE22), um subconjunto da lista de calibração, sem as caches de 64 kbit que não cabem nos 66 blocos de RAM da EP4CE22 e com a FLASH de 12 KiB e a RAM de 8 KiB (documento 02,
 # seção 7.6, do plano Multi-FPGA). O topo tem a SDRAM de 16 bits, que a DE2-115 (RAM emulada) não tem, de modo que o deslocamento do núcleo mede esse controlador.
 # `riscv-tools calibrate verify` compara a tabela da família com estas medidas, com e sem o deslocamento do termo do núcleo.
 family: cyclone-iv-e
@@ -22,5 +22,3 @@ profiles:
   - {id: p6_interrupts, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Interrupts]}
   - {id: p7_ic8, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 8}
   - {id: p7_dc8, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 8}
-  - {id: p7_ic64, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 64, holdout: true}
-  - {id: p7_dc64, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 64, holdout: true}

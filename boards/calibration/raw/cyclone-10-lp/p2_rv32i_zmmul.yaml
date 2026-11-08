@@ -12,13 +12,13 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: 10CL016YU256C8G
 measured_on: '2026-11-07'
-sources_hash: 67aa59f9f1ddfea8038d57ecf68da7b68bd896c640fcc112fdf447b9d449663e
+sources_hash: b52639b11d9901dadee7547882b92bea61614470fa7c34075ee86a2097c20d45
 revisions:
-  .: 7262f9e4a5684b91e1d980ed435f004a78bb56f2
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
-  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
-  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
 added_constants:
 - CLINT_BASE
 - CLINT_ID
@@ -39,20 +39,20 @@ command:
 - mkr_vidor_4000_mkr_vidor_4000
 - '5'
 - map
-elapsed_s: 34
+elapsed_s: 35
 result:
-  logic: 9146
-  registers: 4449
-  ram_bits: 303360
+  logic: 9931
+  registers: 4754
+  ram_bits: 305408
   multipliers: 0
   plls: 1
   pins: 2
 entities:
 - name: mkr_vidor_4000_mkr_vidor_4000_top
   depth: 0
-  luts: 6624
-  registers: 4449
-  memory_bits: 303360
+  luts: 7373
+  registers: 4754
+  memory_bits: 305408
 - name: boot_memory:boot_inst
   depth: 1
   luts: 0
@@ -65,8 +65,13 @@ entities:
   memory_bits: 131072
 - name: flash_chip:flash_chip_inst
   depth: 1
-  luts: 86
+  luts: 87
   registers: 164
+  memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 127
+  registers: 94
   memory_bits: 0
 - name: flash_jtag_shell:flash_jtag_inst
   depth: 1
@@ -75,7 +80,7 @@ entities:
   memory_bits: 0
 - name: flash_loader:flash_loader_inst
   depth: 1
-  luts: 184
+  luts: 172
   registers: 166
   memory_bits: 0
 - name: mkr_vidor_4000_mkr_vidor_4000_pll:pll_inst
@@ -85,7 +90,7 @@ entities:
   memory_bits: 0
 - name: onchip_ram_port:ram_port_inst
   depth: 1
-  luts: 150
+  luts: 151
   registers: 408
   memory_bits: 0
 - name: ram:ram_store_inst
@@ -100,9 +105,9 @@ entities:
   memory_bits: 0
 - name: soc:soc_inst
   depth: 1
-  luts: 5733
-  registers: 3372
-  memory_bits: 73984
+  luts: 6321
+  registers: 3583
+  memory_bits: 76032
 - name: virtual_jtag:uart_vjtag
   depth: 1
   luts: 2

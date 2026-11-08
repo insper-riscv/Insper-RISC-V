@@ -12,13 +12,13 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: 10M50DAF484C7G
 measured_on: '2026-11-07'
-sources_hash: 7409e59a58d9dc9d4bda46be8d2bdd19c152a9cb9b004fc2f86608c35eca9238
+sources_hash: b0669890fc945afd59f2cc7a53ec18889d9f52453b7c966f4fde5167054482bb
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
-  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
-  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
 added_constants:
 - CLINT_BASE
 - CLINT_ID
@@ -39,20 +39,20 @@ command:
 - de10_lite_de10_lite
 - '5'
 - map
-elapsed_s: 40
+elapsed_s: 84
 result:
-  logic: 12722
-  registers: 6465
-  ram_bits: 341376
+  logic: 13385
+  registers: 6709
+  ram_bits: 343424
   multipliers: 0
   plls: 1
   pins: 93
 entities:
 - name: de10_lite_de10_lite_top
   depth: 0
-  luts: 9163
-  registers: 6465
-  memory_bits: 341376
+  luts: 9806
+  registers: 6709
+  memory_bits: 343424
 - name: boot_memory:boot_inst
   depth: 1
   luts: 0
@@ -73,6 +73,11 @@ entities:
   luts: 91
   registers: 166
   memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 139
+  registers: 102
+  memory_bits: 0
 - name: flash_jtag_shell:flash_jtag_inst
   depth: 1
   luts: 183
@@ -80,7 +85,7 @@ entities:
   memory_bits: 0
 - name: flash_loader:flash_loader_inst
   depth: 1
-  luts: 153
+  luts: 172
   registers: 167
   memory_bits: 0
 - name: sdram_arbiter:sdram_arbiter_inst
@@ -100,29 +105,34 @@ entities:
   memory_bits: 0
 - name: sdram_ctrl:sdram_ctrl_inst
   depth: 1
-  luts: 270
+  luts: 269
   registers: 378
   memory_bits: 0
 - name: sdram_dbg_master:sdram_debug_inst
   depth: 1
-  luts: 267
-  registers: 230
+  luts: 264
+  registers: 229
   memory_bits: 0
 - name: sdram_jtag_shell:sdram_jtag_inst
   depth: 1
   luts: 78
-  registers: 135
+  registers: 134
   memory_bits: 0
 - name: sld_hub:auto_hub
   depth: 1
-  luts: 160
-  registers: 91
+  luts: 177
+  registers: 98
   memory_bits: 0
 - name: soc:soc_inst
   depth: 1
-  luts: 7593
-  registers: 3942
-  memory_bits: 46464
+  luts: 8017
+  registers: 4079
+  memory_bits: 48512
+- name: virtual_jtag:display_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
 - name: virtual_jtag:uart_vjtag
   depth: 1
   luts: 2

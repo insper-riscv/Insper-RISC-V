@@ -13,13 +13,13 @@ seed: 5
 tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
 device: EP4CE115F29C7
 measured_on: '2026-11-07'
-sources_hash: 5d6ed397ec93ea73aa068a13b81529982436b1cffd6909fb272802f75909764d
+sources_hash: 2df525a531fcb7da18d3a16356549c6cf1f4b78e541ebf19157cd3ef23abc840
 revisions:
-  .: cff77786c3b9dbf121d8eb1eebf81c4ae63ade5d
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
   Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
-  Core: 1057cbcc67ac3a82af4d314489e1eb840b84e12c
-  Memory: 2da8a19c654f9630a3a0226f101fa5538c425000
-  Peripherals: bf372182e2eaf09c19b1157b0a4392e176fece2c
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
 added_constants:
 - CLINT_BASE
 - CLINT_ID
@@ -40,20 +40,20 @@ command:
 - de2_115_de2_115
 - '5'
 - map
-elapsed_s: 53
+elapsed_s: 56
 result:
-  logic: 17397
-  registers: 7693
-  ram_bits: 893184
+  logic: 18966
+  registers: 8906
+  ram_bits: 895232
   multipliers: 0
   plls: 1
   pins: 76
 entities:
 - name: de2_115_de2_115_top
   depth: 0
-  luts: 14256
-  registers: 7693
-  memory_bits: 893184
+  luts: 14972
+  registers: 8906
+  memory_bits: 895232
 - name: boot_memory:boot_inst
   depth: 1
   luts: 0
@@ -71,22 +71,27 @@ entities:
   memory_bits: 262144
 - name: flash_chip:flash_chip_inst
   depth: 1
-  luts: 89
+  luts: 88
   registers: 166
+  memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 138
+  registers: 102
   memory_bits: 0
 - name: flash_jtag_shell:flash_jtag_inst
   depth: 1
-  luts: 183
+  luts: 184
   registers: 161
   memory_bits: 0
 - name: flash_loader:flash_loader_inst
   depth: 1
-  luts: 153
+  luts: 172
   registers: 167
   memory_bits: 0
 - name: onchip_ram_port:ram_port_inst
   depth: 1
-  luts: 152
+  luts: 154
   registers: 411
   memory_bits: 0
 - name: ram:ram_store_inst
@@ -96,14 +101,19 @@ entities:
   memory_bits: 524288
 - name: sld_hub:auto_hub
   depth: 1
-  luts: 180
-  registers: 106
+  luts: 189
+  registers: 112
   memory_bits: 0
 - name: soc:soc_inst
   depth: 1
-  luts: 13248
-  registers: 6601
-  memory_bits: 73984
+  luts: 13748
+  registers: 7706
+  memory_bits: 76032
+- name: virtual_jtag:display_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
 - name: virtual_jtag:uart_vjtag
   depth: 1
   luts: 2

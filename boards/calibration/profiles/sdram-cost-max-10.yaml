@@ -1,0 +1,15 @@
+# Custo do controlador de SDRAM de 16 bits em LEs (documento 02, seção 7.6, perfil 9), medido na 10M50DA pela diferença entre a plataforma da
+# DE10-Lite com a SDRAM (`raw/max-10`) e a mesma plataforma com a RAM emulada em blocos. A Cyclone IV E usa o resultado em `backends.sdram_16`,
+# porque a tecnologia de LE é a mesma e o `sdram_dbg_master` do Memory não aceita o chip da DE0-Nano (23 bits de endereço).
+family: max-10
+unit: le
+project:
+  platform: src/calibration/de10-lite-emulated/platform.yaml
+  board: de10-lite
+  seed: 5
+bits_per_block: 9216
+reference_kbit: 32
+profiles:
+  - {id: p1_rv32i, group: 1, profile: rv32i}
+  - {id: p3_zicntr_zifencei, group: 3, profile: rv32im_zicntr_zifencei}
+  - {id: p5_base, group: 5, profile: rv32im_zicclsm_zicntr_zihpm_zifencei}

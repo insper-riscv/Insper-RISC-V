@@ -21,8 +21,8 @@ fixed:
   peripherals.DISPLAY: 0.0
   peripherals.FLASH_CTRL: 0.0
   per_block_glue: 0.0
-  # Custo do controlador de SDRAM de 16 bits, medido pela diferença da DE0-Nano (verification/de0-nano.yaml, deslocamento do núcleo).
-  backends.sdram_16: 1449.0
+  # Custo do controlador de SDRAM de 16 bits, média da diferença medida na 10M50DA entre a plataforma com SDRAM e a emulada (raw/sdram-cost-max-10, 598 a 1660 LEs segundo o perfil).
+  backends.sdram_16: 1185.3
 profiles:
   # 1. Núcleo mínimo.
   - {id: p1_rv32i, group: 1, profile: rv32i}
@@ -56,6 +56,6 @@ profiles:
   - {id: p7_ic8, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 8}
   - {id: p7_ic128, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 128}
   - {id: p7_dc8, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 8}
-  - {id: p7_dc128, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 128}
+  - {id: p7_dc128, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 128, outside: true}
   - {id: p7_ic64, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 64, holdout: true}
   - {id: p7_dc64, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 64, holdout: true}
