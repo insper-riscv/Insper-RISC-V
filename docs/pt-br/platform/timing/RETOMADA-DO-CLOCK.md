@@ -58,6 +58,32 @@ O roteiro `run-sementes.sh` copia o repositório por semente, troca a frequênci
 | 4 | `make test` e `make formal` do Core, a prova da `icache` e os testes de plataforma passam | CI dos repositórios |
 | 5 | O CPI base dos programas do Tests é registrado antes e depois | [CPI-BASE.md](CPI-BASE.md) |
 
+## 6. Tabelas por semente
+
+Os valores vêm de `dados/frente-f-onda2/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados/frente-f-onda2` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 6.1. `100mhz-fase6000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -1,418 | core | 0,267 | core |
+| 2 | -1,647 | core | 0,266 | core |
+| 3 | -1,220 | core | 0,255 | core |
+| 4 | -2,300 | core | 0,267 | core |
+| 5 | -1,687 | core | 0,265 | core |
+
+### 6.2. `77mhz-fase7500-final`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,474 | fetch | 0,256 | core |
+| 2 | 0,657 | core | 0,262 | core |
+| 3 | 0,225 | fetch | 0,310 | core |
+| 4 | 0,427 | fetch | 0,268 | core |
+| 5 | 0,707 | core | 0,265 | core |
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../../LICENSE).

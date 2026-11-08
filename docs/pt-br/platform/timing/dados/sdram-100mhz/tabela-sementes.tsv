@@ -1,0 +1,307 @@
+experimento	semente	dominio	setup_slack_ns	setup_tns_ns	hold_slack_ns	hold_tns_ns	recovery_slack_ns	removal_slack_ns	mpw_slack_ns	setup_pior_modelo_ns	hold_pior_modelo_ns
+antes-142mhz	1	DRAM_CLK	0.429	0.000	2.429	0.000				0.429	2.429
+antes-142mhz	1	clock_50							9.731		
+antes-142mhz	1	core	0.166	0.000	0.286	0.000			8.587	0.166	0.145
+antes-142mhz	1	fetch	3.837	0.000	8.036	0.000			8.628	3.837	7.926
+antes-142mhz	1	jtag	10.773	0.000	0.453	0.000	29.807	0.836	14.682	10.773	0.117
+antes-142mhz	1	mem	-0.745	-10.263	0.331	0.000			2.645	-0.745	0.162
+antes-142mhz	1	pll_dram_clk							3.335		
+antes-142mhz	1	pll_vco							0.500		
+antes-142mhz	1	pior	-0.745		0.286		29.807	0.836	0.500	-0.745	0.117
+fase3000	1	DRAM_CLK	0.679	0.000	5.179	0.000				0.679	5.179
+fase3000	1	clock_50							9.731		
+fase3000	1	core	0.907	0.000	0.306	0.000			8.587	0.907	0.148
+fase3000	1	fetch	3.830	0.000	8.307	0.000			8.635	3.830	8.089
+fase3000	1	jtag	10.089	0.000	0.463	0.000	29.616	1.048	14.728	10.089	0.117
+fase3000	1	mem	3.540	0.000	0.341	0.000			4.147	3.540	0.166
+fase3000	1	pll_dram_clk							4.835		
+fase3000	1	pll_vco							1.000		
+fase3000	1	pior	0.679		0.306		29.616	1.048	1.000	0.679	0.117
+fase3000	2	DRAM_CLK	0.123	0.000	5.670	0.000				0.123	5.670
+fase3000	2	clock_50							9.731		
+fase3000	2	core	0.343	0.000	0.301	0.000			8.588	0.343	0.145
+fase3000	2	fetch	3.552	0.000	7.685	0.000			8.623	3.552	7.647
+fase3000	2	jtag	11.044	0.000	0.181	0.000	29.264	0.844	14.691	11.044	0.019
+fase3000	2	mem	4.153	0.000	0.336	0.000			4.132	4.153	0.164
+fase3000	2	pll_dram_clk							4.833		
+fase3000	2	pll_vco							1.000		
+fase3000	2	pior	0.123		0.181		29.264	0.844	1.000	0.123	0.019
+fase3000	3	DRAM_CLK	0.204	0.000	5.719	0.000				0.204	5.719
+fase3000	3	clock_50							9.731		
+fase3000	3	core	1.218	0.000	0.267	0.000			8.584	1.218	0.127
+fase3000	3	fetch	2.651	0.000	8.522	0.000			8.594	2.651	8.186
+fase3000	3	jtag	9.988	0.000	0.571	0.000	29.833	0.896	14.624	9.988	0.196
+fase3000	3	mem	3.802	0.000	0.337	0.000			4.147	3.802	0.159
+fase3000	3	pll_dram_clk							4.843		
+fase3000	3	pll_vco							1.000		
+fase3000	3	pior	0.204		0.267		29.833	0.896	1.000	0.204	0.127
+fase3000	4	DRAM_CLK	0.172	0.000	5.751	0.000				0.172	5.751
+fase3000	4	clock_50							9.731		
+fase3000	4	core	1.451	0.000	0.300	0.000			8.588	1.446	0.145
+fase3000	4	fetch	3.530	0.000	8.501	0.000			8.630	3.530	8.185
+fase3000	4	jtag	10.263	0.000	0.348	0.000	30.640	0.781	14.665	10.263	0.078
+fase3000	4	mem	3.132	0.000	0.340	0.000			4.148	3.132	0.164
+fase3000	4	pll_dram_clk							4.854		
+fase3000	4	pll_vco							1.000		
+fase3000	4	pior	0.172		0.300		30.640	0.781	1.000	0.172	0.078
+fase3000	5	DRAM_CLK	0.660	0.000	5.197	0.000				0.660	5.197
+fase3000	5	clock_50							9.731		
+fase3000	5	core	1.010	0.000	0.310	0.000			8.587	1.010	0.145
+fase3000	5	fetch	4.166	0.000	8.183	0.000			8.626	4.166	8.000
+fase3000	5	jtag	9.601	0.000	0.612	0.000	29.718	1.033	14.711	9.601	0.189
+fase3000	5	mem	4.270	0.000	0.352	0.000			4.137	4.270	0.167
+fase3000	5	pll_dram_clk							4.832		
+fase3000	5	pll_vco							1.000		
+fase3000	5	pior	0.660		0.310		29.718	1.033	1.000	0.660	0.145
+fase4000	1	DRAM_CLK	1.679	0.000	4.179	0.000				1.679	4.179
+fase4000	1	clock_50							9.731		
+fase4000	1	core	0.873	0.000	0.297	0.000			8.587	0.873	0.148
+fase4000	1	fetch	4.009	0.000	8.330	0.000			8.635	4.009	8.106
+fase4000	1	jtag	10.145	0.000	0.467	0.000	28.824	0.919	14.728	10.145	0.129
+fase4000	1	mem	3.417	0.000	0.356	0.000			4.147	3.417	0.166
+fase4000	1	pll_dram_clk							4.835		
+fase4000	1	pll_vco							1.000		
+fase4000	1	pior	0.873		0.297		28.824	0.919	1.000	0.873	0.129
+fase4000	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+fase4000	2	clock_50							9.731		
+fase4000	2	core	0.262	0.000	0.263	0.000			8.588	0.262	0.128
+fase4000	2	fetch	3.917	0.000	7.681	0.000			8.623	3.917	7.642
+fase4000	2	jtag	10.989	0.000	0.157	0.000	30.050	0.890	14.678	10.989	0.010
+fase4000	2	mem	3.786	0.000	0.360	0.000			4.132	3.786	0.168
+fase4000	2	pll_dram_clk							4.833		
+fase4000	2	pll_vco							1.000		
+fase4000	2	pior	0.262		0.157		30.050	0.890	1.000	0.262	0.010
+fase4000	3	DRAM_CLK	1.204	0.000	4.719	0.000				1.204	4.719
+fase4000	3	clock_50							9.731		
+fase4000	3	core	1.226	0.000	0.268	0.000			8.584	1.226	0.125
+fase4000	3	fetch	2.570	0.000	8.520	0.000			8.594	2.570	8.185
+fase4000	3	jtag	10.900	0.000	0.611	0.000	30.346	0.956	14.678	10.900	0.206
+fase4000	3	mem	3.979	0.000	0.345	0.000			4.147	3.979	0.163
+fase4000	3	pll_dram_clk							4.843		
+fase4000	3	pll_vco							1.000		
+fase4000	3	pior	1.204		0.268		30.346	0.956	1.000	1.204	0.125
+fase4000-final	1	DRAM_CLK	1.678	0.000	4.181	0.000				1.678	4.181
+fase4000-final	1	clock_50							9.731		
+fase4000-final	1	core	0.558	0.000	0.265	0.000			8.587	0.558	0.130
+fase4000-final	1	fetch	2.896	0.000	8.016	0.000			8.587	2.896	7.933
+fase4000-final	1	jtag	11.227	0.000	0.515	0.000	30.028	0.775	14.699	11.227	0.152
+fase4000-final	1	mem	3.778	0.000	0.334	0.000			4.147	3.778	0.162
+fase4000-final	1	pll_dram_clk							4.835		
+fase4000-final	1	pll_vco							1.000		
+fase4000-final	1	pior	0.558		0.265		30.028	0.775	1.000	0.558	0.130
+fase4000-final	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+fase4000-final	2	clock_50							9.731		
+fase4000-final	2	core	0.610	0.000	0.271	0.000			8.588	0.591	0.127
+fase4000-final	2	fetch	4.012	0.000	7.524	0.000			8.627	4.012	7.524
+fase4000-final	2	jtag	10.016	0.000	0.361	0.000	30.368	0.907	14.669	10.016	0.076
+fase4000-final	2	mem	3.648	0.000	0.362	0.000			4.132	3.648	0.165
+fase4000-final	2	pll_dram_clk							4.833		
+fase4000-final	2	pll_vco							1.000		
+fase4000-final	2	pior	0.610		0.271		30.368	0.907	1.000	0.591	0.076
+fase4000-final	3	DRAM_CLK	1.203	0.000	4.721	0.000				1.203	4.721
+fase4000-final	3	clock_50							9.731		
+fase4000-final	3	core	1.449	0.000	0.293	0.000			8.580	1.444	0.142
+fase4000-final	3	fetch	2.189	0.000	8.687	0.000			8.634	2.189	8.267
+fase4000-final	3	jtag	9.027	0.000	0.377	0.000	29.484	0.773	14.605	9.027	0.092
+fase4000-final	3	mem	3.857	0.000	0.346	0.000			4.147	3.857	0.166
+fase4000-final	3	pll_dram_clk							4.843		
+fase4000-final	3	pll_vco							1.000		
+fase4000-final	3	pior	1.203		0.293		29.484	0.773	1.000	1.203	0.092
+fase4000-final	4	DRAM_CLK	1.172	0.000	4.751	0.000				1.172	4.751
+fase4000-final	4	clock_50							9.731		
+fase4000-final	4	core	1.342	0.000	0.289	0.000			8.588	1.342	0.135
+fase4000-final	4	fetch	2.904	0.000	8.512	0.000			8.630	2.904	8.182
+fase4000-final	4	jtag	10.539	0.000	0.459	0.000	30.252	0.766	14.649	10.539	0.116
+fase4000-final	4	mem	3.405	0.000	0.356	0.000			4.148	3.405	0.171
+fase4000-final	4	pll_dram_clk							4.854		
+fase4000-final	4	pll_vco							1.000		
+fase4000-final	4	pior	1.172		0.289		30.252	0.766	1.000	1.172	0.116
+fase4000-final	5	DRAM_CLK	1.644	0.000	4.212	0.000				1.644	4.212
+fase4000-final	5	clock_50							9.731		
+fase4000-final	5	core	1.046	0.000	0.253	0.000			8.587	1.046	0.127
+fase4000-final	5	fetch	3.979	0.000	8.005	0.000			8.635	3.979	7.925
+fase4000-final	5	jtag	10.923	0.000	0.272	0.000	29.459	1.164	14.651	10.923	-0.009
+fase4000-final	5	mem	3.629	0.000	0.328	0.000			4.129	3.629	0.157
+fase4000-final	5	pll_dram_clk							4.832		
+fase4000-final	5	pll_vco							1.000		
+fase4000-final	5	pior	1.046		0.253		29.459	1.164	1.000	1.046	-0.009
+marco-m1-50mhz-fase8250	1	DRAM_CLK	1.679	0.000	4.179	0.000				1.679	4.179
+marco-m1-50mhz-fase8250	1	clock_50							9.731		
+marco-m1-50mhz-fase8250	1	core	0.976	0.000	0.290	0.000			8.587	0.970	0.133
+marco-m1-50mhz-fase8250	1	fetch	3.623	0.000	8.135	0.000			8.633	3.623	8.004
+marco-m1-50mhz-fase8250	1	jtag	10.598	0.000	0.376	0.000	29.780	1.046	14.705	10.598	0.091
+marco-m1-50mhz-fase8250	1	mem	3.670	0.000	0.401	0.000			4.147	3.670	0.169
+marco-m1-50mhz-fase8250	1	pll_dram_clk							4.835		
+marco-m1-50mhz-fase8250	1	pll_vco							1.000		
+marco-m1-50mhz-fase8250	1	pior	0.976		0.290		29.780	1.046	1.000	0.970	0.091
+marco-m1-50mhz-fase8250	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+marco-m1-50mhz-fase8250	2	clock_50							9.731		
+marco-m1-50mhz-fase8250	2	core	0.048	0.000	0.275	0.000			8.588	0.048	0.139
+marco-m1-50mhz-fase8250	2	fetch	3.964	0.000	7.492	0.000			8.629	3.964	7.484
+marco-m1-50mhz-fase8250	2	jtag	11.051	0.000	0.540	0.000	29.628	0.730	14.706	11.051	0.052
+marco-m1-50mhz-fase8250	2	mem	3.897	0.000	0.341	0.000			4.132	3.897	0.162
+marco-m1-50mhz-fase8250	2	pll_dram_clk							4.833		
+marco-m1-50mhz-fase8250	2	pll_vco							1.000		
+marco-m1-50mhz-fase8250	2	pior	0.048		0.275		29.628	0.730	1.000	0.048	0.052
+marco-m1-50mhz-fase8250	3	DRAM_CLK	1.203	0.000	4.721	0.000				1.203	4.721
+marco-m1-50mhz-fase8250	3	clock_50							9.731		
+marco-m1-50mhz-fase8250	3	core	1.260	0.000	0.262	0.000			8.584	1.260	0.128
+marco-m1-50mhz-fase8250	3	fetch	2.496	0.000	8.649	0.000			8.630	2.496	8.260
+marco-m1-50mhz-fase8250	3	jtag	10.767	0.000	0.431	0.000	29.513	0.835	14.691	10.767	0.122
+marco-m1-50mhz-fase8250	3	mem	4.188	0.000	0.355	0.000			4.147	4.185	0.167
+marco-m1-50mhz-fase8250	3	pll_dram_clk							4.843		
+marco-m1-50mhz-fase8250	3	pll_vco							1.000		
+marco-m1-50mhz-fase8250	3	pior	1.203		0.262		29.513	0.835	1.000	1.203	0.122
+marco-m1-50mhz-fase8250	4	DRAM_CLK	1.172	0.000	4.751	0.000				1.172	4.751
+marco-m1-50mhz-fase8250	4	clock_50							9.731		
+marco-m1-50mhz-fase8250	4	core	0.979	0.000	0.268	0.000			8.588	0.979	0.132
+marco-m1-50mhz-fase8250	4	fetch	3.689	0.000	8.739	0.000			8.630	3.689	8.284
+marco-m1-50mhz-fase8250	4	jtag	11.000	0.000	0.523	0.000	29.657	0.975	14.621	11.000	0.172
+marco-m1-50mhz-fase8250	4	mem	3.534	0.000	0.326	0.000			4.148	3.534	0.161
+marco-m1-50mhz-fase8250	4	pll_dram_clk							4.854		
+marco-m1-50mhz-fase8250	4	pll_vco							1.000		
+marco-m1-50mhz-fase8250	4	pior	0.979		0.268		29.657	0.975	1.000	0.979	0.132
+marco-m1-50mhz-fase8250	5	DRAM_CLK	1.644	0.000	4.212	0.000				1.644	4.212
+marco-m1-50mhz-fase8250	5	clock_50							9.731		
+marco-m1-50mhz-fase8250	5	core	0.953	0.000	0.266	0.000			8.587	0.953	0.132
+marco-m1-50mhz-fase8250	5	fetch	3.194	0.000	8.212	0.000			8.637	3.194	8.023
+marco-m1-50mhz-fase8250	5	jtag	10.720	0.000	0.453	0.000	29.981	1.032	14.595	10.720	0.118
+marco-m1-50mhz-fase8250	5	mem	3.142	0.000	0.332	0.000			4.129	3.142	0.160
+marco-m1-50mhz-fase8250	5	pll_dram_clk							4.832		
+marco-m1-50mhz-fase8250	5	pll_vco							1.000		
+marco-m1-50mhz-fase8250	5	pior	0.953		0.266		29.981	1.032	1.000	0.953	0.118
+marco-m2-66mhz-fase8500	1	DRAM_CLK	1.678	0.000	4.181	0.000				1.678	4.181
+marco-m2-66mhz-fase8500	1	clock_50							9.731		
+marco-m2-66mhz-fase8500	1	core	0.811	0.000	0.266	0.000			6.087	0.811	0.131
+marco-m2-66mhz-fase8500	1	fetch	0.793	0.000	8.306	0.000			6.134	0.793	8.192
+marco-m2-66mhz-fase8500	1	jtag	10.135	0.000	0.460	0.000	29.852	1.054	14.646	10.135	0.121
+marco-m2-66mhz-fase8500	1	mem	3.689	0.000	0.348	0.000			4.147	3.689	0.167
+marco-m2-66mhz-fase8500	1	pll_dram_clk							4.835		
+marco-m2-66mhz-fase8500	1	pll_vco							0.500		
+marco-m2-66mhz-fase8500	1	pior	0.793		0.266		29.852	1.054	0.500	0.793	0.121
+marco-m2-66mhz-fase8500	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+marco-m2-66mhz-fase8500	2	clock_50							9.731		
+marco-m2-66mhz-fase8500	2	core	-0.366	-2.375	0.267	0.000			6.088	-0.366	0.128
+marco-m2-66mhz-fase8500	2	fetch	0.854	0.000	7.738	0.000			6.119	0.854	7.721
+marco-m2-66mhz-fase8500	2	jtag	9.090	0.000	0.181	0.000	29.110	0.899	14.651	9.090	0.022
+marco-m2-66mhz-fase8500	2	mem	3.377	0.000	0.369	0.000			4.132	3.377	0.166
+marco-m2-66mhz-fase8500	2	pll_dram_clk							4.833		
+marco-m2-66mhz-fase8500	2	pll_vco							0.500		
+marco-m2-66mhz-fase8500	2	pior	-0.366		0.181		29.110	0.899	0.500	-0.366	0.022
+marco-m2-66mhz-fase8500	3	DRAM_CLK	1.204	0.000	4.719	0.000				1.204	4.719
+marco-m2-66mhz-fase8500	3	clock_50							9.731		
+marco-m2-66mhz-fase8500	3	core	1.349	0.000	0.289	0.000			6.080	1.349	0.141
+marco-m2-66mhz-fase8500	3	fetch	0.194	0.000	8.933	0.000			6.135	0.194	8.523
+marco-m2-66mhz-fase8500	3	jtag	9.970	0.000	0.569	0.000	29.539	0.812	14.659	9.970	0.142
+marco-m2-66mhz-fase8500	3	mem	3.909	0.000	0.356	0.000			4.147	3.909	0.167
+marco-m2-66mhz-fase8500	3	pll_dram_clk							4.843		
+marco-m2-66mhz-fase8500	3	pll_vco							0.500		
+marco-m2-66mhz-fase8500	3	pior	0.194		0.289		29.539	0.812	0.500	0.194	0.141
+marco-m2-66mhz-fase8500	4	DRAM_CLK	1.172	0.000	4.751	0.000				1.172	4.751
+marco-m2-66mhz-fase8500	4	clock_50							9.731		
+marco-m2-66mhz-fase8500	4	core	1.564	0.000	0.269	0.000			6.088	1.564	0.128
+marco-m2-66mhz-fase8500	4	fetch	0.437	0.000	8.968	0.000			6.133	0.437	8.536
+marco-m2-66mhz-fase8500	4	jtag	10.167	0.000	0.581	0.000	30.003	0.779	14.710	10.167	0.163
+marco-m2-66mhz-fase8500	4	mem	3.406	0.000	0.338	0.000			4.148	3.406	0.157
+marco-m2-66mhz-fase8500	4	pll_dram_clk							4.854		
+marco-m2-66mhz-fase8500	4	pll_vco							0.500		
+marco-m2-66mhz-fase8500	4	pior	0.437		0.269		30.003	0.779	0.500	0.437	0.128
+marco-m2-66mhz-fase8500	5	DRAM_CLK	1.660	0.000	4.197	0.000				1.660	4.197
+marco-m2-66mhz-fase8500	5	clock_50							9.731		
+marco-m2-66mhz-fase8500	5	core	-0.066	-0.132	0.268	0.000			6.087	-0.066	0.131
+marco-m2-66mhz-fase8500	5	fetch	0.888	0.000	8.399	0.000			6.129	0.888	8.250
+marco-m2-66mhz-fase8500	5	jtag	8.690	0.000	0.449	0.000	29.581	0.979	14.681	8.690	0.145
+marco-m2-66mhz-fase8500	5	mem	3.899	0.000	0.355	0.000			4.137	3.899	0.166
+marco-m2-66mhz-fase8500	5	pll_dram_clk							4.832		
+marco-m2-66mhz-fase8500	5	pll_vco							0.500		
+marco-m2-66mhz-fase8500	5	pior	-0.066		0.268		29.581	0.979	0.500	-0.066	0.131
+marco-m2-66mhz-fase8625	1	DRAM_CLK	1.678	0.000	4.181	0.000				1.678	4.181
+marco-m2-66mhz-fase8625	1	clock_50							9.731		
+marco-m2-66mhz-fase8625	1	core	0.440	0.000	0.262	0.000			6.087	0.440	0.124
+marco-m2-66mhz-fase8625	1	fetch	0.381	0.000	8.629	0.000			6.094	0.381	8.427
+marco-m2-66mhz-fase8625	1	jtag	10.503	0.000	0.467	0.000	29.827	1.149	14.652	10.503	0.123
+marco-m2-66mhz-fase8625	1	mem	3.791	0.000	0.338	0.000			4.147	3.791	0.167
+marco-m2-66mhz-fase8625	1	pll_dram_clk							4.835		
+marco-m2-66mhz-fase8625	1	pll_vco							0.500		
+marco-m2-66mhz-fase8625	1	pior	0.381		0.262		29.827	1.149	0.500	0.381	0.123
+marco-m2-66mhz-fase8625	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+marco-m2-66mhz-fase8625	2	clock_50							9.731		
+marco-m2-66mhz-fase8625	2	core	-0.217	-2.017	0.262	0.000			6.088	-0.217	0.131
+marco-m2-66mhz-fase8625	2	fetch	1.008	0.000	7.873	0.000			6.098	1.008	7.854
+marco-m2-66mhz-fase8625	2	jtag	10.100	0.000	0.489	0.000	30.250	0.974	14.727	10.100	0.137
+marco-m2-66mhz-fase8625	2	mem	3.907	0.000	0.341	0.000			4.132	3.907	0.167
+marco-m2-66mhz-fase8625	2	pll_dram_clk							4.833		
+marco-m2-66mhz-fase8625	2	pll_vco							0.500		
+marco-m2-66mhz-fase8625	2	pior	-0.217		0.262		30.250	0.974	0.500	-0.217	0.131
+marco-m2-66mhz-fase8625	3	DRAM_CLK	1.204	0.000	4.719	0.000				1.204	4.719
+marco-m2-66mhz-fase8625	3	clock_50							9.731		
+marco-m2-66mhz-fase8625	3	core	1.284	0.000	0.261	0.000			6.084	1.284	0.129
+marco-m2-66mhz-fase8625	3	fetch	-0.019	-0.033	9.097	0.000			6.131	-0.019	8.646
+marco-m2-66mhz-fase8625	3	jtag	10.294	0.000	0.516	0.000	30.214	1.184	14.672	10.294	0.155
+marco-m2-66mhz-fase8625	3	mem	3.885	0.000	0.328	0.000			4.147	3.885	0.159
+marco-m2-66mhz-fase8625	3	pll_dram_clk							4.843		
+marco-m2-66mhz-fase8625	3	pll_vco							0.500		
+marco-m2-66mhz-fase8625	3	pior	-0.019		0.261		30.214	1.184	0.500	-0.019	0.129
+marco-m2-66mhz-fase8625	4	DRAM_CLK	1.172	0.000	4.751	0.000				1.172	4.751
+marco-m2-66mhz-fase8625	4	clock_50							9.731		
+marco-m2-66mhz-fase8625	4	core	1.287	0.000	0.270	0.000			6.088	1.287	0.138
+marco-m2-66mhz-fase8625	4	fetch	-0.035	-0.035	9.076	0.000			6.136	-0.035	8.584
+marco-m2-66mhz-fase8625	4	jtag	10.761	0.000	0.498	0.000	29.976	1.115	14.650	10.761	0.144
+marco-m2-66mhz-fase8625	4	mem	3.320	0.000	0.316	0.000			4.148	3.320	0.155
+marco-m2-66mhz-fase8625	4	pll_dram_clk							4.854		
+marco-m2-66mhz-fase8625	4	pll_vco							0.500		
+marco-m2-66mhz-fase8625	4	pior	-0.035		0.270		29.976	1.115	0.500	-0.035	0.138
+marco-m2-66mhz-fase8625	5	DRAM_CLK	1.630	0.000	4.227	0.000				1.630	4.227
+marco-m2-66mhz-fase8625	5	clock_50							9.731		
+marco-m2-66mhz-fase8625	5	core	0.150	0.000	0.267	0.000			6.087	0.150	0.126
+marco-m2-66mhz-fase8625	5	fetch	0.303	0.000	8.394	0.000			6.130	0.303	8.299
+marco-m2-66mhz-fase8625	5	jtag	10.062	0.000	0.550	0.000	29.614	0.825	14.681	10.062	0.144
+marco-m2-66mhz-fase8625	5	mem	3.624	0.000	0.358	0.000			4.124	3.624	0.168
+marco-m2-66mhz-fase8625	5	pll_dram_clk							4.832		
+marco-m2-66mhz-fase8625	5	pll_vco							0.500		
+marco-m2-66mhz-fase8625	5	pior	0.150		0.267		29.614	0.825	0.500	0.150	0.126
+marco-m2-66mhz-fase8875	1	DRAM_CLK	1.679	0.000	4.179	0.000				1.679	4.179
+marco-m2-66mhz-fase8875	1	clock_50							9.731		
+marco-m2-66mhz-fase8875	1	core	1.604	0.000	0.266	0.000			6.087	1.604	0.135
+marco-m2-66mhz-fase8875	1	fetch	0.202	0.000	8.694	0.000			6.130	0.202	8.573
+marco-m2-66mhz-fase8875	1	jtag	10.643	0.000	0.453	0.000	29.031	1.029	14.600	10.643	0.135
+marco-m2-66mhz-fase8875	1	mem	3.766	0.000	0.345	0.000			4.147	3.766	0.169
+marco-m2-66mhz-fase8875	1	pll_dram_clk							4.835		
+marco-m2-66mhz-fase8875	1	pll_vco							0.500		
+marco-m2-66mhz-fase8875	1	pior	0.202		0.266		29.031	1.029	0.500	0.202	0.135
+marco-m2-66mhz-fase8875	2	DRAM_CLK	1.123	0.000	4.670	0.000				1.123	4.670
+marco-m2-66mhz-fase8875	2	clock_50							9.731		
+marco-m2-66mhz-fase8875	2	core	0.567	0.000	0.269	0.000			6.088	0.567	0.125
+marco-m2-66mhz-fase8875	2	fetch	0.539	0.000	8.324	0.000			6.123	0.539	8.279
+marco-m2-66mhz-fase8875	2	jtag	10.694	0.000	0.462	0.000	29.389	1.025	14.682	10.694	0.125
+marco-m2-66mhz-fase8875	2	mem	3.386	0.000	0.341	0.000			4.132	3.386	0.164
+marco-m2-66mhz-fase8875	2	pll_dram_clk							4.833		
+marco-m2-66mhz-fase8875	2	pll_vco							0.500		
+marco-m2-66mhz-fase8875	2	pior	0.539		0.269		29.389	1.025	0.500	0.539	0.125
+marco-m2-66mhz-fase8875	3	DRAM_CLK	1.203	0.000	4.721	0.000				1.203	4.721
+marco-m2-66mhz-fase8875	3	clock_50							9.731		
+marco-m2-66mhz-fase8875	3	core	1.253	0.000	0.268	0.000			6.084	1.253	0.132
+marco-m2-66mhz-fase8875	3	fetch	-0.160	-0.408	9.329	0.000			6.094	-0.160	8.908
+marco-m2-66mhz-fase8875	3	jtag	10.160	0.000	0.452	0.000	30.030	0.839	14.644	10.160	0.117
+marco-m2-66mhz-fase8875	3	mem	3.404	0.000	0.340	0.000			4.147	3.404	0.166
+marco-m2-66mhz-fase8875	3	pll_dram_clk							4.843		
+marco-m2-66mhz-fase8875	3	pll_vco							0.500		
+marco-m2-66mhz-fase8875	3	pior	-0.160		0.268		30.030	0.839	0.500	-0.160	0.117
+marco-m2-66mhz-fase8875	4	DRAM_CLK	1.172	0.000	4.751	0.000				1.172	4.751
+marco-m2-66mhz-fase8875	4	clock_50							9.731		
+marco-m2-66mhz-fase8875	4	core	1.394	0.000	0.266	0.000			6.088	1.236	0.132
+marco-m2-66mhz-fase8875	4	fetch	-0.272	-1.117	9.479	0.000			6.129	-0.272	8.959
+marco-m2-66mhz-fase8875	4	jtag	11.191	0.000	0.527	0.000	29.536	0.915	14.643	11.191	0.151
+marco-m2-66mhz-fase8875	4	mem	3.848	0.000	0.336	0.000			4.148	3.848	0.157
+marco-m2-66mhz-fase8875	4	pll_dram_clk							4.854		
+marco-m2-66mhz-fase8875	4	pll_vco							0.500		
+marco-m2-66mhz-fase8875	4	pior	-0.272		0.266		29.536	0.915	0.500	-0.272	0.132
+marco-m2-66mhz-fase8875	5	DRAM_CLK	1.660	0.000	4.197	0.000				1.660	4.197
+marco-m2-66mhz-fase8875	5	clock_50							9.731		
+marco-m2-66mhz-fase8875	5	core	0.785	0.000	0.267	0.000			6.087	0.785	0.131
+marco-m2-66mhz-fase8875	5	fetch	0.477	0.000	8.645	0.000			6.129	0.477	8.548
+marco-m2-66mhz-fase8875	5	jtag	11.145	0.000	0.592	0.000	29.962	0.953	14.704	11.145	0.182
+marco-m2-66mhz-fase8875	5	mem	3.315	0.000	0.330	0.000			4.137	3.315	0.158
+marco-m2-66mhz-fase8875	5	pll_dram_clk							4.832		
+marco-m2-66mhz-fase8875	5	pll_vco							0.500		
+marco-m2-66mhz-fase8875	5	pior	0.477		0.267		29.962	0.953	0.500	0.477	0.131

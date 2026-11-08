@@ -279,6 +279,42 @@ Atraso médio de dados por número de níveis:
 | `DRAM_CLK` tem zero níveis | O domínio é só de pinos e depende da fase da PLL |
 | Os destinos `r_same`, `r_is_sdram`, `r_in_main` (classificação de F.P4) chegam a 10 e 11 níveis no banco B, vindos de `r_we_ok` da MEM/WB | O adiantamento do resultado de WB para a ULA e para a decodificação do endereço soma à cadeia; vale classificar o endereço só nos bits altos antes da soma completa |
 
+## 7. Tabelas por semente
+
+Os valores vêm de `dados/frente-f-onda2/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados/frente-f-onda2` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 7.1. `b100p5000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| - | -2,610 | fetch | 0,148 | jtag |
+
+### 7.2. `b83p6000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| - | -1,039 | fetch | 0,266 | core |
+
+### 7.3. `p45c100p5000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| - | -2,687 | core | 0,267 | core |
+
+### 7.4. `p45c100p6000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| - | -2,549 | core | 0,270 | core |
+
+### 7.5. `p45c83p6500`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| - | -0,744 | mem | 0,286 | core |
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../../LICENSE).

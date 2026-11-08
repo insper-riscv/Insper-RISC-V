@@ -128,7 +128,7 @@ Os contadores do Zihpm dos kernels `cpi-data` dão a largura de banda e a latên
 | `sdram-store`, ciclos do núcleo | 5381 | 5640 | 4500 | 4620 |
 | `sdram-load-use`, ciclos do núcleo (acertos) | 2318 | 2322 | 2317 | 2318 |
 
-O controlador a 10 ns custa 4 a 8 % no tempo de um programa que só varre a SDRAM (`sdram-stream`, `sdram-copy`), 3 % nos que a usam com reuso (`cache-sweep`, `sdram-memtest`) e nada nos que ficam nas caches (`sdram-load-use`, `code-sweep`). Os números de ciclos por instrução dos programas que não usam a SDRAM não mudam. Os resumos de tempo e de ajuste de cada semente estão em `dados/sdram-100mhz/`. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
+O controlador a 10 ns custa 4 a 8 % no tempo de um programa que só varre a SDRAM (`sdram-stream`, `sdram-copy`), 3 % nos que a usam com reuso (`cache-sweep`, `sdram-memtest`) e nada nos que ficam nas caches (`sdram-load-use`, `code-sweep`). Os números de ciclos por instrução dos programas que não usam a SDRAM não mudam. As folgas e a ocupação de cada semente estão em `dados/sdram-100mhz/tabela-sementes.tsv` e `tabela-ocupacao.tsv`. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
 
 ## 7. Decisão
 
@@ -180,6 +180,143 @@ O M2 não fecha: o laço da cache de instruções (etiqueta até o PC) e o do n�
 ### 9.3. Marcos M3 e M4
 
 O [FRENTE-F-ONDA2.md](FRENTE-F-ONDA2.md) mede o núcleo e a busca a 83,333 MHz e a 100 MHz com os passos F.P4 e F.P5: o núcleo fica em -0,09 a -1,79 ns a 83,333 MHz e o laço de leitura de CSR realimentando a escrita do contador do Zihpm tem 12,3 ns de dados contra os 10 ns do período. O controlador da SDRAM e `DRAM_CLK` deixaram de ser parte do que falta: a 100 MHz eles têm 3,1 ns e 1,1 ns de folga (seção 5). O M3 e o M4 não fecham, e o que falta é só o laço do núcleo.
+
+## 10. Tabelas por semente
+
+Os valores vêm de `dados/sdram-100mhz/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão. A ocupação por semente está em `dados/sdram-100mhz/tabela-ocupacao.tsv`.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados/sdram-100mhz` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 10.1. `antes-142mhz`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -0,745 | mem | 0,286 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+
+### 10.2. `fase3000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,679 | DRAM_CLK | 0,306 | core |
+| 2 | 0,123 | DRAM_CLK | 0,181 | jtag |
+| 3 | 0,204 | DRAM_CLK | 0,267 | core |
+| 4 | 0,172 | DRAM_CLK | 0,300 | core |
+| 5 | 0,660 | DRAM_CLK | 0,310 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,297 / 18,480 ( 45 % ) | 9387 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 2 | 8,304 / 18,480 ( 45 % ) | 9368 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 3 | 8,322 / 18,480 ( 45 % ) | 9483 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 4 | 8,297 / 18,480 ( 45 % ) | 9470 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 5 | 8,294 / 18,480 ( 45 % ) | 9395 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+
+### 10.3. `fase4000`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,873 | core | 0,297 | core |
+| 2 | 0,262 | core | 0,157 | jtag |
+| 3 | 1,204 | DRAM_CLK | 0,268 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,297 / 18,480 ( 45 % ) | 9375 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 2 | 8,304 / 18,480 ( 45 % ) | 9433 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 3 | 8,322 / 18,480 ( 45 % ) | 9493 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+
+### 10.4. `fase4000-final`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,558 | core | 0,265 | core |
+| 2 | 0,610 | core | 0,271 | core |
+| 3 | 1,203 | DRAM_CLK | 0,293 | core |
+| 4 | 1,172 | DRAM_CLK | 0,289 | core |
+| 5 | 1,046 | core | 0,253 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 8,265 / 18,480 ( 45 % ) | 9404 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 2 | 8,329 / 18,480 ( 45 % ) | 9497 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 3 | 8,293 / 18,480 ( 45 % ) | 9451 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 4 | 8,288 / 18,480 ( 45 % ) | 9437 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+| 5 | 8,319 / 18,480 ( 45 % ) | 9376 | 93 / 224 ( 42 % ) | 271 / 308 ( 88 % ) |
+
+### 10.5. `marco-m1-50mhz-fase8250`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,976 | core | 0,290 | core |
+| 2 | 0,048 | core | 0,275 | core |
+| 3 | 1,203 | DRAM_CLK | 0,262 | core |
+| 4 | 0,979 | core | 0,268 | core |
+| 5 | 0,953 | core | 0,266 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 7,948 / 18,480 ( 43 % ) | 9155 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 2 | 7,943 / 18,480 ( 43 % ) | 9214 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 3 | 7,956 / 18,480 ( 43 % ) | 9222 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 4 | 7,978 / 18,480 ( 43 % ) | 9178 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 5 | 7,911 / 18,480 ( 43 % ) | 9221 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+
+### 10.6. `marco-m2-66mhz-fase8500`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,793 | fetch | 0,266 | core |
+| 2 | -0,366 | core | 0,181 | jtag |
+| 3 | 0,194 | fetch | 0,289 | core |
+| 4 | 0,437 | fetch | 0,269 | core |
+| 5 | -0,066 | core | 0,268 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 7,944 / 18,480 ( 43 % ) | 9315 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 2 | 7,965 / 18,480 ( 43 % ) | 9276 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 3 | 7,988 / 18,480 ( 43 % ) | 9301 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 4 | 7,978 / 18,480 ( 43 % ) | 9279 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 5 | 7,980 / 18,480 ( 43 % ) | 9261 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+
+### 10.7. `marco-m2-66mhz-fase8625`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,381 | fetch | 0,262 | core |
+| 2 | -0,217 | core | 0,262 | core |
+| 3 | -0,019 | fetch | 0,261 | core |
+| 4 | -0,035 | fetch | 0,270 | core |
+| 5 | 0,150 | core | 0,267 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 7,973 / 18,480 ( 43 % ) | 9208 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 2 | 7,961 / 18,480 ( 43 % ) | 9308 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 3 | 7,988 / 18,480 ( 43 % ) | 9300 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 4 | 7,991 / 18,480 ( 43 % ) | 9318 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 5 | 7,961 / 18,480 ( 43 % ) | 9217 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+
+### 10.8. `marco-m2-66mhz-fase8875`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | 0,202 | fetch | 0,266 | core |
+| 2 | 0,539 | fetch | 0,269 | core |
+| 3 | -0,160 | fetch | 0,268 | core |
+| 4 | -0,272 | fetch | 0,266 | core |
+| 5 | 0,477 | fetch | 0,267 | core |
+
+| Semente | ALMs | Registradores | Pinos | Blocos de RAM |
+| :--- | ---: | ---: | ---: | ---: |
+| 1 | 7,969 / 18,480 ( 43 % ) | 9272 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 2 | 7,972 / 18,480 ( 43 % ) | 9257 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 3 | 7,998 / 18,480 ( 43 % ) | 9355 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 4 | 7,966 / 18,480 ( 43 % ) | 9250 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
+| 5 | 7,996 / 18,480 ( 43 % ) | 9302 | 93 / 224 ( 42 % ) | 272 / 308 ( 88 % ) |
 
 ---
 

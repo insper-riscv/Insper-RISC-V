@@ -19,7 +19,7 @@ Este documento registra a medição da plataforma `de0-cv` com o perfil `rv32im_
 | Relógios a 100 MHz | Mesma PLL com as saídas 2 e 3 em 100 MHz e a fase do núcleo em 3125 ps; só a cópia de trabalho do Quartus muda, o repositório não |
 | Contagem do tick do `time` | 50 ciclos nas duas compilações, o que não altera o tempo |
 
-Os resumos por domínio de cada semente estão em `dados/<frequência>-semente-<n>.resumo.txt` (o `.sta.summary` do Quartus). Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`. O roteiro `dados/pares-de-dominios.tcl` extrai os caminhos por par de relógios de origem e de destino.
+As folgas por domínio de cada semente estão em `dados/tabela-sementes.tsv` (seção 7). Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`. O roteiro `dados/pares-de-dominios.tcl` extrai os caminhos por par de relógios de origem e de destino.
 
 ## 3. Fmax e caminho crítico
 
@@ -231,6 +231,32 @@ Nenhuma fase leva os três pares a folga não negativa. A fase de 5000 ps equili
 | Caminhos por registrador | `riscv-tools timing-paths --npaths 300` no projeto compilado |
 | Caminhos por par de relógios | `quartus_sta -t docs/pt-br/platform/timing/dados/pares-de-dominios.tcl de0-cv 400 slow` na pasta do projeto compilado |
 | Ciclos por instrução | No repositório Tests, depois de copiar `dados/programas/cpi-<nome>.c` para `c-sdram/cpi-<nome>/src.c` e `rv32_cpi.h` para `tools/riscv_build/include-sdram/`, `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex` e depois `sim --only cpi-core,cpi-data,cpi-fetch` |
+
+## 7. Tabelas por semente
+
+Os valores vêm de `dados/tabela-sementes.tsv`, gerado por `dados/tabelar_resumos.py` a partir dos `.sta.summary` do Timing Analyzer (modelo lento, 1100 mV, 85 °C). Cada tabela lista, por semente, o pior setup, o pior hold e o domínio em que cada um ocorre. Os domínios são `core` (saída 3 da PLL), `fetch` (saída 2), `mem` (saída 0, controlador da SDRAM), `DRAM_CLK` (pino) e `jtag`; no topo `core_fpga_test` as saídas da PLL aparecem como `pll_c0` e `pll_c1`, e `pll_dram_clk` e `pll_vco` só têm largura mínima de pulso. O TSV traz também TNS, recovery, removal, largura mínima de pulso e o pior valor entre os quatro modelos de temperatura e tensão.
+
+As medições descrevem a plataforma congelada em 76,923077 MHz e os experimentos listados. Um novo ataque de frequência regera a tabela com `python3 dados/tabelar_resumos.py gerar dados` sobre os `.resumo.txt` das sementes novas (o `.sta.summary` e o `.fit.summary` do Quartus renomeados), e `--check` confere o TSV contra eles. Os resumos brutos não são versionados, e as tabelas são a referência de partida para a próxima rodada.
+
+### 7.1. `50mhz`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -1,103 | core | 0,293 | core |
+| 2 | -1,604 | core | 0,307 | core |
+| 3 | -0,224 | core | 0,271 | core |
+| 4 | -0,388 | core | 0,267 | core |
+| 5 | -0,783 | core | 0,267 | core |
+
+### 7.2. `100mhz`
+
+| Semente | Pior setup (ns) | Domínio | Pior hold (ns) | Domínio |
+| :--- | ---: | :--- | ---: | :--- |
+| 1 | -5,022 | core | 0,261 | core |
+| 2 | -5,848 | core | 0,254 | core |
+| 3 | -4,058 | core | 0,268 | core |
+| 4 | -4,816 | core | 0,266 | core |
+| 5 | -3,713 | core | 0,267 | core |
 
 ---
 
