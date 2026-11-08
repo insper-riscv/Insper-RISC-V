@@ -36,7 +36,7 @@ flock /tmp/quartus-workstation.lock \
   xargs -P 3 -L 1 bash -c './run-sementes.sh cem_p$0 <copia-do-repositorio> 100.000000 $0 $1'
 ```
 
-O roteiro `run-sementes.sh` copia o repositório por semente, troca a frequência e a fase das saídas 2 e 3 da PLL na cópia, compila com `de0-cv_synth.tcl` e grava `pares.txt` (os 400 piores caminhos por par de relógios) e `detail-*.rpt`. `agrupa-caminhos.py pares.txt` lista os caminhos por origem e destino, `pior-por-par.py pares.txt` dá a pior folga por par, e `levels.tcl` com `niveis-resumo.py` gera a lista por níveis de lógica. Rode no máximo três sementes ao mesmo tempo na PC1.
+O roteiro `run-sementes.sh` copia o repositório por semente, troca a frequência e a fase das saídas 2 e 3 da PLL na cópia, compila com `de0-cv_synth.tcl` e grava `pares.txt` (os 400 piores caminhos por par de relógios) e `detail-*.rpt`. `agrupa_caminhos.py pares.txt` lista os caminhos por origem e destino, `pior_por_par.py pares.txt` dá a pior folga por par, e `levels.tcl` com `niveis_resumo.py` gera a lista por níveis de lógica. Rode no máximo três sementes ao mesmo tempo na PC1.
 
 ## 4. Ideias ainda não tentadas
 

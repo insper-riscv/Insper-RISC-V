@@ -36,7 +36,7 @@ flock /tmp/quartus-workstation.lock \
   xargs -P 3 -L 1 bash -c './run-sementes.sh cem_p$0 <repository-copy> 100.000000 $0 $1'
 ```
 
-The script `run-sementes.sh` copies the repository per seed, changes the frequency and the phase of PLL outputs 2 and 3 in the copy, compiles with `de0-cv_synth.tcl` and writes `pares.txt` (the 400 worst paths per clock pair) and `detail-*.rpt`. `agrupa-caminhos.py pares.txt` lists the paths by source and destination, `pior-por-par.py pares.txt` gives the worst slack per pair, and `levels.tcl` with `niveis-resumo.py` makes the list by logic levels. Run at most three seeds at the same time on PC1.
+The script `run-sementes.sh` copies the repository per seed, changes the frequency and the phase of PLL outputs 2 and 3 in the copy, compiles with `de0-cv_synth.tcl` and writes `pares.txt` (the 400 worst paths per clock pair) and `detail-*.rpt`. `agrupa_caminhos.py pares.txt` lists the paths by source and destination, `pior_por_par.py pares.txt` gives the worst slack per pair, and `levels.tcl` with `niveis_resumo.py` makes the list by logic levels. Run at most three seeds at the same time on PC1.
 
 ## 4. Ideas not yet tried
 
