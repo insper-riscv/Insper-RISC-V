@@ -30,17 +30,31 @@ O chip é o ISSI IS42S16320D-7 (512 Mbit, 32M x 16), o mesmo da DE0-CV, no catá
 
 ## 4. Configuração da MAX 10
 
-O Quartus só monta o arquivo de programação de uma MAX 10 com memórias de conteúdo inicial (a `BOOT_MEMORY` e a FLASH emulada) no modo de imagem única com a RAM de configuração. A família `max-10` pede esse modo na chave `qsf` do arquivo `boards/families/max-10.yaml`, e o projeto gerado o carrega. O ajuste também recusa `SLEW_RATE` nos pinos 3.3-V LVTTL, o que a chave `slew_rate: false` da família trata.
+O Quartus só monta o arquivo de programação de uma MAX 10 com memórias de conteúdo inicial (a `BOOT_MEMORY` e a FLASH emulada) no modo de imagem única com a RAM de configuração. A família `max-10` pede esse modo (`INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"`) na chave `qsf` do arquivo `boards/families/max-10.yaml`, e o projeto gerado o carrega. O ajuste também recusa `SLEW_RATE` nos pinos 3.3-V LVTTL, o que a chave `slew_rate: false` da família trata.
 
 ## 5. Cabimento
 
 | Recurso | Ajuste do Quartus | Capacidade |
 | :--- | ---: | ---: |
-| Elementos lógicos | 22.751 | 49.760 (46 %) |
-| Bits de memória | 1.155.328 | 1.677.312 (69 %) |
+| Elementos lógicos | 19.225 | 49.760 (39 %) |
+| Bits de memória | 1.157.376 | 1.677.312 (69 %) |
 | Blocos de RAM estimados | 126 | 182 |
 | PLLs | 1 | 4 |
 | Pinos | 104 | 360 |
+
+O ajuste fecha o tempo a 50 MHz com a semente 5: a menor folga de setup é de 0,45 ns (85 C, relógio de busca) e a menor de hold, de 0,15 ns. O núcleo anda 8250 ps atrás do relógio de busca, como nas outras placas.
+
+## 6. Na placa
+
+O `board_run.py --stages de10-lite-regression de10-lite-sdram de10-lite-irq` roda os programas do Tests do perfil completo.
+
+| Etapa | Programas | Resultado |
+| :--- | ---: | :--- |
+| `de10-lite-regression` | 128 | 128 passam |
+| `de10-lite-sdram` | 18 | 18 passam |
+| `de10-lite-irq` | 13 | 13 passam |
+
+Ficam fora a `monitor`, a `hex-id` e as três de UART em pinos, que a placa não tem.
 
 ---
 

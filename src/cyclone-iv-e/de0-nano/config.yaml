@@ -1,4 +1,4 @@
-# The de0-nano platform: the Terasic DE0-Nano (Cyclone IV E) with the reduced profile (RV32I with Zicsr), the FLASH
+# The de0-nano platform: the Terasic DE0-Nano (Cyclone IV E) with the reduced profile (RV32I with Zicsr and Zifencei), the FLASH
 # emulated in the M9K blocks and the 32 MB SDRAM as the RAM, behind two small caches. It is the de0-cv platform with the other
 # map (platform.yaml), the other runtime and the project that `board generate` writes for the board; the simulation of the
 # SoC is the one of the modular platform.

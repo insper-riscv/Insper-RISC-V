@@ -59,9 +59,11 @@ memory:
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
 
-# The clocks of the PLL, the single source of the generated PLL. `mem` is the clock of the SDRAM controller.
+# The clocks of the PLL, the single source of the generated PLL. The core is delayed 8250 ps against the fetch clock (the phase measured
+# at 50 MHz in docs/pt-br/platform/timing/MARCOS.md): the instruction memories read on the fetch clock, one cycle ahead of the core. `mem` is the clock of the SDRAM controller.
 clocks:
-  core: {mhz: 50, phase_ps: 8250}
+  core:  {mhz: 50, phase_ps: 8250}
+  fetch: {mhz: 50, phase_ps: 0}
   mem:  {mhz: 100}
 
 # The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
