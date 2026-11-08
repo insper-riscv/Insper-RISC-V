@@ -11,7 +11,7 @@ Este documento ordena os caminhos de setup da `de0-cv` pelo número de níveis d
 | A | Depois dos passos F.P4 e F.P5 (Core `a826b68`, Memory `1052bc3`) | 5000 ps |
 | B | A mais o passo F.P6c, a leitura registrada do Zihpm (Core `63a316e`) | 6000 ps |
 
-Condições: Quartus Prime 25.1std Lite, `HIGH PERFORMANCE EFFORT`, semente 1, modelo lento a 85 °C, relógio de busca e do núcleo em 100 MHz, `get_timing_paths -setup -nworst 1 -npaths 20000` por domínio de destino (um caminho por registrador de destino) e `get_path_info -num_logic_levels`. O script é `levels.tcl`, em `dados/frente-f-onda2/`, junto com os caminhos brutos compactados e as tabelas geradas. Os nomes estão abreviados: `#` troca os números de índice, e os contadores do Zihpm aparecem como `counter#`.
+Condições: Quartus Prime 25.1std Lite, `HIGH PERFORMANCE EFFORT`, semente 1, modelo lento a 85 °C, relógio de busca e do núcleo em 100 MHz, `get_timing_paths -setup -nworst 1 -npaths 20000` por domínio de destino (um caminho por registrador de destino) e `get_path_info -num_logic_levels`. O script é `levels.tcl`, em `dados/frente-f-onda2/`, e `niveis_resumo.py` gera as tabelas a partir da saída dele. Os caminhos brutos e as tabelas geradas não são versionados; regere-os com `levels.tcl` sobre a compilação da semente 1 e `niveis_resumo.py` sobre a saída. Os nomes estão abreviados: `#` troca os números de índice, e os contadores do Zihpm aparecem como `counter#`.
 
 ## 2. Banco A: os caminhos com mais níveis
 

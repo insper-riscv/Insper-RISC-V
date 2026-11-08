@@ -112,7 +112,7 @@ Na semente 5, as entradas presas a `0` dão 8 069 ALMs e 9 190 registradores, co
 
 ## 7. Dados brutos
 
-Em `dados/core-novo/`, para cada compilação `<topo>-semente-<n>`: `.quartus.log` (log do fluxo, com os caminhos locais trocados por `<caminho-local>`), `.sta.relatorio.txt` (o `.sta.rpt`), `.sta.resumo.txt` (o `.sta.summary`) e `.fit.resumo.txt` (o `.fit.summary`). Os topos são `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` com `has_interrupts`, sementes 1 a 5) e `irq0` (entradas em `0`, semente 5). As extensões `.rpt` e `.summary` foram trocadas por `.txt` porque o `.gitignore` as ignora.
+Em `dados/core-novo/`, para cada compilação `<topo>-semente-<n>`: `.sta.resumo.txt` (o `.sta.summary`) e `.fit.resumo.txt` (o `.fit.summary`). Os topos são `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` com `has_interrupts`, sementes 1 a 5) e `irq0` (entradas em `0`, semente 5). As extensões `.rpt` e `.summary` foram trocadas por `.txt` porque o `.gitignore` as ignora. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
 
 ---
 

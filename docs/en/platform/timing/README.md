@@ -19,7 +19,7 @@ This document records the measurement of the `de0-cv` platform with the `rv32im_
 | Clocks at 100 MHz | The same PLL with outputs 2 and 3 at 100 MHz and the core phase at 3125 ps; only the Quartus working copy changes, the repository does not |
 | `time` tick count | 50 cycles in both builds, which does not change the timing |
 
-The per-domain summaries of each seed are in `dados/<frequency>-semente-<n>.resumo.txt` (the Quartus `.sta.summary`), and the full report of the worst seed of each frequency is in `dados/50mhz-semente-2.relatorio.txt` and `dados/100mhz-semente-2.relatorio.txt` (the Quartus `.sta.rpt`, under `docs/pt-br/platform/timing/`). The script `dados/pares-de-dominios.tcl` extracts the paths by pair of source and destination clocks.
+The per-domain summaries of each seed are in `dados/<frequency>-semente-<n>.resumo.txt` (the Quartus `.sta.summary`). The full Quartus reports and logs are not versioned; regenerate them with `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <seed>` on the build of the requested seed, which leaves the `.sta.rpt` and `.fit.rpt` in `output_files/`. The script `dados/pares-de-dominios.tcl` extracts the paths by pair of source and destination clocks.
 
 ## 3. Fmax and critical path
 

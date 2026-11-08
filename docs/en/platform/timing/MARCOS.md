@@ -18,7 +18,7 @@ This document measures the `de0-cv` with the final core (Core `8a828cc`, which a
 | Clocks | PLL outputs 2 and 3 at the milestone frequency (50 or 66.666667 MHz) and the phase of output 3 (core clock) given in each table; only the Quartus working copy changes, not the repository |
 | `time` tick count | 50 cycles at both frequencies, which does not change the build timing |
 
-The summaries of each seed are in `dados/marcos/<frequency>-fase<phase>-semente-<n>.resumo.txt`; the timing report and the build log of the worst seed of each milestone are in `dados/marcos/*.relatorio.txt` and `dados/marcos/*.compilacao.log`.
+The summaries of each seed are in `dados/marcos/<frequency>-fase<phase>-semente-<n>.resumo.txt`. The full Quartus reports and logs are not versioned; regenerate them with `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <seed>` on the build of the requested seed, which leaves the `.sta.rpt` and `.fit.rpt` in `output_files/`.
 
 ## 3. Milestone M1: 50 MHz
 

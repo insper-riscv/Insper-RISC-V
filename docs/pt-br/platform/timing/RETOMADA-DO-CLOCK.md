@@ -27,7 +27,7 @@ A soma dá 11,0 a 11,5 ns de dados contra o período de 10 ns. A causa é estrut
 
 ## 3. Como repetir a medição
 
-Os arquivos estão em `dados/frente-f-onda2/` e rodam na PC1, com a trava do Quartus.
+Os arquivos estão em `dados/frente-f-onda2/` e rodam na PC1, com a trava do Quartus. Os relatórios completos e logs do Quartus não são versionados; regere-os com `run-sementes.sh` sobre a compilação da semente N.
 
 ```
 export TIMING_DIR=/tmp/timing          # contém os .tcl desta pasta

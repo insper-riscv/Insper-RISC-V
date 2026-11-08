@@ -112,7 +112,7 @@ On seed 5, inputs tied to `0` give 8,069 ALMs and 9,190 registers, against 8,078
 
 ## 7. Raw data
 
-In `dados/core-novo/`, for each compile `<top>-semente-<n>`: `.quartus.log` (flow log, local paths replaced by `<caminho-local>`), `.sta.relatorio.txt` (the `.sta.rpt`), `.sta.resumo.txt` (the `.sta.summary`) and `.fit.resumo.txt` (the `.fit.summary`). The tops are `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` with `has_interrupts`, seeds 1 to 5) and `irq0` (inputs tied to `0`, seed 5). The `.rpt` and `.summary` extensions were changed to `.txt` because `.gitignore` ignores them.
+In `dados/core-novo/`, for each compile `<top>-semente-<n>`: `.sta.resumo.txt` (the `.sta.summary`) and `.fit.resumo.txt` (the `.fit.summary`). The tops are `de0-cv`, `external-data`, `core_fpga_test`, `irq` (`de0-cv` with `has_interrupts`, seeds 1 to 5) and `irq0` (inputs tied to `0`, seed 5). The `.rpt` and `.summary` extensions were changed to `.txt` because `.gitignore` ignores them. The full Quartus reports and logs are not versioned; regenerate them with `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <seed>` on the build of the requested seed, which leaves the `.sta.rpt` and `.fit.rpt` in `output_files/`.
 
 ---
 

@@ -18,7 +18,7 @@ Este documento mede a `de0-cv` com o núcleo final (Core `8a828cc`, que já traz
 | Relógios | Saídas 2 e 3 da PLL na frequência do marco (50 ou 66,666667 MHz) e fase da saída 3 (relógio do núcleo) indicada em cada tabela; só a cópia de trabalho do Quartus muda, o repositório não |
 | Contagem do tick do `time` | 50 ciclos nas duas frequências, o que não altera o tempo da compilação |
 
-Os resumos de cada semente estão em `dados/marcos/<frequência>-fase<fase>-semente-<n>.resumo.txt`; o relatório de tempo e o registro da compilação da semente de pior resultado de cada marco estão em `dados/marcos/*.relatorio.txt` e `dados/marcos/*.compilacao.log`.
+Os resumos de cada semente estão em `dados/marcos/<frequência>-fase<fase>-semente-<n>.resumo.txt`. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
 
 ## 3. Marco M1: 50 MHz
 

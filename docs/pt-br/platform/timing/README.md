@@ -19,7 +19,7 @@ Este documento registra a medição da plataforma `de0-cv` com o perfil `rv32im_
 | Relógios a 100 MHz | Mesma PLL com as saídas 2 e 3 em 100 MHz e a fase do núcleo em 3125 ps; só a cópia de trabalho do Quartus muda, o repositório não |
 | Contagem do tick do `time` | 50 ciclos nas duas compilações, o que não altera o tempo |
 
-Os resumos por domínio de cada semente estão em `dados/<frequência>-semente-<n>.resumo.txt` (o `.sta.summary` do Quartus), e o relatório completo da semente de pior resultado de cada frequência está em `dados/50mhz-semente-2.relatorio.txt` e `dados/100mhz-semente-2.relatorio.txt` (o `.sta.rpt` do Quartus). O roteiro `dados/pares-de-dominios.tcl` extrai os caminhos por par de relógios de origem e de destino.
+Os resumos por domínio de cada semente estão em `dados/<frequência>-semente-<n>.resumo.txt` (o `.sta.summary` do Quartus). Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`. O roteiro `dados/pares-de-dominios.tcl` extrai os caminhos por par de relógios de origem e de destino.
 
 ## 3. Fmax e caminho crítico
 

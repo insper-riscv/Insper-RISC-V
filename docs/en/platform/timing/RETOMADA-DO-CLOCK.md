@@ -27,7 +27,7 @@ The sum is 11.0 to 11.5 ns of data against the 10 ns period. The cause is struct
 
 ## 3. How to repeat the measurement
 
-The files are in `dados/frente-f-onda2/` and run on PC1, with the Quartus lock.
+The files are in `dados/frente-f-onda2/` and run on PC1, with the Quartus lock. The full Quartus reports and logs are not versioned; regenerate them with `run-sementes.sh` on the build of seed N.
 
 ```
 export TIMING_DIR=/tmp/timing          # holds the .tcl files of this folder

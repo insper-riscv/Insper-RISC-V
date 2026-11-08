@@ -128,7 +128,7 @@ Os contadores do Zihpm dos kernels `cpi-data` dão a largura de banda e a latên
 | `sdram-store`, ciclos do núcleo | 5381 | 5640 | 4500 | 4620 |
 | `sdram-load-use`, ciclos do núcleo (acertos) | 2318 | 2322 | 2317 | 2318 |
 
-O controlador a 10 ns custa 4 a 8 % no tempo de um programa que só varre a SDRAM (`sdram-stream`, `sdram-copy`), 3 % nos que a usam com reuso (`cache-sweep`, `sdram-memtest`) e nada nos que ficam nas caches (`sdram-load-use`, `code-sweep`). Os números de ciclos por instrução dos programas que não usam a SDRAM não mudam. Os valores brutos estão em `dados/sdram-100mhz/`.
+O controlador a 10 ns custa 4 a 8 % no tempo de um programa que só varre a SDRAM (`sdram-stream`, `sdram-copy`), 3 % nos que a usam com reuso (`cache-sweep`, `sdram-memtest`) e nada nos que ficam nas caches (`sdram-load-use`, `code-sweep`). Os números de ciclos por instrução dos programas que não usam a SDRAM não mudam. Os resumos de tempo e de ajuste de cada semente estão em `dados/sdram-100mhz/`. Os relatórios completos e logs do Quartus não são versionados; regere-os com `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <semente>` sobre a compilação da semente pedida, que deixa o `.sta.rpt` e o `.fit.rpt` em `output_files/`.
 
 ## 7. Decisão
 

@@ -18,7 +18,7 @@ This document measures the `de0-cv` with steps F.P4 (address class registered in
 | Milestone frequency | 83.333 MHz (divider 12 of the 1000 MHz VCO), the lowest frequency the PLL can make above 80 MHz |
 | Clock pairs | `c3` is the core clock, `c2` the fetch clock; `c2>c3` is the path from the instruction cache to the PC, `c3>c2` from the PC to the cache |
 
-The summaries and the worst paths per pair are in `dados/frente-f-onda2/`.
+The per-seed summaries and the scripts are in `dados/frente-f-onda2/`. The full Quartus reports and logs are not versioned; regenerate them with `dados/frente-f-onda2/run-sementes.sh` on the build of seed N, and `pior_por_par.py` extracts the worst path per domain pair.
 
 ## 3. Result at 83.333 MHz, core phase at 6000 ps, seeds 1 to 5
 

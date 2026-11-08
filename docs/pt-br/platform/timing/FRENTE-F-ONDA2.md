@@ -18,7 +18,7 @@ Este documento mede a `de0-cv` com os passos F.P4 (classificação do endereço 
 | Frequência do marco | 83,333 MHz (divisor 12 do VCO de 1000 MHz), a menor frequência realizável pela PLL acima de 80 MHz |
 | Pares de relógios | `c3` é o relógio do núcleo, `c2` o da busca; `c2>c3` é o caminho da cache de instruções ao PC, `c3>c2` o do PC à cache |
 
-Os resumos e os piores caminhos por par estão em `dados/frente-f-onda2/`.
+Os resumos de cada semente e os roteiros estão em `dados/frente-f-onda2/`. Os relatórios completos e logs do Quartus não são versionados; regere-os com `dados/frente-f-onda2/run-sementes.sh` sobre a compilação da semente N, e o `pior_por_par.py` extrai o pior caminho por par de domínios.
 
 ## 3. Resultado a 83,333 MHz, fase do núcleo em 6000 ps, sementes 1 a 5
 

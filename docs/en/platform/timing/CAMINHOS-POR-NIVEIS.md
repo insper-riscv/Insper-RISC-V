@@ -11,7 +11,7 @@ This document orders the setup paths of the `de0-cv` by the number of logic leve
 | A | After steps F.P4 and F.P5 (Core `a826b68`, Memory `1052bc3`) | 5000 ps |
 | B | A plus step F.P6c, the registered Zihpm read (Core `63a316e`) | 6000 ps |
 
-Conditions: Quartus Prime 25.1std Lite, `HIGH PERFORMANCE EFFORT`, seed 1, slow model at 85 °C, fetch and core clocks at 100 MHz, `get_timing_paths -setup -nworst 1 -npaths 20000` per destination domain (one path per destination register) and `get_path_info -num_logic_levels`. The script is `levels.tcl`, in `dados/frente-f-onda2/`, together with the compressed raw paths and the generated tables. Names are abbreviated: `#` replaces index numbers, and the Zihpm counters appear as `counter#`.
+Conditions: Quartus Prime 25.1std Lite, `HIGH PERFORMANCE EFFORT`, seed 1, slow model at 85 °C, fetch and core clocks at 100 MHz, `get_timing_paths -setup -nworst 1 -npaths 20000` per destination domain (one path per destination register) and `get_path_info -num_logic_levels`. The script is `levels.tcl`, in `dados/frente-f-onda2/`, and `niveis_resumo.py` builds the tables from its output. The raw paths and the generated tables are not versioned; regenerate them with `levels.tcl` on the build of seed 1 and `niveis_resumo.py` on the output. Names are abbreviated: `#` replaces index numbers, and the Zihpm counters appear as `counter#`.
 
 ## 2. Database A: the paths with the most levels
 

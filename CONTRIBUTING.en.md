@@ -222,6 +222,7 @@ def fetch_user(user_id: str, include_roles: bool = False) -> User:
 5. **Non-redundant tables and LaTeX:** structured data belongs in Markdown tables and mathematical/boolean equations in LaTeX blocks (`$$ ... $$` or `$ ... $`), without repeating in prose what the table or equation already states.
 6. **No changelog or open TODOs in technical docs:** architecture and contract documents describe exclusively the current state, without historical bugfix notes or unimplemented work lists.
 7. **Usage guides only instruct:** installation and run instructions say how to do it, without justifying the choice of method.
+8. **No tool logs:** no tool log (Quartus, GHDL, sby) is versioned, only the scripts that generate them and the summaries (`*.resumo.txt`) that the documentation cites.
 
 ## 8. Mandatory Verification Before Opening a Pull Request
 
@@ -245,6 +246,8 @@ The `formal` CI job runs the proofs once per engine (`formal - yices`, `formal -
 A warning in the formal run is an error. The formal flow scans the GHDL output and the Yosys and SymbiYosys logs after every step, including on the mutants, and fails pointing at the file and line of the warning. The fix is always in the code or in the properties, never in an option that hides the warning (`-Wno-*`). The details are in [docs/en/interconnect/ext_interconnect.md](docs/en/interconnect/ext_interconnect.md).
 
 The `python-static-analysis` CI job runs `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files, and the job name is the check the default-branch ruleset requires, so do not rename it.
+
+The `boot-memory-images` CI job rebuilds, in the `ci-elf` image, the boot memory test images (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` and `external_data/boot_memory_real.hex`) from `boot_memory.S` and fails if the result differs from what is versioned. After changing the boot memory, regenerate both with `tests/python/gen_de0_cv_boot_images.py` and `tests/python/gen_external_data_images.py` and version the result.
 
 When adding, renaming, or removing any versioned file, immediately update:
 - `paths.yaml`

@@ -128,7 +128,7 @@ The Zihpm counters of the `cpi-data` kernels give the bandwidth and the latency 
 | `sdram-store`, core cycles | 5381 | 5640 | 4500 | 4620 |
 | `sdram-load-use`, core cycles (hits) | 2318 | 2322 | 2317 | 2318 |
 
-The 10 ns controller costs 4 to 8 % in the time of a program that only sweeps the SDRAM (`sdram-stream`, `sdram-copy`), 3 % in those that use it with reuse (`cache-sweep`, `sdram-memtest`) and nothing in those that stay in the caches (`sdram-load-use`, `code-sweep`). The cycles-per-instruction figures of the programs that do not use the SDRAM do not change. The raw values are in `dados/sdram-100mhz/`.
+The 10 ns controller costs 4 to 8 % in the time of a program that only sweeps the SDRAM (`sdram-stream`, `sdram-copy`), 3 % in those that use it with reuse (`cache-sweep`, `sdram-memtest`) and nothing in those that stay in the caches (`sdram-load-use`, `code-sweep`). The cycles-per-instruction figures of the programs that do not use the SDRAM do not change. The timing and fit summaries of each seed are in `dados/sdram-100mhz/`. The full Quartus reports and logs are not versioned; regenerate them with `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <seed>` on the build of the requested seed, which leaves the `.sta.rpt` and `.fit.rpt` in `output_files/`.
 
 ## 7. Decision
 

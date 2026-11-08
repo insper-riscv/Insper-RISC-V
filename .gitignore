@@ -38,3 +38,6 @@ src/*/*/quartus/*.qws
 src/*/*/quartus/*.jdi
 src/*/*/quartus/*.done
 src/*/*/quartus/*.smsg
+
+# Tool logs are never versioned
+*.log
