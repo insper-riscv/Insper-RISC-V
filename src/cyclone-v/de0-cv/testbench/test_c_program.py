@@ -161,19 +161,21 @@ def script_path(variable: str, name: str) -> Path | None:
     return found[0] if found else None
 
 
+def uart_states(dut: Any, **states: bool) -> None:
+    """Drive the scan states of the UART JTAG (absent flags are low)."""
+    for name in ("cdr", "sdr", "udr", "uir"):
+        pin = getattr(dut, f"i_uart_state_{name}")
+        pin.value = int(states.get(name, False))
+
+
 async def uart_tck(dut: Any, **states: bool) -> None:
     """Clock the UART's Virtual JTAG with the given flags high."""
-    for name in ("cdr", "sdr", "udr", "uir"):
-        getattr(dut, f"i_uart_state_{name}").value = (
-            1 if states.get(name) else 0
-        )
+    uart_states(dut, **states)
+    for level in (0, 1):
+        dut.i_uart_tck.value = level
+        await Timer(HALF_TCK_NS, unit="ns")
     dut.i_uart_tck.value = 0
-    await Timer(HALF_TCK_NS, unit="ns")
-    dut.i_uart_tck.value = 1
-    await Timer(HALF_TCK_NS, unit="ns")
-    dut.i_uart_tck.value = 0
-    for name in ("cdr", "sdr", "udr", "uir"):
-        getattr(dut, f"i_uart_state_{name}").value = 0
+    uart_states(dut)
 
 
 async def uart_scan(dut: Any, push: int | None = None) -> list[int]:
