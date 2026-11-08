@@ -75,14 +75,14 @@ def flash_port(dut: Any) -> SimpleNamespace:
         `o_jtag_tdo`, as `unittests.integration.jtag` reads them.
     """
     return SimpleNamespace(
-        i_jtag_tck=dut.FLASH_TCK,
-        i_jtag_tdi=dut.FLASH_TDI,
-        o_jtag_tdo=dut.FLASH_TDO,
-        i_jtag_ir_in=dut.FLASH_IR_IN,
-        i_jtag_state_cdr=dut.FLASH_STATE_CDR,
-        i_jtag_state_sdr=dut.FLASH_STATE_SDR,
-        i_jtag_state_udr=dut.FLASH_STATE_UDR,
-        i_jtag_state_uir=dut.FLASH_STATE_UIR,
+        i_jtag_tck=dut.i_flash_tck,
+        i_jtag_tdi=dut.i_flash_tdi,
+        o_jtag_tdo=dut.o_flash_tdo,
+        i_jtag_ir_in=dut.i_flash_ir_in,
+        i_jtag_state_cdr=dut.i_flash_state_cdr,
+        i_jtag_state_sdr=dut.i_flash_state_sdr,
+        i_jtag_state_udr=dut.i_flash_state_udr,
+        i_jtag_state_uir=dut.i_flash_state_uir,
     )
 
 
@@ -183,7 +183,7 @@ async def wait_for_word(dut: Any, index: int, want: int) -> None:
     """Wait until a word of the SDRAM holds a value."""
     cycles = 0
     while cycles < TIMEOUT_CYCLES:
-        await ClockCycles(dut.CLK, POLL_CYCLES)
+        await ClockCycles(dut.i_clk, POLL_CYCLES)
         cycles += POLL_CYCLES
         if await sdram_word(dut, index) == want:
             return
@@ -196,13 +196,13 @@ async def test_the_host_replaces_the_program_and_the_core_boots_it(
     dut: Any,
 ) -> None:
     """Halt, write, check and release: the new program boots."""
-    cocotb.start_soon(Clock(dut.CLK, CLK_NS, unit="ns").start())
-    cocotb.start_soon(Clock(dut.CLK_MEM, CLK_MEM_NS, unit="ns").start())
+    cocotb.start_soon(Clock(dut.i_clk, CLK_NS, unit="ns").start())
+    cocotb.start_soon(Clock(dut.i_clk_mem, CLK_MEM_NS, unit="ns").start())
     port = flash_port(dut)
-    dut.reset.value = 1
-    dut.DBG_WORD_ADDR.value = 0
-    await ClockCycles(dut.CLK, RESET_CYCLES)
-    dut.reset.value = 0
+    dut.i_rst.value = 1
+    dut.i_dbg_word_addr.value = 0
+    await ClockCycles(dut.i_clk, RESET_CYCLES)
+    dut.i_rst.value = 0
     await wait_for_word(dut, TOHOST_WORD, 1)
     check(await sdram_word(dut, OLD_MARK_WORD) == OLD_MARK, "old mark")
     await load_ir(port, IR_CMD)
@@ -211,9 +211,9 @@ async def test_the_host_replaces_the_program_and_the_core_boots_it(
     await command(port, OP_HALT)
     status, _, _ = await settle(port)
     check(bool(status & HALTED), f"the loader is not halted ({status:#x})")
-    await ClockCycles(dut.CLK, 2 * POLL_CYCLES)
+    await ClockCycles(dut.i_clk, 2 * POLL_CYCLES)
     frozen = await sdram_word(dut, COUNTER_WORD)
-    await ClockCycles(dut.CLK, 4 * POLL_CYCLES)
+    await ClockCycles(dut.i_clk, 4 * POLL_CYCLES)
     check(
         await sdram_word(dut, COUNTER_WORD) == frozen,
         "the program kept running after the halt",

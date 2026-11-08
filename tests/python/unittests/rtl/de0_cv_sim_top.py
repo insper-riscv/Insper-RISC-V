@@ -37,12 +37,12 @@ async def start(dut: Any) -> None:
     dut : Any
         The device under test.
     """
-    cocotb.start_soon(Clock(dut.CLK, CLK_NS, unit="ns").start())
-    cocotb.start_soon(Clock(dut.CLK_MEM, CLK_MEM_NS, unit="ns").start())
-    dut.reset.value = 1
-    dut.DBG_WORD_ADDR.value = 0
-    await ClockCycles(dut.CLK, RESET_CYCLES)
-    dut.reset.value = 0
+    cocotb.start_soon(Clock(dut.i_clk, CLK_NS, unit="ns").start())
+    cocotb.start_soon(Clock(dut.i_clk_mem, CLK_MEM_NS, unit="ns").start())
+    dut.i_rst.value = 1
+    dut.i_dbg_word_addr.value = 0
+    await ClockCycles(dut.i_clk, RESET_CYCLES)
+    dut.i_rst.value = 0
 
 
 async def sdram_word(dut: Any, index: int) -> int:
@@ -60,10 +60,10 @@ async def sdram_word(dut: Any, index: int) -> int:
     int
         The word.
     """
-    dut.DBG_WORD_ADDR.value = index
-    await ClockCycles(dut.CLK_MEM, 3)
+    dut.i_dbg_word_addr.value = index
+    await ClockCycles(dut.i_clk_mem, 3)
     await Timer(1, unit="ns")
-    return int(dut.DBG_WORD_DATA.value)
+    return int(dut.o_dbg_word_data.value)
 
 
 async def wait_for_tohost(dut: Any) -> None:
@@ -81,7 +81,7 @@ async def wait_for_tohost(dut: Any) -> None:
     """
     cycles = 0
     while cycles < TIMEOUT_CYCLES:
-        await ClockCycles(dut.CLK, POLL_CYCLES)
+        await ClockCycles(dut.i_clk, POLL_CYCLES)
         cycles += POLL_CYCLES
         if await sdram_word(dut, TOHOST_WORD) != 0:
             return
@@ -111,5 +111,5 @@ async def test_the_display_register_takes_the_flash_write(dut: Any) -> None:
     """The write to the display slot reaches the display value."""
     await start(dut)
     await wait_for_tohost(dut)
-    value = int(dut.DISPLAY_VALUE.value)
+    value = int(dut.o_display_value.value)
     check(value == DISPLAY_VALUE, f"display {value:#x}")

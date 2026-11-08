@@ -49,5 +49,5 @@ async def test_both_flash_ports_serve_one_program(dut: Any) -> None:
     for name, (index, expected) in words.items():
         got = await sdram_word(dut, index)
         check(got == expected, f"{name} {got:#x}")
-    shown = int(dut.DISPLAY_VALUE.value)
+    shown = int(dut.o_display_value.value)
     check(shown == DISPLAY_VALUE, f"display {shown:#x}")

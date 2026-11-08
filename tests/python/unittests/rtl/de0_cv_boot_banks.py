@@ -113,7 +113,7 @@ async def wait_for_tohost(dut: Any) -> bool:
     """
     waited = 0
     while waited < TIMEOUT_CYCLES:
-        await ClockCycles(dut.CLK, POLL_CYCLES)
+        await ClockCycles(dut.i_clk, POLL_CYCLES)
         waited += POLL_CYCLES
         if await sdram_word(dut, TOHOST_WORD) != 0:
             return True
@@ -130,9 +130,9 @@ async def check_parked(dut: Any, name: str) -> None:
     name : str
         The case, for the messages.
     """
-    await ClockCycles(dut.CLK, PARK_CYCLES)
+    await ClockCycles(dut.i_clk, PARK_CYCLES)
     for _ in range(PARK_SAMPLES):
-        await ClockCycles(dut.CLK, 7)
+        await ClockCycles(dut.i_clk, 7)
         address = int(dut.if_addr.value)
         check(
             WAIT_RESTART <= address < WAIT_RESTART_END,
@@ -152,13 +152,13 @@ async def test_the_boot_memory_chooses_the_bank(dut: Any) -> None:
     case = next(
         c for c in json.loads(IMAGES.read_text())["cases"] if c["name"] == name
     )
-    cocotb.start_soon(Clock(dut.CLK, CLK_NS, unit="ns").start())
-    cocotb.start_soon(Clock(dut.CLK_MEM, CLK_MEM_NS, unit="ns").start())
-    dut.reset.value = 1
-    dut.DBG_WORD_ADDR.value = 0
-    await ClockCycles(dut.CLK, RESET_CYCLES)
-    dut.reset.value = 0
-    await ClockCycles(dut.CLK, SETTLE_CYCLES)
+    cocotb.start_soon(Clock(dut.i_clk, CLK_NS, unit="ns").start())
+    cocotb.start_soon(Clock(dut.i_clk_mem, CLK_MEM_NS, unit="ns").start())
+    dut.i_rst.value = 1
+    dut.i_dbg_word_addr.value = 0
+    await ClockCycles(dut.i_clk, RESET_CYCLES)
+    dut.i_rst.value = 0
+    await ClockCycles(dut.i_clk, SETTLE_CYCLES)
     if case["expect"] == "none":
         await check_parked(dut, name)
         return

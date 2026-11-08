@@ -405,6 +405,50 @@ architecture behaviour of soc is
   -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
   constant D_ROM_END_KIB  : natural := pick(has_dcache, 1048576, rom_end_kib);
 
+  -- Bit da janela de um periférico: o do índice quando ele existe e zero quando não existe.
+  function slot_vec(present : boolean; id : natural) return std_logic_vector is
+  begin
+    if present then
+      return std_logic_vector(to_unsigned(2**id, 8));
+    end if;
+    return x"00";
+  end function slot_vec;
+
+  -- Janela do CLINT (existe com has_interrupts).
+  constant SLOT_CLINT    : std_logic_vector(7 downto 0) := slot_vec(has_interrupts, clint_id);
+  -- Janela do PLIC (existe com has_interrupts).
+  constant SLOT_PLIC     : std_logic_vector(7 downto 0) := slot_vec(has_interrupts, plic_id);
+  -- Janela do temporizador.
+  constant SLOT_TIMER    : std_logic_vector(7 downto 0) := slot_vec(has_timer, timer_id);
+  -- Janela das chaves.
+  constant SLOT_SWITCHES : std_logic_vector(7 downto 0) := slot_vec(HAS_SWITCHES_ROLE, switches_id);
+  -- Janela dos botões.
+  constant SLOT_KEYS     : std_logic_vector(7 downto 0) := slot_vec(HAS_KEYS_ROLE, keys_id);
+  -- Janela do display.
+  constant SLOT_DISPLAY  : std_logic_vector(7 downto 0) := slot_vec(HAS_DISPLAY_ROLE, display_id);
+  -- Janela da UART via JTAG.
+  constant SLOT_UART_JTAG : std_logic_vector(7 downto 0) := slot_vec(has_uart_jtag, uart_jtag_id);
+  -- Janela da UART via pinos.
+  constant SLOT_UART_PINS : std_logic_vector(7 downto 0) := slot_vec(has_uart_pins, uart_pins_id);
+  -- Janela do controlador de FLASH.
+  constant SLOT_FLASH_CTRL : std_logic_vector(7 downto 0) :=
+    slot_vec(has_flash_ctrl, flash_ctrl_id);
+
+  -- Janelas ocupadas pelos periféricos presentes, uma por bit.
+  constant SLOTS_USED : std_logic_vector(7 downto 0) :=
+    SLOT_CLINT or SLOT_PLIC or SLOT_TIMER or SLOT_SWITCHES or SLOT_KEYS or SLOT_DISPLAY or
+    SLOT_UART_JTAG or SLOT_UART_PINS or SLOT_FLASH_CTRL;
+  -- Soma das janelas dos presentes: é igual a SLOTS_USED só quando nenhum índice se repete.
+  constant SLOTS_SUM : natural :=
+    to_integer(unsigned(SLOT_CLINT)) + to_integer(unsigned(SLOT_PLIC)) +
+    to_integer(unsigned(SLOT_TIMER)) + to_integer(unsigned(SLOT_SWITCHES)) +
+    to_integer(unsigned(SLOT_KEYS)) + to_integer(unsigned(SLOT_DISPLAY)) +
+    to_integer(unsigned(SLOT_UART_JTAG)) + to_integer(unsigned(SLOT_UART_PINS)) +
+    to_integer(unsigned(SLOT_FLASH_CTRL));
+
+  -- Tamanho máximo, em KiB, de uma região que a janela das caches cobre.
+  constant CACHE_WINDOW_KIB : natural := 2**(cache_window_bits - 10);
+
   -- Sinais do núcleo: busca de instrução e FLASH interna.
   signal if_addr       : std_logic_vector(31 downto 0);
   -- Habilitação de leitura da busca de instrução ('1' = lê).
@@ -648,6 +692,82 @@ begin
 
   assert boot_memory_size_bytes mod 1024 = 0
     report "boot_memory_size_bytes deve ser múltiplo de 1 KiB"
+    severity failure;
+
+  -- ---------------------------------------------------------------------------
+  -- Validação dos generics: cada regra vale no RTL e em todo platform.yaml, e a
+  -- mensagem traz o nome do generic e a causa.
+  -- ---------------------------------------------------------------------------
+
+  -- A BOOT_MEMORY é endereçada por bits do endereço, então o tamanho é potência de dois.
+  assert is_power_of_two(boot_memory_size_bytes)
+    report "boot_memory_size_bytes deve ser potência de dois, "
+           & "o endereço da BOOT_MEMORY é um corte de bits"
+    severity failure;
+
+  -- O mapa é ordenado, sem sobreposição: BOOT_MEMORY, ROM, RAM, janela externa e janela de
+  -- periféricos.
+  assert rom_end_kib >= BOOT_KIB
+    report "rom_end_kib deve ser no mínimo o tamanho da BOOT_MEMORY em KiB, "
+           & "a ROM começa logo depois dela"
+    severity failure;
+  assert ram_base_kib >= rom_end_kib
+    report "ram_base_kib deve ser no mínimo rom_end_kib, a RAM não pode sobrepor a ROM"
+    severity failure;
+  assert ram_end_kib > ram_base_kib
+    report "ram_end_kib deve ser maior que ram_base_kib, a RAM precisa de ao menos 1 KiB"
+    severity failure;
+  assert ext_base_kib >= ram_end_kib
+    report "ext_base_kib deve ser no mínimo ram_end_kib, a janela externa não pode sobrepor a RAM"
+    severity failure;
+  assert periph_base_kib >= ext_base_kib
+    report "periph_base_kib deve ser no mínimo ext_base_kib, "
+           & "a janela de periféricos vem depois da externa"
+    severity failure;
+
+  -- As regiões alcançadas pelas caches ou pela ponte de busca cabem na janela de
+  -- 2**cache_window_bits bytes.
+  assert (not ROM_PORT) or rom_end_kib <= BOOT_KIB + CACHE_WINDOW_KIB
+    report "cache_window_bits pequeno demais, "
+           & "a ROM (rom_end_kib menos a BOOT_MEMORY) não cabe na janela das caches"
+    severity failure;
+  assert (not (RAM_PORT and has_dcache)) or ram_end_kib <= ram_base_kib + CACHE_WINDOW_KIB
+    report "cache_window_bits pequeno demais, "
+           & "a RAM (ram_base_kib até ram_end_kib) não cabe na janela da cache de dados"
+    severity failure;
+
+  -- Cada cache tem ao menos duas linhas de 128 bits e tamanho em potência de dois.
+  assert (not has_icache) or (icache_size_bits >= 256 and is_power_of_two(icache_size_bits))
+    report "icache_size_bits deve ser potência de dois de pelo menos 256 bits com has_icache"
+    severity failure;
+  assert (not has_dcache) or (dcache_size_bits >= 256 and is_power_of_two(dcache_size_bits))
+    report "dcache_size_bits deve ser potência de dois de pelo menos 256 bits com has_dcache"
+    severity failure;
+
+  -- Opções que só existem dentro de uma cache não valem sem ela.
+  assert has_dcache or (not has_dcache_bypass)
+    report "has_dcache_bypass exige has_dcache, a página de desvio só existe na cache de dados"
+    severity failure;
+  assert has_icache or (not fast_icache_select)
+    report "fast_icache_select exige has_icache, "
+           & "a seleção pelo endereço registrado só existe na cache de instruções"
+    severity failure;
+
+  -- Os contadores são CSRs: sem Zicsr não há onde lê-los (o núcleo confere o mesmo).
+  assert has_zicsr or (not (has_zicntr or has_zihpm))
+    report "has_zicntr e has_zihpm exigem has_zicsr, os contadores são lidos por CSR"
+    severity failure;
+
+  -- A polaridade dos pinos da UART só tem efeito no papel de pinos.
+  assert has_uart_pins or (not (uart_tx_invert or uart_rx_invert))
+    report "uart_tx_invert e uart_rx_invert exigem has_uart_pins, "
+           & "a polaridade só vale para os pinos TX e RX"
+    severity failure;
+
+  -- Dois periféricos presentes não dividem a mesma janela de 256 MiB da janela de periféricos.
+  assert to_integer(unsigned(SLOTS_USED)) = SLOTS_SUM
+    report "clint_id, plic_id, timer_id, switches_id, keys_id, display_id, uart_jtag_id, "
+           & "uart_pins_id e flash_ctrl_id: dois periféricos presentes usam o mesmo índice"
     severity failure;
 
   o_retire      <= core_retire;

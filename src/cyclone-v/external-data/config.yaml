@@ -131,9 +131,9 @@ sim:
   python_path:
     - src/cyclone-v/de0-cv
   # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
-  # power-up wait (200 us) comes before the first access: ticks of CLK are counted for the timeout.
+  # power-up wait (200 us) comes before the first access: ticks of i_clk are counted for the timeout.
   env:
-    SIM_EXTRA_CLOCKS: "CLK_MEM:10"
+    SIM_EXTRA_CLOCKS: "i_clk_mem:10"
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "2000000"
 

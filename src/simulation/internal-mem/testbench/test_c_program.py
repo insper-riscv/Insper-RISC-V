@@ -106,8 +106,8 @@ SIM_RESET_ACTIVE = int(os.environ.get("SIM_RESET_ACTIVE", "1"))
 SIM_SAMPLE_CLOCK = os.environ.get("SIM_SAMPLE_CLOCK", SIM_CLOCK)
 TIMEOUT_CYCLES = int(os.environ.get("SIM_TIMEOUT_CYCLES", "200000"))
 # More clocks the top has, "PORT:period_ns" separated by commas (for
-# example the SDRAM platform's CLK_MEM:7). They are driven for the whole
-# test and need no reset of their own.
+# example the SDRAM platform's i_clk_mem:7). They are driven for the
+# whole test and need no reset of their own.
 EXTRA_CLOCKS = [
     (name, int(period))
     for name, period in (

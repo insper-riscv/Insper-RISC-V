@@ -5,22 +5,22 @@
 -- dele, atrás da cache de dados. A FLASH é uma só cópia de duas portas, como na
 -- placa: a porta A é lida pela busca de instrução e a porta B pelo estágio MEM,
 -- por meio do carregador de FLASH. O hospedeiro da simulação grava a imagem na
--- elaboração, pelo arquivo de ROM, ou depois, pelos sinais FLASH_*, que são os da
+-- elaboração, pelo arquivo de ROM, ou depois, pelos sinais i_flash_*, que são os da
 -- instância do Virtual JTAG do carregador: com eles o testbench para o núcleo,
 -- grava uma imagem nova e o libera, como o hospedeiro da placa. A SDRAM, com a
 -- ponte, o árbitro, o controlador e o modelo de chip do repositório Memory, roda
 -- em clock próprio. A FLASH começa logo depois da BOOT_MEMORY e termina em 256 KiB,
 -- e a SDRAM fica em 0x40000000.
 --
--- CLK é o clock base do núcleo (um gerador de clock o divide por três, como na
--- internal-mem). CLK_MEM é o clock da SDRAM, conduzido pelo testbench sem
--- relação fixa com CLK, como na placa. DBG_WORD_ADDR e DBG_WORD_DATA leem uma
+-- i_clk é o clock base do núcleo (um gerador de clock o divide por três, como na
+-- internal-mem). i_clk_mem é o clock da SDRAM, conduzido pelo testbench sem
+-- relação fixa com i_clk, como na placa. i_dbg_word_addr e o_dbg_word_data leem uma
 -- palavra direto do modelo do chip, que é como o testbench compara o conteúdo da
 -- memória com um golden.
 --
 -- A porta externa do núcleo passa pelo interconector: o bit 31 em '0' é a
 -- SDRAM, em '1' a janela de periféricos, com a UART JTAG em 0xC0000000 e o
--- registrador do display em 0xD0000000. Os sinais UART_* são os da instância do
+-- registrador do display em 0xD0000000. Os sinais i_uart_* são os da instância do
 -- Virtual JTAG da UART (ver jtag_uart), que o testbench conduz para ler o que o
 -- programa imprime.
 -- ============================================================================
@@ -34,9 +34,9 @@ use work.external_data_map_pkg.all;
 entity rv32im_external_data_sim_test is
 	generic (
 		-- Arquivo com a imagem da BOOT_MEMORY, uma palavra de 32 bits por linha em hexadecimal.
-		BOOT_MEMORY_FILE : string := "default.hex";
+		boot_memory_file : string := "default.hex";
 		-- Arquivo com a imagem da FLASH, uma palavra de 32 bits por linha em hexadecimal.
-		ROM_FILE : string := "default.hex";
+		rom_file : string := "default.hex";
 		-- Largura do endereço de palavra da BOOT_MEMORY.
 		boot_memory_addr_width : natural := 9;
 		-- Largura do endereço de palavra da FLASH.
@@ -44,104 +44,104 @@ entity rv32im_external_data_sim_test is
 		-- Largura do endereço de palavra da RAM; a RAM é a SDRAM, então a largura não dimensiona nada aqui.
 		ram_addr_width : natural := 9;
 		-- Zicsr no núcleo (instruções CSR reais); false mantém o comportamento de NOP.
-		HAS_ZICSR : boolean := false;
+		has_zicsr : boolean := false;
 		-- Contadores da extensão Zicntr (implica Zicsr).
-		HAS_ZICNTR : boolean := false;
+		has_zicntr : boolean := false;
 		-- Extensão M completa no núcleo.
-		HAS_M : boolean := true;
+		has_m : boolean := true;
 		-- Multiplicação sem divisão (Zmmul) no núcleo.
-		HAS_ZMMUL : boolean := false;
+		has_zmmul : boolean := false;
 		-- Zifencei no núcleo (FENCE.I esvazia a cache de dados); false mantém o NOP.
-		HAS_ZIFENCEI : boolean := false;
+		has_zifencei : boolean := false;
 		-- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-		HAS_ZICCLSM : boolean := true;
+		has_zicclsm : boolean := true;
 		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_INTERRUPTS : boolean := false;
+		has_interrupts : boolean := false;
 		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_SSCOFPMF : boolean := false;
+		has_sscofpmf : boolean := false;
 		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
-		HAS_ACCESS_FAULTS : boolean := false;
+		has_access_faults : boolean := false;
 		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
-		HAS_ZIHPM : boolean := false;
+		has_zihpm : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
-		HPM_COUNTERS : natural range 0 to 29 := 29;
+		hpm_counters : natural range 0 to 29 := 29;
 		-- Largura, em bits, de cada contador de eventos do Zihpm.
-		HPM_WIDTH : natural range 0 to 64 := 64;
+		hpm_width : natural range 0 to 64 := 64;
 		-- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
-		HAS_ZIMOP : boolean := work.external_data_map_pkg.HAS_ZIMOP;
+		has_zimop : boolean := work.external_data_map_pkg.HAS_ZIMOP;
 		-- Extensão Zicond no núcleo (czero.eqz e czero.nez).
-		HAS_ZICOND : boolean := work.external_data_map_pkg.HAS_ZICOND;
+		has_zicond : boolean := work.external_data_map_pkg.HAS_ZICOND;
 		-- Dicas ntl.* da extensão Zihintntl no núcleo (executam como nop).
-		HAS_ZIHINTNTL : boolean := work.external_data_map_pkg.HAS_ZIHINTNTL;
+		has_zihintntl : boolean := work.external_data_map_pkg.HAS_ZIHINTNTL;
 		-- Dica pause da extensão Zihintpause no núcleo (executa como nop).
-		HAS_ZIHINTPAUSE : boolean := work.external_data_map_pkg.HAS_ZIHINTPAUSE;
+		has_zihintpause : boolean := work.external_data_map_pkg.HAS_ZIHINTPAUSE;
 		-- A ROM fica fora do núcleo (o modelo de memória do platform.yaml).
-		ROM_EXTERNAL : boolean := work.external_data_map_pkg.ROM_EXTERNAL;
+		rom_external : boolean := work.external_data_map_pkg.ROM_EXTERNAL;
 		-- A RAM fica fora do núcleo (o modelo de memória do platform.yaml).
-		RAM_EXTERNAL : boolean := work.external_data_map_pkg.RAM_EXTERNAL;
+		ram_external : boolean := work.external_data_map_pkg.RAM_EXTERNAL;
 		-- Existe cache de instruções (o modelo de memória do platform.yaml); o topo monta só a de dados.
-		HAS_ICACHE : boolean := work.external_data_map_pkg.HAS_ICACHE;
+		has_icache : boolean := work.external_data_map_pkg.HAS_ICACHE;
 		-- Existe cache de dados (o modelo de memória do platform.yaml).
-		HAS_DCACHE : boolean := work.external_data_map_pkg.HAS_DCACHE;
+		has_dcache : boolean := work.external_data_map_pkg.HAS_DCACHE;
 		-- Tamanho da cache de instruções, em bits (o modelo de memória do platform.yaml).
-		ICACHE_SIZE_BITS : positive := work.external_data_map_pkg.ICACHE_SIZE_BITS;
+		icache_size_bits : positive := work.external_data_map_pkg.ICACHE_SIZE_BITS;
 		-- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
-		DCACHE_SIZE_BITS : positive := work.external_data_map_pkg.DCACHE_SIZE_BITS;
+		dcache_size_bits : positive := work.external_data_map_pkg.DCACHE_SIZE_BITS;
 		-- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil da plataforma por padrão).
-		HAS_E : boolean := work.external_data_map_pkg.HAS_E;
+		has_e : boolean := work.external_data_map_pkg.HAS_E;
 		-- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 		-- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de depuração.
-		SDRAM_FILE : string := "";
+		sdram_file : string := "";
 		-- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
-		SDRAM_TCK_PS : natural := work.external_data_map_pkg.SDRAM_TCK_PS
+		sdram_tck_ps : natural := work.external_data_map_pkg.SDRAM_TCK_PS
 	);
 	port (
 		-- Clock base do núcleo.
-		CLK            : in  std_logic;
+		i_clk            : in  std_logic;
 		-- Clock da SDRAM.
-		CLK_MEM        : in  std_logic;
+		i_clk_mem        : in  std_logic;
 		-- Reset, ativo em '1'.
-		reset          : in  std_logic := '0';
+		i_rst          : in  std_logic := '0';
 		-- Endereço de palavra lido direto do modelo do chip de SDRAM.
-		DBG_WORD_ADDR  : in  std_logic_vector(23 downto 0) := (others => '0');
+		i_dbg_word_addr  : in  std_logic_vector(23 downto 0) := (others => '0');
 		-- Palavra lida direto do modelo do chip de SDRAM.
-		DBG_WORD_DATA  : out std_logic_vector(31 downto 0);
+		o_dbg_word_data  : out std_logic_vector(31 downto 0);
 		-- Clock da cadeia JTAG da UART.
-		UART_TCK       : in  std_logic := '0';
+		i_uart_tck       : in  std_logic := '0';
 		-- Dado serial vindo do hospedeiro para a UART.
-		UART_TDI       : in  std_logic := '0';
+		i_uart_tdi       : in  std_logic := '0';
 		-- Dado serial para o hospedeiro vindo da UART.
-		UART_TDO       : out std_logic;
+		o_uart_tdo       : out std_logic;
 		-- Registrador de instrução do Virtual JTAG da UART.
-		UART_IR_IN     : in  std_logic_vector(1 downto 0) := "00";
+		i_uart_ir_in     : in  std_logic_vector(1 downto 0) := "00";
 		-- Estado Capture-DR da cadeia da UART.
-		UART_STATE_CDR : in  std_logic := '0';
+		i_uart_state_cdr : in  std_logic := '0';
 		-- Estado Shift-DR da cadeia da UART.
-		UART_STATE_SDR : in  std_logic := '0';
+		i_uart_state_sdr : in  std_logic := '0';
 		-- Estado Update-DR da cadeia da UART.
-		UART_STATE_UDR : in  std_logic := '0';
+		i_uart_state_udr : in  std_logic := '0';
 		-- Estado Update-IR da cadeia da UART.
-		UART_STATE_UIR : in  std_logic := '0';
+		i_uart_state_uir : in  std_logic := '0';
 		-- Clock da cadeia JTAG do carregador da FLASH.
-		FLASH_TCK       : in  std_logic := '0';
+		i_flash_tck       : in  std_logic := '0';
 		-- Dado serial vindo do hospedeiro para o carregador.
-		FLASH_TDI       : in  std_logic := '0';
+		i_flash_tdi       : in  std_logic := '0';
 		-- Dado serial para o hospedeiro vindo do carregador.
-		FLASH_TDO       : out std_logic;
+		o_flash_tdo       : out std_logic;
 		-- Registrador de instrução do Virtual JTAG do carregador.
-		FLASH_IR_IN     : in  std_logic_vector(1 downto 0) := "00";
+		i_flash_ir_in     : in  std_logic_vector(1 downto 0) := "00";
 		-- Estado Capture-DR da cadeia do carregador.
-		FLASH_STATE_CDR : in  std_logic := '0';
+		i_flash_state_cdr : in  std_logic := '0';
 		-- Estado Shift-DR da cadeia do carregador.
-		FLASH_STATE_SDR : in  std_logic := '0';
+		i_flash_state_sdr : in  std_logic := '0';
 		-- Estado Update-DR da cadeia do carregador.
-		FLASH_STATE_UDR : in  std_logic := '0';
+		i_flash_state_udr : in  std_logic := '0';
 		-- Estado Update-IR da cadeia do carregador.
-		FLASH_STATE_UIR : in  std_logic := '0';
+		i_flash_state_uir : in  std_logic := '0';
 		-- Valor do registrador do display (periférico 5, 0xD0000000), cuja porta do hospedeiro fica ociosa aqui.
-		DISPLAY_VALUE  : out std_logic_vector(23 downto 0);
+		o_display_value  : out std_logic_vector(23 downto 0);
 		-- Segmentos dos seis displays.
-		DISPLAY_HEX    : out std_logic_vector(41 downto 0)
+		o_display_hex    : out std_logic_vector(41 downto 0)
 	);
 end entity;
 
@@ -189,13 +189,19 @@ architecture behaviour of rv32im_external_data_sim_test is
 	signal core_reset : std_logic;
 	-- Comando da porta JTAG ao carregador: alternância, operação, endereço de palavra e dado.
 	signal flash_cmd_tog : std_logic;
+	-- Operação do comando da porta JTAG ao carregador de FLASH.
 	signal flash_op : std_logic_vector(3 downto 0);
+	-- Endereço de palavra do comando da porta JTAG ao carregador de FLASH.
 	signal flash_cmd_addr : std_logic_vector(23 downto 0);
+	-- Dado do comando da porta JTAG ao carregador de FLASH.
 	signal flash_cmd_data : std_logic_vector(31 downto 0);
 	-- Resposta do carregador à porta JTAG.
 	signal flash_done_tog : std_logic;
+	-- Endereço de palavra da resposta do carregador de FLASH.
 	signal flash_rsp_addr : std_logic_vector(23 downto 0);
+	-- Dado da resposta do carregador de FLASH.
 	signal flash_rsp_data : std_logic_vector(31 downto 0);
+	-- Estado da resposta do carregador de FLASH.
 	signal flash_rsp_status : std_logic_vector(7 downto 0);
 
 	-- Porta de RAM interna do núcleo, sem uso nesta plataforma (a RAM é a SDRAM).
@@ -280,20 +286,24 @@ architecture behaviour of rv32im_external_data_sim_test is
 	signal dc_bypass : std_logic;
 	-- Lado da memória da cache de dados, ligado direto ao sdram_system.
 	signal dd_addr, dd_wdata, dd_rdata : std_logic_vector(31 downto 0);
+	-- Porta de memória da cache de dados: habilita de bytes.
 	signal dd_be     : std_logic_vector(3 downto 0);
+	-- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+	-- a próxima palavra da linha, acesso concluído.
 	signal dd_rden, dd_wren, dd_line, dd_adv, dd_ready : std_logic;
+	-- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
 	signal dd_wdx, dd_rdx : std_logic_vector(95 downto 0);
 	-- Fim e ocupação da invalidação da cache de dados.
 	signal dc_done, dc_busy : std_logic;
 
 begin
 
-	core_reset <= reset or flash_halt;
+	core_reset <= i_rst or flash_halt;
 
 	u_pll : entity work.clk_gen_3way
     port map (
-      i_clk  => CLK,
-      i_rst  => reset,
+      i_clk  => i_clk,
+      i_rst  => i_rst,
       o_clk0 => pll_clk_if,
       o_clk1 => pll_clk_idexmem,
       o_clk2 => pll_clk_wb
@@ -301,28 +311,28 @@ begin
 
 	u_core : entity work.core
 		generic map (
-			has_m           => HAS_M,
-			has_zmmul       => HAS_ZMMUL,
-			has_zicsr       => HAS_ZICSR,
-			has_zicntr      => HAS_ZICNTR,
-			has_zifencei    => HAS_ZIFENCEI,
-			has_zicclsm     => HAS_ZICCLSM,
-			has_e           => HAS_E,
+			has_m           => has_m,
+			has_zmmul       => has_zmmul,
+			has_zicsr       => has_zicsr,
+			has_zicntr      => has_zicntr,
+			has_zifencei    => has_zifencei,
+			has_zicclsm     => has_zicclsm,
+			has_e           => has_e,
 			boot_memory_bits   => BOOT_MEMORY_BITS,
 			rom_end_kib     => ROM_END_KIB,
-			rom_external    => ROM_EXTERNAL,
+			rom_external    => rom_external,
 			ram_base_kib    => RAM_BASE_KIB,
 			ram_end_kib     => RAM_END_KIB,
-			ram_external    => RAM_EXTERNAL,
+			ram_external    => ram_external,
 			ext_base_kib    => EXT_BASE_KIB,
 			periph_base_kib => PERIPH_BASE_KIB,
-			has_zihpm       => HAS_ZIHPM,
-			hpm_counters    => HPM_COUNTERS,
-			hpm_width       => HPM_WIDTH,
-			has_zimop       => HAS_ZIMOP,
-			has_zicond      => HAS_ZICOND,
-			has_zihintntl   => HAS_ZIHINTNTL,
-			has_zihintpause => HAS_ZIHINTPAUSE
+			has_zihpm       => has_zihpm,
+			hpm_counters    => hpm_counters,
+			hpm_width       => hpm_width,
+			has_zimop       => has_zimop,
+			has_zicond      => has_zicond,
+			has_zihintntl   => has_zihintntl,
+			has_zihintpause => has_zihintpause
 		)
 		port map (
 			o_trap          => core_trap,
@@ -366,7 +376,7 @@ begin
 	hpm_ext_events <= '0' & dc_miss & '0';
 
 	u_boot_memory : entity work.rom_simulation
-		generic map (rom_file => BOOT_MEMORY_FILE, size_bytes => BOOT_BYTES)
+		generic map (rom_file => boot_memory_file, size_bytes => BOOT_BYTES)
 		port map (
 			i_addr => if_addr(31 downto 2),
 			i_clk  => pll_clk_if,
@@ -376,7 +386,7 @@ begin
 
 	-- A FLASH, uma só cópia de duas portas: A para a busca, B para o dado do estágio MEM e para o carregador.
 	u_flash : entity work.flash_simulation
-		generic map (size_bytes => ROM_BYTES, rom_file => ROM_FILE)
+		generic map (size_bytes => ROM_BYTES, rom_file => rom_file)
 		port map (
 			i_clk_a     => pll_clk_if,
 			i_address_a => if_addr(rom_addr_width + 1 downto 2),
@@ -396,7 +406,7 @@ begin
 		generic map (addr_width => rom_addr_width)
 		port map (
 			i_clk         => pll_clk_idexmem,
-			i_rst         => reset,
+			i_rst         => i_rst,
 			i_cmd_tog     => flash_cmd_tog,
 			o_done_tog    => flash_done_tog,
 			i_op          => flash_op,
@@ -418,9 +428,9 @@ begin
 	-- A porta JTAG do carregador, a do Virtual JTAG que na placa é o flash_jtag_shell.
 	u_flash_jtag : entity work.flash_jtag_core
 		port map (
-			i_tck => FLASH_TCK, i_tdi => FLASH_TDI, o_tdo => FLASH_TDO, i_ir_in => FLASH_IR_IN,
-			i_state_cdr => FLASH_STATE_CDR, i_state_sdr => FLASH_STATE_SDR,
-			i_state_udr => FLASH_STATE_UDR, i_state_uir => FLASH_STATE_UIR,
+			i_tck => i_flash_tck, i_tdi => i_flash_tdi, o_tdo => o_flash_tdo, i_ir_in => i_flash_ir_in,
+			i_state_cdr => i_flash_state_cdr, i_state_sdr => i_flash_state_sdr,
+			i_state_udr => i_flash_state_udr, i_state_uir => i_flash_state_uir,
 			o_cmd_tog => flash_cmd_tog, o_op => flash_op, o_addr => flash_cmd_addr, o_data => flash_cmd_data,
 			i_done_tog => flash_done_tog, i_rsp_addr => flash_rsp_addr, i_rsp_data => flash_rsp_data,
 			i_rsp_status => flash_rsp_status
@@ -431,7 +441,8 @@ begin
 	dc_bypass <= '1' when m_addr(31 downto 12) = RAM_LAST_PAGE else '0';
 
 	u_dcache : entity work.dcache
-		generic map (size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB)
+		generic map (size_bits => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB,
+			rom_end_kib => ROM_END_KIB)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
@@ -461,9 +472,9 @@ begin
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
 			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(UART_ID), i_re => p_re(UART_ID),
 			o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID),
-			i_tck => UART_TCK, i_tdi => UART_TDI, o_tdo => UART_TDO, i_ir_in => UART_IR_IN,
-			i_state_cdr => UART_STATE_CDR, i_state_sdr => UART_STATE_SDR,
-			i_state_udr => UART_STATE_UDR, i_state_uir => UART_STATE_UIR
+			i_tck => i_uart_tck, i_tdi => i_uart_tdi, o_tdo => o_uart_tdo, i_ir_in => i_uart_ir_in,
+			i_state_cdr => i_uart_state_cdr, i_state_sdr => i_uart_state_sdr,
+			i_state_udr => i_uart_state_udr, i_state_uir => i_uart_state_uir
 		);
 
 	u_display : entity work.seg_display
@@ -473,24 +484,24 @@ begin
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
 			i_state_cdr => '0', i_state_sdr => '0', i_state_udr => '0', i_state_uir => '0',
-			o_value => DISPLAY_VALUE, o_fail => open, o_hex => DISPLAY_HEX
+			o_value => o_display_value, o_fail => open, o_hex => o_display_hex
 		);
 
 	-- A SDRAM e o modelo do chip; as portas de depuração do modelo ficam sem uso aqui e a porta de instruções fica ociosa.
 	u_sdram : entity work.sdram_system
-		generic map (tck_ps => SDRAM_TCK_PS,
-			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, SDRAM_TCK_PS),
-			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, SDRAM_TCK_PS) * 9 / 10,
-			init_file => SDRAM_FILE)
+		generic map (tck_ps => sdram_tck_ps,
+			init_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_INIT_PS, sdram_tck_ps),
+			refresh_cycles => work.sdram_pkg.cycles(work.sdram_pkg.T_REFI_PS, sdram_tck_ps) * 9 / 10,
+			init_file => sdram_file)
 		port map (
-			i_clk_mem => CLK_MEM, i_clk_cpu => pll_clk_idexmem,
-			i_rst_mem => reset,   i_rst_cpu => core_reset,
+			i_clk_mem => i_clk_mem, i_clk_cpu => pll_clk_idexmem,
+			i_rst_mem => i_rst,   i_rst_cpu => core_reset,
 			i_addr => dd_addr, i_wdata => dd_wdata, i_byteena => dd_be,
 			i_rden => dd_rden, i_wren => dd_wren, i_mem_advance => dd_adv,
 			o_ready => dd_ready, o_rdata => dd_rdata,
 			i_line => dd_line, i_wdata_x => dd_wdx, o_rdata_x => dd_rdx,
 			o_init_done => sdram_init,
-			i_dbg_word_addr => DBG_WORD_ADDR, o_dbg_word_data => DBG_WORD_DATA,
+			i_dbg_word_addr => i_dbg_word_addr, o_dbg_word_data => o_dbg_word_data,
 			i_dbg_flip => '0', i_dbg_flip_addr => (others => '0'), i_dbg_flip_bit => (others => '0'),
 			o_dbg_refreshes => dbg_refreshes, o_dbg_init_ok => dbg_init_ok
 		);

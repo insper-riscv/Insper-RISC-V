@@ -82,6 +82,23 @@ Five generics turn on what boards with a high clock need, all off by default so 
 | `i_inval_valid`, `i_inval_first` and `i_inval_last` (ports) | The rewritten FLASH region, which drops the lines of both caches |
 | `i_display_*`, `o_display_tdo` and `o_display_fail` (ports) | The Virtual JTAG through which the host reads and writes the display register and the failure flag; the board top wires the node of index 2 |
 
+### 5.3. Generic validation
+
+Elaboration of the SoC stops with `severity failure` when a combination of generics makes no sense, and the message names the generic and the cause.
+
+| Rule | Generics |
+| :--- | :--- |
+| The BOOT_MEMORY is a power of two and a multiple of 1 KiB | `boot_memory_size_bytes` |
+| The map is ordered with no overlap: BOOT_MEMORY, ROM, RAM, external window and peripheral window | `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` |
+| The ROM reached through the port fits the cache window, and the RAM fits it with the data cache | `cache_window_bits`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib` |
+| Each existing cache has a power-of-two size of at least 256 bits | `icache_size_bits`, `dcache_size_bits` |
+| The options of a cache only apply with it | `has_dcache_bypass` requires `has_dcache`, `fast_icache_select` requires `has_icache` |
+| The counters are CSRs | `has_zicntr` and `has_zihpm` require `has_zicsr` |
+| The polarity of the UART pins only applies to the pins role | `uart_tx_invert` and `uart_rx_invert` require `has_uart_pins` |
+| Two present peripherals do not share a window index | `clint_id`, `plic_id`, `timer_id`, `switches_id`, `keys_id`, `display_id`, `uart_jtag_id`, `uart_pins_id`, `flash_ctrl_id` |
+
+`has_interrupts`, `has_sscofpmf` and `has_access_faults` do not fail without `has_zicsr`, because the SoC turns them off before handing them to the core.
+
 ## 6. PLIC lines
 
 Each peripheral connects its interrupt to a fixed PLIC line, the same on every platform.

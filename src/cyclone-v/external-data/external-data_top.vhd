@@ -80,12 +80,19 @@ architecture behaviour of core_fpga_external_data is
 	-- PLL da placa: o clock do controlador da SDRAM, o do pino da SDRAM e os dois do núcleo.
 	component sdram_platform_pll is
 		port (
+			-- Clock de referência do PLL (50 MHz da placa).
 			refclk   : in  std_logic;
+			-- Reset do PLL, ativo em '1'.
 			rst      : in  std_logic;
+			-- Saída 0 do PLL: clock do controlador da SDRAM.
 			outclk_0 : out std_logic;
+			-- Saída 1 do PLL: clock do pino da SDRAM, defasado do da saída 0.
 			outclk_1 : out std_logic;
+			-- Saída 2 do PLL: clock dos estágios IF do núcleo.
 			outclk_2 : out std_logic;
+			-- Saída 3 do PLL: clock dos estágios ID, EX e MEM do núcleo.
 			outclk_3 : out std_logic;
+			-- Indica o travamento do PLL ('1' = travado).
 			locked   : out std_logic
 		);
 	end component;
@@ -247,43 +254,68 @@ architecture behaviour of core_fpga_external_data is
 
 	-- Pulso de um ciclo de o_trap_take do núcleo (exceção tomada, com ou sem Zicsr) e a bandeira que o segura até o próximo reset.
 	signal core_trap : std_logic;
+	-- Bandeira que segura a exceção vista até o próximo reset, mostrada no LED 1.
 	signal trap_seen : std_logic := '0';
 
 	-- Mestre A (a ponte do núcleo) e mestre B (o mestre de depuração) do árbitro.
 	signal a_req, a_ack, a_we : std_logic;
+	-- Mestre A: endereço de palavra do pedido.
 	signal a_addr  : std_logic_vector(23 downto 0);
+	-- Mestre A: dado de escrita e dado lido.
 	signal a_wdata, a_rdata : std_logic_vector(31 downto 0);
+	-- Mestre A: habilita de bytes da escrita.
 	signal a_be    : std_logic_vector(3 downto 0);
+	-- Mestre B: alternância de pedido, alternância de confirmação e escrita.
 	signal b_req, b_ack, b_we : std_logic;
+	-- Mestre B: endereço de palavra do pedido.
 	signal b_addr  : std_logic_vector(23 downto 0);
+	-- Mestre B: dado de escrita e dado lido.
 	signal b_wdata, b_rdata : std_logic_vector(31 downto 0);
+	-- Mestre B: habilita de bytes da escrita.
 	signal b_be    : std_logic_vector(3 downto 0);
 	-- Comando do mestre de depuração vindo do Virtual JTAG.
 	signal cmd_tog, done_tog : std_logic;
+	-- Comando do Virtual JTAG: operação e habilita de bytes.
 	signal d_op, d_be : std_logic_vector(3 downto 0);
+	-- Endereço de palavra do comando (d_addr) e da resposta (r_addr).
 	signal d_addr, r_addr : std_logic_vector(23 downto 0);
+	-- Dado do comando (d_data) e da resposta (r_data).
 	signal d_data, r_data : std_logic_vector(31 downto 0);
+	-- Estado da resposta do mestre de depuração.
 	signal r_status : std_logic_vector(7 downto 0);
 
 	-- Linha de quatro palavras entre a ponte A e o árbitro.
 	signal a_line    : std_logic;
+	-- Linha larga de 96 bits entre a ponte A e o árbitro: escrita (a_wdx) e leitura (a_rdx).
 	signal a_wdx, a_rdx : std_logic_vector(95 downto 0);
+	-- Habilita de bytes da linha larga entre a ponte A e o árbitro.
 	signal a_bex     : std_logic_vector(11 downto 0);
 	-- Lado do controlador da SDRAM.
 	signal c_line    : std_logic;
+	-- Linha larga de 96 bits do lado do controlador: escrita (c_wdx) e leitura (c_rdx).
 	signal c_wdx, c_rdx : std_logic_vector(95 downto 0);
+	-- Habilita de bytes da linha larga do lado do controlador.
 	signal c_bex     : std_logic_vector(11 downto 0);
 
 	-- Reset do controlador, solto em passo com o clock dele.
 	signal rst_async : std_logic;
+	-- Deslocador que solta o reset do controlador em passo com o clock dele.
 	signal rst_sr    : std_logic_vector(1 downto 0) := "11";
+	-- Reset do controlador da SDRAM já sincronizado ao clock dele.
 	signal rst_mem   : std_logic;
+	-- Lado do controlador: alternância de pedido, alternância de confirmação, inicialização concluída e escrita.
 	signal req_tog, ack_tog, init_done, c_we : std_logic;
+	-- Lado do controlador: endereço de palavra do pedido.
 	signal c_addr    : std_logic_vector(23 downto 0);
+	-- Lado do controlador: dado de escrita e dado lido.
 	signal c_wdata, c_rdata : std_logic_vector(31 downto 0);
+	-- Lado do controlador: habilita de bytes da escrita.
 	signal c_be      : std_logic_vector(3 downto 0);
+	-- Dado que o controlador põe no barramento da SDRAM (dq_out) e dado lido dele (dq_in).
 	signal dq_out, dq_in : std_logic_vector(15 downto 0);
+	-- Habilita a saída do barramento de dados da SDRAM ('1' = o controlador dirige).
 	signal dq_oe     : std_logic;
+	-- Máscara de bytes do acesso à SDRAM.
 	signal dqm       : std_logic_vector(1 downto 0);
 
 begin

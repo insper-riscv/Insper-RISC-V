@@ -13,26 +13,23 @@ use work.internal_mem_map_pkg.all;
 
 entity rv32i3stage_core_sim_test is
 	generic (
-	  -- BOOT_MEMORY_FILE is built ONCE per test run (see
-	  -- riscv_tools.boot_memory.build_boot_memory), not per test like
-	  -- ROM_FILE (FLASH's own image) is -- see config.yaml's
-	  -- sim.parameters. Both default to "default.hex" for existing
-	  -- callers (e.g. tests/python/tests.json) that don't set them.
+	  -- Imagem da BOOT_MEMORY, montada UMA vez por execução de testes (ver
+	  -- riscv_tools.boot_memory.build_boot_memory), e não por teste como o ROM_FILE
+	  -- (a imagem própria da FLASH; ver sim.parameters do config.yaml). Os dois têm
+	  -- "default.hex" como padrão para os chamadores que não os informam (por
+	  -- exemplo tests/python/tests.json).
 	  BOOT_MEMORY_FILE : string := "default.hex";
 	  -- Imagem da FLASH, uma palavra de 32 bits por linha em hexadecimal.
 	  ROM_FILE : string := "default.hex";
-	  -- Initial contents of the RAM, same format as ROM_FILE; empty: zero.
+	  -- Conteúdo inicial da RAM, no formato do ROM_FILE; vazio significa zero.
 	  RAM_FILE : string := "";
-	  -- Word-address width of ROM_simulation/RAM_simulation's internal
-	  -- memory array (depth = 2**width words) — all three default to
-	  -- 9 (512 words) inside ROM_simulation/RAM_simulation themselves,
-	  -- too small for a program/tohost address sized for the real
-	  -- BOOT_MEMORY/FLASH/RAM1PORT hardware. Exposed here so a
-	  -- full-pipeline testbench can size these to match whatever
-	  -- memory map its own tests were compiled against, without
-	  -- editing this file. Left at the same 9/9/9 default so existing
-	  -- callers (e.g. tests/python/tests.json's instruction-level
-	  -- tests) are unaffected.
+	  -- Largura do endereço de palavra do vetor interno de memória da BOOT_MEMORY, da
+	  -- FLASH e da RAM simuladas (profundidade 2**largura palavras). Os três valem 9
+	  -- (512 palavras) dentro dos modelos, pouco para um programa ou um endereço de
+	  -- tohost dimensionados para o hardware real. Expostos aqui para um testbench
+	  -- do pipeline completo ajustá-los ao mapa de memória dos seus testes sem editar
+	  -- este arquivo; o padrão 9/9/9 mantém os chamadores de tests.json
+	  -- (testes por instrução) como estão.
 	  boot_memory_addr_width : natural := 9;
 	  -- Largura, em bits, do endereço de palavra da FLASH simulada (profundidade 2**largura).
 	  rom_addr_width : natural := 9;

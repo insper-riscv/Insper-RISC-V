@@ -82,6 +82,23 @@ Cinco generics ligam o que as placas de relógio alto precisam, todos desligados
 | `i_inval_valid`, `i_inval_first` e `i_inval_last` (portas) | A região regravada da FLASH, que derruba as linhas das duas caches |
 | `i_display_*`, `o_display_tdo` e `o_display_fail` (portas) | O Virtual JTAG pelo qual o hospedeiro lê e grava o registrador do display e a bandeira de falha; o topo da placa liga o nó de índice 2 |
 
+### 5.3. Validação dos generics
+
+A elaboração do SoC para com `severity failure` quando uma combinação de generics não tem sentido, e a mensagem traz o nome do generic e a causa.
+
+| Regra | Generics |
+| :--- | :--- |
+| A BOOT_MEMORY é potência de dois e múltipla de 1 KiB | `boot_memory_size_bytes` |
+| O mapa é ordenado, sem sobreposição: BOOT_MEMORY, ROM, RAM, janela externa e janela de periféricos | `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` |
+| A ROM alcançada pela porta cabe na janela das caches, e a RAM cabe nela com a cache de dados | `cache_window_bits`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib` |
+| Cada cache existente tem tamanho em potência de dois de pelo menos 256 bits | `icache_size_bits`, `dcache_size_bits` |
+| As opções de uma cache só valem com ela | `has_dcache_bypass` exige `has_dcache`, `fast_icache_select` exige `has_icache` |
+| Os contadores são CSRs | `has_zicntr` e `has_zihpm` exigem `has_zicsr` |
+| A polaridade dos pinos da UART só vale no papel de pinos | `uart_tx_invert` e `uart_rx_invert` exigem `has_uart_pins` |
+| Dois periféricos presentes não dividem o índice de janela | `clint_id`, `plic_id`, `timer_id`, `switches_id`, `keys_id`, `display_id`, `uart_jtag_id`, `uart_pins_id`, `flash_ctrl_id` |
+
+`has_interrupts`, `has_sscofpmf` e `has_access_faults` não geram erro sem `has_zicsr`, porque o SoC os desliga antes de entregá-los ao núcleo.
+
 ## 6. Linhas do PLIC
 
 Cada periférico liga a sua interrupção a uma linha fixa do PLIC, a mesma em toda plataforma.

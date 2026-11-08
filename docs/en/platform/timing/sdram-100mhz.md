@@ -140,7 +140,7 @@ The chosen option is the controller at 100 MHz with the 1 to 1 bridge, not the f
 | :--- | :--- |
 | Compile a seed | `quartus_sh -t src/cyclone-v/de0-cv/de0-cv_synth.tcl <seed>`, in a copy of the repository |
 | Change the controller clock or phase | Edit `sdram.clock_hz` and `sdram.dram_clk_phase_ps` in `platform.yaml`, and `output_clock_frequency0`, `output_clock_frequency1` and `phase_shift1` in `src/cyclone-v/de0-cv/pll/sdram_platform_pll.v`, then run `riscv-tools generate-memory-map`; `check-memory-map` verifies that both sides agree |
-| Simulate with another clock | `SIM_CLOCK_PERIOD_NS` (period of `CLK`, three times the core's) and `SIM_EXTRA_CLOCKS=CLK_MEM:<ns>` with the parameter `SDRAM_TCK_PS=<ps>` of the simulation top |
+| Simulate with another clock | `SIM_CLOCK_PERIOD_NS` (period of `i_clk`, three times the core's) and `SIM_EXTRA_CLOCKS=i_clk_mem:<ns>` with the parameter `SDRAM_TCK_PS=<ps>` of the simulation top |
 
 ## 9. Milestones M1 and M2 with the controller at 100 MHz
 
