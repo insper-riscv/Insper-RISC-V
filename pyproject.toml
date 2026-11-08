@@ -9,6 +9,8 @@ dependencies = [
     # tests/python/runner.py runs the entity tests with cocotb (and its cocotb_tools),
     # at the version of the ci-vhdl image. riscv-tools comes from the image, not from here.
     "cocotb==2.1.0",
+    # scripts/check_irq_sources.py reads the platform.yaml files.
+    "PyYAML>=6.0",
 ]
 
 [tool.uv]
@@ -98,6 +100,10 @@ docstring-code-line-length = 72
 paths = ["scripts", "src", "tests"]
 max-complexity-allowed = 10
 
+[tool.deptry]
+# The testbench package of src/simulation/modular is imported by its test module.
+known_first_party = ["testbench"]
+
 [tool.deptry.per_rule_ignores]
 # riscv-tools comes from the ci-vhdl image, not from the dependencies above.
 DEP001 = ["riscv_tools"]
@@ -108,22 +114,26 @@ venv = ".venv"
 pythonVersion = "3.14"
 typeCheckingMode = "strict"
 reportMissingModuleSource = "none"
+# The yaml stub: the PyYAML that the ci-vhdl image carries is untyped and shadows the stubs of the environment.
+stubPath = "typings"
 include = ["scripts", "src", "tests"]
-# Where the ci-vhdl image installs riscv-tools.
-extraPaths = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
+# Where the ci-vhdl image installs riscv-tools, and the folder that holds the testbench package of the modular platform.
+extraPaths = ["/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages", "src/simulation/modular"]
 
 [tool.pyrefly]
 preset = "strict"
 project-includes = ["scripts", "src", "tests"]
-# The repository root resolves `tests.python...`; the second path is where the ci-vhdl image installs riscv-tools.
-search-path = [".", "/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"]
+# The repository root resolves `tests.python...`; the second path is where the ci-vhdl image installs riscv-tools;
+# the third holds the testbench package of the modular platform.
+search-path = [".", "/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages", "src/simulation/modular"]
 python-version = "3.14"
 
 [tool.pylint.main]
 ignore = [".venv", "build", "sim_build", "Core", "Memory", "Peripherals", "Common-Components"]
 fail-under = 10
-# riscv-tools is installed by the ci-vhdl image, outside the project environment.
-init-hook = "import sys; sys.path.append('/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages')"
+# riscv-tools is installed by the ci-vhdl image, outside the project environment; the testbench package of the
+# modular platform sits in src/simulation/modular.
+init-hook = "import sys; sys.path.extend(['/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages', 'src/simulation/modular'])"
 
 [tool.pylint.similarities]
 # The testbenches of two platforms read the same SIM_* variables. Each one is loaded alone, from its
