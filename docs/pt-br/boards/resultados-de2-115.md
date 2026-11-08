@@ -7,7 +7,15 @@ Este relatório registra o que as duas plataformas da DE2-115 fizeram na placa, 
 | Plataforma | Elementos lógicos | Bits de memória | Folga de setup |
 | :--- | ---: | ---: | :--- |
 | `de2-115-n2` | 18.961 de 114.480 | 3.254.528 de 3.981.312 | positiva em todos os domínios, mínima de 0,084 ns |
-| `de2-115` | 20.111 de 114.480 | 108.800 de 3.981.312 | positiva em todos os domínios, mínima de 0,172 ns |
+| `de2-115` | 20.111 de 114.480 | 108.800 de 3.981.312 | positiva em todos os domínios, mínima de 0,780 ns (`DRAM_CLK`) |
+
+A RAM do mapa tem 128 MiB (`cache_window_bits` 27), e a folga de setup foi medida em três sementes do Quartus.
+
+| Semente | `clk[3]` | `DRAM_CLK` (pino) |
+| :--- | ---: | ---: |
+| 5 | +1,250 ns | +0,810 ns |
+| 1 | +1,471 ns | +0,780 ns |
+| 9 | +1,208 ns | +0,810 ns |
 
 O núcleo roda a 50 MHz com a fase de 8250 ps contra o relógio de busca. Com a fase em zero, o núcleo salta instruções, porque as memórias de instrução leem no relógio de busca um ciclo à frente do núcleo.
 
@@ -51,7 +59,6 @@ São 16 dos 18 programas compilados para a placa. `monitor` e `hex-id` pedem uma
 
 | Item | Limitação |
 | :--- | :--- |
-| RAM do mapa | 64 MiB dos 128 MB, porque a tag das caches guarda os bits de endereço até o 25 |
 | FLASH do mapa | 1024 KiB do chip, a janela do roteador de regiões |
 | Invalidação das caches | o pulso de invalidação do controlador cobre um setor de 8 KiB, mesmo quando o chip apaga um setor de 64 KiB |
 | Atualização de programa | as bancas A e B pelo firmware (`c-sdram-update`) não rodaram nesta placa, porque o `uart_input.txt` dos testes é a imagem da banca B da DE0-CV |

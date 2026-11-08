@@ -7,7 +7,15 @@ This report records what the two DE2-115 platforms did on the board, with Quartu
 | Platform | Logic elements | Memory bits | Setup slack |
 | :--- | ---: | ---: | :--- |
 | `de2-115-n2` | 18.961 of 114.480 | 3.254.528 of 3.981.312 | positive in every domain, minimum 0.084 ns |
-| `de2-115` | 20.111 of 114.480 | 108.800 of 3.981.312 | positive in every domain, minimum 0.172 ns |
+| `de2-115` | 20.111 of 114.480 | 108.800 of 3.981.312 | positive in every domain, minimum 0.780 ns (`DRAM_CLK`) |
+
+The RAM of the map has 128 MiB (`cache_window_bits` 27), and the setup slack was measured with three Quartus seeds.
+
+| Seed | `clk[3]` | `DRAM_CLK` (pin) |
+| :--- | ---: | ---: |
+| 5 | +1.250 ns | +0.810 ns |
+| 1 | +1.471 ns | +0.780 ns |
+| 9 | +1.208 ns | +0.810 ns |
 
 The core runs at 50 MHz with a phase of 8250 ps against the fetch clock. With the phase at zero the core skips instructions, because the instruction memories read on the fetch clock one cycle ahead of the core.
 
@@ -51,7 +59,6 @@ That is 16 of the 18 programs built for the board. `monitor` and `hex-id` need a
 
 | Item | Limitation |
 | :--- | :--- |
-| RAM of the map | 64 MiB of the 128 MB, because the cache tag keeps the address bits up to 25 |
 | FLASH of the map | 1024 KiB of the chip, the window of the region router |
 | Cache invalidation | the invalidation pulse of the controller covers an 8 KiB sector, even when the chip erases a 64 KiB sector |
 | Program update | banks A and B by the firmware (`c-sdram-update`) did not run on this board, because the `uart_input.txt` of the tests is the DE0-CV bank B image |

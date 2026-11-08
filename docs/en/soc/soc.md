@@ -52,7 +52,24 @@ The switches and keys are GPIO blocks, and the display is the `seg_display` regi
 
 The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The SoC does not depend on that package. The core extensions (`has_*`), the caches (`has_icache`, `has_dcache` and the sizes), the interrupts (`has_interrupts`, `plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
 
-### 5.1. Critical path cuts and program update
+### 5.1. Map and extension generics
+
+| Group | Generics | Default |
+| :--- | :--- | :--- |
+| Map | `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` | none |
+| External regions | `rom_external`, `ram_external` | `false` |
+| Caches | `has_icache`, `has_dcache` | `false` |
+| Cache sizes | `icache_size_bits`, `dcache_size_bits` | 4096 bits |
+| Cache window | `cache_window_bits`, from 26 to 29 (26 is 64 MiB, 27 is 128 MiB, the address window the tag covers) | 26 |
+| Core base and extensions | `has_e`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_m`, `has_zmmul`, `has_zifencei`, `has_zicclsm`, `has_access_faults` | `false` |
+| Zihpm counters | `hpm_counters`, from 0 to 29, and `hpm_width`, from 0 to 64 bits | 29 and 64 |
+| Interrupts | `has_interrupts`, `has_sscofpmf`, `periph_slots`, `clint_tick_cycles`, `clint_id`, `plic_id`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | off, windows 6 (CLINT) and 7 (PLIC), 6 sources, 3 bits, 20 bits |
+| Peripheral windows | `timer_id`, `switches_id`, `keys_id`, `uart_pins_id`, `uart_jtag_id`, `display_id`, `flash_ctrl_id` | 0, 1, 2, 3, 4, 5 and 3 |
+| Peripheral presence | `has_timer`, `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
+| Role widths | `switches_width`, `keys_width`, `display_digits` | 10, 4 and 6 |
+| Pin polarity | `switches_active_low`, `keys_active_low`, `display_active_low`, `uart_tx_invert`, `uart_rx_invert` | `false`, except the display (`true`) |
+
+### 5.2. Critical path cuts and program update
 
 Five generics turn on what boards with a high clock need, all off by default so the simulation platforms stay as they were.
 

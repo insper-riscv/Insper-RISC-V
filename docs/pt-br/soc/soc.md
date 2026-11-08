@@ -52,7 +52,24 @@ As chaves e os botões são blocos GPIO, e o display é o registrador `seg_displ
 
 O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` e `periph_base_kib`. Os valores vêm do `platform.yaml`, pelo pacote que o topo lê. O SoC não depende desse pacote. As extensões do núcleo (`has_*`), as caches (`has_icache`, `has_dcache` e os tamanhos), as interrupções (`has_interrupts`, `plic_*`, `clint_*`) e os índices das janelas dos periféricos são generics com valor neutro.
 
-### 5.1. Cortes de caminho crítico e atualização de programa
+### 5.1. Generics do mapa e das extensões
+
+| Grupo | Generics | Valor padrão |
+| :--- | :--- | :--- |
+| Mapa | `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` | sem padrão |
+| Regiões externas | `rom_external`, `ram_external` | `false` |
+| Caches | `has_icache`, `has_dcache` | `false` |
+| Tamanho das caches | `icache_size_bits`, `dcache_size_bits` | 4096 bits |
+| Janela das caches | `cache_window_bits`, de 26 a 29 (26 é 64 MiB, 27 é 128 MiB, a janela de endereços que a tag cobre) | 26 |
+| Base e extensões do núcleo | `has_e`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_m`, `has_zmmul`, `has_zifencei`, `has_zicclsm`, `has_access_faults` | `false` |
+| Contadores do Zihpm | `hpm_counters`, de 0 a 29, e `hpm_width`, de 0 a 64 bits | 29 e 64 |
+| Interrupções | `has_interrupts`, `has_sscofpmf`, `periph_slots`, `clint_tick_cycles`, `clint_id`, `plic_id`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | desligadas, janelas 6 (CLINT) e 7 (PLIC), 6 fontes, 3 bits, 20 bits |
+| Janelas dos periféricos | `timer_id`, `switches_id`, `keys_id`, `uart_pins_id`, `uart_jtag_id`, `display_id`, `flash_ctrl_id` | 0, 1, 2, 3, 4, 5 e 3 |
+| Presença dos periféricos | `has_timer`, `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
+| Largura dos papéis | `switches_width`, `keys_width`, `display_digits` | 10, 4 e 6 |
+| Polaridade dos pinos | `switches_active_low`, `keys_active_low`, `display_active_low`, `uart_tx_invert`, `uart_rx_invert` | `false`, exceto o display (`true`) |
+
+### 5.2. Cortes de caminho crítico e atualização de programa
 
 Cinco generics ligam o que as placas de relógio alto precisam, todos desligados por padrão para que as plataformas de simulação fiquem como estavam.
 
