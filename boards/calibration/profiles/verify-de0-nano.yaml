@@ -1,0 +1,24 @@
+# Perfis da verificação cruzada da tabela da família cyclone-iv-e na de0-nano (EP4CE22), um subconjunto da lista de calibração, sem as caches de 64 kbit que não cabem nos 66 blocos de RAM da EP4CE22 e com a FLASH de 12 KiB e a RAM de 8 KiB (documento 02,
+# seção 7.6, do plano Multi-FPGA). O topo tem a SDRAM de 16 bits, que a DE2-115 (RAM emulada) não tem, de modo que o deslocamento do núcleo mede esse controlador.
+# `riscv-tools calibrate verify` compara a tabela da família com estas medidas, com e sem o deslocamento do termo do núcleo.
+family: cyclone-iv-e
+unit: le
+project:
+  platform: src/calibration/de0-nano/platform.yaml
+  board: de0-nano
+  seed: 5
+bits_per_block: 9216
+reference_kbit: 32
+profiles:
+  - {id: p1_rv32i, group: 1, profile: rv32i}
+  - {id: p1_rv32e, group: 1, profile: rv32e}
+  - {id: p2_rv32im, group: 2, profile: rv32im}
+  - {id: p3_zicntr_zifencei, group: 3, profile: rv32im_zicntr_zifencei}
+  - {id: p3_zicclsm_zicntr_zifencei, group: 3, profile: rv32im_zicclsm_zicntr_zifencei}
+  - {id: p4_hpm_4x40, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 4, HPM_WIDTH: 40}}
+  - {id: p4_hpm_16x52, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 16, HPM_WIDTH: 52}, holdout: true}
+  - {id: p5_base, group: 5, profile: rv32im_zicclsm_zicntr_zihpm_zifencei}
+  - {id: p5_full, group: 5, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf], holdout: true}
+  - {id: p6_interrupts, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Interrupts]}
+  - {id: p7_ic8, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 8}
+  - {id: p7_dc8, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 8}

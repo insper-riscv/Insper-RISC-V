@@ -129,7 +129,6 @@ QSFS = (
         "src/simulation/internal-mem/quartus/core_fpga_test.qsf",
         ("pll_ip", "core_fpga_test"),
     ),
-    Saida("src/cyclone-v/de0-cv/de0-cv.qsf", ("de0_cv_top",)),
     Saida(
         "src/cyclone-v/external-data/external-data.qsf",
         ("external_data_top",),
@@ -204,6 +203,7 @@ ENTRADAS = (
         ("fpga_uart_pins_map", "modular_sim_top"),
         "PlatformFpgaUartPins",
     ),
+    Saida(TESTS_JSON, ("soc",), "SocRoles"),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),

@@ -123,6 +123,7 @@ sim:
     - Memory/src/RAM/SoC/sim/sdram_system.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/cache/SoC/flash_chip.vhd
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
@@ -154,9 +155,12 @@ sim:
     UART_SLOT: "4"
 
 quartus:
-  project_dir: src/cyclone-v/de0-cv
-  project_name: de0-cv
-  sof_file: output_files/de0-cv.sof
+  # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`
+  # writes it before compiling: nothing under build/ is versioned.
+  generate: {platform: src/cyclone-v/de0-cv/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
+  project_dir: build/de0-cv-de0-cv
+  project_name: de0_cv_de0_cv
+  sof_file: output_files/de0_cv_de0_cv.sof
   rom_mif_target: init.mif
   boot_memory_mif_target: boot_memory_init.mif
   # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor

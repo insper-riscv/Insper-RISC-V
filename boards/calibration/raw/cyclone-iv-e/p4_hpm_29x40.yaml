@@ -1,0 +1,124 @@
+id: p4_hpm_29x40
+group: 4
+family: cyclone-iv-e
+unit: le
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+extras: []
+icache_kbit: 32
+dcache_kbit: 32
+generics:
+  HPM_COUNTERS: 29
+  HPM_WIDTH: 40
+holdout: false
+seed: 5
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+device: EP4CE115F29C7
+measured_on: '2026-11-07'
+sources_hash: 7956285804f94c442fed8ae286dcd713380bc2d31654f74ad4a4b8ded78d88c5
+revisions:
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
+added_constants:
+- CLINT_BASE
+- CLINT_ID
+- PLIC_BASE
+- PLIC_ID
+- CLOCK_HZ
+- MTIME_HZ
+- CLINT_TICK_CYCLES
+- PLIC_N_SOURCES
+- PLIC_PRIORITY_BITS
+- PLIC_ADDR_WIDTH
+- IRQ_UART_JTAG
+- IRQ_FLASH
+command:
+- quartus_sh
+- -t
+- compile.tcl
+- de2_115_de2_115
+- '5'
+- map
+- HPM_COUNTERS=29
+- HPM_WIDTH=40
+elapsed_s: 131
+result:
+  logic: 15923
+  registers: 7513
+  ram_bits: 895232
+  multipliers: 0
+  plls: 1
+  pins: 76
+entities:
+- name: de2_115_de2_115_top
+  depth: 0
+  luts: 12648
+  registers: 7513
+  memory_bits: 895232
+- name: boot_memory:boot_inst
+  depth: 1
+  luts: 0
+  registers: 0
+  memory_bits: 32768
+- name: de2_115_de2_115_pll:pll_inst
+  depth: 1
+  luts: 1
+  registers: 1
+  memory_bits: 0
+- name: flash:flash_store_inst
+  depth: 1
+  luts: 140
+  registers: 4
+  memory_bits: 262144
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 87
+  registers: 166
+  memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 138
+  registers: 102
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 184
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 172
+  registers: 167
+  memory_bits: 0
+- name: onchip_ram_port:ram_port_inst
+  depth: 1
+  luts: 153
+  registers: 411
+  memory_bits: 0
+- name: ram:ram_store_inst
+  depth: 1
+  luts: 105
+  registers: 74
+  memory_bits: 524288
+- name: sld_hub:auto_hub
+  depth: 1
+  luts: 189
+  registers: 112
+  memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 11426
+  registers: 6313
+  memory_bits: 76032
+- name: virtual_jtag:display_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0

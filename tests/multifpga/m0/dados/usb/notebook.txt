@@ -1,0 +1,26 @@
+sysfs=3-6 vid:pid=09fb:6001 iSerial=91d28408 busnum=3 devpath=6 real=/sys/devices/pci0000:00/0000:00:14.0/usb3/3-6
+  ID_SERIAL_SHORT=91d28408
+  ID_PATH=pci-0000:00:14.0-usb-0:6
+  ID_PATH_TAG=pci-0000_00_14_0-usb-0_6
+---
+/:  Bus 001.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/1p, 480M
+/:  Bus 002.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/4p, 20000M/x2
+/:  Bus 003.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/12p, 480M
+    |__ Port 001: Dev 011, If 0, Class=Hub, Driver=hub/4p, 480M
+        |__ Port 001: Dev 012, If 0, Class=Human Interface Device, Driver=usbhid, 12M
+        |__ Port 001: Dev 012, If 1, Class=Human Interface Device, Driver=usbhid, 12M
+        |__ Port 003: Dev 013, If 0, Class=Hub, Driver=hub/4p, 480M
+            |__ Port 001: Dev 015, If 0, Class=Mass Storage, Driver=usb-storage, 480M
+        |__ Port 004: Dev 014, If 0, Class=Vendor Specific Class, Driver=r8152, 480M
+    |__ Port 002: Dev 016, If 0, Class=Billboard, Driver=[none], 480M
+    |__ Port 006: Dev 018, If 0, Class=Vendor Specific Class, Driver=[none], 12M
+    |__ Port 007: Dev 004, If 0, Class=Human Interface Device, Driver=usbhid, 12M
+    |__ Port 008: Dev 005, If 0, Class=Human Interface Device, Driver=usbhid, 12M
+    |__ Port 009: Dev 006, If 0, Class=Video, Driver=uvcvideo, 480M
+    |__ Port 009: Dev 006, If 1, Class=Video, Driver=uvcvideo, 480M
+    |__ Port 009: Dev 006, If 2, Class=Video, Driver=uvcvideo, 480M
+    |__ Port 009: Dev 006, If 3, Class=Video, Driver=uvcvideo, 480M
+    |__ Port 009: Dev 006, If 4, Class=Application Specific Interface, Driver=[none], 480M
+    |__ Port 010: Dev 007, If 0, Class=Wireless, Driver=btusb, 12M
+    |__ Port 010: Dev 007, If 1, Class=Wireless, Driver=btusb, 12M
+/:  Bus 004.Port 001: Dev 001, Class=root_hub, Driver=xhci_hcd/2p, 20000M/x2

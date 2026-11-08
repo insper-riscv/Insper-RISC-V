@@ -1,0 +1,61 @@
+# Perfis da calibração da Cyclone IV E (documento 02, seção 7.6, do plano Multi-FPGA), medidos com o `quartus_map` do projeto que o
+# `board generate` escreve para a de2-115 (EP4CE115). A calibração mede o dispositivo e não a placa. O topo da plataforma de calibração é fixo:
+# a FLASH emulada, o display, a JTAG UART e o controlador de FLASH e a RAM emulada em blocos (a SDRAM da placa tem 32 bits e o Memory não tem controlador dela) existem em todos os
+# perfis e ficam absorvidos no termo do núcleo (`fixed`); só o que o `platform.yaml` e os generics variam entra no ajuste.
+family: cyclone-iv-e
+unit: le
+project:
+  platform: src/calibration/de2-115/platform.yaml
+  board: de2-115
+  seed: 5
+# Bits de um bloco M9K.
+bits_per_block: 9216
+# Tamanho das caches (kbit) que o termo do núcleo já contém; os termos de cache medem a diferença para ele.
+reference_kbit: 32
+# Termos que o topo fixo carrega em toda medida, fixados em zero.
+fixed:
+  peripherals.CLINT: 0.0
+  peripherals.PLIC_base: 0.0
+  peripherals.PLIC_per_source: 0.0
+  peripherals.UART: 0.0
+  peripherals.DISPLAY: 0.0
+  peripherals.FLASH_CTRL: 0.0
+  per_block_glue: 0.0
+  # Custo do controlador de SDRAM de 16 bits, média da diferença medida na 10M50DA entre a plataforma com SDRAM e a emulada (raw/sdram-cost-max-10, 598 a 1660 LEs segundo o perfil).
+  backends.sdram_16: 1185.3
+profiles:
+  # 1. Núcleo mínimo.
+  - {id: p1_rv32i, group: 1, profile: rv32i}
+  - {id: p1_rv32e, group: 1, profile: rv32e}
+  # 2. Multiplicação e divisão.
+  - {id: p2_rv32im, group: 2, profile: rv32im}
+  - {id: p2_rv32i_zmmul, group: 2, profile: rv32i_zmmul}
+  # 3. Zicsr, Zicntr, Zifencei e Zicclsm.
+  - {id: p3_zicsr, group: 3, profile: rv32im_zicsr}
+  - {id: p3_zicsr_zifencei, group: 3, profile: rv32im_zicsr_zifencei}
+  - {id: p3_zicntr_zifencei, group: 3, profile: rv32im_zicntr_zifencei}
+  - {id: p3_zicclsm_zicntr_zifencei, group: 3, profile: rv32im_zicclsm_zicntr_zifencei}
+  # 4. Zihpm: contadores e larguras (o perfil 5 sem extras é o ponto de 29 contadores de 64 bits).
+  - {id: p4_hpm_4x40, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 4, HPM_WIDTH: 40}}
+  - {id: p4_hpm_4x64, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 4, HPM_WIDTH: 64}}
+  - {id: p4_hpm_29x40, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 29, HPM_WIDTH: 40}}
+  - {id: p4_hpm_0x64, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 0, HPM_WIDTH: 64}}
+  - {id: p4_hpm_8x32, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 8, HPM_WIDTH: 32}}
+  - {id: p4_hpm_16x52, group: 4, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, generics: {HPM_COUNTERS: 16, HPM_WIDTH: 52}, holdout: true}
+  # 5. Perfil completo: a base sem extras e o perfil da plataforma com todos os extras (verificação).
+  - {id: p5_base, group: 5, profile: rv32im_zicclsm_zicntr_zihpm_zifencei}
+  - {id: p5_full, group: 5, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf], holdout: true}
+  # 6. Cada extra ligado por vez sobre a base do perfil 5.
+  - {id: p6_zimop, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zimop]}
+  - {id: p6_zicond, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zicond]}
+  - {id: p6_zihintntl, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zihintntl]}
+  - {id: p6_zihintpause, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Zihintpause]}
+  - {id: p6_interrupts, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Interrupts]}
+  - {id: p6_interrupts_sscofpmf, group: 6, profile: rv32im_zicclsm_zicntr_zihpm_zifencei, extras: [Interrupts, Sscofpmf]}
+  # 7. Caches de 8, 64 e 128 kbit (a de 32 kbit é o perfil p3_zicntr_zifencei).
+  - {id: p7_ic8, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 8}
+  - {id: p7_ic128, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 128}
+  - {id: p7_dc8, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 8}
+  - {id: p7_dc128, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 128, outside: true}
+  - {id: p7_ic64, group: 7, profile: rv32im_zicntr_zifencei, icache_kbit: 64, holdout: true}
+  - {id: p7_dc64, group: 7, profile: rv32im_zicntr_zifencei, dcache_kbit: 64, holdout: true}

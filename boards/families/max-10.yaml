@@ -1,0 +1,24 @@
+# Família de dispositivos MAX 10. Esquema: Plans/Multi-FPGA/02-ESQUEMAS-PLATFORM-E-BOARD.md, seção 5.
+# A faixa do oscilador e o número de saídas do PLL vêm do manual da família; o Fmax é a frequência de núcleo medida por grau
+# (null quando não há medida) e a calibração é o arquivo medido pelo estimador de cabimento (null até existir).
+family: max-10
+quartus_family: MAX 10
+logic_unit: le
+pll:
+  ip: altpll
+  vco_mhz: [600, 1300]
+  clock_node_pattern: "<instance>|altpll_component|auto_generated|pll1|clk[N]"
+  outputs_max: 5
+block_ram: {kind: m9k, bits_per_block: 9216}
+memory_ip: altsyncram
+virtual_jtag: true
+onchip_flash: altera_onchip_flash
+fmax:
+  core_mhz_by_grade: {C8: null, I7: null}
+calibration: calibration/max-10.yaml
+# O ajuste do Quartus recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL da MAX 10 (erro 169303), e o gerador de pinos a omite.
+slew_rate: false
+# O ajuste da MAX 10 só monta o arquivo de programação das memórias com conteúdo inicial (a boot memory e a FLASH emulada) no modo de configuração
+# de imagem única com a RAM de configuração, que o projeto gerado pede por esta atribuição.
+qsf:
+  - set_global_assignment -name INTERNAL_FLASH_UPDATE_MODE "SINGLE IMAGE WITH ERAM"

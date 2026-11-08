@@ -1,0 +1,1 @@
+RESULTADO pll_altpll "Cyclone IV E" EP4CE115F29C7 PASSA

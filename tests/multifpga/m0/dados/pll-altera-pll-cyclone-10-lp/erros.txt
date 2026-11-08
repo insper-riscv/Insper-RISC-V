@@ -1,0 +1,4 @@
+Error (12024): WYSIWYG primitive "general[0].gpll" is not compatible with the current device family File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altera_pll.v Line: 749
+Error (12024): WYSIWYG primitive "general[1].gpll" is not compatible with the current device family File: /opt/altera_lite/25.1std/quartus/libraries/megafunctions/altera_pll.v Line: 749
+Error (12152): Can't elaborate user hierarchy "m0_pll:pll_inst|altera_pll:altera_pll_i" File: /tmp/m0/src/pll/m0_pll_altera_pll.v Line: 32
+Error (23031): Evaluation of Tcl script /tmp/m0/src/m0_map.tcl unsuccessful
