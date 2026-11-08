@@ -289,4 +289,5 @@ jobs:
           export PYTHONPATH=.
           /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_de0_cv_boot_images.py --check
           /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_external_data_images.py
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code tests/python/unittests/rtl/data
