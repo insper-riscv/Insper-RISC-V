@@ -89,12 +89,17 @@ check-irq-sources:
 	uv run --no-project --with pyyaml python scripts/check_irq_sources.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
-# that uses both.
+# that uses both. The one exception is counter64, which the Core still keeps in src/Zicntr until its
+# config_pkg migration (part A) removes it: the source lists of the tops never carry both copies, because
+# only the Core requires its own and nothing requires the one of Common-Components yet. Drop COUNTER64_DUP
+# in the pointer bump that brings the Core without counter64.
+COUNTER64_DUP := ^counter64: (Common-Components/src/counter64.vhd Core/src/Zicntr/counter64.vhd|Core/src/Zicntr/counter64.vhd Common-Components/src/counter64.vhd)$$
 check-unique:
 	@dups=$$(find $(SUBREPOS) -name '*.vhd' $(NESTED) $(NOT_RTL) -print0 \
 	  | xargs -0 grep -HioE '^[[:space:]]*(entity|package)[[:space:]]+[A-Za-z0-9_]+[[:space:]]+is' \
 	  | sed -E 's/^([^:]+):[[:space:]]*(entity|package)[[:space:]]+([A-Za-z0-9_]+).*/\3 \1/I' \
-	  | awk '{n = tolower($$1); c[n]++; f[n] = f[n] " " $$2} END {for (k in c) if (c[k] > 1) print k ":" f[k]}'); \
+	  | awk '{n = tolower($$1); c[n]++; f[n] = f[n] " " $$2} END {for (k in c) if (c[k] > 1) print k ":" f[k]}' \
+	  | grep -vE '$(COUNTER64_DUP)' || true); \
 	if [ -n "$$dups" ]; then echo "defined more than once:"; echo "$$dups"; exit 1; fi; \
 	echo "no entity or package is defined twice"
 

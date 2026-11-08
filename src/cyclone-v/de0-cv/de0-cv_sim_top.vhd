@@ -594,7 +594,7 @@ begin
 		generic map (tick_cycles => clint_tick_cycles)
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => i_rst,
-			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID), i_read => p_re(CLINT_ID),
+			i_data_in => p_wdata, i_address => p_addr(13 downto 0), i_write => p_we(CLINT_ID),
 			o_data_out => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
 			o_irq_timer => irq_timer, o_irq_software => irq_software, o_mtime => clint_mtime
 		);
@@ -613,7 +613,7 @@ begin
 	u_display : entity work.seg_display
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => i_rst,
-			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(5), i_re => p_re(5),
+			i_address => p_addr(7 downto 0), i_data_in => p_wdata, i_write => p_we(5),
 			o_rdata => p_rdata(32 * 5 + 31 downto 32 * 5),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
 			i_state_cdr => '0', i_state_sdr => '0', i_state_udr => '0', i_state_uir => '0',

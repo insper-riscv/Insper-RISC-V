@@ -381,15 +381,6 @@ architecture behaviour of soc is
   -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
   constant LINE_FLASH     : positive := 6;
 
-  -- Escolhe entre dois valores naturais conforme a condição.
-  function pick(cond : boolean; a : natural; b : natural) return natural is
-  begin
-    if cond then
-      return a;
-    end if;
-    return b;
-  end function pick;
-
   -- Início, em KiB, da seleção pelo endereço registrado da cache de instruções; -1 usa a porta de seleção.
   function ic_select_from(fast : boolean; start_kib : natural) return integer is
   begin
@@ -954,7 +945,6 @@ begin
         i_data_in      => p_wdata,
         i_address      => p_addr(13 downto 0),
         i_write        => p_we(clint_id),
-        i_read         => p_re(clint_id),
         o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
         o_irq_timer    => irq_timer,
         o_irq_software => irq_software,
@@ -1023,10 +1013,9 @@ begin
       port map (
         i_clk       => i_clk_core,
         i_rst       => i_rst,
-        i_addr      => p_addr(7 downto 0),
-        i_wdata     => p_wdata,
-        i_we        => p_we(display_id),
-        i_re        => p_re(display_id),
+        i_address   => p_addr(7 downto 0),
+        i_data_in   => p_wdata,
+        i_write     => p_we(display_id),
         o_rdata     => p_rdata(32 * display_id + 31 downto 32 * display_id),
         i_tck       => i_display_tck,
         i_tdi       => i_display_tdi,
