@@ -1,4 +1,4 @@
-# The memory map of the DE0-Nano platform: the reduced profile (RV32I with Zicsr) of the Terasic DE0-Nano (Cyclone IV E, EP4CE22,
+# The memory map of the DE0-Nano platform: the reduced profile (RV32I with Zicsr and Zifencei) of the Terasic DE0-Nano (Cyclone IV E, EP4CE22,
 # 22,320 LEs and 608 kbit of M9K). The BOOT_MEMORY is inside the core, the FLASH is emulated in the M9K blocks (28 KiB, right after the
 # BOOT_MEMORY, so that the store is 32 KiB) and the RAM is the 32 MB SDRAM of the board (one 16-bit chip), both behind two small caches. The full DE0-CV profile
 # does not fit this device: `riscv-tools board generate` refuses it by the RAM bits and the LEs (docs/pt-br/boards/de0-nano.md).
@@ -10,8 +10,9 @@ board: auto
 boards: [de0-nano]
 # The component of paths.yaml whose closure of `requires` is the source list of the generated project.
 top: Insper-RISC-V/de0_nano_board
-# The reduced profile: RV32I with the Zicsr extension (no counters, no multiplier, no Zifencei, no interrupts).
-profile: rv32i_zicsr
+# The reduced profile: RV32I with the Zicsr and Zifencei extensions (no counters, no multiplier, no interrupts). The boot memory executes
+# fence.i at every reset, which a core without Zifencei takes as an illegal instruction and traps back to the reset, forever.
+profile: rv32i_zicsr_zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:

@@ -4,7 +4,7 @@ Esta página descreve a plataforma `de0-nano`, a Terasic DE0-Nano (Cyclone IV E,
 
 ## 1. Perfil e mapa de memória
 
-O dispositivo tem 22.320 LEs e 608 kbit de M9K. O perfil completo da DE0-CV não cabe, então a plataforma liga só o RV32I com a extensão Zicsr, sem contadores, multiplicador, Zifencei nem interrupções.
+O dispositivo tem 22.320 LEs e 608 kbit de M9K. O perfil completo da DE0-CV não cabe, então a plataforma liga só o RV32I com as extensões Zicsr e Zifencei, sem contadores, multiplicador nem interrupções. O Zifencei entra porque a boot memory executa `fence.i` a cada reinício, e sem ele o núcleo trata a instrução como ilegal e volta ao reinício para sempre.
 
 | Região | Base | Tamanho | Realização |
 | :--- | :--- | ---: | :--- |
