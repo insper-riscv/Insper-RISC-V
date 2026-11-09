@@ -66,8 +66,8 @@ NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
 }
 
-# Constantes de ISA: o núcleo e o SoC as leem do config_pkg da plataforma,
-# então nenhum top as declara como generic.
+# Constantes de ISA: o núcleo e o SoC as leem do config_pkg da
+# plataforma, então nenhum top as declara como generic.
 ISA = {
     "HAS_E",
     "HAS_M",
