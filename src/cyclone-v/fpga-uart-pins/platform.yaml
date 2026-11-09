@@ -35,6 +35,9 @@ memory:
 
 extras: [Zimop, Zicond]
 
+# The console is the UART on the two board pins (an external serial converter), not the JTAG UART.
+console: pins
+
 generate:
   specs: {path: src/cyclone-v/fpga-uart-pins/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/cyclone-v/fpga-uart-pins/runtime/boot_memory.ld}

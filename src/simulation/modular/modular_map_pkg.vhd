@@ -19,7 +19,7 @@ package modular_map_pkg is
 	-- A extensão Zmmul está no perfil.
 	constant HAS_ZMMUL           : boolean  := false;
 	-- A extensão Zicsr está no perfil.
-	constant HAS_ZICSR           : boolean  := false;
+	constant HAS_ZICSR           : boolean  := true;
 	-- A extensão Zicntr está no perfil.
 	constant HAS_ZICNTR          : boolean  := false;
 	-- A extensão Zihpm está no perfil.

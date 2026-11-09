@@ -14,7 +14,7 @@
 platform: modular
 # The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
 # `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
-profile: rv32im_zicclsm
+profile: rv32im_zicclsm_zicsr
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -36,7 +36,7 @@ boot:
 # The window of the peripherals (0x80000000 and above), in the four models: the general-purpose timer, the slide
 # switches and the push buttons (GPIO), the UART on two pins, the UART on the JTAG cable, the display, the CLINT (64 KiB
 # slot) and the PLIC (4 MiB window). The outputs of the CLINT and the PLIC are the MTIP, MSIP and MEIP of the core, which
-# only takes them with Zicsr; the default profile has none, so a test that runs the interrupts turns has_zicsr on.
+# only takes them with Zicsr, which the default profile has.
 peripherals:
   - {name: TIMER,     base: 0x80000000, id: 0}
   - {name: SWITCHES,  base: 0x90000000, id: 1}

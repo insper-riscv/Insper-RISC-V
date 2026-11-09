@@ -480,7 +480,7 @@ begin
 	u_display : entity work.seg_display
 		port map (
 			i_clk => pll_clk_idexmem, i_rst => core_reset,
-			i_addr => p_addr(7 downto 0), i_wdata => p_wdata, i_we => p_we(DISPLAY_ID), i_re => p_re(DISPLAY_ID),
+			i_address => p_addr(7 downto 0), i_data_in => p_wdata, i_write => p_we(DISPLAY_ID),
 			o_rdata => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
 			i_tck => '0', i_tdi => '0', i_ir_in => "00",
 			i_state_cdr => '0', i_state_sdr => '0', i_state_udr => '0', i_state_uir => '0',
