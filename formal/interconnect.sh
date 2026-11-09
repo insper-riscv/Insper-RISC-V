@@ -166,7 +166,7 @@ mutant() {  # <file> <props> <entity> <defines> <name> <sed expression> [bmc dep
 mutant "$ic" "$props" ext_interconnect '' slot_off_by_one  "s/id        <= to_integer(unsigned(i_addr(30 downto 28)));/id        <= to_integer(unsigned(i_addr(31 downto 29)));/"
 mutant "$ic" "$props" ext_interconnect '' pulse_not_gated  "s/pulse <= '1' when st = ST_IDLE and is_periph = '1' and active = '1' else '0';/pulse <= '1' when is_periph = '1' and active = '1' else '0';/"
 mutant "$ic" "$props" ext_interconnect '' memory_sees_periph "s/o_m_rden    <= i_rden and not is_periph;/o_m_rden    <= i_rden;/"
-mutant "$ic" "$props" ext_interconnect '' ready_always     "s/'1' when st = ST_DONE else '0';/'1';/"
+mutant "$ic" "$props" ext_interconnect '' ready_always     "s/'1' when st = ST_DONE else/'1' when true else/"
 mutant "$ic" "$props" ext_interconnect '' slot_zero_data   "s/pending <= i_p_rdata(32 \* id + 31 downto 32 \* id);/pending <= i_p_rdata(31 downto 0);/"
 mutant "$ic" "$props" ext_interconnect '' select_kept      "s/sel_wb <= '0';/null;/"
 mutant "$ic" "$props" ext_interconnect '' write_reads      "s/o_p_we(id) <= i_wren;/o_p_we(id) <= i_rden;/"
