@@ -1,26 +1,24 @@
-/* stdout, stdin and stderr for the picolibc stdio (printf, puts, putchar).
+/* stdout, stdin e stderr da stdio da picolibc (printf, puts, putchar).
  *
- * The core has no output device, so output goes to a buffer in RAM that
- * the host reads over JTAG once the test is over: a fixed region at the
- * top of RAM, just below the words the boot memory clears (tohost,
- * fromhost). rv32im-fpga.specs leaves it out of RAM's size, so
- * the stack never reaches it. The boot memory clears the header on every
- * start.
+ * O núcleo não tem dispositivo de saída, então a saída vai para um buffer na RAM que o hospedeiro lê pela
+ * JTAG quando o teste termina: uma região fixa no topo da RAM, logo abaixo das palavras que a BOOT_MEMORY
+ * zera (tohost e fromhost). O rv32im-fpga.specs a deixa fora do tamanho da RAM, então a pilha nunca a
+ * alcança. A BOOT_MEMORY zera o cabeçalho a cada partida.
  *
- *   +0   length     bytes written, at most STDOUT_SIZE
- *   +4   truncated  1 once a byte did not fit, 0 otherwise
+ *   +0   length     bytes escritos, no máximo STDOUT_SIZE
+ *   +4   truncated  1 quando um byte não coube, 0 no resto
  *   +8   data       STDOUT_SIZE bytes
  *
- * from RV32_STDOUT_BASE (memory_map.h, generated from platform.yaml).
+ * a partir de RV32_STDOUT_BASE (memory_map.h, gerado do platform.yaml).
  *
- * The buffer is linear: when it is full, further bytes are dropped and
- * `truncated` is set. There is no input: reads report end of file.
+ * O buffer é linear: cheio, os bytes seguintes são descartados e `truncated` vale 1. Não há entrada, e a
+ * leitura informa fim de arquivo.
  *
- * Every byte also goes to the JTAG UART, which a host console reads while the
- * program runs. The UART is a live view: the buffer stays the copy the test checks. A program
- * prints to the UART only once a host has scanned it (bit 17 of the status register), so one with
- * nobody listening is never slowed down; once someone listens it waits for a free place in the
- * queue, up to a bound, then drops the byte. Spike has no such device: its build skips the UART.
+ * Cada byte também vai à UART JTAG, que um console do hospedeiro lê enquanto o programa roda. A UART é uma
+ * vista ao vivo: o buffer continua sendo a cópia que o teste confere. Um programa só imprime na UART depois
+ * que um hospedeiro a varreu (bit 17 do registrador de estado), de modo que um sem ninguém ouvindo nunca é
+ * atrasado; quando alguém ouve, ele espera um lugar na fila, até um limite, e então descarta o byte. O
+ * Spike não tem esse dispositivo: a sua construção pula a UART.
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -28,15 +26,39 @@
 
 #include "memory_map.h"
 
-#define STDOUT_BASE RV32_STDOUT_BASE
-#define STDOUT_SIZE 1024u
+/* Este arquivo implementa a biblioteca do runtime, não é um programa: ele define stdin, stdout e stderr,
+ * identificadores que a norma reserva à biblioteca (ISO/IEC 9899:2024, 7.1.3 e 6.4.3), como a libc do
+ * runtime deve fazer. O __strong_reference é o único recurso fora da norma aqui: é uma macro de
+ * <sys/cdefs.h> da picolibc que expande em um atributo GNU de alias, e a norma não tem equivalente para
+ * dar a três nomes o mesmo objeto. */
 
+/* Tamanho do buffer de stdout, em bytes. */
+static constexpr uint32_t STDOUT_SIZE = 1024u;
+
+#ifndef RV32_SPIKE
+/* Máximo de leituras do estado da UART à espera de lugar na fila de transmissão. */
+static constexpr uint32_t UART_WAIT_POLLS = 200000u;
+#endif
+
+/* Registradores de dados de transmissão e de estado da UART JTAG. Ficam como macros porque um ponteiro para
+ * endereço fixo não pode ser constexpr (ISO/IEC 9899:2024, 6.7.2: só o ponteiro nulo); o acesso é volatile
+ * (6.7.4.1) e alinhado a palavra. */
 #define UART_TXDATA ((volatile uint32_t *)RV32_UART_BASE)
 #define UART_STATUS ((volatile uint32_t *)(RV32_UART_BASE + 8u))
-#define UART_FREE(status)     ((status) & 0xFFu)
-#define UART_ATTACHED(status) (((status) >> 17) & 1u)
-#define UART_WAIT_POLLS 200000u
 
+/* Lugares livres na fila de transmissão, tirados do registrador de estado (bits 7 a 0). */
+static inline uint32_t uart_free(uint32_t status)
+{
+    return status & 0xFFu;
+}
+
+/* Diz se um hospedeiro varreu a UART (bit 17 do registrador de estado). */
+static inline bool uart_attached(uint32_t status)
+{
+    return ((status >> 17) & 1u) != 0u;
+}
+
+/* Cabeçalho do buffer de stdout seguido dos bytes, no layout descrito acima. */
 struct stdout_buffer {
     volatile uint32_t length;
     volatile uint32_t truncated;
@@ -44,13 +66,14 @@ struct stdout_buffer {
 };
 
 #ifndef RV32_SPIKE
+/* Envia um byte à UART quando há um hospedeiro ouvindo, esperando lugar na fila até o limite. */
 static void uart_put(char c)
 {
     uint32_t status = *UART_STATUS;
 
-    if (!UART_ATTACHED(status))
+    if (!uart_attached(status))
         return;
-    for (uint32_t polls = 0; UART_FREE(status) == 0; polls++) {
+    for (uint32_t polls = 0; uart_free(status) == 0u; polls++) {
         if (polls == UART_WAIT_POLLS)
             return;
         status = *UART_STATUS;
@@ -58,15 +81,19 @@ static void uart_put(char c)
     *UART_TXDATA = (uint8_t)c;
 }
 #else
-static void uart_put(char c) { (void)c; }
+/* O Spike não tem a UART: o byte é descartado. */
+static void uart_put(char)
+{
+}
 #endif
 
-static int rv32_putc(char c, FILE *file)
+/* Guarda o byte no buffer de stdout (e o envia à UART) e devolve o byte; o stdio da picolibc o chama. O
+ * segundo parâmetro, o fluxo, não é usado e fica sem nome (ISO/IEC 9899:2024, 6.9.2). */
+static int rv32_putc(char c, FILE *)
 {
-    struct stdout_buffer *buf = (struct stdout_buffer *)STDOUT_BASE;
+    struct stdout_buffer *buf = (struct stdout_buffer *)RV32_STDOUT_BASE;
     uint32_t length = buf->length;
 
-    (void)file;
     uart_put(c);
     if (length < STDOUT_SIZE) {
         buf->data[length] = c;
@@ -77,14 +104,16 @@ static int rv32_putc(char c, FILE *file)
     return (unsigned char)c;
 }
 
-static int rv32_getc(FILE *file)
+/* Não há entrada: toda leitura informa fim de arquivo. */
+static int rv32_getc(FILE *)
 {
-    (void)file;
     return _FDEV_EOF;
 }
 
-static FILE rv32_stdio = FDEV_SETUP_STREAM(rv32_putc, rv32_getc, NULL, _FDEV_SETUP_RW);
+/* O fluxo único que a picolibc usa para stdin, stdout e stderr. */
+static FILE rv32_stdio = FDEV_SETUP_STREAM(rv32_putc, rv32_getc, nullptr, _FDEV_SETUP_RW);
 
+/* stdin e, como alias do mesmo objeto, stdout e stderr. */
 FILE *const stdin = &rv32_stdio;
 __strong_reference(stdin, stdout);
 __strong_reference(stdin, stderr);
