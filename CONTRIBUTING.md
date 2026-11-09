@@ -10,12 +10,16 @@ Todo código de hardware do projeto é escrito e validado sob a norma **IEEE 107
 
 | Regra | Especificação |
 | :--- | :--- |
-| Norma da linguagem | VHDL-2008 (`--std=08`) em todos os arquivos `.vhd` |
-| Pacotes IEEE permitidos | Apenas `ieee.std_logic_1164.all` e `ieee.numeric_std.all` |
-| Pacotes proibidos | `std_logic_arith`, `std_logic_unsigned` e `std_logic_signed` nunca devem ser utilizados |
-| Instanciação de módulos | Usar instanciação direta de entidade (`u_nome : entity work.nome_da_entidade`), sem declarações `component` redundantes |
-| Mapeamento de portas (`port map`) | Associar sempre por nome (`i_porta => sinal`) e utilizar sinais intermediários para expressões lógicas ou fatias dinâmicas, pois o GHDL exige expressões globalmente estáticas nos formais/atuais de porta |
-| Inferência de latches | Todo sinal atribuído em processo combinacional ou atribuição condicional deve receber valor padrão explícito em todos os ramos (`else` / `when others =>`) |
+| Norma da linguagem | C23 (`-std=c23`, nunca `-std=gnu23`) em todos os arquivos `.c` e `.h`; o `riscv-tools` passa a flag em toda compilação |
+| Avisos | `-Wall -Wextra -Wpedantic -Werror`, passados pelo `riscv-tools`; nenhum aviso é aceito, e `-Wmissing-prototypes` vale para o runtime |
+| Ambiente de execução | Hospedado, com a picolibc da imagem de toolchain do Infra: o runtime e os programas compilam com o `--specs` da plataforma, sem `-ffreestanding`; a norma garante em ambiente freestanding só dez cabeçalhos (cláusula 4), e `<stdio.h>` e `<sys/cdefs.h>` vêm da picolibc |
+| Extensões do compilador | Sem extensões GNU quando há equivalente na norma: `[[noreturn]]`, `alignas` e `static_assert` no lugar de `__attribute__`; `[[gnu::weak]]`, `__strong_reference` e `__asm__` só onde a norma não tem equivalente, com um comentário que diga o motivo |
+| Tipos e constantes | Tipos de `<stdint.h>` quando a largura importa, `static constexpr` tipado no lugar de `#define` numérico e `nullptr` no lugar de `NULL`; `memory_map.h` e `flash_banks.h` são gerados e lidos por arquivos `.S`, então seguem em `#define` |
+| Identificadores reservados | O runtime define `stdin`, `stdout`, `stderr` e `_exit`, que a norma reserva à biblioteca (cláusulas 7.1.3 e 6.4.3); isso só vale em código da própria libc do runtime, e o arquivo diz que é implementação |
+| Parâmetro não usado | Parâmetro sem nome na definição (cláusula 6.9.2), e não `(void)nome;` |
+| MMIO, deslocamentos, alias e assembly | As regras da seção 1.1 do `CONTRIBUTING.md` do repositório `Testes` valem para todo C deste repositório |
+| Nomenclatura e comentários | Identificadores em **inglês** com `snake_case`, tipos com sufixo `_t`; comentário em **português** acima de cada função, variável global, constante e macro |
+| Biblioteca padrão | picolibc, conforme a imagem de toolchain do Infra |
 
 A norma de referência é a [IEEE Std 1076-2008, IEEE Standard VHDL Language Reference Manual](https://standards.ieee.org/ieee/1076/3666/). Em trabalhos acadêmicos, cite-a com a entrada BibTeX abaixo:
 
