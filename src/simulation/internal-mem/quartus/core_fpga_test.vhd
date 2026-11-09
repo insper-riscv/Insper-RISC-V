@@ -15,40 +15,10 @@ use work.internal_mem_map_pkg.all;
 
 entity core_fpga_test is
 	generic (
-		-- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
-		HAS_E        : boolean := work.internal_mem_map_pkg.HAS_E;
-		-- Extensao M completa no core.
-		HAS_M        : boolean := work.internal_mem_map_pkg.HAS_M;
-		-- Multiplicacao sem divisao (Zmmul) no core.
-		HAS_ZMMUL    : boolean := work.internal_mem_map_pkg.HAS_ZMMUL;
-		-- Zicsr no core (CSRs e traps do modo maquina).
-		HAS_ZICSR    : boolean := work.internal_mem_map_pkg.HAS_ZICSR;
-		-- Contadores cycle, time e instret (Zicntr).
-		HAS_ZICNTR   : boolean := work.internal_mem_map_pkg.HAS_ZICNTR;
-		-- Contadores de eventos do Zihpm.
-		HAS_ZIHPM    : boolean := work.internal_mem_map_pkg.HAS_ZIHPM;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
 		HPM_COUNTERS : natural range 0 to 29 := 29;
 		-- Largura, em bits, de cada contador de eventos do Zihpm.
-		HPM_WIDTH    : natural range 0 to 64 := 64;
-		-- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-		HAS_ZIMOP    : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
-		-- Extensao Zicond no core (czero.eqz e czero.nez).
-		HAS_ZICOND   : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
-		-- Dicas ntl.* da extensao Zihintntl no core (executam como nop).
-		HAS_ZIHINTNTL    : boolean := work.internal_mem_map_pkg.HAS_ZIHINTNTL;
-		-- Dica pause da extensao Zihintpause no core (executa como nop).
-		HAS_ZIHINTPAUSE    : boolean := work.internal_mem_map_pkg.HAS_ZIHINTPAUSE;
-		-- Zifencei no core (FENCE.I).
-		HAS_ZIFENCEI : boolean := work.internal_mem_map_pkg.HAS_ZIFENCEI;
-		-- Acesso desalinhado executado em hardware (Zicclsm).
-		HAS_ZICCLSM  : boolean := work.internal_mem_map_pkg.HAS_ZICCLSM;
-		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_INTERRUPTS : boolean := work.internal_mem_map_pkg.HAS_INTERRUPTS;
-		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		HAS_SSCOFPMF : boolean := work.internal_mem_map_pkg.HAS_SSCOFPMF;
-		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
-		HAS_ACCESS_FAULTS : boolean := work.internal_mem_map_pkg.HAS_ACCESS_FAULTS
+		HPM_WIDTH    : natural range 0 to 64 := 64
 	);
 	port (
 		-- Clock de 50 MHz da placa, entrada do PLL.
@@ -256,20 +226,8 @@ begin
 
 	u_core : entity work.core
 		generic map (
-			has_m           => HAS_M,
-			has_zmmul       => HAS_ZMMUL,
-			has_zicsr       => HAS_ZICSR,
-			has_zicntr      => HAS_ZICNTR,
-			has_zihpm       => HAS_ZIHPM,
 			hpm_counters    => HPM_COUNTERS,
-			hpm_width       => HPM_WIDTH,
-			has_zimop       => HAS_ZIMOP,
-			has_zicond      => HAS_ZICOND,
-			has_zihintntl   => HAS_ZIHINTNTL,
-			has_zihintpause => HAS_ZIHINTPAUSE,
-			has_zifencei    => HAS_ZIFENCEI,
-			has_zicclsm     => HAS_ZICCLSM,
-			has_e           => HAS_E
+			hpm_width       => HPM_WIDTH
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,

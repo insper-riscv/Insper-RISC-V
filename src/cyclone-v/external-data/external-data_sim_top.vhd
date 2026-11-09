@@ -43,38 +43,10 @@ entity rv32im_external_data_sim_test is
 		rom_addr_width : natural := 16;
 		-- Largura do endereço de palavra da RAM; a RAM é a SDRAM, então a largura não dimensiona nada aqui.
 		ram_addr_width : natural := 9;
-		-- Zicsr no núcleo (instruções CSR reais); false mantém o comportamento de NOP.
-		has_zicsr : boolean := false;
-		-- Contadores da extensão Zicntr (implica Zicsr).
-		has_zicntr : boolean := false;
-		-- Extensão M completa no núcleo.
-		has_m : boolean := true;
-		-- Multiplicação sem divisão (Zmmul) no núcleo.
-		has_zmmul : boolean := false;
-		-- Zifencei no núcleo (FENCE.I esvazia a cache de dados); false mantém o NOP.
-		has_zifencei : boolean := false;
-		-- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-		has_zicclsm : boolean := true;
-		-- Interrupções de máquina do platform.yaml; este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		has_interrupts : boolean := false;
-		-- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-		has_sscofpmf : boolean := false;
-		-- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
-		has_access_faults : boolean := false;
-		-- Contadores de eventos da extensão Zihpm; exige Zicsr.
-		has_zihpm : boolean := false;
 		-- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
 		hpm_counters : natural range 0 to 29 := 29;
 		-- Largura, em bits, de cada contador de eventos do Zihpm.
 		hpm_width : natural range 0 to 64 := 64;
-		-- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
-		has_zimop : boolean := work.external_data_map_pkg.HAS_ZIMOP;
-		-- Extensão Zicond no núcleo (czero.eqz e czero.nez).
-		has_zicond : boolean := work.external_data_map_pkg.HAS_ZICOND;
-		-- Dicas ntl.* da extensão Zihintntl no núcleo (executam como nop).
-		has_zihintntl : boolean := work.external_data_map_pkg.HAS_ZIHINTNTL;
-		-- Dica pause da extensão Zihintpause no núcleo (executa como nop).
-		has_zihintpause : boolean := work.external_data_map_pkg.HAS_ZIHINTPAUSE;
 		-- A ROM fica fora do núcleo (o modelo de memória do platform.yaml).
 		rom_external : boolean := work.external_data_map_pkg.ROM_EXTERNAL;
 		-- A RAM fica fora do núcleo (o modelo de memória do platform.yaml).
@@ -87,8 +59,6 @@ entity rv32im_external_data_sim_test is
 		icache_size_bits : positive := work.external_data_map_pkg.ICACHE_SIZE_BITS;
 		-- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
 		dcache_size_bits : positive := work.external_data_map_pkg.DCACHE_SIZE_BITS;
-		-- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil da plataforma por padrão).
-		has_e : boolean := work.external_data_map_pkg.HAS_E;
 		-- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
 		-- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de depuração.
 		sdram_file : string := "";
@@ -277,6 +247,8 @@ architecture behaviour of rv32im_external_data_sim_test is
 
 	-- Pulso do FENCE.I do núcleo, que esvazia a cache de dados.
 	signal ic_inval  : std_logic;
+	-- Pedido de flush da cache de dados que o FENCE.I do núcleo faz antes de invalidar a cache de instruções.
+	signal dc_flush : std_logic;
 	-- Falha da cache de dados, evento para os contadores do Zihpm.
 	signal dc_miss   : std_logic;
 	-- Eventos externos do Zihpm: espera da FLASH, falha da cache de dados e falha da cache de instruções.
@@ -311,20 +283,8 @@ begin
 
 	u_core : entity work.core
 		generic map (
-			has_m           => has_m,
-			has_zmmul       => has_zmmul,
-			has_zicsr       => has_zicsr,
-			has_zicntr      => has_zicntr,
-			has_zifencei    => has_zifencei,
-			has_zicclsm     => has_zicclsm,
-			has_e           => has_e,
-			has_zihpm       => has_zihpm,
 			hpm_counters    => hpm_counters,
-			hpm_width       => hpm_width,
-			has_zimop       => has_zimop,
-			has_zicond      => has_zicond,
-			has_zihintntl   => has_zihintntl,
-			has_zihintpause => has_zihintpause
+			hpm_width       => hpm_width
 		)
 		port map (
 			o_trap          => core_trap,
@@ -361,7 +321,9 @@ begin
 			o_mem_advance   => mem_advance,
 
 			i_hpm_ext_events => hpm_ext_events,
-			o_ic_inval      => ic_inval
+			o_ic_inval      => ic_inval,
+			o_dc_flush      => dc_flush,
+			i_dc_done      => dc_done
 		);
 
 	-- Sem cache de instruções nem chip de FLASH, só a cache de dados conta eventos.
@@ -440,7 +402,7 @@ begin
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
-			i_flush => ic_inval, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
+			i_flush => dc_flush, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
 			i_bypass => dc_bypass,
 			o_d_addr => dd_addr, o_d_wdata => dd_wdata, o_d_byteena => dd_be,
 			o_d_rden => dd_rden, o_d_wren => dd_wren, o_d_advance => dd_adv, i_d_ready => dd_ready,

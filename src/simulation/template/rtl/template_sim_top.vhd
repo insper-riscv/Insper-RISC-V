@@ -31,37 +31,7 @@ entity template_sim_top is
         -- Tamanho da RAM em bytes, uma potência de dois
         ram_size_bytes      : positive := RAM_STORAGE_BYTES;
         -- Instancia a UART sobre JTAG na janela de periféricos
-        has_uart            : boolean  := false;
-        -- Base RV32E (16 registradores) no núcleo; falso é o RV32I do perfil
-        has_e               : boolean  := HAS_E;
-        -- Extensão M (multiplicação e divisão) no núcleo
-        has_m               : boolean  := HAS_M;
-        -- Extensão Zmmul (só multiplicação) no núcleo
-        has_zmmul           : boolean  := HAS_ZMMUL;
-        -- Extensão Zicsr (instruções CSR) no núcleo
-        has_zicsr           : boolean  := HAS_ZICSR;
-        -- Contadores da extensão Zicntr (implica Zicsr)
-        has_zicntr          : boolean  := HAS_ZICNTR;
-        -- Contadores de eventos da extensão Zihpm (exige Zicsr)
-        has_zihpm           : boolean  := HAS_ZIHPM;
-        -- Extensão Zimop (mop.r.n e mop.rr.n escrevem zero em rd)
-        has_zimop           : boolean  := HAS_ZIMOP;
-        -- Extensão Zicond (czero.eqz e czero.nez)
-        has_zicond          : boolean  := HAS_ZICOND;
-        -- Extensão Zihintntl (dicas de não temporalidade)
-        has_zihintntl       : boolean  := HAS_ZIHINTNTL;
-        -- Extensão Zihintpause (a instrução pause)
-        has_zihintpause     : boolean  := HAS_ZIHINTPAUSE;
-        -- Extensão Zifencei (fence.i)
-        has_zifencei        : boolean  := HAS_ZIFENCEI;
-        -- Extensão Zicclsm (acessos desalinhados)
-        has_zicclsm         : boolean  := HAS_ZICCLSM;
-        -- Interrupções de máquina (as portas i_irq_* do núcleo; exige Zicsr)
-        has_interrupts      : boolean  := HAS_INTERRUPTS;
-        -- Interrupção de estouro de contador (Sscofpmf; exige Zihpm e as interrupções)
-        has_sscofpmf        : boolean  := HAS_SSCOFPMF;
-        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa (exige Zicsr)
-        has_access_faults   : boolean  := HAS_ACCESS_FAULTS
+        has_uart            : boolean  := false
     );
     port(
         -- Clock base; o gerador o divide por três para os estágios do núcleo
@@ -166,21 +136,6 @@ begin
 
     u_core : entity work.core
         generic map(
-            has_e           => has_e,
-            has_m           => has_m,
-            has_zmmul       => has_zmmul,
-            has_zicsr       => has_zicsr,
-            has_zicntr      => has_zicntr,
-            has_zihpm       => has_zihpm,
-            has_zifencei    => has_zifencei,
-            has_zicclsm     => has_zicclsm,
-            has_zimop       => has_zimop,
-            has_zicond      => has_zicond,
-            has_zihintntl   => has_zihintntl,
-            has_zihintpause => has_zihintpause,
-            has_interrupts  => has_interrupts and has_zicsr,
-            has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
-            has_access_faults => has_access_faults and has_zicsr,
             periph_slots    => PERIPH_SLOTS
         )
         port map(

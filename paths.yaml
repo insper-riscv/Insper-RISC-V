@@ -156,7 +156,8 @@ tree:
     formal:
       ext_interconnect: []
   vhdl_style:
-    exclude: [src/simulation/internal-mem/pll/pll_sim.vhd]
+    # IP gerado pelo Quartus (pll.vhd) e modelo de simulação dele (pll_sim.vhd).
+    exclude: [src/simulation/internal-mem/pll/pll_sim.vhd, src/simulation/internal-mem/pll/pll.vhd]
 
 provides:
   # Each component lists its sources in GHDL dependency order and the components it needs. A requires of the form

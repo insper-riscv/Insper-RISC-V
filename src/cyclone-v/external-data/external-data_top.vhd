@@ -157,6 +157,8 @@ architecture behaviour of core_fpga_external_data is
 
 	-- Pulso do FENCE.I do núcleo, que esvazia a cache de dados.
 	signal ic_inval : std_logic;
+	-- Pedido de flush da cache de dados que o FENCE.I do núcleo faz antes de invalidar a cache de instruções.
+	signal dc_flush : std_logic;
 	-- Falha da cache de dados, evento para os contadores do Zihpm.
 	signal dc_miss : std_logic;
 	-- Eventos externos do Zihpm: espera da FLASH, falha da cache de dados e falha da cache de instruções.
@@ -362,21 +364,9 @@ begin
 
 	u_core : entity work.core
 		generic map (
-			has_m           => HAS_M,
-			has_zmmul       => HAS_ZMMUL,
-			has_zicsr       => HAS_ZICSR or HAS_ZICNTR,
-			has_zicntr      => HAS_ZICNTR,
 			tick_cycles     => 50,
-			has_zifencei    => HAS_ZIFENCEI,
-			has_zicclsm     => HAS_ZICCLSM,
-			has_e           => HAS_E,
-			has_zihpm       => HAS_ZIHPM,
 			hpm_counters    => HPM_COUNTERS,
-			hpm_width       => HPM_WIDTH,
-			has_zimop       => HAS_ZIMOP,
-			has_zicond      => HAS_ZICOND,
-			has_zihintntl   => HAS_ZIHINTNTL,
-			has_zihintpause => HAS_ZIHINTPAUSE
+			hpm_width       => HPM_WIDTH
 		)
 		port map (
 			i_clk           => pll_clk_idexmem,
@@ -411,7 +401,9 @@ begin
 			o_trap_take     => core_trap,
 
 			i_hpm_ext_events => hpm_ext_events,
-			o_ic_inval      => ic_inval
+			o_ic_inval      => ic_inval,
+			o_dc_flush      => dc_flush,
+			i_dc_done      => dc_done
 		);
 
 	-- Sem cache de instruções nem chip de FLASH, só a cache de dados conta eventos.
@@ -490,7 +482,7 @@ begin
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
-			i_flush => ic_inval, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
+			i_flush => dc_flush, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
 			i_bypass => dc_bypass,
 			o_d_addr => dd_addr, o_d_wdata => dd_wdata, o_d_byteena => dd_be,
 			o_d_rden => dd_rden, o_d_wren => dd_wren, o_d_advance => dd_adv, i_d_ready => dd_ready,

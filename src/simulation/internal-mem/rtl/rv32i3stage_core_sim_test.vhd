@@ -35,38 +35,10 @@ entity rv32i3stage_core_sim_test is
 	  rom_addr_width : natural := 9;
 	  -- Largura, em bits, do endereço de palavra da RAM simulada (profundidade 2**largura).
 	  ram_addr_width : natural := 9;
-	  -- Zicsr no core (instrucoes CSR reais); false mantem o comportamento de NOP.
-	  HAS_ZICSR : boolean := false;
-	  -- Habilita os contadores da extensão Zicntr (implica Zicsr).
-	  HAS_ZICNTR : boolean := false;
-	  -- Contadores de eventos da extensao Zihpm (29, indices 3 a 31); exige Zicsr.
-	  HAS_ZIHPM : boolean := false;
 	  -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
 	  HPM_COUNTERS : natural range 0 to 29 := 29;
 	  -- Largura, em bits, de cada contador de eventos do Zihpm.
 	  HPM_WIDTH : natural range 0 to 64 := 64;
-	  -- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-	  HAS_ZIMOP : boolean := work.internal_mem_map_pkg.HAS_ZIMOP;
-	  -- Extensao Zicond no core (czero.eqz e czero.nez).
-	  HAS_ZICOND : boolean := work.internal_mem_map_pkg.HAS_ZICOND;
-	  -- Dicas ntl.* da extensao Zihintntl no core (executam como nop).
-	  HAS_ZIHINTNTL : boolean := work.internal_mem_map_pkg.HAS_ZIHINTNTL;
-	  -- Dica pause da extensao Zihintpause no core (executa como nop).
-	  HAS_ZIHINTPAUSE : boolean := work.internal_mem_map_pkg.HAS_ZIHINTPAUSE;
-	  -- Extensao M completa no core.
-	  HAS_M : boolean := true;
-	  -- Multiplicacao sem divisao (Zmmul) no core.
-	  HAS_ZMMUL : boolean := false;
-	  -- Acesso desalinhado a memoria principal executado em hardware (Zicclsm).
-	  HAS_ZICCLSM : boolean := true;
-	  -- Interrupcoes de maquina do platform.yaml; este topo nao tem CLINT, o generico existe porque o gerador o passa a todos.
-	  HAS_INTERRUPTS : boolean := false;
-	  -- Interrupção de estouro de contador (Sscofpmf); este topo não tem CLINT, o genérico existe porque o gerador o passa a todos.
-	  HAS_SSCOFPMF : boolean := false;
-	  -- Falhas de acesso; este topo não as liga, o genérico existe porque o gerador o passa a todos.
-	  HAS_ACCESS_FAULTS : boolean := false;
-	  -- Zifencei no core (FENCE.I); false mantem o NOP.
-	  HAS_ZIFENCEI : boolean := false;
 	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
 	  ROM_EXTERNAL : boolean := work.internal_mem_map_pkg.ROM_EXTERNAL;
 	  -- A RAM fica fora do core (o modelo de memória do platform.yaml).
@@ -78,9 +50,7 @@ entity rv32i3stage_core_sim_test is
 	  -- Tamanho da cache de instruções, em bits (o modelo de memória do platform.yaml).
 	  ICACHE_SIZE_BITS : positive := work.internal_mem_map_pkg.ICACHE_SIZE_BITS;
 	  -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
-	  DCACHE_SIZE_BITS : positive := work.internal_mem_map_pkg.DCACHE_SIZE_BITS;
-	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
-	  HAS_E : boolean := work.internal_mem_map_pkg.HAS_E
+	  DCACHE_SIZE_BITS : positive := work.internal_mem_map_pkg.DCACHE_SIZE_BITS
   	);
 	port (
 		-- Clock base da simulação; o gerador de clock o divide por três.
@@ -207,20 +177,8 @@ begin
 
 	u_core : entity work.core
 		generic map (
-			has_e => HAS_E,
-			has_m => HAS_M,
-			has_zmmul => HAS_ZMMUL,
-			has_zicsr => HAS_ZICSR,
-			has_zicntr => HAS_ZICNTR,
-			has_zihpm => HAS_ZIHPM,
 			hpm_counters => HPM_COUNTERS,
-			hpm_width => HPM_WIDTH,
-			has_zimop => HAS_ZIMOP,
-			has_zicond => HAS_ZICOND,
-			has_zihintntl => HAS_ZIHINTNTL,
-			has_zihintpause => HAS_ZIHINTPAUSE,
-			has_zifencei => HAS_ZIFENCEI,
-			has_zicclsm => HAS_ZICCLSM
+			hpm_width => HPM_WIDTH
 		)
 		port map (
 			o_trap       => core_trap,

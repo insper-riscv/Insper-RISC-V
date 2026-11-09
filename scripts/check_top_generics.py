@@ -1,9 +1,9 @@
 """Confere que cada top declara os HAS_* do seu pacote gerado.
 
-O ``riscv-tools platform sync`` e o ``generate`` passam ao GHDL um
-generic para cada constante ``HAS_*`` do ``*_map_pkg.vhd``. Um top que
-não o declara quebra a elaboração com
-``cannot find in top entity generic``.
+Um generic ``HAS_*`` que o top não declara quebra a elaboração com
+``cannot find in top entity generic`` quando o teste ou a plataforma o
+passa ao GHDL. As constantes de ISA ficam de fora dos tops que não
+instanciam o SoC, porque o núcleo as lê do ``config_pkg``.
 """
 
 import re
@@ -66,6 +66,29 @@ NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
 }
 
+# Constantes de ISA: o núcleo as lê do config_pkg da plataforma, então
+# só o top que as repassa ao SoC (que as confere contra o config_pkg)
+# as declara como generic.
+ISA = {
+    "HAS_E",
+    "HAS_M",
+    "HAS_ZMMUL",
+    "HAS_ZICSR",
+    "HAS_ZICNTR",
+    "HAS_ZIHPM",
+    "HAS_ZIMOP",
+    "HAS_ZICOND",
+    "HAS_ZIHINTNTL",
+    "HAS_ZIHINTPAUSE",
+    "HAS_ZIFENCEI",
+    "HAS_ZICCLSM",
+    "HAS_INTERRUPTS",
+    "HAS_SSCOFPMF",
+    "HAS_ACCESS_FAULTS",
+}
+# Tops que instanciam o SoC e por isso mantêm os generics de ISA.
+SOC_TOPS = {"src/simulation/modular/modular_sim_top.vhd"}
+
 CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)
 GENERIC = re.compile(r"^\s*(HAS_\w+)\s*:", re.IGNORECASE | re.MULTILINE)
 
@@ -88,6 +111,23 @@ def names(pattern: re.Pattern[str], path: Path) -> set[str]:
     return {n.upper() for n in pattern.findall(path.read_text("utf-8"))}
 
 
+def exempt_for(top: str) -> set[str]:
+    """Devolve os generics que o top não precisa declarar.
+
+    Parameters
+    ----------
+    top : str
+        Caminho do top, relativo à raiz do repositório.
+
+    Returns
+    -------
+    set of str
+        Os nomes ``HAS_*`` dispensados nesse top.
+    """
+    exempt: set[str] = CACHE if top in NO_CACHE else set()
+    return exempt if top in SOC_TOPS else exempt | ISA
+
+
 def missing(root: Path) -> list[str]:
     """Lista os ``HAS_*`` do pacote que o top não declara.
 
@@ -105,8 +145,7 @@ def missing(root: Path) -> list[str]:
     for package, tops in PLATFORMS.items():
         wanted = names(CONSTANT, root / package)
         for top in tops:
-            exempt: set[str] = CACHE if top in NO_CACHE else set()
-            absent = wanted - names(GENERIC, root / top) - exempt
+            absent = wanted - names(GENERIC, root / top) - exempt_for(top)
             problems += [f"{top}: falta o generic {n}" for n in sorted(absent)]
     return problems
 

@@ -33,7 +33,7 @@ Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0
 
 ## 4. O topo
 
-`template_sim_top` tem os genéricos de arquivo (`boot_memory_file`, `rom_file`, `ram_file`), os de tamanho (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa), `has_uart` e um genérico `has_*` por extensão do núcleo (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` e `has_zicclsm`), cujo padrão é a constante `HAS_*` do pacote e que o topo liga ao núcleo.
+`template_sim_top` tem os genéricos de arquivo (`boot_memory_file`, `rom_file`, `ram_file`), os de tamanho (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa) e `has_uart`. O núcleo lê as extensões do `config_pkg` gerado da plataforma, então o topo não declara genérico de extensão.
 
 | Porta | Uso |
 | :--- | :--- |
