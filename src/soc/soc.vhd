@@ -14,7 +14,7 @@
 --   | RAM externa   | o_ramd_* e o_rami_* com i_ramd_* e i_rami_*   | chip de RAM (modelo ou dispositivo)       |
 --
 --   rom_via_port = rom_external ou has_icache
---   ram_via_port = ram_external ou has_dcache
+--   ram_via_port = ram_external ou HAS_DCACHE (do config_pkg)
 --
 -- O núcleo recebe rom_via_port e ram_via_port nos seus genéricos rom_external e ram_external,
 -- porque uma cache só existe do lado do protocolo da porta. A face de uma região que não é
@@ -39,8 +39,9 @@
 -- display_digits), e um papel de largura zero é omitido. A polaridade dos pinos é um generic por papel,
 -- resolvido por quem instancia o SoC; o periférico vê sempre o programa ativo em '1'.
 --
--- O núcleo lê a ISA e o mapa do config_pkg gerado do platform.yaml da plataforma, e o SoC confere em asserções
--- que os genéricos do mapa, que quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos
+-- O núcleo e o SoC leem a ISA (base, extensões, interrupções e a cache de dados) do config_pkg gerado do
+-- platform.yaml da plataforma, sem genérico de ISA. O SoC confere em asserções que os genéricos do mapa, que
+-- quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos
 -- em potência de dois (bytes para
 -- a BOOT_MEMORY, bits para as caches), verificados pelo log2_exact.
 -- =============================================================================
@@ -68,12 +69,8 @@ entity soc is
         rom_external           : boolean                       := false;
         -- A RAM é externa (um chip fora do núcleo, alcançado pela porta).
         ram_external           : boolean                       := false;
-        -- Base RV32E (16 registradores) no núcleo; false é o RV32I.
-        has_e                  : boolean                       := false;
         -- Existe cache de instruções; sem ela, a ROM via porta é lida pela ponte de busca.
         has_icache             : boolean                       := false;
-        -- Existe cache de dados; sem ela, a RAM via porta é acessada direto, palavra a palavra.
-        has_dcache             : boolean                       := false;
         -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
         icache_size_bits       : positive                      := 4096;
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
@@ -81,39 +78,10 @@ entity soc is
         -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
         -- MiB).
         cache_window_bits      : natural range 26 to 29        := 26;
-        -- Zicsr no núcleo (instruções CSR reais); falso mantém o comportamento de NOP.
-        has_zicsr              : boolean                       := false;
-        -- Contadores da extensão Zicntr (implica Zicsr).
-        has_zicntr             : boolean                       := false;
-        -- Contadores de eventos da extensão Zihpm (quatro, índices 3 a 6); exige Zicsr.
-        has_zihpm              : boolean                       := false;
         -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
         hpm_counters           : natural range 0 to 29         := 29;
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64         := 64;
-        -- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
-        has_zimop              : boolean                       := false;
-        -- Extensão Zicond no núcleo (czero.eqz e czero.nez).
-        has_zicond             : boolean                       := false;
-        -- Dicas ntl.* da extensão Zihintntl no núcleo (executam como nop).
-        has_zihintntl          : boolean                       := false;
-        -- Dica pause da extensão Zihintpause no núcleo (executa como nop).
-        has_zihintpause        : boolean                       := false;
-        -- Extensão M completa no núcleo.
-        has_m                  : boolean                       := false;
-        -- Multiplicação sem divisão (Zmmul) no núcleo.
-        has_zmmul              : boolean                       := false;
-        -- Zifencei no núcleo (FENCE.I invalida a cache de instruções); falso mantém o NOP.
-        has_zifencei           : boolean                       := false;
-        -- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-        has_zicclsm            : boolean                       := false;
-        -- Interrupções de máquina: o CLINT e o controlador externo ficam na janela de periféricos e as
-        -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
-        has_interrupts         : boolean                       := false;
-        -- Interrupção de estouro de contador (Sscofpmf): exige Zihpm e as interrupções.
-        has_sscofpmf           : boolean                       := false;
-        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa; exige Zicsr.
-        has_access_faults      : boolean                       := false;
         -- Quantidade de janelas de periférico do mapa, passada ao núcleo.
         periph_slots           : std_logic_vector(7 downto 0)  := (others => '1');
         -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
@@ -351,10 +319,16 @@ architecture behaviour of soc is
     -- Tamanho da BOOT_MEMORY em KiB: onde a ROM começa, o que a cache de instruções usa para reconhecê-la.
     constant BOOT_KIB : natural := boot_memory_size_bytes / 1024;
 
+    -- Existe cache de dados no núcleo, do config_pkg; sem ela, a RAM via porta é acessada direto, palavra a palavra.
+    constant HAS_DCACHE : boolean := work.config_pkg.HAS_DCACHE;
+    -- Interrupções de máquina, do config_pkg: o CLINT e o controlador externo ficam na janela de periféricos e as
+    -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
+    constant HAS_INTERRUPTS : boolean := work.config_pkg.HAS_INTERRUPTS;
+
     -- A ROM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de instruções.
     constant ROM_PORT : boolean := rom_external or has_icache;
     -- A RAM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de dados.
-    constant RAM_PORT : boolean := ram_external or has_dcache;
+    constant RAM_PORT : boolean := ram_external or HAS_DCACHE;
 
     -- O papel de E/S existe: pedido pelo generic e com largura maior que zero.
     constant HAS_SWITCHES_ROLE : boolean := has_switches and switches_width > 0;
@@ -365,7 +339,7 @@ architecture behaviour of soc is
 
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
-        has_interrupts or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
+        HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
         or has_timer;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
@@ -403,9 +377,9 @@ architecture behaviour of soc is
 
     -- Base da região da ROM, em KiB, nos endereços que o roteador dos dados vê: a cache de dados os
     -- troca pelos do alias da FLASH, e sem ela chegam os do mapa.
-    constant D_ROM_BASE_KIB : natural := pick(has_dcache, FLASH_ALIAS_BASE_KIB, BOOT_KIB);
+    constant D_ROM_BASE_KIB : natural := pick(HAS_DCACHE, FLASH_ALIAS_BASE_KIB, BOOT_KIB);
     -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
-    constant D_ROM_END_KIB  : natural := pick(has_dcache, FLASH_ALIAS_END_KIB, rom_end_kib);
+    constant D_ROM_END_KIB  : natural := pick(HAS_DCACHE, FLASH_ALIAS_END_KIB, rom_end_kib);
 
     -- Bit da janela de um periférico: o do índice quando ele existe e zero quando não existe.
 
@@ -420,10 +394,10 @@ architecture behaviour of soc is
 
     end function slot_vec;
 
-    -- Janela do CLINT (existe com has_interrupts).
-    constant SLOT_CLINT      : std_logic_vector(7 downto 0) := slot_vec(has_interrupts, clint_id);
-    -- Janela do PLIC (existe com has_interrupts).
-    constant SLOT_PLIC       : std_logic_vector(7 downto 0) := slot_vec(has_interrupts, plic_id);
+    -- Janela do CLINT (existe com HAS_INTERRUPTS).
+    constant SLOT_CLINT      : std_logic_vector(7 downto 0) := slot_vec(HAS_INTERRUPTS, clint_id);
+    -- Janela do PLIC (existe com HAS_INTERRUPTS).
+    constant SLOT_PLIC       : std_logic_vector(7 downto 0) := slot_vec(HAS_INTERRUPTS, plic_id);
     -- Janela do temporizador.
     constant SLOT_TIMER      : std_logic_vector(7 downto 0) := slot_vec(has_timer, timer_id);
     -- Janela das chaves.
@@ -794,19 +768,13 @@ begin
     assert ROM_PORT = work.config_pkg.ROM_EXTERNAL and RAM_PORT = work.config_pkg.RAM_EXTERNAL
         report "rom_external, ram_external e as caches diferem de ROM_EXTERNAL e RAM_EXTERNAL do config_pkg"
         severity failure;
-    -- O núcleo lê a ISA e a presença das caches do config_pkg; a cache de dados que o SoC monta tem de ser a
-    -- que o núcleo espera, porque o FENCE.I do núcleo aguarda o fim do flush dela.
-    assert has_dcache = work.config_pkg.HAS_DCACHE
-        report "has_dcache difere de HAS_DCACHE do config_pkg"
-        severity failure;
-
     -- As regiões alcançadas pelas caches ou pela ponte de busca cabem na janela de
     -- 2**cache_window_bits bytes.
     assert (not ROM_PORT) or rom_end_kib <= BOOT_KIB + CACHE_WINDOW_KIB
         report "cache_window_bits pequeno demais, "
                & "a ROM (rom_end_kib menos a BOOT_MEMORY) não cabe na janela das caches"
         severity failure;
-    assert (not (RAM_PORT and has_dcache)) or ram_end_kib <= ram_base_kib + CACHE_WINDOW_KIB
+    assert (not (RAM_PORT and HAS_DCACHE)) or ram_end_kib <= ram_base_kib + CACHE_WINDOW_KIB
         report "cache_window_bits pequeno demais, "
                & "a RAM (ram_base_kib até ram_end_kib) não cabe na janela da cache de dados"
         severity failure;
@@ -815,22 +783,17 @@ begin
     assert (not has_icache) or (icache_size_bits >= 256 and is_power_of_two(icache_size_bits))
         report "icache_size_bits deve ser potência de dois de pelo menos 256 bits com has_icache"
         severity failure;
-    assert (not has_dcache) or (dcache_size_bits >= 256 and is_power_of_two(dcache_size_bits))
-        report "dcache_size_bits deve ser potência de dois de pelo menos 256 bits com has_dcache"
+    assert (not HAS_DCACHE) or (dcache_size_bits >= 256 and is_power_of_two(dcache_size_bits))
+        report "dcache_size_bits deve ser potência de dois de pelo menos 256 bits com HAS_DCACHE"
         severity failure;
 
     -- Opções que só existem dentro de uma cache não valem sem ela.
-    assert has_dcache or (not has_dcache_bypass)
-        report "has_dcache_bypass exige has_dcache, a página de desvio só existe na cache de dados"
+    assert HAS_DCACHE or (not has_dcache_bypass)
+        report "has_dcache_bypass exige HAS_DCACHE, a página de desvio só existe na cache de dados"
         severity failure;
     assert has_icache or (not fast_icache_select)
         report "fast_icache_select exige has_icache, "
                & "a seleção pelo endereço registrado só existe na cache de instruções"
-        severity failure;
-
-    -- Os contadores são CSRs: sem Zicsr não há onde lê-los (o núcleo confere o mesmo).
-    assert has_zicsr or (not (has_zicntr or has_zihpm))
-        report "has_zicntr e has_zihpm exigem has_zicsr, os contadores são lidos por CSR"
         severity failure;
 
     -- A polaridade dos pinos da UART só tem efeito no papel de pinos.
@@ -916,7 +879,7 @@ begin
         generic map (
             hpm_counters  => hpm_counters,
             hpm_width     => hpm_width,
-            time_external => has_interrupts,
+            time_external => HAS_INTERRUPTS,
             periph_slots  => periph_slots
         )
         port map (
@@ -1008,7 +971,7 @@ begin
 
     -- CLINT e controlador de interrupção externa, no domínio de clock do núcleo (sem sincronizador).
 
-    gen_interrupts : if has_interrupts generate
+    gen_interrupts : if HAS_INTERRUPTS generate
     begin
 
         u_clint : entity work.clint
@@ -1238,7 +1201,7 @@ begin
 
     -- Com cache de dados, ela fica entre a interconexão e a memória.
 
-    gen_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate
+    gen_dcache : if (ROM_PORT or RAM_PORT) and HAS_DCACHE generate
     begin
 
         u_dcache : entity work.dcache
@@ -1286,7 +1249,7 @@ begin
 
     -- Sem cache de dados, o pedido da interconexão segue palavra a palavra, com os endereços do mapa.
 
-    gen_no_dcache : if (ROM_PORT or RAM_PORT) and not has_dcache generate
+    gen_no_dcache : if (ROM_PORT or RAM_PORT) and not HAS_DCACHE generate
     begin
         dd_addr  <= m_addr;
         dd_wdata <= m_wdata;
@@ -1422,7 +1385,7 @@ begin
             generic map (
                 rom_base_kib => D_ROM_BASE_KIB,
                 rom_end_kib  => D_ROM_END_KIB,
-                hold_rdata   => not has_dcache
+                hold_rdata   => not HAS_DCACHE
             )
             port map (
                 i_clk       => i_clk_core,

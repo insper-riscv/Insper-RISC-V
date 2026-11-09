@@ -63,8 +63,6 @@ entity modular_sim_top is
         rom_size_bytes         : positive                 := ROM_STORAGE_BYTES;
         -- Tamanho da RAM em bytes, uma potência de dois.
         ram_size_bytes         : positive                 := RAM_STORAGE_BYTES;
-        -- Base RV32E (16 registradores) no núcleo; false é o RV32I (o perfil do platform.yaml por padrão).
-        has_e                  : boolean                  := HAS_E;
         -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_MEMORY.
         rom_end_kib            : natural                  := ROM_END_KIB;
         -- Base, em KiB, da RAM.
@@ -94,39 +92,10 @@ entity modular_sim_top is
         flash_next_latency     : natural                  := 4;
         -- Bordas entre o pedido e a conclusão de um acesso ao chip de RAM externo.
         ext_ram_latency        : natural                  := 8;
-        -- Zicsr no núcleo (instruções CSR reais); falso mantém o comportamento de NOP.
-        has_zicsr              : boolean                  := HAS_ZICSR;
-        -- Contadores da extensão Zicntr (implica Zicsr).
-        has_zicntr             : boolean                  := HAS_ZICNTR;
-        -- Contadores de eventos da extensão Zihpm (quatro, índices 3 a 6); exige Zicsr.
-        has_zihpm              : boolean                  := HAS_ZIHPM;
         -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
         hpm_counters           : natural range 0 to 29    := 29;
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64    := 64;
-        -- Extensão Zimop no núcleo (mop.r.n e mop.rr.n escrevem zero em rd).
-        has_zimop              : boolean                  := HAS_ZIMOP;
-        -- Extensão Zicond no núcleo (czero.eqz e czero.nez).
-        has_zicond             : boolean                  := HAS_ZICOND;
-        -- Dicas ntl.* da extensão Zihintntl no núcleo (executam como nop).
-        has_zihintntl          : boolean                  := HAS_ZIHINTNTL;
-        -- Dica pause da extensão Zihintpause no núcleo (executa como nop).
-        has_zihintpause        : boolean                  := HAS_ZIHINTPAUSE;
-        -- Extensão M completa no núcleo.
-        has_m                  : boolean                  := HAS_M;
-        -- Multiplicação sem divisão (Zmmul) no núcleo.
-        has_zmmul              : boolean                  := HAS_ZMMUL;
-        -- Zifencei no núcleo (FENCE.I invalida a cache de instruções); falso mantém o NOP.
-        has_zifencei           : boolean                  := HAS_ZIFENCEI;
-        -- Acesso desalinhado à memória principal executado em hardware (Zicclsm).
-        has_zicclsm            : boolean                  := HAS_ZICCLSM;
-        -- Interrupções de máquina: o CLINT e o controlador externo ficam na janela de periféricos e as
-        -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
-        has_interrupts         : boolean                  := HAS_INTERRUPTS;
-        -- Interrupção de estouro de contador (Sscofpmf): exige Zihpm e as interrupções.
-        has_sscofpmf           : boolean                  := HAS_SSCOFPMF;
-        -- Falhas de acesso (causas 1, 5 e 7) fora das regiões válidas do mapa; exige Zicsr.
-        has_access_faults      : boolean                  := HAS_ACCESS_FAULTS;
         -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
         clint_tick_cycles      : positive                 := 1;
         -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
@@ -336,6 +305,11 @@ architecture behaviour of modular_sim_top is
 
 begin
 
+    -- O SoC lê a cache de dados do config_pkg; a que este topo supõe (RAM_PORT, o modelo do chip) tem de ser a mesma.
+    assert has_dcache = work.config_pkg.HAS_DCACHE
+        report "has_dcache difere de HAS_DCACHE do config_pkg"
+        severity failure;
+
     ram_re_gated <= ram_rden and ram_en;
     ram_we_gated <= ram_wren and ram_en;
 
@@ -358,29 +332,13 @@ begin
             periph_base_kib        => periph_base_kib,
             rom_external           => rom_external,
             ram_external           => ram_external,
-            has_e                  => has_e,
             has_icache             => has_icache,
-            has_dcache             => has_dcache,
             icache_size_bits       => icache_size_bits,
             dcache_size_bits       => dcache_size_bits,
             cache_window_bits      => cache_window_bits,
-            has_zicsr              => has_zicsr,
-            has_zicntr             => has_zicntr,
-            has_zihpm              => has_zihpm,
             hpm_counters           => hpm_counters,
             hpm_width              => hpm_width,
-            has_zimop              => has_zimop,
-            has_zicond             => has_zicond,
-            has_zihintntl          => has_zihintntl,
-            has_zihintpause        => has_zihintpause,
-            has_m                  => has_m,
-            has_zmmul              => has_zmmul,
-            has_zifencei           => has_zifencei,
-            has_zicclsm            => has_zicclsm,
-            has_interrupts         => has_interrupts,
-            has_sscofpmf           => has_sscofpmf,
-            has_access_faults      => has_access_faults,
-            periph_slots           => PERIPH_SLOTS,
+            periph_slots          => PERIPH_SLOTS,
             clint_tick_cycles      => clint_tick_cycles,
             clint_id               => clint_id,
             plic_id                => plic_id,

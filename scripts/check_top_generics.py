@@ -2,8 +2,8 @@
 
 Um generic ``HAS_*`` que o top não declara quebra a elaboração com
 ``cannot find in top entity generic`` quando o teste ou a plataforma o
-passa ao GHDL. As constantes de ISA ficam de fora dos tops que não
-instanciam o SoC, porque o núcleo as lê do ``config_pkg``.
+passa ao GHDL. As constantes de ISA ficam de fora de todos os tops,
+porque o núcleo e o SoC as leem do ``config_pkg``.
 """
 
 import re
@@ -66,9 +66,8 @@ NO_CACHE = {
     "src/simulation/internal-mem/quartus/core_fpga_test.vhd",
 }
 
-# Constantes de ISA: o núcleo as lê do config_pkg da plataforma, então
-# só o top que as repassa ao SoC (que as confere contra o config_pkg)
-# as declara como generic.
+# Constantes de ISA: o núcleo e o SoC as leem do config_pkg da plataforma,
+# então nenhum top as declara como generic.
 ISA = {
     "HAS_E",
     "HAS_M",
@@ -86,8 +85,6 @@ ISA = {
     "HAS_SSCOFPMF",
     "HAS_ACCESS_FAULTS",
 }
-# Tops que instanciam o SoC e por isso mantêm os generics de ISA.
-SOC_TOPS = {"src/simulation/modular/modular_sim_top.vhd"}
 
 CONSTANT = re.compile(r"constant\s+(HAS_\w+)\s*:", re.IGNORECASE)
 GENERIC = re.compile(r"^\s*(HAS_\w+)\s*:", re.IGNORECASE | re.MULTILINE)
@@ -125,7 +122,7 @@ def exempt_for(top: str) -> set[str]:
         Os nomes ``HAS_*`` dispensados nesse top.
     """
     exempt: set[str] = CACHE if top in NO_CACHE else set()
-    return exempt if top in SOC_TOPS else exempt | ISA
+    return exempt | ISA
 
 
 def missing(root: Path) -> list[str]:
