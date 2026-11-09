@@ -62,9 +62,35 @@ Bit 0 drives IN1, and bit 3 drives IN4. Forward motion uses the sequence below; 
 
 The `stepper-motor` program starts with a short self-test that writes and reads back all eight states. It then holds each movement state for 100,000 cycles of the 50 MHz core, equal to 2 ms. It performs 1024 half steps in each direction, with a 250 ms pause between them, and writes zero at the end. Mechanical gearing varies among 28BYJ-48 versions, so the exact number of steps per revolution must be measured on the unit in use.
 
-## 5. Verification
+The `stepper-uart` program uses the same interval and performs 1024 half steps per command. Before the timed movement, it also walks quickly through the selected sequence and reads each state back. This self-test lasts only a few microseconds and causes no relevant mechanical displacement.
 
-The simulation checks the sequence produced by the self-test on all four top-level pins. The physical test confirms movement, direction and coil wiring. The self-test lasts only a few microseconds and causes no relevant mechanical displacement before the timed movement.
+## 5. UART control
+
+The platform runtime connects `stdin`, `stdout` and `stderr` to the 115200-baud, 8N1 physical UART. `stepper-uart` writes `READY` through `printf` and then blocks in `scanf(" %c", &command)` until it receives one of the commands below. The space before `%c` discards line endings sent by the terminal.
+
+| Command | Action | Initial response |
+| :---: | :--- | :--- |
+| `d` or `D` | Perform 1024 half steps in the forward direction | `DIREITA` |
+| `e` or `E` | Perform 1024 half steps in the reverse direction | `ESQUERDA` |
+| Any other byte | Do not move the motor | `ERRO` |
+
+Movement is blocking: for approximately 2.048 s the CPU does not call `scanf` again. A byte received in that interval remains in the RX FIFO and is handled after movement ends; a burst larger than the 16-byte FIFO may overrun it. At completion, the program writes zero to the coils, prints `CONCLUIDO`, and waits for another command.
+
+Build and program the interactive image with:
+
+```bash
+cd ~/PFE/Stepper-Motor/Tests
+export PATH="$HOME/.local/opt/insper-riscv32-elf/bin:$HOME/.local/opt/insper-spike/bin:$PATH"
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml generate-header
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml compile --emit mif
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml program build-stepper/real/stepper-uart.mif
+```
+
+After programming, open the serial adapter at 115200 baud, 8N1. When `READY` appears, send `d` or `e`; pressing Enter is unnecessary if the terminal transmits each key immediately.
+
+## 6. Verification
+
+The `stepper-motor` simulation checks the forward sequence produced by the self-test on all four top-level pins. For `stepper-uart`, the testbench waits for `READY`, sends `e` through RX, requires `ESQUERDA` on TX and checks the reverse sequence on the four pins. It finishes after the quick self-test instead of spending time simulating all 1024 timed steps. The physical test confirms movement, direction and coil wiring.
 
 ```bash
 cd ~/PFE/Stepper-Motor/Tests
@@ -74,7 +100,7 @@ riscv-tools --config tools/riscv_build/config.stepper-motor.yaml compile --emit 
 riscv-tools --config tools/riscv_build/config.stepper-motor.yaml program build-stepper/real/stepper-motor.mif
 ```
 
-After programming, the motor turns approximately one quarter revolution, pauses, returns and stays de-energized. If it only vibrates, check the IN1 through IN4 order. If the observed direction is reversed, the wiring is functional and the direction names can be swapped in software.
+After programming `stepper-motor`, the motor turns approximately one quarter revolution, pauses, returns and stays de-energized. If it only vibrates, check the IN1 through IN4 order. If the observed direction is reversed, the wiring is functional and the direction names can be swapped in software.
 
 ---
 

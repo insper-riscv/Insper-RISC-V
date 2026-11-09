@@ -129,8 +129,12 @@ UART_ERRORS_FINAL = b"P"
 UART_STDIO_PROMPT = b"READY\n"
 UART_STDIO_INPUT = b"UART 42\n"
 UART_STDIO_RESULT = b"Hello, UART! value=42\n"
+STEPPER_UART_PROMPT = b"READY\n"
+STEPPER_UART_INPUT = b"e"
+STEPPER_UART_RESULT = b"ESQUERDA\n"
 UART_BIT_TIME_NS = round(1_000_000_000 / 115_200)
 MOTOR_HALF_STEP_SEQUENCE = (0x1, 0x3, 0x2, 0x6, 0x4, 0xC, 0x8, 0x9)
+MOTOR_REVERSE_HALF_STEP_SEQUENCE = tuple(reversed(MOTOR_HALF_STEP_SEQUENCE))
 
 
 def check(condition: bool, message: str) -> None:
@@ -240,6 +244,20 @@ async def exchange_uart_stdio(uart_rx: Any, uart_tx: Any) -> bytes:
     return bytes(received)
 
 
+async def exchange_stepper_uart(uart_rx: Any, uart_tx: Any) -> bytes:
+    """Send a reverse command and capture its acknowledgement."""
+    received = bytearray(
+        await receive_uart_message(uart_tx, len(STEPPER_UART_PROMPT))
+    )
+
+    result_capture = cocotb.start_soon(
+        receive_uart_message(uart_tx, len(STEPPER_UART_RESULT))
+    )
+    await send_uart_message(uart_rx, STEPPER_UART_INPUT)
+    received.extend(await result_capture)
+    return bytes(received)
+
+
 def retired_now(dut: Any) -> int:
     """1 when an instruction retires on this clock edge, 0 otherwise.
 
@@ -276,6 +294,8 @@ def start_uart(
         )
     elif test_name == "uart-stdio":
         expected = UART_STDIO_PROMPT + UART_STDIO_RESULT
+    elif test_name == "stepper-uart":
+        expected = STEPPER_UART_PROMPT + STEPPER_UART_RESULT
     else:
         return None, None
     if test_name != "uart-tx":
@@ -284,6 +304,8 @@ def start_uart(
         capture = exchange_uart_errors(dut.i_uart_rx, dut.o_uart_tx)
     elif test_name == "uart-stdio":
         capture = exchange_uart_stdio(dut.i_uart_rx, dut.o_uart_tx)
+    elif test_name == "stepper-uart":
+        capture = exchange_stepper_uart(dut.i_uart_rx, dut.o_uart_tx)
     else:
         capture = receive_uart_message(dut.o_uart_tx, len(expected))
     return expected, cocotb.start_soon(capture)
@@ -292,8 +314,11 @@ def start_uart(
 class MotorSequence:
     """Confere as mudanças dos quatro sinais que comandam o ULN2003."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self, expected: tuple[int, ...] = MOTOR_HALF_STEP_SEQUENCE
+    ) -> None:
         """Comece sem nenhum estado de meio passo observado."""
+        self.expected = expected
         self.observed: list[int] = []
 
     def sample(self, dut: Any) -> bool:
@@ -310,17 +335,17 @@ class MotorSequence:
 
         index = len(self.observed)
         check(
-            index < len(MOTOR_HALF_STEP_SEQUENCE),
+            index < len(self.expected),
             f"motor produziu um estado adicional: 0x{value:X}",
         )
-        expected = MOTOR_HALF_STEP_SEQUENCE[index]
+        expected = self.expected[index]
         check(
             value == expected,
             f"passo {index} do motor incorreto: esperado 0x{expected:X}, "
             f"recebido 0x{value:X}",
         )
         self.observed.append(value)
-        return len(self.observed) == len(MOTOR_HALF_STEP_SEQUENCE)
+        return len(self.observed) == len(self.expected)
 
 
 class RamBus:
@@ -451,7 +476,12 @@ async def test_program(dut: Any) -> None:
     uart_expected, uart_capture = start_uart(dut, test_name)
     uart_drive: Task[None] | None = None
     bus = RamBus(dut)
-    motor = MotorSequence()
+    motor_expected = (
+        MOTOR_REVERSE_HALF_STEP_SEQUENCE
+        if test_name == "stepper-uart"
+        else MOTOR_HALF_STEP_SEQUENCE
+    )
+    motor = MotorSequence(motor_expected)
     cycles_used = 0
     retired = 0
 
@@ -467,7 +497,17 @@ async def test_program(dut: Any) -> None:
         cycles_used += 1
         retired += retired_now(dut)
 
-        if test_name == "stepper-motor" and motor.sample(dut):
+        if test_name in ("stepper-motor", "stepper-uart") and motor.sample(
+            dut
+        ):
+            if uart_capture is not None:
+                received = await with_timeout(uart_capture, 5, "ms")
+                check(
+                    received == uart_expected,
+                    f"UART TX incorreto: esperado {uart_expected!r}, "
+                    f"recebido {received!r}",
+                )
+                LOG.info("UART TX recebido: %r", received)
             LOG.info(
                 "PASS: sequência de meio passo do motor: %s", motor.observed
             )

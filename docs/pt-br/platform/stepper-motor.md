@@ -62,9 +62,35 @@ O bit 0 comanda IN1, e o bit 3 comanda IN4. O sentido direto usa a sequência ab
 
 O programa `stepper-motor` começa com um autoteste curto que escreve e lê de volta os oito estados. Depois, mantém cada estado do movimento por 100.000 ciclos do núcleo de 50 MHz, equivalentes a 2 ms. Ele executa 1024 meios passos em cada sentido, com uma pausa de 250 ms entre eles, e grava zero no final. A redução mecânica varia entre versões do 28BYJ-48, então a quantidade exata de passos por volta deve ser medida no conjunto usado.
 
-## 5. Verificação
+O programa `stepper-uart` usa o mesmo intervalo e executa 1024 meios passos por comando. Antes do movimento temporizado, ele também percorre rapidamente a sequência escolhida e lê de volta cada estado. Esse autoteste dura somente alguns microssegundos e não causa deslocamento mecânico relevante.
 
-A simulação confere nos quatro pinos do topo a sequência produzida pelo autoteste. O teste físico confirma o movimento, o sentido e a ligação das bobinas. O autoteste dura somente alguns microssegundos e não causa deslocamento mecânico relevante antes do movimento temporizado.
+## 5. Controle pela UART
+
+O runtime da plataforma liga `stdin`, `stdout` e `stderr` à UART física de 115200 baud, 8N1. `stepper-uart` escreve `READY` com `printf` e então bloqueia em `scanf(" %c", &command)` até receber um dos comandos abaixo. O espaço antes de `%c` descarta quebras de linha enviadas pelo terminal.
+
+| Comando | Ação | Resposta inicial |
+| :---: | :--- | :--- |
+| `d` ou `D` | Executa 1024 meios passos no sentido direto | `DIREITA` |
+| `e` ou `E` | Executa 1024 meios passos no sentido inverso | `ESQUERDA` |
+| Outro byte | Não movimenta o motor | `ERRO` |
+
+O movimento é bloqueante: durante aproximadamente 2,048 s a CPU não chama `scanf` novamente. Um byte recebido nesse período permanece na FIFO RX e é processado depois do fim do movimento; uma rajada maior que os 16 bytes da FIFO pode causar overrun. Ao terminar, o programa grava zero nas bobinas, escreve `CONCLUIDO` e volta a esperar outro comando.
+
+Para compilar e programar a imagem interativa:
+
+```bash
+cd ~/PFE/Stepper-Motor/Tests
+export PATH="$HOME/.local/opt/insper-riscv32-elf/bin:$HOME/.local/opt/insper-spike/bin:$PATH"
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml generate-header
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml compile --emit mif
+riscv-tools --config tools/riscv_build/config.stepper-motor.yaml program build-stepper/real/stepper-uart.mif
+```
+
+Depois da programação, abra o adaptador serial em 115200 baud, 8N1. Quando `READY` aparecer, envie `d` ou `e`; não é necessário pressionar Enter se o terminal transmitir cada tecla imediatamente.
+
+## 6. Verificação
+
+A simulação de `stepper-motor` confere nos quatro pinos do topo a sequência direta produzida pelo autoteste. Para `stepper-uart`, o testbench espera `READY`, envia `e` pelo RX, exige `ESQUERDA` no TX e confere a sequência inversa nos quatro pinos. Ele termina depois do autoteste rápido, sem gastar tempo simulando os 1024 passos temporizados. O teste físico confirma o movimento, o sentido e a ligação das bobinas.
 
 ```bash
 cd ~/PFE/Stepper-Motor/Tests
@@ -74,7 +100,7 @@ riscv-tools --config tools/riscv_build/config.stepper-motor.yaml compile --emit 
 riscv-tools --config tools/riscv_build/config.stepper-motor.yaml program build-stepper/real/stepper-motor.mif
 ```
 
-Depois da programação, o motor gira aproximadamente um quarto de volta, pausa, retorna e fica desenergizado. Se ele apenas vibrar, confira a ordem IN1 a IN4. Se o sentido observado estiver invertido, a ligação está funcional e os nomes dos sentidos podem ser trocados no software.
+Depois de programar `stepper-motor`, o motor gira aproximadamente um quarto de volta, pausa, retorna e fica desenergizado. Se ele apenas vibrar, confira a ordem IN1 a IN4. Se o sentido observado estiver invertido, a ligação está funcional e os nomes dos sentidos podem ser trocados no software.
 
 ---
 
