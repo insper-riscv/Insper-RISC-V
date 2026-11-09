@@ -156,8 +156,9 @@ tree:
     formal:
       ext_interconnect: []
   vhdl_style:
-    # IP gerado pelo Quartus (pll.vhd) e modelo de simulação dele (pll_sim.vhd).
-    exclude: [src/simulation/internal-mem/pll/pll_sim.vhd, src/simulation/internal-mem/pll/pll.vhd]
+    # IP gerado pelo Quartus (pll.vhd) e modelo de simulação dele (pll_sim.vhd), e os pacotes que o
+    # riscv-tools generate-memory-map escreve (config_pkg e *_map_pkg, conferidos por make generate-check).
+    exclude: [src/simulation/internal-mem/pll/pll_sim.vhd, src/simulation/internal-mem/pll/pll.vhd, 'src/*config_pkg.vhd', 'src/*_map_pkg.vhd']
 
 provides:
   # Each component lists its sources in GHDL dependency order and the components it needs. A requires of the form
