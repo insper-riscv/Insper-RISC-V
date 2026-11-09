@@ -28,9 +28,10 @@ sim:
   toplevel: template_sim_top
   # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
   vhdl_sources:
+    - Common-Components/src/utils_pkg.vhd
+    - src/simulation/template/rtl/config_pkg.vhd
     - src/simulation/template/rtl/template_map_pkg.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
-    - Common-Components/src/utils_pkg.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
     - Core/src/shared/opcode_consts.vhd
@@ -62,6 +63,9 @@ sim:
     - Common-Components/src/mux_4x1.vhd
     - Common-Components/src/mux_8x1.vhd
     - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
     - Common-Components/src/onehot_decoder.vhd
     - Core/src/shared/reg_file.vhd
     - Core/src/shared/control_unit.vhd
@@ -86,7 +90,7 @@ sim:
     - Core/src/Zicclsm/misaligned_unit.vhd
     - Core/src/Zicond/zicond_decode.vhd
     - Core/src/Zicond/zicond_unit.vhd
-    - Core/src/Zicntr/counter64.vhd
+    - Common-Components/src/counter64.vhd
     - Core/src/Zicntr/tick_divider.vhd
     - Core/src/Zihpm/hpm_counter_bank.vhd
     - Core/src/Zicsr/csr_decode.vhd

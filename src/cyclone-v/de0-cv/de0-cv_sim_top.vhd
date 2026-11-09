@@ -367,9 +367,7 @@ begin
 
 	u_core : entity work.core
 		generic map (has_m => has_m, has_zmmul => has_zmmul, has_zicsr => has_zicsr, has_zicntr => has_zicntr,
-			has_zifencei => has_zifencei, has_zicclsm => has_zicclsm, has_e => has_e, boot_memory_bits => BOOT_MEMORY_BITS,
-			rom_end_kib => ROM_END_KIB, rom_external => rom_external, ram_base_kib => RAM_BASE_KIB, ram_end_kib => RAM_END_KIB,
-			ram_external => ram_external, ext_base_kib => EXT_BASE_KIB, periph_base_kib => PERIPH_BASE_KIB,
+			has_zifencei => has_zifencei, has_zicclsm => has_zicclsm, has_e => has_e,
 			has_zihpm => has_zihpm, hpm_counters => hpm_counters, hpm_width => hpm_width, has_zimop => has_zimop,
 			has_zicond => has_zicond, has_zihintntl => has_zihintntl, has_zihintpause => has_zihintpause,
 			has_interrupts => has_interrupts and (has_zicsr or has_zicntr or has_zihpm),

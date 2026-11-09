@@ -94,26 +94,56 @@ package de0_cv_map_pkg is
 	constant FLASH_CTRL_BASE : std_logic_vector(31 downto 0) := x"B0000000";
 	-- Índice da janela de 256 MiB do periférico FLASH_CTRL (bits 30:28 do endereço).
 	constant FLASH_CTRL_ID   : natural := 3;
+	-- Deslocamento na janela de periféricos do periférico FLASH_CTRL, em bytes.
+	constant FLASH_CTRL_OFFSET : std_logic_vector(31 downto 0) := x"30000000";
+	-- Tamanho do periférico FLASH_CTRL, em bytes.
+	constant FLASH_CTRL_SIZE   : std_logic_vector(31 downto 0) := x"00000020";
+	-- Padding reservado depois do tamanho do periférico FLASH_CTRL, em bytes.
+	constant FLASH_CTRL_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFE0";
 
 	-- Endereço base do periférico UART.
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";
 	-- Índice da janela de 256 MiB do periférico UART (bits 30:28 do endereço).
 	constant UART_ID   : natural := 4;
+	-- Deslocamento na janela de periféricos do periférico UART, em bytes.
+	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
+	-- Tamanho do periférico UART, em bytes.
+	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico DISPLAY.
 	constant DISPLAY_BASE : std_logic_vector(31 downto 0) := x"D0000000";
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
+	-- Deslocamento na janela de periféricos do periférico DISPLAY, em bytes.
+	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
+	-- Tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding reservado depois do tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico CLINT.
 	constant CLINT_BASE : std_logic_vector(31 downto 0) := x"E0000000";
 	-- Índice da janela de 256 MiB do periférico CLINT (bits 30:28 do endereço).
 	constant CLINT_ID   : natural := 6;
+	-- Deslocamento na janela de periféricos do periférico CLINT, em bytes.
+	constant CLINT_OFFSET : std_logic_vector(31 downto 0) := x"60000000";
+	-- Tamanho do periférico CLINT, em bytes.
+	constant CLINT_SIZE   : std_logic_vector(31 downto 0) := x"00010000";
+	-- Padding reservado depois do tamanho do periférico CLINT, em bytes.
+	constant CLINT_PAD    : std_logic_vector(31 downto 0) := x"0FFF0000";
 
 	-- Endereço base do periférico PLIC.
 	constant PLIC_BASE : std_logic_vector(31 downto 0) := x"F0000000";
 	-- Índice da janela de 256 MiB do periférico PLIC (bits 30:28 do endereço).
 	constant PLIC_ID   : natural := 7;
+	-- Deslocamento na janela de periféricos do periférico PLIC, em bytes.
+	constant PLIC_OFFSET : std_logic_vector(31 downto 0) := x"70000000";
+	-- Tamanho do periférico PLIC, em bytes.
+	constant PLIC_SIZE   : std_logic_vector(31 downto 0) := x"00400000";
+	-- Padding reservado depois do tamanho do periférico PLIC, em bytes.
+	constant PLIC_PAD    : std_logic_vector(31 downto 0) := x"0FC00000";
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
 	constant CLOCK_HZ          : positive := 77000000;

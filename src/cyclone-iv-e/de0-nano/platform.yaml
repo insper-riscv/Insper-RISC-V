@@ -37,10 +37,14 @@ flash:
     - {name: A, base: 0x00001000, size: 12K}
     - {name: B, base: 0x00004000, size: 16K}
 
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
 # The slots of the external interconnect: the FLASH controller of the program update and the JTAG UART.
 peripherals:
-  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
-  - {name: UART,    base: 0xC0000000, id: 4}
+  - {name: FLASH_CTRL, offset: 0x30000000, id: 3, size: 32, padding: 0x0FFFFFE0}
+  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
 
 # The FLASH is emulated in the M9K blocks with the latency of a serial chip and the SDRAM is the device of the board, both behind
 # the instruction and the data caches (8192 bits each).
@@ -77,6 +81,9 @@ generate:
     package: de0_nano_map_pkg
     rom: FLASH
     ram: RAM
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/cyclone-iv-e/de0-nano/config_pkg.vhd}
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
 config:

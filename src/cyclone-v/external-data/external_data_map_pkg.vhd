@@ -94,11 +94,23 @@ package external_data_map_pkg is
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";
 	-- Índice da janela de 256 MiB do periférico UART (bits 30:28 do endereço).
 	constant UART_ID   : natural := 4;
+	-- Deslocamento na janela de periféricos do periférico UART, em bytes.
+	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
+	-- Tamanho do periférico UART, em bytes.
+	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico DISPLAY.
 	constant DISPLAY_BASE : std_logic_vector(31 downto 0) := x"D0000000";
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
+	-- Deslocamento na janela de periféricos do periférico DISPLAY, em bytes.
+	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
+	-- Tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding reservado depois do tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;

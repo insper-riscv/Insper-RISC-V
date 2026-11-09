@@ -269,15 +269,7 @@ begin
 			has_zihintpause => HAS_ZIHINTPAUSE,
 			has_zifencei    => HAS_ZIFENCEI,
 			has_zicclsm     => HAS_ZICCLSM,
-			has_e           => HAS_E,
-			boot_memory_bits   => BOOT_MEMORY_BITS,
-			rom_end_kib     => ROM_END_KIB,
-			rom_external    => ROM_EXTERNAL,
-			ram_base_kib    => RAM_BASE_KIB,
-			ram_end_kib     => RAM_END_KIB,
-			ram_external    => RAM_EXTERNAL,
-			ext_base_kib    => EXT_BASE_KIB,
-			periph_base_kib => PERIPH_BASE_KIB
+			has_e           => HAS_E
 		)
 		port map (
 			i_clk          => pll_clk_idexmem,
