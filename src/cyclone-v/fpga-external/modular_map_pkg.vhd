@@ -94,15 +94,33 @@ package modular_map_pkg is
 	constant SWITCHES_BASE : std_logic_vector(31 downto 0) := x"90000000";
 	-- Índice da janela de 256 MiB do periférico SWITCHES (bits 30:28 do endereço).
 	constant SWITCHES_ID   : natural := 1;
+	-- Deslocamento na janela de periféricos do periférico SWITCHES, em bytes.
+	constant SWITCHES_OFFSET : std_logic_vector(31 downto 0) := x"10000000";
+	-- Tamanho do periférico SWITCHES, em bytes.
+	constant SWITCHES_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico SWITCHES, em bytes.
+	constant SWITCHES_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico KEYS.
 	constant KEYS_BASE : std_logic_vector(31 downto 0) := x"A0000000";
 	-- Índice da janela de 256 MiB do periférico KEYS (bits 30:28 do endereço).
 	constant KEYS_ID   : natural := 2;
+	-- Deslocamento na janela de periféricos do periférico KEYS, em bytes.
+	constant KEYS_OFFSET : std_logic_vector(31 downto 0) := x"20000000";
+	-- Tamanho do periférico KEYS, em bytes.
+	constant KEYS_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico KEYS, em bytes.
+	constant KEYS_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico DISPLAY.
 	constant DISPLAY_BASE : std_logic_vector(31 downto 0) := x"D0000000";
 	-- Índice da janela de 256 MiB do periférico DISPLAY (bits 30:28 do endereço).
 	constant DISPLAY_ID   : natural := 5;
+	-- Deslocamento na janela de periféricos do periférico DISPLAY, em bytes.
+	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
+	-- Tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico DISPLAY, em bytes.
+	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 end package modular_map_pkg;

@@ -61,9 +61,10 @@ set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
 set_global_assignment -name VERILOG_FILE ../pll/pll_0002.v
 # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
 set_global_assignment -name VHDL_FILE ../pll/pll.vhd
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/utils_pkg.vhd
+set_global_assignment -name VHDL_FILE ../rtl/config_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/internal_mem_map_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/Blinky.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/utils_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/byte_mask_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/opcode_consts.vhd
@@ -95,6 +96,9 @@ set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_2x1.
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_4x1.vhd
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_8x1.vhd
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_tree.vhd
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_16x1.vhd
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_32x1.vhd
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/mux_64x1.vhd
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/onehot_decoder.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/reg_file.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/control_unit.vhd
@@ -119,7 +123,7 @@ set_global_assignment -name VHDL_FILE ../../../../Core/src/M/multdiv.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicclsm/misaligned_unit.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicond/zicond_decode.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicond/zicond_unit.vhd
-set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicntr/counter64.vhd
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/counter64.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicntr/tick_divider.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zihpm/hpm_counter_bank.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/Zicsr/csr_decode.vhd
@@ -138,6 +142,7 @@ set_global_assignment -name VHDL_FILE ../../../../Core/src/core/core.vhd
 set_global_assignment -name QIP_FILE ../../../../Memory/src/RAM/FPGA/Cyclone-V/ram.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/boot_memory.qip
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash.qip
+set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/synchronizer.vhd
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd

@@ -39,8 +39,8 @@
 -- display_digits), e um papel de largura zero é omitido. A polaridade dos pinos é um generic por papel,
 -- resolvido por quem instancia o SoC; o periférico vê sempre o programa ativo em '1'.
 --
--- O mapa vem dos genéricos, que quem instancia lê do pacote gerado do platform.yaml da plataforma;
--- o SoC não depende desse pacote. Todos os tamanhos são genéricos em potência de dois (bytes para
+-- O núcleo lê o mapa do config_pkg gerado do platform.yaml da plataforma, e o SoC confere em asserções
+-- que os genéricos do mapa, que quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos em potência de dois (bytes para
 -- a BOOT_MEMORY, bits para as caches), verificados pelo log2_exact.
 -- =============================================================================
 
@@ -390,11 +390,16 @@ architecture behaviour of soc is
     return -1;
   end function ic_select_from;
 
+  -- Base, em KiB, do alias da FLASH que a cache de dados entrega ao roteador (0x20000000, bits 31:26 em "001000").
+  constant FLASH_ALIAS_BASE_KIB : natural := 2**19;
+  -- Fim exclusivo, em KiB, do alias da FLASH (0x40000000), o dobro da base.
+  constant FLASH_ALIAS_END_KIB  : natural := 2 * FLASH_ALIAS_BASE_KIB;
+
   -- Base da região da ROM, em KiB, nos endereços que o roteador dos dados vê: a cache de dados os
-  -- troca pelos da região da FLASH (0x20000000), e sem ela chegam os do mapa.
-  constant D_ROM_BASE_KIB : natural := pick(has_dcache, 524288, BOOT_KIB);
+  -- troca pelos do alias da FLASH, e sem ela chegam os do mapa.
+  constant D_ROM_BASE_KIB : natural := pick(has_dcache, FLASH_ALIAS_BASE_KIB, BOOT_KIB);
   -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
-  constant D_ROM_END_KIB  : natural := pick(has_dcache, 1048576, rom_end_kib);
+  constant D_ROM_END_KIB  : natural := pick(has_dcache, FLASH_ALIAS_END_KIB, rom_end_kib);
 
   -- Bit da janela de um periférico: o do índice quando ele existe e zero quando não existe.
   function slot_vec(present : boolean; id : natural) return std_logic_vector is
@@ -716,6 +721,31 @@ begin
            & "a janela de periféricos vem depois da externa"
     severity failure;
 
+  -- O núcleo lê o mapa do config_pkg da plataforma, e os genéricos do SoC (que o topo lê do pacote do mapa)
+  -- têm de concordar com ele, senão o roteamento do SoC e a decodificação do núcleo divergem.
+  assert shift_left(resize(to_unsigned(rom_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.ROM_END
+    report "rom_end_kib difere de ROM_END do config_pkg"
+    severity failure;
+  assert shift_left(resize(to_unsigned(ram_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.RAM_BASE
+    report "ram_base_kib difere de RAM_BASE do config_pkg"
+    severity failure;
+  assert shift_left(resize(to_unsigned(ram_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.RAM_END
+    report "ram_end_kib difere de RAM_END do config_pkg"
+    severity failure;
+  assert shift_left(resize(to_unsigned(ext_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.EXT_BASE
+    report "ext_base_kib difere de EXT_BASE do config_pkg"
+    severity failure;
+  assert shift_left(resize(to_unsigned(periph_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
+         work.config_pkg.PERIPH_BASE
+    report "periph_base_kib difere de PERIPH_BASE do config_pkg"
+    severity failure;
+  assert log2_exact(boot_memory_size_bytes) = work.config_pkg.BOOT_MEMORY_BITS
+    report "boot_memory_size_bytes difere de BOOT_MEMORY_BITS do config_pkg"
+    severity failure;
+  assert ROM_PORT = work.config_pkg.ROM_EXTERNAL and RAM_PORT = work.config_pkg.RAM_EXTERNAL
+    report "rom_external, ram_external e as caches diferem de ROM_EXTERNAL e RAM_EXTERNAL do config_pkg"
+    severity failure;
+
   -- As regiões alcançadas pelas caches ou pela ponte de busca cabem na janela de
   -- 2**cache_window_bits bytes.
   assert (not ROM_PORT) or rom_end_kib <= BOOT_KIB + CACHE_WINDOW_KIB
@@ -833,14 +863,6 @@ begin
       has_zifencei => has_zifencei,
       has_zicclsm  => has_zicclsm,
       has_e         => has_e,
-      boot_memory_bits => log2_exact(boot_memory_size_bytes),
-      rom_end_kib   => rom_end_kib,
-      rom_external  => ROM_PORT,
-      ram_base_kib  => ram_base_kib,
-      ram_end_kib   => ram_end_kib,
-      ram_external  => RAM_PORT,
-      ext_base_kib  => ext_base_kib,
-      periph_base_kib => periph_base_kib,
       has_zihpm    => has_zihpm,
       hpm_counters => hpm_counters,
       hpm_width    => hpm_width,

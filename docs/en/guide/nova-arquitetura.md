@@ -759,8 +759,8 @@ A platform repository uses the peripheral after the `Peripherals` submodule poin
 
 ```yaml
 peripherals:
-  - {name: UART, base: 0xC0000000, id: 4}
-  - {name: LED,  base: 0xD0000000, id: 5}
+  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+  - {name: LED,  offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
 ```
 
 After `generate-memory-map`, the package gains `LED_BASE` and `LED_ID`, and `memory_map.h` gains `RV32_LED_BASE`. In the top, the window selector, the filtered enables and the read data follow the pattern of step 6.4, and the source `led_register.vhd` enters the `sim.vhdl_sources` list of the `config.yaml`, the `Makefile` of the platform and the `.qsf`, if there is a board.
