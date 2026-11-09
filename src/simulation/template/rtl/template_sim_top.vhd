@@ -181,15 +181,7 @@ begin
             has_interrupts  => has_interrupts and has_zicsr,
             has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
             has_access_faults => has_access_faults and has_zicsr,
-            periph_slots    => PERIPH_SLOTS,
-            boot_memory_bits   => log2_exact(boot_memory_size_bytes),
-            rom_end_kib     => ROM_END_KIB,
-            rom_external    => ROM_EXTERNAL,
-            ram_base_kib    => RAM_BASE_KIB,
-            ram_end_kib     => RAM_END_KIB,
-            ram_external    => RAM_EXTERNAL,
-            ext_base_kib    => EXT_BASE_KIB,
-            periph_base_kib => PERIPH_BASE_KIB
+            periph_slots    => PERIPH_SLOTS
         )
         port map(
             o_trap          => open,

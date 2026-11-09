@@ -759,8 +759,8 @@ Um repositório de plataforma usa o periférico depois que o ponteiro do submód
 
 ```yaml
 peripherals:
-  - {name: UART, base: 0xC0000000, id: 4}
-  - {name: LED,  base: 0xD0000000, id: 5}
+  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+  - {name: LED,  offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
 ```
 
 Depois de `generate-memory-map`, o pacote ganha `LED_BASE` e `LED_ID`, e o `memory_map.h`, `RV32_LED_BASE`. No topo, o seletor da janela, os enables filtrados e o dado de leitura seguem o padrão do passo 6.4, e a fonte `led_register.vhd` entra na lista `sim.vhdl_sources` do `config.yaml`, no `Makefile` da plataforma e no `.qsf`, se houver placa.

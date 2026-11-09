@@ -31,8 +31,12 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
 peripherals:
-  - {name: UART, base: 0xC0000000, id: 4}
+  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
 
 # The memory model: both memories inside the chip, no cache. The package takes ROM_EXTERNAL and RAM_EXTERNAL from here.
 memory:
@@ -55,6 +59,9 @@ generate:
     package: internal_mem_map_pkg
     rom: FLASH
     ram: RAM
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/simulation/internal-mem/rtl/config_pkg.vhd}
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`): the bases and
 # the words of the memories, tohost and fromhost, and the address width of each simulation memory.

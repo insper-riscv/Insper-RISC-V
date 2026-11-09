@@ -55,9 +55,10 @@ sim:
   # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
   vhdl_sources:
     - src/simulation/internal-mem/pll/pll_sim.vhd
+    - Common-Components/src/utils_pkg.vhd
+    - src/simulation/internal-mem/rtl/config_pkg.vhd
     - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
     - src/simulation/internal-mem/rtl/Blinky.vhd
-    - Common-Components/src/utils_pkg.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
     - Core/src/shared/opcode_consts.vhd
@@ -89,6 +90,9 @@ sim:
     - Common-Components/src/mux_4x1.vhd
     - Common-Components/src/mux_8x1.vhd
     - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
     - Common-Components/src/onehot_decoder.vhd
     - Core/src/shared/reg_file.vhd
     - Core/src/shared/control_unit.vhd
@@ -113,7 +117,7 @@ sim:
     - Core/src/Zicclsm/misaligned_unit.vhd
     - Core/src/Zicond/zicond_decode.vhd
     - Core/src/Zicond/zicond_unit.vhd
-    - Core/src/Zicntr/counter64.vhd
+    - Common-Components/src/counter64.vhd
     - Core/src/Zicntr/tick_divider.vhd
     - Core/src/Zihpm/hpm_counter_bank.vhd
     - Core/src/Zicsr/csr_decode.vhd
@@ -133,6 +137,7 @@ sim:
     - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
     - Memory/src/ROM/Cyclone-V/boot_memory.vhd
     - Memory/src/ROM/Cyclone-V/flash.vhd
+    - Common-Components/src/synchronizer.vhd
     - Memory/src/ROM/SoC/flash_jtag_core.vhd
     - Memory/src/ROM/SoC/flash_loader.vhd
     - Common-Components/src/altera/virtual_jtag.vhd

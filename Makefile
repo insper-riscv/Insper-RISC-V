@@ -32,7 +32,7 @@ SOURCES := riscv-tools --root . sources
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
+.PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -50,26 +50,26 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: sources-check check-tops check-generics check-unique check-irq-sources
+check: sources-check variants-check check-tops check-generics check-unique check-irq-sources
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
 check-tops:
-	@mkdir -p $(WDIR)
+	@rm -rf $(WDIR) && mkdir -p $(WDIR)
 	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) internal_mem_sim_top)
 	@printf '00000000\n' > $(WDIR)/default.hex
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32i3stage_core_sim_test
 	@echo "the simulation top of internal-mem builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
 	@echo "the simulation top of the external-data platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) template_sim_top)
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) template_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. template_sim_top
 	@echo "the simulation top of the template platform builds"
-	@$(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) modular_map modular_sim_top)
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) modular_map modular_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. modular_sim_top
 	@echo "the simulation top of the modular platform builds"
 	@for n in $(TEN); do \
@@ -89,17 +89,12 @@ check-irq-sources:
 	uv run --no-project --with pyyaml python scripts/check_irq_sources.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
-# that uses both. The one exception is counter64, which the Core still keeps in src/Zicntr until its
-# config_pkg migration (part A) removes it: the source lists of the tops never carry both copies, because
-# only the Core requires its own and nothing requires the one of Common-Components yet. Drop COUNTER64_DUP
-# in the pointer bump that brings the Core without counter64.
-COUNTER64_DUP := ^counter64: (Common-Components/src/counter64.vhd Core/src/Zicntr/counter64.vhd|Core/src/Zicntr/counter64.vhd Common-Components/src/counter64.vhd)$$
+# that uses both.
 check-unique:
 	@dups=$$(find $(SUBREPOS) -name '*.vhd' $(NESTED) $(NOT_RTL) -print0 \
 	  | xargs -0 grep -HioE '^[[:space:]]*(entity|package)[[:space:]]+[A-Za-z0-9_]+[[:space:]]+is' \
 	  | sed -E 's/^([^:]+):[[:space:]]*(entity|package)[[:space:]]+([A-Za-z0-9_]+).*/\3 \1/I' \
-	  | awk '{n = tolower($$1); c[n]++; f[n] = f[n] " " $$2} END {for (k in c) if (c[k] > 1) print k ":" f[k]}' \
-	  | grep -vE '$(COUNTER64_DUP)' || true); \
+	  | awk '{n = tolower($$1); c[n]++; f[n] = f[n] " " $$2} END {for (k in c) if (c[k] > 1) print k ":" f[k]}'); \
 	if [ -n "$$dups" ]; then echo "defined more than once:"; echo "$$dups"; exit 1; fi; \
 	echo "no entity or package is defined twice"
 
@@ -114,7 +109,7 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
-	$(MAKE) generate-check sources-check
+	$(MAKE) generate-check variants-check sources-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot memory and
 # the VHDL package of the generics): `make generate` writes them and `make generate-check` fails when one
@@ -128,6 +123,7 @@ generate:
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
+	$(MAKE) variants
 
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
@@ -138,6 +134,26 @@ generate-check:
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml --check
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml --check || exit 1; done
+	$(MAKE) variants-check
+
+# The config_pkg of the modular platform with another memory combination, for the matrix tests of tests.json (each
+# combination needs its own package, because the core reads the map from it): `make variants` writes them and
+# `make variants-check` fails when one is out of date.
+VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off internal_caches:rom=internal,ram=internal,icache=on,dcache=on
+VARIANT_DIR := src/simulation/modular/variants
+
+variants:
+	@for v in $(VARIANTS); do n=$${v%%:*}; m=$${v#*:}; mkdir -p $(VARIANT_DIR)/$$n; \
+	  riscv-tools --root . --memory "$$m" generate-config-pkg --platform $(PM)/platform.yaml \
+	    --output $(VARIANT_DIR)/$$n/config_pkg.vhd || exit 1; done
+
+variants-check:
+	@mkdir -p $(WDIR); for v in $(VARIANTS); do n=$${v%%:*}; m=$${v#*:}; \
+	  riscv-tools --root . --memory "$$m" generate-config-pkg --platform $(PM)/platform.yaml \
+	    --output $(WDIR)/variant_$$n.vhd >/dev/null || exit 1; \
+	  cmp -s $(WDIR)/variant_$$n.vhd $(VARIANT_DIR)/$$n/config_pkg.vhd \
+	    || { echo "out of date: $(VARIANT_DIR)/$$n/config_pkg.vhd (run make variants)"; exit 1; }; done; \
+	echo "the config_pkg variants are up to date"
 
 # The source lists of the tops (the config*.yaml, tests/python/tests.json and the .qsf files) come from the
 # provides of the repositories, through `riscv-tools sources`: `make generate-sources` writes them and

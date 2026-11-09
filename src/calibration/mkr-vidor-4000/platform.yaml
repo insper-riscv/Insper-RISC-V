@@ -33,12 +33,19 @@ io: {}
 extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
   vhdl: {path: src/calibration/mkr-vidor-4000/mkr_vidor_4000_map_pkg.vhd, package: mkr_vidor_4000_map_pkg, rom: FLASH, ram: RAM}
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/calibration/mkr-vidor-4000/config_pkg.vhd}
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
 peripherals:
-  - {name: FLASH_CTRL, base: 0xB0000000, id: 3}
-  - {name: UART,    base: 0xC0000000, id: 4}
-  - {name: DISPLAY, base: 0xD0000000, id: 5}
-  - {name: CLINT,   base: 0xE0000000, id: 6}
-  - {name: PLIC,    base: 0xF0000000, id: 7, size: 4M}
+  - {name: FLASH_CTRL, offset: 0x30000000, id: 3, size: 32, padding: 0x0FFFFFE0}
+  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
+  - {name: CLINT,   offset: 0x60000000, id: 6, size: 64K, padding: 0x0FFF0000}
+  - {name: PLIC,    offset: 0x70000000, id: 7, size: 4M, padding: 0x0FC00000}
 interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000

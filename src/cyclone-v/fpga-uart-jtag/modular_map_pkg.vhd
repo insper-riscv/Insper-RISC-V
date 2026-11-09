@@ -94,5 +94,11 @@ package modular_map_pkg is
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";
 	-- Índice da janela de 256 MiB do periférico UART (bits 30:28 do endereço).
 	constant UART_ID   : natural := 4;
+	-- Deslocamento na janela de periféricos do periférico UART, em bytes.
+	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
+	-- Tamanho do periférico UART, em bytes.
+	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
+	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 end package modular_map_pkg;

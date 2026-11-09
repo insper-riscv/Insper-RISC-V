@@ -145,14 +145,15 @@ ENTRADAS = (
     Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularIntegrated"),
     Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularInterrupts"),
     Saida(
-        TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularExternalData"
+        TESTS_JSON,
+        ("modular_ram_direct_map", "modular_sim_top"),
+        "ModularExternalData",
     ),
     Saida(
         TESTS_JSON,
-        ("modular_map", "modular_sim_top"),
-        "ModularExternalInstruction",
+        ("modular_bridge_direct_map", "modular_sim_top"),
+        "ModularExternal",
     ),
-    Saida(TESTS_JSON, ("modular_map", "modular_sim_top"), "ModularExternal"),
     Saida(
         TESTS_JSON,
         ("test_integrated_map", "modular_sim_top"),
@@ -203,7 +204,52 @@ ENTRADAS = (
         ("fpga_uart_pins_map", "modular_sim_top"),
         "PlatformFpgaUartPins",
     ),
-    Saida(TESTS_JSON, ("soc",), "SocRoles"),
+    Saida(TESTS_JSON, ("modular_map", "soc"), "SocRoles"),
+    Saida(
+        TESTS_JSON,
+        ("modular_bridge_dcache_map", "modular_sim_top"),
+        "ModularBridgeDcacheWindow128",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_internal_caches_map", "modular_sim_top"),
+        "ModularInternalCachesWindow128",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_internal_caches_map", "modular_sim_top"),
+        "ModularInternalCaches",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_icache_direct_map", "modular_sim_top"),
+        "ModularIcacheDirect",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_bridge_dcache_map", "modular_sim_top"),
+        "ModularBridgeDcache",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_bridge_direct_map", "modular_sim_top"),
+        "ModularBridgeDirect",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_ram_direct_map", "modular_sim_top"),
+        "ModularRamDirect",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_rom_bridge_map", "modular_sim_top"),
+        "ModularRomBridge",
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_rom_bridge_map", "modular_sim_top"),
+        "ModularExternalInstruction",
+    ),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),

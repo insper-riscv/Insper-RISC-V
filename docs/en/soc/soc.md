@@ -50,7 +50,7 @@ The switches and keys are GPIO blocks, and the display is the `seg_display` regi
 
 ## 5. Map and generics
 
-The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The SoC does not depend on that package. The core extensions (`has_*`), the caches (`has_icache`, `has_dcache` and the sizes), the interrupts (`has_interrupts`, `plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
+The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The core reads the same map from the `config_pkg` that `platform.yaml` generates for the platform (`generate.config_pkg`), and the SoC checks in assertions that these generics agree with it. The core extensions (`has_*`), the caches (`has_icache`, `has_dcache` and the sizes), the interrupts (`has_interrupts`, `plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
 
 ### 5.1. Map and extension generics
 
