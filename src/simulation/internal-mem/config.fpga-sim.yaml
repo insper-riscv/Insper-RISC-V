@@ -142,6 +142,10 @@ sim:
     - Memory/src/ROM/SoC/flash_loader.vhd
     - Common-Components/src/altera/virtual_jtag.vhd
     - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
+    - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd

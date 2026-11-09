@@ -88,7 +88,18 @@ package internal_mem_map_pkg is
 	constant RAM_VIA_PORT        : boolean  := RAM_EXTERNAL or HAS_DCACHE;
 
 	-- Janelas de 256 MiB do barramento de periféricos que têm periférico (bit n para o índice n, bits 30:28 do endereço).
-	constant PERIPH_SLOTS : std_logic_vector(7 downto 0) := "00010000";
+	constant PERIPH_SLOTS : std_logic_vector(7 downto 0) := "00010010";
+
+	-- Endereço base do periférico MOTOR.
+	constant MOTOR_BASE : std_logic_vector(31 downto 0) := x"90000000";
+	-- Índice da janela de 256 MiB do periférico MOTOR (bits 30:28 do endereço).
+	constant MOTOR_ID   : natural := 1;
+	-- Deslocamento na janela de periféricos do periférico MOTOR, em bytes.
+	constant MOTOR_OFFSET : std_logic_vector(31 downto 0) := x"10000000";
+	-- Tamanho do periférico MOTOR, em bytes.
+	constant MOTOR_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico MOTOR, em bytes.
+	constant MOTOR_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico UART.
 	constant UART_BASE : std_logic_vector(31 downto 0) := x"C0000000";

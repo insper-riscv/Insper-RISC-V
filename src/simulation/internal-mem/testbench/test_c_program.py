@@ -130,6 +130,7 @@ UART_STDIO_PROMPT = b"READY\n"
 UART_STDIO_INPUT = b"UART 42\n"
 UART_STDIO_RESULT = b"Hello, UART! value=42\n"
 UART_BIT_TIME_NS = round(1_000_000_000 / 115_200)
+MOTOR_HALF_STEP_SEQUENCE = (0x1, 0x3, 0x2, 0x6, 0x4, 0xC, 0x8, 0x9)
 
 
 def check(condition: bool, message: str) -> None:
@@ -288,6 +289,40 @@ def start_uart(
     return expected, cocotb.start_soon(capture)
 
 
+class MotorSequence:
+    """Confere as mudanças dos quatro sinais que comandam o ULN2003."""
+
+    def __init__(self) -> None:
+        """Comece sem nenhum estado de meio passo observado."""
+        self.observed: list[int] = []
+
+    def sample(self, dut: Any) -> bool:
+        """Amostre mudanças e detecte a sequência completa."""
+        try:
+            value = int(dut.io_motor.value)
+        except ValueError:
+            return False
+
+        if not self.observed and value == 0:
+            return False
+        if self.observed and value == self.observed[-1]:
+            return False
+
+        index = len(self.observed)
+        check(
+            index < len(MOTOR_HALF_STEP_SEQUENCE),
+            f"motor produziu um estado adicional: 0x{value:X}",
+        )
+        expected = MOTOR_HALF_STEP_SEQUENCE[index]
+        check(
+            value == expected,
+            f"passo {index} do motor incorreto: esperado 0x{expected:X}, "
+            f"recebido 0x{value:X}",
+        )
+        self.observed.append(value)
+        return len(self.observed) == len(MOTOR_HALF_STEP_SEQUENCE)
+
+
 class RamBus:
     """Rebuild the RAM content from the writes seen on its bus.
 
@@ -416,6 +451,7 @@ async def test_program(dut: Any) -> None:
     uart_expected, uart_capture = start_uart(dut, test_name)
     uart_drive: Task[None] | None = None
     bus = RamBus(dut)
+    motor = MotorSequence()
     cycles_used = 0
     retired = 0
 
@@ -430,6 +466,12 @@ async def test_program(dut: Any) -> None:
         await RisingEdge(sample_clock)
         cycles_used += 1
         retired += retired_now(dut)
+
+        if test_name == "stepper-motor" and motor.sample(dut):
+            LOG.info(
+                "PASS: sequência de meio passo do motor: %s", motor.observed
+            )
+            return
 
         tohost = bus.tohost_write()
         if tohost is None:

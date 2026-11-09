@@ -1,9 +1,10 @@
 -- =============================================================================
 -- Topo de simulação da plataforma internal-mem
 --
--- Monta o núcleo com as memórias simuladas (BOOT_MEMORY, FLASH e RAM) e a UART mapeada em
--- 0xC0000000, alimentados pelo gerador de clock de três fases. As larguras de endereço das
--- memórias e as extensões do núcleo são genéricos, para o testbench dimensionar a plataforma.
+-- Monta o núcleo com as memórias simuladas (BOOT_MEMORY, FLASH e RAM), o GPIO do motor
+-- mapeado em 0x90000000 e a UART em 0xC0000000, alimentados pelo gerador de clock de três
+-- fases. As larguras de endereço das memórias e as extensões do núcleo são genéricos, para
+-- o testbench dimensionar a plataforma.
 -- =============================================================================
 
 library ieee;
@@ -90,7 +91,9 @@ entity rv32i3stage_core_sim_test is
 		-- Entrada serial da UART (repouso em '1').
 		i_uart_rx : in  std_logic := '1';
 		-- Saída serial da UART (repouso em '1').
-		o_uart_tx : out std_logic := '1'
+		o_uart_tx : out std_logic := '1';
+		-- Quatro sinais do GPIO que comandam IN1 a IN4 do driver do motor.
+		io_motor  : inout std_logic_vector(3 downto 0)
   	);
 end entity;
 
@@ -170,6 +173,19 @@ architecture behaviour of rv32i3stage_core_sim_test is
 	-- Dado lido da UART registrado, devolvido ao núcleo no ciclo seguinte.
 	signal uart_rdata_d  : std_logic_vector(31 downto 0);
 
+	-- GPIO do motor mapeado em MOTOR_BASE.
+	signal motor_selected : std_logic;
+	-- Escrita no GPIO do motor ('1' = escreve; janela selecionada e escrita do núcleo).
+	signal motor_write    : std_logic;
+	-- Leitura do GPIO do motor ('1' = lê; janela selecionada e leitura do núcleo).
+	signal motor_read     : std_logic;
+	-- Dado lido dos quatro registradores do GPIO do motor.
+	signal motor_rdata    : std_logic_vector(3 downto 0);
+	-- Leitura do GPIO do motor atrasada um ciclo, que acompanha a resposta registrada.
+	signal motor_read_d   : std_logic;
+	-- Dado lido do GPIO do motor, estendido e registrado para o núcleo.
+	signal motor_rdata_d  : std_logic_vector(31 downto 0);
+
 	-- Porta externa do core (enderecos com o bit 31 ou 30 em 1): aqui so' a UART responde.
 	signal sdram_addr     : std_logic_vector(31 downto 0);
 	-- Dado de escrita do barramento externo do núcleo.
@@ -191,6 +207,13 @@ begin
 		else '0';
 	uart_write <= sdram_wren and uart_selected;
 	uart_read  <= sdram_rden and uart_selected;
+
+	-- Seleciona a janela do GPIO que comanda as quatro entradas do ULN2003.
+	motor_selected <= '1'
+		when sdram_addr(31 downto 28) = MOTOR_BASE(31 downto 28)
+		else '0';
+	motor_write <= sdram_wren and motor_selected;
+	motor_read  <= sdram_rden and motor_selected;
 
 	-- Sinais intermediarios para port maps (VHDL-93 nao aceita expressoes em port maps)
 	ram_re_gated <= ram_rden and ram_en;
@@ -287,22 +310,47 @@ begin
 			o_uart_tx  => o_uart_tx
 		);
 
+	u_motor_gpio : entity work.gpio
+		generic map (
+			data_width => 4,
+			active_low => false
+		)
+		port map (
+			i_clk        => pll_clk_idexmem,
+			i_rst        => i_rst,
+			i_data_in    => sdram_wdata(3 downto 0),
+			i_address    => sdram_addr(5 downto 2),
+			i_write      => motor_write,
+			i_read       => motor_read,
+			o_data_out   => motor_rdata,
+			o_irq        => open,
+			io_gpio_pins => io_motor
+		);
+
 	UART_READ_PIPELINE : process (i_rst, pll_clk_idexmem)
 	begin
 		if i_rst = '1' then
 			uart_read_d  <= '0';
 			uart_rdata_d <= (others => '0');
+			motor_read_d  <= '0';
+			motor_rdata_d <= (others => '0');
 		elsif rising_edge(pll_clk_idexmem) then
 			uart_read_d <= uart_read;
+			motor_read_d <= motor_read;
 
 			if uart_read = '1' then
 				uart_rdata_d <= uart_rdata;
 			end if;
+			if motor_read = '1' then
+				motor_rdata_d <= (31 downto 4 => '0') & motor_rdata;
+			end if;
 		end if;
 	end process;
 
-	-- O core recebe a resposta do acesso realizado no ciclo anterior.
-	sdram_rdata <= uart_rdata_d;
+	-- O core recebe a resposta do periférico acessado no ciclo anterior.
+	sdram_rdata <= uart_rdata_d when uart_read_d = '1' else
+	               motor_rdata_d when motor_read_d = '1' else
+	               (others => '0');
 	ram_rdata   <= ram_memory_rdata;
 
 	-- BOOT_MEMORY e FLASH: duas instancias separadas da MESMA entidade

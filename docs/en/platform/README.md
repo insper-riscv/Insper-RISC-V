@@ -20,4 +20,5 @@ The documents common to both describe what the program sees.
 | [runtime.md](runtime.md) | C runtime, platform file, `stdout` and Spike |
 | [atualizacao-de-programa.md](atualizacao-de-programa.md) | Replacing one program with another and the boot handoff between tests |
 | [interrupcoes.md](interrupcoes.md) | Machine interrupts: the PLIC, the sources of each peripheral and the registers of each event |
+| [stepper-motor.md](stepper-motor.md) | Wiring, register map, sequence and test for the 28BYJ-48 motor with ULN2003 |
 | [timing/README.md](timing/README.md) | Timing baseline (Fmax, critical paths), cycles per instruction and clock domain crossings of the `de0-cv` |
