@@ -10,16 +10,12 @@ All hardware code in the project is written and validated under the **IEEE 1076-
 
 | Rule | Specification |
 | :--- | :--- |
-| Language standard | C23 (`-std=c23`, never `-std=gnu23`) across all `.c` and `.h` files; `riscv-tools` passes the flag on every compile |
-| Warnings | `-Wall -Wextra -Wpedantic -Werror`, passed by `riscv-tools`; no warning is accepted, and `-Wmissing-prototypes` applies to the runtime |
-| Execution environment | Hosted, with the picolibc of the Infra toolchain image: the runtime and the programs compile with the platform `--specs`, without `-ffreestanding`; the standard guarantees only ten headers in a freestanding environment (clause 4), and `<stdio.h>` and `<sys/cdefs.h>` come from picolibc |
-| Compiler extensions | No GNU extensions when the standard has an equivalent: `[[noreturn]]`, `alignas`, and `static_assert` instead of `__attribute__`; `[[gnu::weak]]`, `__strong_reference`, and `__asm__` only where the standard has no equivalent, with a comment that states the reason |
-| Types and constants | `<stdint.h>` types when width matters, typed `static constexpr` instead of numeric `#define`, and `nullptr` instead of `NULL`; `memory_map.h` and `flash_banks.h` are generated and read by `.S` files, so they stay as `#define` |
-| Reserved identifiers | The runtime defines `stdin`, `stdout`, `stderr`, and `_exit`, which the standard reserves to the library (clauses 7.1.3 and 6.4.3); this holds only in the runtime libc code itself, and the file says it is an implementation |
-| Unused parameter | Unnamed parameter in the definition (clause 6.9.2), not `(void)name;` |
-| MMIO, shifts, aliasing, and assembly | The rules of section 1.1 of the `Testes` repository `CONTRIBUTING.en.md` apply to all C in this repository |
-| Naming and comments | Identifiers in **English** with `snake_case`, types with the `_t` suffix; comment in **Portuguese** above every function, global variable, constant, and macro |
-| Standard library | picolibc, as provided by the Infra toolchain image |
+| Language standard | VHDL-2008 (`--std=08`) across all `.vhd` files |
+| Permitted IEEE packages | Only `ieee.std_logic_1164.all` and `ieee.numeric_std.all` |
+| Prohibited packages | `std_logic_arith`, `std_logic_unsigned`, and `std_logic_signed` must never be used |
+| Module instantiation | Direct entity instantiation (`u_name : entity work.entity_name`) for all project code, without exception and without a `component` declaration. The only exception is the narrow list of vendor primitives with no entity visible to VHDL, defined in `vendor_primitives.yaml` of `riscv-tools`; `altsyncram` and `sld_virtual_jtag` (they require `library altera_mf;`) and `sdram_platform_pll` (no library) use `component`, because Quartus Lite 25.1 rejects direct instantiation of them (error 10481). A generated and documented PLL goes in `tree.vhdl_style.exclude` of `paths.yaml` |
+| Port mapping (`port map`) | Always associate by name (`i_port => signal`) and use intermediate signals for logical expressions or dynamic slices, because GHDL requires globally static expressions in port map actuals |
+| Latch prevention | Every signal assigned in a combinational process or conditional assignment must receive an explicit default value across all branches (`else` / `when others =>`) |
 
 The reference standard is [IEEE Std 1076-2008, IEEE Standard VHDL Language Reference Manual](https://standards.ieee.org/ieee/1076/3666/). In academic work, cite it with the BibTeX entry below:
 
@@ -64,8 +60,15 @@ All C code in the project, wherever it lives (test programs, runtime, and platfo
 
 | Rule | Specification |
 | :--- | :--- |
-| Language standard | C23 (`-std=c23`) across all `.c` and `.h` files |
-| Compiler extensions | Do not use GNU extensions when the standard has an equivalent |
+| Language standard | C23 (`-std=c23`, never `-std=gnu23`) across all `.c` and `.h` files; `riscv-tools` passes the flag on every compile |
+| Warnings | `-Wall -Wextra -Wpedantic -Werror`, passed by `riscv-tools`; no warning is accepted, and `-Wmissing-prototypes` applies to the runtime |
+| Execution environment | Hosted, with the picolibc of the Infra toolchain image: the runtime and the programs compile with the platform `--specs`, without `-ffreestanding`; the standard guarantees only ten headers in a freestanding environment (clause 4), and `<stdio.h>` and `<sys/cdefs.h>` come from picolibc |
+| Compiler extensions | No GNU extensions when the standard has an equivalent: `[[noreturn]]`, `alignas`, and `static_assert` instead of `__attribute__`; `[[gnu::weak]]`, `__strong_reference`, and `__asm__` only where the standard has no equivalent, with a comment that states the reason |
+| Types and constants | `<stdint.h>` types when width matters, typed `static constexpr` instead of numeric `#define`, and `nullptr` instead of `NULL`; `memory_map.h` and `flash_banks.h` are generated and read by `.S` files, so they stay as `#define` |
+| Reserved identifiers | The runtime defines `stdin`, `stdout`, `stderr`, and `_exit`, which the standard reserves to the library (clauses 7.1.3 and 6.4.3); this holds only in the runtime libc code itself, and the file says it is an implementation |
+| Unused parameter | Unnamed parameter in the definition (clause 6.9.2), not `(void)name;` |
+| MMIO, shifts, aliasing, and assembly | The rules of section 1.1 of the `Testes` repository `CONTRIBUTING.en.md` apply to all C in this repository |
+| Naming and comments | Identifiers in **English** with `snake_case`, types with the `_t` suffix; comment in **Portuguese** above every function, global variable, constant, and macro |
 | Standard library | picolibc, as provided by the Infra toolchain image |
 
 The reference standard is [ISO/IEC 9899:2024, Programming languages: C](https://www.iso.org/standard/82075.html). In academic work, cite it with the BibTeX entry below:
