@@ -64,7 +64,8 @@ entity rv32im_sdram_flash_sim_test is
         -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
         dcache_size_bits       : positive              := work.de0_cv_map_pkg.DCACHE_SIZE_BITS;
         -- Controlador de FLASH na janela de periferico 3 (0xB0000000), com a FLASH de duas portas e o chip de comandos
-        -- (apagar, gravar, proteger) atras dele: a atualizacao de programa em campo. Desligado, a FLASH e so de leitura.
+        -- (apagar, gravar, proteger) atras dele: a atualizacao de programa em campo. Desligado, a FLASH e so de
+        -- leitura.
         has_flash_controller   : boolean               := false;
         -- Bordas de espera de um apagar de setor do chip de FLASH, antes da varredura do setor.
         flash_erase_latency    : natural               := 2000;
@@ -73,7 +74,8 @@ entity rv32im_sdram_flash_sim_test is
         -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
         -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
         sdram_file             : string                := "";
-        -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+        -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao
+        -- dos tempos do chip em ciclos.
         sdram_tck_ps           : natural               := work.de0_cv_map_pkg.SDRAM_TCK_PS
     );
     port (
@@ -197,12 +199,17 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal p_rdata        : std_logic_vector(8 * 32 - 1 downto 0)     := (others => '0');
     -- As três linhas de interrupção de máquina do núcleo
     signal irq_timer      : std_logic                                 := '0';
+    -- Interrupção de software de máquina (MSIP), saída do CLINT.
     signal irq_software   : std_logic                                 := '0';
+    -- Interrupção externa de máquina (MEIP), do controlador de interrupções.
     signal irq_external   : std_logic                                 := '0';
-    -- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do CLINT
+    -- As três linhas de interrupção entram no núcleo por um registrador: o árbitro do PLIC e o comparador do mtime do
+    -- CLINT
     -- ficam fora do caminho que decide a tomada da interrupção (um ciclo de latência a mais).
     signal irq_timer_q    : std_logic                                 := '0';
+    -- Interrupção de software de máquina (MSIP) como o núcleo a recebe.
     signal irq_software_q : std_logic                                 := '0';
+    -- Interrupção externa de máquina (MEIP) como o núcleo a recebe.
     signal irq_external_q : std_logic                                 := '0';
     -- mtime do CLINT, que o CSR time do núcleo espelha.
     signal clint_mtime    : std_logic_vector(63 downto 0)             := (others => '0');
@@ -248,7 +255,9 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Eventos das caches e da FLASH para os contadores do Zihpm: falha da cache de instrucoes, falha da cache de
     -- dados e ciclo de espera do chip de FLASH.
     signal ic_miss        : std_logic;
+    -- Falha da cache de dados, evento dos contadores do Zihpm.
     signal dc_miss        : std_logic;
+    -- Ciclo de espera do chip de FLASH, evento dos contadores do Zihpm.
     signal flash_busy     : std_logic;
     -- Eventos externos para os contadores do Zihpm: falha da cache de instruções, falha da cache de dados e espera da
     -- FLASH.
@@ -263,9 +272,13 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Roteador de instruções, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
     -- para a próxima palavra da linha, acesso concluído.
     signal si_rden  : std_logic;
+    -- Roteador de instruções, lado da SDRAM: habilita de escrita.
     signal si_wren  : std_logic;
+    -- Roteador de instruções, lado da SDRAM: pedido de linha de cache.
     signal si_line  : std_logic;
+    -- Roteador de instruções, lado da SDRAM: avanço para a próxima palavra da linha.
     signal si_adv   : std_logic;
+    -- Roteador de instruções, lado da SDRAM: acesso concluído.
     signal si_ready : std_logic;
     -- Roteador de instruções, lado da SDRAM: linha larga de escrita de 96 bits.
     signal si_wdx   : std_logic_vector(95 downto 0);
@@ -278,16 +291,23 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal dc_bypass        : std_logic;
     -- Porta de memória da cache de dados: endereço, dado de escrita, dado lido.
     signal dd_addr          : std_logic_vector(31 downto 0);
+    -- Porta de memória da cache de dados: dado de escrita.
     signal dd_wdata         : std_logic_vector(31 downto 0);
+    -- Porta de memória da cache de dados: dado lido.
     signal dd_rdata         : std_logic_vector(31 downto 0);
     -- Porta de memória da cache de dados: habilita de bytes.
     signal dd_be            : std_logic_vector(3 downto 0);
-    -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+    -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
+    -- para
     -- a próxima palavra da linha, acesso concluído.
     signal dd_rden          : std_logic;
+    -- Porta de memória da cache de dados: habilita de escrita.
     signal dd_wren          : std_logic;
+    -- Porta de memória da cache de dados: pedido de linha de cache.
     signal dd_line          : std_logic;
+    -- Porta de memória da cache de dados: avanço para a próxima palavra da linha.
     signal dd_adv           : std_logic;
+    -- Porta de memória da cache de dados: acesso concluído.
     signal dd_ready         : std_logic;
     -- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
     signal dd_wdx,  dd_rdx  : std_logic_vector(95 downto 0);
@@ -296,50 +316,77 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 
     -- Roteador da cache de dados: lado da SDRAM (porta de dados do sdram_system)
     signal sd_addr        : std_logic_vector(31 downto 0);
+    -- Roteador de dados, lado da SDRAM: dado de escrita.
     signal sd_wdata       : std_logic_vector(31 downto 0);
+    -- Roteador de dados, lado da SDRAM: dado lido.
     signal sd_rdata       : std_logic_vector(31 downto 0);
     -- Roteador de dados, lado da SDRAM: habilita de bytes.
     signal sd_be          : std_logic_vector(3 downto 0);
-    -- Roteador de dados, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para a
+    -- Roteador de dados, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+    -- a
     -- próxima palavra da linha, acesso concluído.
     signal sd_rden        : std_logic;
+    -- Roteador de dados, lado da SDRAM: habilita de escrita.
     signal sd_wren        : std_logic;
+    -- Roteador de dados, lado da SDRAM: pedido de linha de cache.
     signal sd_line        : std_logic;
+    -- Roteador de dados, lado da SDRAM: avanço para a próxima palavra da linha.
     signal sd_adv         : std_logic;
+    -- Roteador de dados, lado da SDRAM: acesso concluído.
     signal sd_ready       : std_logic;
     -- Roteador de dados, lado da SDRAM: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
     signal sd_wdx, sd_rdx : std_logic_vector(95 downto 0);
 
     -- Lado da FLASH dos dois roteadores, o árbitro e o chip
     signal fa_addr                        : std_logic_vector(31 downto 0);
+    -- Roteador A, lado da FLASH: dado lido.
     signal fa_rdata                       : std_logic_vector(31 downto 0);
+    -- Roteador B, lado da FLASH: endereço.
     signal fb_addr                        : std_logic_vector(31 downto 0);
+    -- Roteador B, lado da FLASH: dado lido.
     signal fb_rdata                       : std_logic_vector(31 downto 0);
+    -- Roteador C, lado da FLASH: endereço.
     signal fc_addr                        : std_logic_vector(31 downto 0);
+    -- Roteador C, lado da FLASH: dado lido.
     signal fc_rdata                       : std_logic_vector(31 downto 0);
-    -- Roteador de instruções, lado da FLASH: habilita de leitura; Roteador de instruções, lado da FLASH: pedido de linha
+    -- Roteador de instruções, lado da FLASH: habilita de leitura; Roteador de instruções, lado da FLASH: pedido de
+    -- linha
     -- de cache; Roteador de instruções, lado da FLASH: avanço para a próxima palavra da linha; Roteador de instruções,
-    -- lado da FLASH: acesso concluído; Roteador de dados, lado da FLASH: habilita de leitura; Roteador de dados, lado da
-    -- FLASH: pedido de linha de cache; Roteador de dados, lado da FLASH: avanço para a próxima palavra da linha; Roteador
+    -- lado da FLASH: acesso concluído; Roteador de dados, lado da FLASH: habilita de leitura; Roteador de dados, lado
+    -- da
+    -- FLASH: pedido de linha de cache; Roteador de dados, lado da FLASH: avanço para a próxima palavra da linha;
+    -- Roteador
     -- de dados, lado da FLASH: acesso concluído.
     signal fa_rden                        : std_logic;
+    -- Roteador A, lado da FLASH: pedido de linha de cache.
     signal fa_line                        : std_logic;
+    -- Roteador A, lado da FLASH: avanço para a próxima palavra da linha.
     signal fa_adv                         : std_logic;
+    -- Roteador A, lado da FLASH: acesso concluído.
     signal fa_ready                       : std_logic;
+    -- Roteador B, lado da FLASH: habilita de leitura.
     signal fb_rden                        : std_logic;
+    -- Roteador B, lado da FLASH: pedido de linha de cache.
     signal fb_line                        : std_logic;
+    -- Roteador B, lado da FLASH: avanço para a próxima palavra da linha.
     signal fb_adv                         : std_logic;
+    -- Roteador B, lado da FLASH: acesso concluído.
     signal fb_ready                       : std_logic;
     -- Árbitro, lado do chip de FLASH: habilita de leitura, pedido de linha de cache, avanço para a próxima palavra da
     -- linha, acesso concluído.
     signal fc_rden                        : std_logic;
+    -- Roteador C, lado da FLASH: pedido de linha de cache.
     signal fc_line                        : std_logic;
+    -- Roteador C, lado da FLASH: avanço para a próxima palavra da linha.
     signal fc_adv                         : std_logic;
+    -- Roteador C, lado da FLASH: acesso concluído.
     signal fc_ready                       : std_logic;
     -- Roteador de instruções, lado da FLASH: linha larga lida de 96 bits; Roteador de dados, lado da FLASH: linha larga
     -- lida de 96 bits; Árbitro, lado do chip de FLASH: linha larga lida de 96 bits.
     signal fa_rdx                         : std_logic_vector(95 downto 0);
+    -- Roteador B, lado da FLASH: linha larga lida de 96 bits.
     signal fb_rdx                         : std_logic_vector(95 downto 0);
+    -- Roteador C, lado da FLASH: linha larga lida de 96 bits.
     signal fc_rdx                         : std_logic_vector(95 downto 0);
     -- Endereço de byte do pedido do árbitro ao chip de FLASH; Palavra lida do chip de FLASH pelo árbitro.
     signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
@@ -347,8 +394,11 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Controlador de FLASH e chip de comandos (so com HAS_FLASH_CONTROLLER): comando, estado, buffer de pagina,
     -- porta B do armazenamento e invalidacao por regiao das duas caches.
     signal fl_cmd_valid                  : std_logic                     := '0';
+    -- Controlador de FLASH: operação em andamento.
     signal fl_busy                       : std_logic                     := '0';
+    -- Controlador de FLASH: escrita habilitada (WEL).
     signal fl_wel                        : std_logic                     := '0';
+    -- Controlador de FLASH: comando recusado.
     signal fl_refused                    : std_logic                     := '0';
     -- Controlador de FLASH: operação do comando.
     signal fl_cmd_op                     : std_logic_vector(2 downto 0);
@@ -358,10 +408,13 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal fl_buf_idx                    : std_logic_vector(5 downto 0);
     -- Controlador de FLASH: palavra do buffer de página.
     signal fl_buf_data                   : std_logic_vector(31 downto 0);
-    -- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado lido
+    -- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado
+    -- lido
     -- da porta B do armazenamento.
     signal fl_b_addr                     : std_logic_vector(31 downto 0) := (others => '0');
+    -- Controlador de FLASH: dado de escrita da porta B do armazenamento.
     signal fl_b_wdata                    : std_logic_vector(31 downto 0) := (others => '0');
+    -- Controlador de FLASH: dado lido da porta B do armazenamento.
     signal fl_b_data                     : std_logic_vector(31 downto 0) := (others => '0');
     -- Controlador de FLASH: escrita na porta B do armazenamento.
     signal fl_b_we                       : std_logic                     := '0';

@@ -33,7 +33,7 @@ architecture rtl of clk_gen_3way is
 begin
 
     -- Contador mod-3 atualizado na borda de descida; i_rst assíncrono
-    process (i_clk, i_rst) is
+    p_mod3_counter : process (i_clk, i_rst) is
 
         -- Próximo valor do contador mod-3.
         variable next_cnt : unsigned(1 downto 0);
@@ -51,7 +51,7 @@ begin
             cnt <= next_cnt;
         end if;
 
-    end process;
+    end process p_mod3_counter;
 
     -- Saídas: ativas apenas durante a fase baixa de i_clk e quando cnt corresponde
     -- Pulso da fase 0 (ativo quando o contador vale 0 e i_clk está em '1').

@@ -266,10 +266,12 @@ begin
     m_ready         <= ready_i;
     o_dbg_word_data <= mem(to_integer(unsigned(i_dbg_word_addr)));
 
-    process (i_clk) is
+    p_memory : process (i_clk) is
 
         -- Índice do laço de carga.
-        variable i : integer;
+        variable i  : integer;
+        -- Bit menor do byte b da palavra w dentro de m_wdx.
+        variable lo : natural;
 
     begin
 
@@ -307,7 +309,8 @@ begin
                                 for b in 0 to 3 loop
 
                                     if m_bex(4 * (w - 1) + b) = '1' then
-                                        mem(i + w)(8 * b + 7 downto 8 * b) <= m_wdx(32 * (w - 1) + 8 * b + 7 downto 32 * (w - 1) + 8 * b);
+                                        lo                                 := 32 * (w - 1) + 8 * b;
+                                        mem(i + w)(8 * b + 7 downto 8 * b) <= m_wdx(lo + 7 downto lo);
                                     end if;
 
                                 end loop;
@@ -322,7 +325,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_memory;
 
     u_uart : entity work.jtag_uart
         port map (

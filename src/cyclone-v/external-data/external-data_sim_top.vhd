@@ -62,7 +62,8 @@ entity rv32im_external_data_sim_test is
         -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
         -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de depuração.
         sdram_file             : string                := "";
-        -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao dos tempos do chip em ciclos.
+        -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao
+        -- dos tempos do chip em ciclos.
         sdram_tck_ps           : natural               := work.external_data_map_pkg.SDRAM_TCK_PS
     );
     port (
@@ -258,16 +259,23 @@ architecture behaviour of rv32im_external_data_sim_test is
     signal dc_bypass        : std_logic;
     -- Lado da memória da cache de dados, ligado direto ao sdram_system.
     signal dd_addr          : std_logic_vector(31 downto 0);
+    -- Porta de memória da cache de dados: dado de escrita.
     signal dd_wdata         : std_logic_vector(31 downto 0);
+    -- Porta de memória da cache de dados: dado lido.
     signal dd_rdata         : std_logic_vector(31 downto 0);
     -- Porta de memória da cache de dados: habilita de bytes.
     signal dd_be            : std_logic_vector(3 downto 0);
-    -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
+    -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
+    -- para
     -- a próxima palavra da linha, acesso concluído.
     signal dd_rden          : std_logic;
+    -- Porta de memória da cache de dados: habilita de escrita.
     signal dd_wren          : std_logic;
+    -- Porta de memória da cache de dados: pedido de linha de cache.
     signal dd_line          : std_logic;
+    -- Porta de memória da cache de dados: avanço para a próxima palavra da linha.
     signal dd_adv           : std_logic;
+    -- Porta de memória da cache de dados: acesso concluído.
     signal dd_ready         : std_logic;
     -- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
     signal dd_wdx,  dd_rdx  : std_logic_vector(95 downto 0);
@@ -517,7 +525,8 @@ begin
             o_hex       => o_display_hex
         );
 
-    -- A SDRAM e o modelo do chip; as portas de depuração do modelo ficam sem uso aqui e a porta de instruções fica ociosa.
+    -- A SDRAM e o modelo do chip; as portas de depuração do modelo ficam sem uso aqui e a porta de instruções fica
+    -- ociosa.
     u_sdram : entity work.sdram_system
         generic map (
             tck_ps         => sdram_tck_ps,

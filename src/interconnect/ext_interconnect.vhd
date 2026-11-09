@@ -124,7 +124,7 @@ begin
 
     pulse <= '1' when st = ST_IDLE and is_periph = '1' and active = '1' else '0';
 
-    process (pulse, id, i_rden, i_wren) is
+    p_decode : process (pulse, id, i_rden, i_wren) is
     begin
 
         o_p_we <= (others => '0');
@@ -135,14 +135,14 @@ begin
             o_p_re(id) <= i_rden;
         end if;
 
-    end process;
+    end process p_decode;
 
     o_ready <= (i_m_ready) when is_periph = '0' else
                '1' when st = ST_DONE else
                '0';
     o_rdata <= p_rdata_q when sel_wb = '1' else i_m_rdata;
 
-    process (i_clk) is
+    p_registers : process (i_clk) is
     begin
 
         if rising_edge(i_clk) then
@@ -181,6 +181,6 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_registers;
 
 end architecture rtl;

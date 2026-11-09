@@ -211,16 +211,16 @@ begin
 
     -- Sem UART, o barramento externo não tem dispositivo e o topo não o usa
 
-    g_no_uart : if not has_uart generate
+    gen_no_uart : if not has_uart generate
     begin
         uart_selected <= '0';
         uart_rdata    <= (others => '0');
         o_uart_tdo    <= '0';
-    end generate g_no_uart;
+    end generate gen_no_uart;
 
     -- Com UART, ela responde na janela de periféricos cuja base é UART_BASE
 
-    g_uart : if has_uart generate
+    gen_uart : if has_uart generate
     begin
         uart_selected <= '1' when ext_addr(31 downto 28) = UART_BASE(31 downto 28) else '0';
 
@@ -243,7 +243,7 @@ begin
                 i_state_uir => i_uart_uir
             );
 
-    end generate g_uart;
+    end generate gen_uart;
 
     -- O núcleo lê o dado do barramento externo no ciclo seguinte ao pedido
     p_uart_read : process (pll_clk_idexmem, i_rst) is

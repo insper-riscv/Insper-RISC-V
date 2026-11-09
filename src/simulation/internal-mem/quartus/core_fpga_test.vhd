@@ -209,8 +209,9 @@ begin
     o_ledr(5) <= trap_seen;      -- '1' core tomou uma exceção desde o último reset
 
     -- o_trap_take dura um ciclo de clock do core, invisível a olho nu: a bandeira o segura até o reset. O reset é
-    -- assíncrono porque o botão também segura a PLL em reset e o clock do core pára, então um clear síncrono nunca o veria
-    process (pll_clk_idexmem, core_reset) is
+    -- assíncrono porque o botão também segura a PLL em reset e o clock do core pára, então um clear síncrono nunca o
+    -- veria
+    p_trap_seen : process (pll_clk_idexmem, core_reset) is
     begin
 
         if core_reset = '1' then
@@ -221,7 +222,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_trap_seen;
 
     u_core : entity work.core
         generic map (
@@ -278,7 +279,7 @@ begin
             o_uart_tx  => o_uart_tx
         );
 
-    uart_read_pipeline : process (core_reset, pll_clk_idexmem) is
+    p_uart_read_pipeline : process (core_reset, pll_clk_idexmem) is
     begin
 
         if core_reset = '1' then
@@ -292,7 +293,7 @@ begin
             end if;
         end if;
 
-    end process uart_read_pipeline;
+    end process p_uart_read_pipeline;
 
     -- A UART responde no ciclo seguinte da porta externa; a RAM interna
     -- permanece dedicada à sua própria porta do core.

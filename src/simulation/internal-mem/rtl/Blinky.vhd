@@ -32,7 +32,7 @@ architecture rtl of blinky is
 
 begin
 
-    process (i_clk) is
+    p_blink : process (i_clk) is
     begin
 
         if rising_edge(i_clk) then
@@ -44,7 +44,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_blink;
 
     o_led <= led_r;
 

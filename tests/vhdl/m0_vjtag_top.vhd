@@ -61,7 +61,7 @@ begin
             virtual_state_uir  => open
         );
 
-    process (tck) is
+    p_jtag_shift : process (tck) is
     begin
 
         if rising_edge(tck) then
@@ -70,7 +70,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_jtag_shift;
 
     tdo   <= shreg(0);
     o_bit <= shreg(7) xor ir_in(0);

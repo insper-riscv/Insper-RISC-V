@@ -40,7 +40,8 @@
 -- resolvido por quem instancia o SoC; o periférico vê sempre o programa ativo em '1'.
 --
 -- O núcleo lê a ISA e o mapa do config_pkg gerado do platform.yaml da plataforma, e o SoC confere em asserções
--- que os genéricos do mapa, que quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos em potência de dois (bytes para
+-- que os genéricos do mapa, que quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos
+-- em potência de dois (bytes para
 -- a BOOT_MEMORY, bits para as caches), verificados pelo log2_exact.
 -- =============================================================================
 
@@ -77,7 +78,8 @@ entity soc is
         icache_size_bits       : positive                      := 4096;
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
         dcache_size_bits       : positive                      := 4096;
-        -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+        -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
+        -- MiB).
         cache_window_bits      : natural range 26 to 29        := 26;
         -- Zicsr no núcleo (instruções CSR reais); falso mantém o comportamento de NOP.
         has_zicsr              : boolean                       := false;
@@ -238,7 +240,8 @@ entity soc is
         i_flash_rdata_x     : in    std_logic_vector(95 downto 0) := (others => '0');
         -- Controlador de FLASH: pulso que entrega um comando ao chip.
         o_flash_cmd_valid   : out   std_logic;
-        -- Controlador de FLASH: código do comando (001 habilitar escrita, 010 apagar, 011 gravar, 100 proteger, 101 desproteger).
+        -- Controlador de FLASH: código do comando (001 habilitar escrita, 010 apagar, 011 gravar, 100 proteger, 101
+        -- desproteger).
         o_flash_cmd_op      : out   std_logic_vector(2 downto 0);
         -- Controlador de FLASH: endereço de byte do comando.
         o_flash_cmd_addr    : out   std_logic_vector(31 downto 0);
@@ -362,7 +365,8 @@ architecture behaviour of soc is
 
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
-        has_interrupts or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins or has_timer;
+        has_interrupts or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
+        or has_timer;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -483,7 +487,9 @@ architecture behaviour of soc is
     signal irq_software   : std_logic                                 := '0';
     -- As três linhas de interrupção como o núcleo as recebe (direto, ou por um registrador com registered_irqs).
     signal irq_timer_q    : std_logic                                 := '0';
+    -- Interrupção de software de máquina (MSIP) como o núcleo a recebe.
     signal irq_software_q : std_logic                                 := '0';
+    -- Interrupção externa de máquina (MEIP) como o núcleo a recebe.
     signal irq_external_q : std_logic                                 := '0';
     -- Interrupção externa de máquina (MEIP), saída do PLIC.
     signal irq_external   : std_logic                                 := '0';
@@ -647,29 +653,45 @@ architecture behaviour of soc is
     -- Roteadores por região (as duas memórias externas): lado do chip de FLASH.
     -- Endereço e dado lido dos roteadores A, B e C do chip de FLASH.
     signal fa_addr  : std_logic_vector(31 downto 0);
+    -- Roteador A, lado da FLASH: dado lido.
     signal fa_rdata : std_logic_vector(31 downto 0);
+    -- Roteador B, lado da FLASH: endereço.
     signal fb_addr  : std_logic_vector(31 downto 0);
+    -- Roteador B, lado da FLASH: dado lido.
     signal fb_rdata : std_logic_vector(31 downto 0);
+    -- Roteador C, lado da FLASH: endereço.
     signal fc_addr  : std_logic_vector(31 downto 0);
+    -- Roteador C, lado da FLASH: dado lido.
     signal fc_rdata : std_logic_vector(31 downto 0);
     -- Roteador A para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
     signal fa_rden  : std_logic;
+    -- Roteador A, lado da FLASH: pedido de linha de cache.
     signal fa_line  : std_logic;
+    -- Roteador A, lado da FLASH: avanço para a próxima palavra da linha.
     signal fa_adv   : std_logic;
+    -- Roteador A, lado da FLASH: acesso concluído.
     signal fa_ready : std_logic;
     -- Roteador B para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
     signal fb_rden  : std_logic;
+    -- Roteador B, lado da FLASH: pedido de linha de cache.
     signal fb_line  : std_logic;
+    -- Roteador B, lado da FLASH: avanço para a próxima palavra da linha.
     signal fb_adv   : std_logic;
+    -- Roteador B, lado da FLASH: acesso concluído.
     signal fb_ready : std_logic;
     -- Roteador C para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
     signal fc_rden  : std_logic;
+    -- Roteador C, lado da FLASH: pedido de linha de cache.
     signal fc_line  : std_logic;
+    -- Roteador C, lado da FLASH: avanço para a próxima palavra da linha.
     signal fc_adv   : std_logic;
+    -- Roteador C, lado da FLASH: acesso concluído.
     signal fc_ready : std_logic;
     -- Linhas lidas dos roteadores A, B e C, barramentos largos de 96 bits.
     signal fa_rdx   : std_logic_vector(95 downto 0);
+    -- Roteador B, lado da FLASH: linha larga lida de 96 bits.
     signal fb_rdx   : std_logic_vector(95 downto 0);
+    -- Roteador C, lado da FLASH: linha larga lida de 96 bits.
     signal fc_rdx   : std_logic_vector(95 downto 0);
 
     -- Portas do chip de RAM externo: dados e instruções.
@@ -751,13 +773,15 @@ begin
     assert shift_left(resize(to_unsigned(rom_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.ROM_END
         report "rom_end_kib difere de ROM_END do config_pkg"
         severity failure;
-    assert shift_left(resize(to_unsigned(ram_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.RAM_BASE
+    assert shift_left(resize(to_unsigned(ram_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
+         work.config_pkg.RAM_BASE
         report "ram_base_kib difere de RAM_BASE do config_pkg"
         severity failure;
     assert shift_left(resize(to_unsigned(ram_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.RAM_END
         report "ram_end_kib difere de RAM_END do config_pkg"
         severity failure;
-    assert shift_left(resize(to_unsigned(ext_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.EXT_BASE
+    assert shift_left(resize(to_unsigned(ext_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
+         work.config_pkg.EXT_BASE
         report "ext_base_kib difere de EXT_BASE do config_pkg"
         severity failure;
     assert shift_left(resize(to_unsigned(periph_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
@@ -865,17 +889,17 @@ begin
 
     hpm_ext_events <= flash_busy & dc_miss & ic_miss;
 
-    g_irq_direct : if not registered_irqs generate
+    gen_irq_direct : if not registered_irqs generate
     begin
         irq_timer_q    <= irq_timer;
         irq_software_q <= irq_software;
         irq_external_q <= irq_external;
-    end generate g_irq_direct;
+    end generate gen_irq_direct;
 
-    g_irq_registered : if registered_irqs generate
+    gen_irq_registered : if registered_irqs generate
     begin
 
-        process (i_clk_core) is
+        p_irq_registers : process (i_clk_core) is
         begin
 
             if rising_edge(i_clk_core) then
@@ -884,9 +908,9 @@ begin
                 irq_external_q <= irq_external;
             end if;
 
-        end process;
+        end process p_irq_registers;
 
-    end generate g_irq_registered;
+    end generate gen_irq_registered;
 
     u_core : entity work.core
         generic map (
@@ -941,7 +965,7 @@ begin
     -- sem ela, direto ao lado da memória. Existe quando há dados via porta ou interrupções (o CLINT
     -- e o controlador externo ficam na janela); sem dados via porta, o lado da memória responde zero.
 
-    g_data_port : if ROM_PORT or RAM_PORT or HAS_PERIPHERALS generate
+    gen_data_port : if ROM_PORT or RAM_PORT or HAS_PERIPHERALS generate
     begin
 
         u_interconnect : entity work.ext_interconnect
@@ -974,17 +998,17 @@ begin
                 i_p_rdata     => p_rdata
             );
 
-    end generate g_data_port;
+    end generate gen_data_port;
 
-    g_no_data_port : if not (ROM_PORT or RAM_PORT) generate
+    gen_no_data_port : if not (ROM_PORT or RAM_PORT) generate
     begin
         m_ready <= '1';
         m_rdata <= (others => '0');
-    end generate g_no_data_port;
+    end generate gen_no_data_port;
 
     -- CLINT e controlador de interrupção externa, no domínio de clock do núcleo (sem sincronizador).
 
-    g_interrupts : if has_interrupts generate
+    gen_interrupts : if has_interrupts generate
     begin
 
         u_clint : entity work.clint
@@ -1021,12 +1045,12 @@ begin
                 o_meip     => irq_external
             );
 
-    end generate g_interrupts;
+    end generate gen_interrupts;
 
     -- Periféricos do topo da placa: chaves e botões (GPIO), display e as duas UART. Um periférico ausente deixa
     -- a saída em zero e o dado lido da janela em zero, como uma janela sem dispositivo.
 
-    g_switches : if HAS_SWITCHES_ROLE generate
+    gen_switches : if HAS_SWITCHES_ROLE generate
     begin
 
         u_switches : entity work.gpio
@@ -1045,9 +1069,9 @@ begin
                 io_gpio_pins => io_switches
             );
 
-    end generate g_switches;
+    end generate gen_switches;
 
-    g_keys : if HAS_KEYS_ROLE generate
+    gen_keys : if HAS_KEYS_ROLE generate
     begin
 
         u_keys : entity work.gpio
@@ -1066,9 +1090,9 @@ begin
                 io_gpio_pins => io_keys
             );
 
-    end generate g_keys;
+    end generate gen_keys;
 
-    g_display : if HAS_DISPLAY_ROLE generate
+    gen_display : if HAS_DISPLAY_ROLE generate
     begin
 
         u_display : entity work.seg_display
@@ -1095,11 +1119,11 @@ begin
                 o_hex       => o_display_hex
             );
 
-    end generate g_display;
+    end generate gen_display;
 
     -- O console é um só bloco de periférico; o backend ("jtag" ou "pinos") é a escolha da instância.
 
-    g_uart_jtag : if has_uart_jtag generate
+    gen_uart_jtag : if has_uart_jtag generate
     begin
 
         u_uart_jtag : entity work.console
@@ -1126,9 +1150,9 @@ begin
                 i_state_uir => i_uart_state_uir
             );
 
-    end generate g_uart_jtag;
+    end generate gen_uart_jtag;
 
-    g_flash_ctrl : if has_flash_ctrl generate
+    gen_flash_ctrl : if has_flash_ctrl generate
     begin
 
         u_flash_ctrl : entity work.flash_controller
@@ -1151,23 +1175,23 @@ begin
                 o_buf_data  => o_flash_buf_data
             );
 
-    end generate g_flash_ctrl;
+    end generate gen_flash_ctrl;
 
-    g_no_display : if not HAS_DISPLAY_ROLE generate
+    gen_no_display : if not HAS_DISPLAY_ROLE generate
     begin
         o_display_tdo  <= '0';
         o_display_fail <= '0';
-    end generate g_no_display;
+    end generate gen_no_display;
 
-    g_no_flash_ctrl : if not has_flash_ctrl generate
+    gen_no_flash_ctrl : if not has_flash_ctrl generate
     begin
         o_flash_cmd_valid <= '0';
         o_flash_cmd_op    <= (others => '0');
         o_flash_cmd_addr  <= (others => '0');
         o_flash_buf_data  <= (others => '0');
-    end generate g_no_flash_ctrl;
+    end generate gen_no_flash_ctrl;
 
-    g_timer : if has_timer generate
+    gen_timer : if has_timer generate
     begin
 
         u_timer : entity work.timer
@@ -1183,9 +1207,9 @@ begin
                 o_pwm      => open
             );
 
-    end generate g_timer;
+    end generate gen_timer;
 
-    g_uart_pins : if has_uart_pins generate
+    gen_uart_pins : if has_uart_pins generate
     begin
 
         u_uart_pins : entity work.console
@@ -1208,13 +1232,13 @@ begin
                 o_tdo   => open
             );
 
-    end generate g_uart_pins;
+    end generate gen_uart_pins;
 
     dc_bypass <= '1' when has_dcache_bypass and m_addr(31 downto 12) = bypass_page else '0';
 
     -- Com cache de dados, ela fica entre a interconexão e a memória.
 
-    g_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate
+    gen_dcache : if (ROM_PORT or RAM_PORT) and has_dcache generate
     begin
 
         u_dcache : entity work.dcache
@@ -1258,11 +1282,11 @@ begin
                 i_d_rdata_x    => dd_rdx
             );
 
-    end generate g_dcache;
+    end generate gen_dcache;
 
     -- Sem cache de dados, o pedido da interconexão segue palavra a palavra, com os endereços do mapa.
 
-    g_no_dcache : if (ROM_PORT or RAM_PORT) and not has_dcache generate
+    gen_no_dcache : if (ROM_PORT or RAM_PORT) and not has_dcache generate
     begin
         dd_addr  <= m_addr;
         dd_wdata <= m_wdata;
@@ -1274,11 +1298,11 @@ begin
         dd_wdx   <= (others => '0');
         m_ready  <= dd_ready;
         m_rdata  <= dd_rdata;
-    end generate g_no_dcache;
+    end generate gen_no_dcache;
 
     -- Instruções via porta, com cache: a cache de instruções entre o núcleo e a memória.
 
-    g_icache : if ROM_PORT and has_icache generate
+    gen_icache : if ROM_PORT and has_icache generate
     begin
 
         u_icache : entity work.icache
@@ -1312,11 +1336,11 @@ begin
                 i_d_rdata_x    => id_rdx
             );
 
-    end generate g_icache;
+    end generate gen_icache;
 
     -- Instruções via porta, sem cache: a ponte de busca, que guarda só a linha corrente.
 
-    g_ifetch : if ROM_PORT and not has_icache generate
+    gen_ifetch : if ROM_PORT and not has_icache generate
     begin
 
         u_ifetch : entity work.ifetch_bridge
@@ -1344,21 +1368,21 @@ begin
                 i_d_rdata_x  => id_rdx
             );
 
-    end generate g_ifetch;
+    end generate gen_ifetch;
 
     -- Sem a ROM via porta, a face do chip de FLASH fica parada.
 
-    g_flash_idle : if not ROM_PORT generate
+    gen_flash_idle : if not ROM_PORT generate
     begin
         fc_addr <= (others => '0');
         fc_rden <= '0';
         fc_line <= '0';
         fc_adv  <= '0';
-    end generate g_flash_idle;
+    end generate gen_flash_idle;
 
     -- Só a RAM via porta: o lado da memória dos dados fala direto com o chip de RAM.
 
-    g_direct_data : if RAM_PORT and not ROM_PORT generate
+    gen_direct_data : if RAM_PORT and not ROM_PORT generate
     begin
         rc_d_addr  <= dd_addr;
         rc_d_wdata <= dd_wdata;
@@ -1371,11 +1395,11 @@ begin
         dd_ready   <= rc_d_ready;
         dd_rdata   <= rc_d_rdata;
         dd_rdx     <= rc_d_rdx;
-    end generate g_direct_data;
+    end generate gen_direct_data;
 
     -- Só a ROM via porta: o roteador leva os dados da ROM à FLASH, e o que cai fora dela responde zero.
 
-    g_rom_only : if ROM_PORT and not RAM_PORT generate
+    gen_rom_only : if ROM_PORT and not RAM_PORT generate
     begin
         sd_ready <= '1';
         sd_rdata <= (others => '0');
@@ -1387,11 +1411,11 @@ begin
         id_ready <= fa_ready;
         id_rdata <= fa_rdata;
         id_rdx   <= fa_rdx;
-    end generate g_rom_only;
+    end generate gen_rom_only;
 
     -- A ROM via porta: o roteador dos dados e o árbitro entre a busca e os dados na FLASH.
 
-    g_rom_path : if ROM_PORT generate
+    gen_rom_path : if ROM_PORT generate
     begin
 
         u_router_d : entity work.mem_region_router
@@ -1461,12 +1485,12 @@ begin
                 i_rdata_x   => fc_rdx
             );
 
-    end generate g_rom_path;
+    end generate gen_rom_path;
 
     -- As duas memórias via porta: o roteador da busca separa a FLASH do chip de RAM, e o dos dados
     -- entrega o que não é da FLASH ao chip.
 
-    g_routed : if ROM_PORT and RAM_PORT generate
+    gen_routed : if ROM_PORT and RAM_PORT generate
     begin
 
         u_router_i : entity work.mem_region_router
@@ -1522,6 +1546,6 @@ begin
         si_ready  <= rc_i_ready;
         si_rdata  <= rc_i_rdata;
         si_rdx    <= rc_i_rdx;
-    end generate g_routed;
+    end generate gen_routed;
 
 end architecture behaviour;

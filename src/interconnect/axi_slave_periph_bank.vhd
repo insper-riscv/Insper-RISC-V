@@ -149,7 +149,7 @@ begin
     o_p_wdata   <= wdata_l;
     o_p_byteena <= strb_l;
 
-    process (st, id, we_l) is
+    p_decode : process (st, id, we_l) is
     begin
 
         o_p_we <= (others => '0');
@@ -160,7 +160,7 @@ begin
             o_p_re(id) <= not we_l;
         end if;
 
-    end process;
+    end process p_decode;
 
     o_s_bvalid <= '1' when st = ST_RESP and we_l = '1' else '0';
     o_s_bresp  <= "10" when bad_l = '1' else "00";
@@ -169,7 +169,7 @@ begin
     o_s_rdata  <= rd_q when bad_l = '0' else x"00000000";
     o_s_rlast  <= '1' when (st = ST_RESP and we_l = '0') or (st = ST_RDROP and left_l = 0) else '0';
 
-    process (i_clk) is
+    p_registers : process (i_clk) is
     begin
 
         if rising_edge(i_clk) then
@@ -242,6 +242,6 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_registers;
 
 end architecture rtl;

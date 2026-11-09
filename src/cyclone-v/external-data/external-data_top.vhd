@@ -254,14 +254,17 @@ architecture behaviour of core_fpga_external_data is
     -- Reset do núcleo: PLL destravado, botão ou carregador da FLASH.
     signal core_reset : std_logic;
 
-    -- Pulso de um ciclo de o_trap_take do núcleo (exceção tomada, com ou sem Zicsr) e a bandeira que o segura até o próximo reset.
+    -- Pulso de um ciclo de o_trap_take do núcleo (exceção tomada, com ou sem Zicsr) e a bandeira que o segura até o
+    -- próximo reset.
     signal core_trap : std_logic;
     -- Bandeira que segura a exceção vista até o próximo reset, mostrada no LED 1.
     signal trap_seen : std_logic := '0';
 
     -- Mestre A (a ponte do núcleo) e mestre B (o mestre de depuração) do árbitro.
     signal a_req             : std_logic;
+    -- Mestre A (a ponte do núcleo) do árbitro: alternância de confirmação.
     signal a_ack             : std_logic;
+    -- Mestre A (a ponte do núcleo) do árbitro: escrita.
     signal a_we              : std_logic;
     -- Mestre A: endereço de palavra do pedido.
     signal a_addr            : std_logic_vector(23 downto 0);
@@ -271,7 +274,9 @@ architecture behaviour of core_fpga_external_data is
     signal a_be              : std_logic_vector(3 downto 0);
     -- Mestre B: alternância de pedido, alternância de confirmação e escrita.
     signal b_req             : std_logic;
+    -- Mestre B (o mestre de depuração) do árbitro: alternância de confirmação.
     signal b_ack             : std_logic;
+    -- Mestre B (o mestre de depuração) do árbitro: escrita.
     signal b_we              : std_logic;
     -- Mestre B: endereço de palavra do pedido.
     signal b_addr            : std_logic_vector(23 downto 0);
@@ -311,8 +316,11 @@ architecture behaviour of core_fpga_external_data is
     signal rst_mem          : std_logic;
     -- Lado do controlador: alternância de pedido, alternância de confirmação, inicialização concluída e escrita.
     signal req_tog          : std_logic;
+    -- Lado do controlador: alternância de confirmação.
     signal ack_tog          : std_logic;
+    -- Lado do controlador: inicialização concluída.
     signal init_done        : std_logic;
+    -- Lado do controlador: escrita.
     signal c_we             : std_logic;
     -- Lado do controlador: endereço de palavra do pedido.
     signal c_addr           : std_logic_vector(23 downto 0);
@@ -342,9 +350,12 @@ begin
 
     core_reset <= (not pll_locked) or (not fpga_reset_n) or flash_halt;
 
-    -- LEDR9 a LEDR4 mostram as extensões do perfil do núcleo ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga o LEDR6);
-    -- LEDR0 acende quando algum programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende quando o
-    -- núcleo toma uma exceção, sinalizada em o_trap_take (com ou sem Zicsr), e fica aceso até o próximo reset; LEDR2 acende com o núcleo
+    -- LEDR9 a LEDR4 mostram as extensões do perfil do núcleo ('1' = presente, e o Zicntr apaga o LEDR7, como o M apaga
+    -- o LEDR6);
+    -- LEDR0 acende quando algum programa da execução em curso falhou (o hospedeiro grava a bandeira); LEDR1 acende
+    -- quando o
+    -- núcleo toma uma exceção, sinalizada em o_trap_take (com ou sem Zicsr), e fica aceso até o próximo reset; LEDR2
+    -- acende com o núcleo
     -- parado pelo carregador da FLASH; LEDR3 fica apagado.
     LEDR(9) <= '1' when HAS_ZICCLSM else '0';
     LEDR(8) <= '1' when HAS_ZIFENCEI else '0';
@@ -449,7 +460,8 @@ begin
             o_q_b       => flash_data2
         );
 
-    -- O carregador da FLASH: com o núcleo parado, escreve a imagem pela porta B; com ele rodando, repassa o estágio MEM.
+    -- O carregador da FLASH: com o núcleo parado, escreve a imagem pela porta B; com ele rodando, repassa o estágio
+    -- MEM.
     u_flash_loader : entity work.flash_loader
         generic map (
             addr_width => log2_exact(ROM_STORAGE_BYTES) - 2
@@ -492,7 +504,10 @@ begin
 
     u_dcache : entity work.dcache
         generic map (
-            size_bits => DCACHE_SIZE_BITS, write_through => true, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB
+            size_bits     => DCACHE_SIZE_BITS,
+            write_through => true,
+            rom_base_kib  => ROM_BASE_KIB,
+            rom_end_kib   => ROM_END_KIB
         )
         port map (
             i_clk         => pll_clk_idexmem,

@@ -243,7 +243,7 @@ begin
             o_uart_tx  => o_uart_tx
         );
 
-    uart_read_pipeline : process (i_rst, pll_clk_idexmem) is
+    p_uart_read_pipeline : process (i_rst, pll_clk_idexmem) is
     begin
 
         if i_rst = '1' then
@@ -257,7 +257,7 @@ begin
             end if;
         end if;
 
-    end process uart_read_pipeline;
+    end process p_uart_read_pipeline;
 
     -- O core recebe a resposta do acesso realizado no ciclo anterior.
     sdram_rdata <= uart_rdata_d;

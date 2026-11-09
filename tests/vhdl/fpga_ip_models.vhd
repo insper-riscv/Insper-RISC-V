@@ -93,7 +93,7 @@ begin
 
     o_q <= q_r;
 
-    process (i_clk) is
+    p_read : process (i_clk) is
     begin
 
         if rising_edge(i_clk) then
@@ -102,7 +102,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_read;
 
 end architecture sim;
 
@@ -184,7 +184,7 @@ begin
     o_q_b <= q_b_r;
 
     -- Porta A: só lê.
-    process (i_clk_a) is
+    p_port_a : process (i_clk_a) is
     begin
 
         if rising_edge(i_clk_a) then
@@ -193,10 +193,10 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_port_a;
 
     -- Porta B: lê e escreve.
-    process (i_clk_b) is
+    p_port_b : process (i_clk_b) is
     begin
 
         if rising_edge(i_clk_b) then
@@ -208,7 +208,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_port_b;
 
 end architecture sim;
 
@@ -258,7 +258,7 @@ begin
 
     o_q <= q_r;
 
-    process (i_clk) is
+    p_ram : process (i_clk) is
 
         -- Conteúdo da RAM.
         variable mem   : words_t := (others => (others => '0'));
@@ -285,7 +285,7 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_ram;
 
 end architecture sim;
 

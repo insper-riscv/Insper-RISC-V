@@ -32,107 +32,160 @@ entity axi_router is
 
         -- Porta escravo AXI4, canal de endereço de escrita: validade da transferência ('1' = válida).
         i_s_awvalid : in    std_logic;
+        -- Porta escravo AXI4, canal de endereço de escrita: destino pronto para aceitar a transferência ('1').
         o_s_awready : out   std_logic;
+        -- Porta escravo AXI4, canal de endereço de escrita: endereço da transferência.
         i_s_awaddr  : in    std_logic_vector(31 downto 0);
         -- Porta escravo AXI4, canal de endereço de escrita: número de beats da rajada menos um.
         i_s_awlen   : in    std_logic_vector(7 downto 0);
+        -- Porta escravo AXI4, canal de endereço de escrita: tamanho de cada beat da rajada (log2 de bytes).
         i_s_awsize  : in    std_logic_vector(2 downto 0);
+        -- Porta escravo AXI4, canal de endereço de escrita: tipo da rajada.
         i_s_awburst : in    std_logic_vector(1 downto 0);
         -- Porta escravo AXI4, canal de dados de escrita: validade da transferência ('1' = válida).
         i_s_wvalid  : in    std_logic;
+        -- Porta escravo AXI4, canal de dados de escrita: destino pronto para aceitar a transferência ('1').
         o_s_wready  : out   std_logic;
+        -- Porta escravo AXI4, canal de dados de escrita: palavra de dados.
         i_s_wdata   : in    std_logic_vector(31 downto 0);
         -- Porta escravo AXI4, canal de dados de escrita: habilita de bytes.
         i_s_wstrb   : in    std_logic_vector(3 downto 0);
+        -- Porta escravo AXI4, canal de dados de escrita: último beat da rajada ('1').
         i_s_wlast   : in    std_logic;
         -- Porta escravo AXI4, canal de resposta de escrita: validade da transferência ('1' = válida).
         o_s_bvalid  : out   std_logic;
+        -- Porta escravo AXI4, canal de resposta de escrita: origem pronta para aceitar a resposta ('1').
         i_s_bready  : in    std_logic;
+        -- Porta escravo AXI4, canal de resposta de escrita: código de resposta.
         o_s_bresp   : out   std_logic_vector(1 downto 0);
         -- Porta escravo AXI4, canal de endereço de leitura: validade da transferência ('1' = válida).
         i_s_arvalid : in    std_logic;
+        -- Porta escravo AXI4, canal de endereço de leitura: destino pronto para aceitar a transferência ('1').
         o_s_arready : out   std_logic;
+        -- Porta escravo AXI4, canal de endereço de leitura: endereço da transferência.
         i_s_araddr  : in    std_logic_vector(31 downto 0);
         -- Porta escravo AXI4, canal de endereço de leitura: número de beats da rajada menos um.
         i_s_arlen   : in    std_logic_vector(7 downto 0);
+        -- Porta escravo AXI4, canal de endereço de leitura: tamanho de cada beat da rajada (log2 de bytes).
         i_s_arsize  : in    std_logic_vector(2 downto 0);
+        -- Porta escravo AXI4, canal de endereço de leitura: tipo da rajada.
         i_s_arburst : in    std_logic_vector(1 downto 0);
         -- Porta escravo AXI4, canal de dados de leitura: validade da transferência ('1' = válida).
         o_s_rvalid  : out   std_logic;
+        -- Porta escravo AXI4, canal de dados de leitura: origem pronta para aceitar o dado ('1').
         i_s_rready  : in    std_logic;
         -- Porta escravo AXI4, canal de dados de leitura: dados.
         o_s_rdata   : out   std_logic_vector(31 downto 0);
+        -- Porta escravo AXI4, canal de dados de leitura: código de resposta.
         o_s_rresp   : out   std_logic_vector(1 downto 0);
+        -- Porta escravo AXI4, canal de dados de leitura: último beat da rajada ('1').
         o_s_rlast   : out   std_logic;
 
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: validade da transferência ('1' = válida).
         o_m0_awvalid : out   std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_awready : in    std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: endereço da transferência.
         o_m0_awaddr  : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: número de beats da rajada menos um.
         o_m0_awlen   : out   std_logic_vector(7 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: tamanho de cada beat da rajada (log2 de bytes).
         o_m0_awsize  : out   std_logic_vector(2 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: tipo da rajada.
         o_m0_awburst : out   std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: validade da transferência ('1' = válida).
         o_m0_wvalid  : out   std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_wready  : in    std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: palavra de dados.
         o_m0_wdata   : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: habilita de bytes.
         o_m0_wstrb   : out   std_logic_vector(3 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: último beat da rajada ('1').
         o_m0_wlast   : out   std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de resposta de escrita: validade da transferência ('1' = válida).
         i_m0_bvalid  : in    std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de resposta de escrita: origem pronta para aceitar a resposta ('1').
         o_m0_bready  : out   std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de resposta de escrita: código de resposta.
         i_m0_bresp   : in    std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: validade da transferência ('1' = válida).
         o_m0_arvalid : out   std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: destino pronto para aceitar a transferência ('1').
         i_m0_arready : in    std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: endereço da transferência.
         o_m0_araddr  : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: número de beats da rajada menos um.
         o_m0_arlen   : out   std_logic_vector(7 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: tamanho de cada beat da rajada (log2 de bytes).
         o_m0_arsize  : out   std_logic_vector(2 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: tipo da rajada.
         o_m0_arburst : out   std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: validade da transferência ('1' = válida).
         i_m0_rvalid  : in    std_logic;
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: origem pronta para aceitar o dado ('1').
         o_m0_rready  : out   std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: dados.
         i_m0_rdata   : in    std_logic_vector(31 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: código de resposta.
         i_m0_rresp   : in    std_logic_vector(1 downto 0);
+        -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: último beat da rajada ('1').
         i_m0_rlast   : in    std_logic;
 
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: validade da transferência ('1' = válida).
         o_m1_awvalid : out   std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: destino pronto para aceitar a transferência
+        -- ('1').
         i_m1_awready : in    std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: endereço da transferência.
         o_m1_awaddr  : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: número de beats da rajada menos um.
         o_m1_awlen   : out   std_logic_vector(7 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: tamanho de cada beat da rajada (log2 de
+        -- bytes).
         o_m1_awsize  : out   std_logic_vector(2 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: tipo da rajada.
         o_m1_awburst : out   std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: validade da transferência ('1' = válida).
         o_m1_wvalid  : out   std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: destino pronto para aceitar a transferência
+        -- ('1').
         i_m1_wready  : in    std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: palavra de dados.
         o_m1_wdata   : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: habilita de bytes.
         o_m1_wstrb   : out   std_logic_vector(3 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: último beat da rajada ('1').
         o_m1_wlast   : out   std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de resposta de escrita: validade da transferência ('1' = válida).
         i_m1_bvalid  : in    std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de resposta de escrita: origem pronta para aceitar a resposta ('1').
         o_m1_bready  : out   std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de resposta de escrita: código de resposta.
         i_m1_bresp   : in    std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: validade da transferência ('1' = válida).
         o_m1_arvalid : out   std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: destino pronto para aceitar a transferência
+        -- ('1').
         i_m1_arready : in    std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: endereço da transferência.
         o_m1_araddr  : out   std_logic_vector(31 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: número de beats da rajada menos um.
         o_m1_arlen   : out   std_logic_vector(7 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: tamanho de cada beat da rajada (log2 de
+        -- bytes).
         o_m1_arsize  : out   std_logic_vector(2 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: tipo da rajada.
         o_m1_arburst : out   std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: validade da transferência ('1' = válida).
         i_m1_rvalid  : in    std_logic;
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: origem pronta para aceitar o dado ('1').
         o_m1_rready  : out   std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: dados.
         i_m1_rdata   : in    std_logic_vector(31 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: código de resposta.
         i_m1_rresp   : in    std_logic_vector(1 downto 0);
+        -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: último beat da rajada ('1').
         i_m1_rlast   : in    std_logic
     );
 end entity axi_router;
@@ -272,7 +325,7 @@ begin
                    '1' when rd_left = 0 else
                    '0';
 
-    process (i_clk) is
+    p_registers : process (i_clk) is
     begin
 
         if rising_edge(i_clk) then
@@ -313,6 +366,6 @@ begin
             end if;
         end if;
 
-    end process;
+    end process p_registers;
 
 end architecture rtl;

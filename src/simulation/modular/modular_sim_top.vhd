@@ -85,7 +85,8 @@ entity modular_sim_top is
         icache_size_bits       : positive                 := 4096;
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
         dcache_size_bits       : positive                 := 4096;
-        -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
+        -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
+        -- MiB).
         cache_window_bits      : natural range 26 to 29   := 26;
         -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
         flash_first_latency    : natural                  := 24;
@@ -487,7 +488,7 @@ begin
 
     -- ROM do núcleo: a FLASH com duas portas, uma para instruções e outra para dados.
 
-    g_rom_internal : if not ROM_PORT generate
+    gen_rom_internal : if not ROM_PORT generate
     begin
 
         u_flash : entity work.rom_simulation
@@ -505,11 +506,11 @@ begin
                 o_data2 => flash_data2
             );
 
-    end generate g_rom_internal;
+    end generate gen_rom_internal;
 
     -- RAM do núcleo.
 
-    g_ram_internal : if not RAM_PORT generate
+    gen_ram_internal : if not RAM_PORT generate
     begin
 
         u_ram : entity work.ram_simulation
@@ -527,11 +528,11 @@ begin
                 o_data_out => ram_rdata
             );
 
-    end generate g_ram_internal;
+    end generate gen_ram_internal;
 
     -- O chip de FLASH e o seu armazenamento, quando a ROM é alcançada pela porta.
 
-    g_rom_chip : if ROM_PORT generate
+    gen_rom_chip : if ROM_PORT generate
     begin
 
         u_flash_chip : entity work.flash_chip
@@ -566,11 +567,11 @@ begin
                 o_data => flash_mem_data
             );
 
-    end generate g_rom_chip;
+    end generate gen_rom_chip;
 
     -- O chip de RAM, quando a RAM é alcançada pela porta.
 
-    g_ext_ram : if RAM_PORT generate
+    gen_ext_ram : if RAM_PORT generate
     begin
 
         u_ext_ram : entity work.ram_chip
@@ -607,11 +608,11 @@ begin
                 o_dbg_word_data => o_dbg_word_data
             );
 
-    end generate g_ext_ram;
+    end generate gen_ext_ram;
 
-    g_no_ext_ram : if not RAM_PORT generate
+    gen_no_ext_ram : if not RAM_PORT generate
     begin
         o_dbg_word_data <= (others => '0');
-    end generate g_no_ext_ram;
+    end generate gen_no_ext_ram;
 
 end architecture behaviour;
