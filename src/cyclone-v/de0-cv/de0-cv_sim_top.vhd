@@ -43,40 +43,14 @@ entity rv32im_sdram_flash_sim_test is
 	  flash_next_latency  : natural := 4;
 	  -- Largura do endereço de palavra da RAM interna; com a SDRAM como RAM não dimensiona nada.
 	  ram_addr_width : natural := 9;
-	  -- Zicsr no core (instrucoes CSR reais); false mantem o comportamento de NOP.
-	  has_zicsr : boolean := false;
-	  -- Habilita os contadores da extensão Zicntr (implica Zicsr).
-	  has_zicntr : boolean := false;
-	  -- Extensao M completa no core.
-	  has_m : boolean := true;
-	  -- Multiplicacao sem divisao (Zmmul) no core.
-	  has_zmmul : boolean := false;
-	  -- Zifencei no core (FENCE.I invalida a cache de instrucoes); false mantem o NOP.
-	  has_zifencei : boolean := false;
-	  -- Acesso desalinhado a memoria principal executado em hardware (Zicclsm).
-	  has_zicclsm : boolean := true;
 	  -- Interrupcoes de maquina: o CLINT e o controlador externo na janela de periféricos, e as tres linhas no core.
 	  has_interrupts : boolean := true;
-	  -- Interrupcao de estouro de contador (Sscofpmf): exige Zihpm e as interrupcoes.
-	  has_sscofpmf : boolean := work.de0_cv_map_pkg.HAS_SSCOFPMF;
-	  -- Falhas de acesso (causas 1, 5 e 7) fora das regioes validas do mapa; exige Zicsr.
-	  has_access_faults : boolean := work.de0_cv_map_pkg.HAS_ACCESS_FAULTS;
 	  -- Ciclos de clock do core por incremento do mtime do CLINT.
 	  clint_tick_cycles : positive := work.de0_cv_map_pkg.CLINT_TICK_CYCLES;
-	  -- Contadores de eventos da extensao Zihpm (quatro, indices 3 a 6); exige Zicsr.
-	  has_zihpm : boolean := false;
 	  -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os indices a partir de 3.
 	  hpm_counters : natural range 0 to 29 := 29;
 	  -- Largura, em bits, de cada contador de eventos do Zihpm.
 	  hpm_width : natural range 0 to 64 := 64;
-	  -- Extensao Zimop no core (mop.r.n e mop.rr.n escrevem zero em rd).
-	  has_zimop : boolean := work.de0_cv_map_pkg.HAS_ZIMOP;
-	  -- Extensao Zicond no core (czero.eqz e czero.nez).
-	  has_zicond : boolean := work.de0_cv_map_pkg.HAS_ZICOND;
-	  -- Dicas ntl.* da extensao Zihintntl no core (executam como nop).
-	  has_zihintntl : boolean := work.de0_cv_map_pkg.HAS_ZIHINTNTL;
-	  -- Dica pause da extensao Zihintpause no core (executa como nop).
-	  has_zihintpause : boolean := work.de0_cv_map_pkg.HAS_ZIHINTPAUSE;
 	  -- A ROM fica fora do core (o modelo de memória do platform.yaml).
 	  rom_external : boolean := work.de0_cv_map_pkg.ROM_EXTERNAL;
 	  -- A RAM fica fora do core (o modelo de memória do platform.yaml).
@@ -89,8 +63,6 @@ entity rv32im_sdram_flash_sim_test is
 	  icache_size_bits : positive := work.de0_cv_map_pkg.ICACHE_SIZE_BITS;
 	  -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
 	  dcache_size_bits : positive := work.de0_cv_map_pkg.DCACHE_SIZE_BITS;
-	  -- Base RV32E (16 registradores) no core; false e o RV32I (o perfil da plataforma por padrao).
-	  has_e : boolean := work.de0_cv_map_pkg.HAS_E;
 	  -- Controlador de FLASH na janela de periferico 3 (0xB0000000), com a FLASH de duas portas e o chip de comandos
 	  -- (apagar, gravar, proteger) atras dele: a atualizacao de programa em campo. Desligado, a FLASH e so de leitura.
 	  has_flash_controller : boolean := false;
@@ -255,6 +227,8 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
 	signal ic_sel    : std_logic;
 	-- Cache de instruções: pulso de invalidação.
 	signal ic_inval  : std_logic;
+	-- Pedido de flush da cache de dados que o FENCE.I do núcleo faz antes de invalidar a cache de instruções.
+	signal dc_flush : std_logic;
 	-- Porta de memória da cache de instruções: endereço.
 	signal id_addr   : std_logic_vector(31 downto 0);
 	-- Porta de memória da cache de instruções: habilita de leitura.
@@ -366,13 +340,7 @@ begin
     );
 
 	u_core : entity work.core
-		generic map (has_m => has_m, has_zmmul => has_zmmul, has_zicsr => has_zicsr, has_zicntr => has_zicntr,
-			has_zifencei => has_zifencei, has_zicclsm => has_zicclsm, has_e => has_e,
-			has_zihpm => has_zihpm, hpm_counters => hpm_counters, hpm_width => hpm_width, has_zimop => has_zimop,
-			has_zicond => has_zicond, has_zihintntl => has_zihintntl, has_zihintpause => has_zihintpause,
-			has_interrupts => has_interrupts and (has_zicsr or has_zicntr or has_zihpm),
-			has_sscofpmf => has_sscofpmf and has_zihpm and has_interrupts, time_external => has_interrupts,
-			has_access_faults => has_access_faults and (has_zicsr or has_zicntr or has_zihpm),
+		generic map (hpm_counters => hpm_counters, hpm_width => hpm_width, time_external => has_interrupts,
 			periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS)
 		port map (
 			o_trap       => core_trap,
@@ -417,7 +385,9 @@ begin
 			i_ic_data  => ic_data,
 			i_ic_ready => ic_ready,
 			o_ic_sel   => ic_sel,
-			o_ic_inval => ic_inval
+			o_ic_inval => ic_inval,
+			o_dc_flush => dc_flush,
+			i_dc_done => dc_done
 	);
 
 	u_icache : entity work.icache
@@ -457,7 +427,7 @@ begin
 			i_addr => m_addr, i_wdata => m_wdata, i_byteena => m_byteena,
 			i_rden => m_rden, i_wren => m_wren, i_mem_advance => mem_advance,
 			o_ready => m_ready, o_rdata => m_rdata,
-			i_flush => ic_inval, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
+			i_flush => dc_flush, i_invalidate => '1', o_flush_done => dc_done, o_busy => dc_busy, o_miss => dc_miss,
 			i_inval_region => fl_inval_valid, i_inval_first => fl_inval_first, i_inval_last => fl_inval_last,
 			i_bypass => dc_bypass,
 			o_d_addr => dd_addr, o_d_wdata => dd_wdata, o_d_byteena => dd_be,

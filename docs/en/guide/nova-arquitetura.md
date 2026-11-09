@@ -305,9 +305,9 @@ The memory sizes are power-of-two generics whose default value comes from the ge
 
 ### 6.3. Profile and map in the `core`
 
-The top declares one `has_*` generic per extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei`, `has_zicclsm` and `has_interrupts`), each with the `HAS_*` constant of the package as default value. In the `generic map` of the `core`, each `has_*` of the core receives the generic of the same name of the top, and the `has_interrupts` of the core receives `has_interrupts and has_zicsr`. The region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
+The core has no extension generic: it reads the base and the extensions from the `HAS_*` constants of the generated `config_pkg` of the platform, which the top compiles in place of the default package of Common-Components. The `generic map` of the `core` carries only what does not come from the package (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external` and `periph_slots`). The top that instantiates the SoC keeps one `has_*` generic per extension, with the `HAS_*` constant of the map package as default value, and the SoC asserts that `has_dcache` equals the constant of the `config_pkg`. The region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
 
-`riscv-tools` passes the simulator one `-g has_*` per extension of the profile. Every top it simulates must declare the thirteen generics, and a top that does not declare one of them fails at elaboration with `cannot find in top entity generic`.
+A simulation parameter that names a generic the top does not declare fails at elaboration with `cannot find in top entity generic`; the top that does not instantiate the SoC declares no extension generic, and the extension of a test changes by swapping the `config_pkg` of the source list.
 
 ### 6.4. Window of each peripheral
 

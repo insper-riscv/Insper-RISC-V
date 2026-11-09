@@ -305,9 +305,9 @@ Os tamanhos das memórias são genéricos em potência de dois, cujo valor padr�
 
 ### 6.3. Perfil e mapa no `core`
 
-O topo declara um genérico `has_*` por extensão (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei`, `has_zicclsm` e `has_interrupts`), cada um com a constante `HAS_*` do pacote como valor padrão. No `generic map` do `core`, cada `has_*` do núcleo recebe o genérico de mesmo nome do topo, e o `has_interrupts` do núcleo recebe `has_interrupts and has_zicsr`. Os limites das regiões (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
+O núcleo não tem genérico de extensão: ele lê a base e as extensões das constantes `HAS_*` do `config_pkg` gerado da plataforma, que o topo compila no lugar do pacote padrão do Common-Components. O `generic map` do `core` leva só o que não vem do pacote (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external` e `periph_slots`). O topo que instancia o SoC mantém um genérico `has_*` por extensão, com a constante `HAS_*` do pacote do mapa como valor padrão, e o SoC confere em asserção que `has_dcache` vale o mesmo que a constante do `config_pkg`. Os limites das regiões (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
 
-O `riscv-tools` passa ao simulador um `-g has_*` por extensão do perfil. Todo topo que ele simula precisa declarar os treze genéricos, e o topo que não declara um deles falha na elaboração com `cannot find in top entity generic`.
+Um parâmetro de simulação que nomeia um genérico que o topo não declara falha na elaboração com `cannot find in top entity generic`; o topo que não instancia o SoC não declara os genéricos de extensão, e a extensão de um teste muda trocando o `config_pkg` da lista de fontes.
 
 ### 6.4. Janela de cada periférico
 

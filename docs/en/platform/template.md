@@ -33,7 +33,7 @@ The 1032 bytes of `stdout`, `tohost` and `fromhost` take the top of the RAM, fro
 
 ## 4. The top
 
-`template_sim_top` has the file generics (`boot_memory_file`, `rom_file`, `ram_file`), the size generics (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, powers of two whose default comes from the map package), `has_uart` and one `has_*` generic per core extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` and `has_zicclsm`), whose default is the `HAS_*` constant of the package and which the top connects to the core.
+`template_sim_top` has the file generics (`boot_memory_file`, `rom_file`, `ram_file`), the size generics (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, powers of two whose default comes from the map package) and `has_uart`. The core reads the extensions from the generated `config_pkg` of the platform, so the top declares no extension generic.
 
 | Port | Use |
 | :--- | :--- |

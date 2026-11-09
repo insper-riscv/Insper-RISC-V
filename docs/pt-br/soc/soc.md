@@ -61,7 +61,7 @@ O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_byte
 | Caches | `has_icache`, `has_dcache` | `false` |
 | Tamanho das caches | `icache_size_bits`, `dcache_size_bits` | 4096 bits |
 | Janela das caches | `cache_window_bits`, de 26 a 29 (26 é 64 MiB, 27 é 128 MiB, a janela de endereços que a tag cobre) | 26 |
-| Base e extensões do núcleo | `has_e`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_m`, `has_zmmul`, `has_zifencei`, `has_zicclsm`, `has_access_faults` | `false` |
+| Base e extensões do núcleo (o núcleo as lê do `config_pkg`) | `has_e`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_m`, `has_zmmul`, `has_zifencei`, `has_zicclsm`, `has_access_faults` | `false` |
 | Contadores do Zihpm | `hpm_counters`, de 0 a 29, e `hpm_width`, de 0 a 64 bits | 29 e 64 |
 | Interrupções | `has_interrupts`, `has_sscofpmf`, `periph_slots`, `clint_tick_cycles`, `clint_id`, `plic_id`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | desligadas, janelas 6 (CLINT) e 7 (PLIC), 6 fontes, 3 bits, 20 bits |
 | Janelas dos periféricos | `timer_id`, `switches_id`, `keys_id`, `uart_pins_id`, `uart_jtag_id`, `display_id`, `flash_ctrl_id` | 0, 1, 2, 3, 4, 5 e 3 |

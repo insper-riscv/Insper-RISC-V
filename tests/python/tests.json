@@ -1901,9 +1901,6 @@
     "De0CvBootBanks": {
         "extends": "De0CvSimTop",
         "test_module": "tests.python.unittests.rtl.de0_cv_boot_banks",
-        "parameters": {
-            "HAS_ZIFENCEI": true
-        },
         "cases": "tests.python.unittests.rtl.de0_cv_boot_banks:cases"
     },
     "ExternalDataSimTop": {
@@ -2031,8 +2028,7 @@
         "test_module": "tests.python.unittests.rtl.external_data_flash_update",
         "parameters": {
             "BOOT_MEMORY_FILE": "tests/python/unittests/rtl/data/external_data/boot_memory_real.hex",
-            "ROM_FILE": "tests/python/unittests/rtl/data/external_data/loader_flash.hex",
-            "HAS_ZIFENCEI": true
+            "ROM_FILE": "tests/python/unittests/rtl/data/external_data/loader_flash.hex"
         }
     },
     "TemplateSimTop": {

@@ -39,7 +39,7 @@
 -- display_digits), e um papel de largura zero é omitido. A polaridade dos pinos é um generic por papel,
 -- resolvido por quem instancia o SoC; o periférico vê sempre o programa ativo em '1'.
 --
--- O núcleo lê o mapa do config_pkg gerado do platform.yaml da plataforma, e o SoC confere em asserções
+-- O núcleo lê a ISA e o mapa do config_pkg gerado do platform.yaml da plataforma, e o SoC confere em asserções
 -- que os genéricos do mapa, que quem instancia lê do pacote do mapa, concordam com ele. Todos os tamanhos são genéricos em potência de dois (bytes para
 -- a BOOT_MEMORY, bits para as caches), verificados pelo log2_exact.
 -- =============================================================================
@@ -520,6 +520,8 @@ architecture behaviour of soc is
   signal ic_sel        : std_logic;
   -- Invalidação da cache de instruções pelo FENCE.I ('1' = invalida).
   signal ic_inval      : std_logic;
+  -- Pedido de flush da cache de dados que o FENCE.I do núcleo faz antes de invalidar a cache de instruções.
+  signal dc_flush : std_logic;
 
   -- Pulso de retirada de instrução do núcleo, que o testbench conta para o CPI.
   signal core_retire   : std_logic;
@@ -745,6 +747,11 @@ begin
   assert ROM_PORT = work.config_pkg.ROM_EXTERNAL and RAM_PORT = work.config_pkg.RAM_EXTERNAL
     report "rom_external, ram_external e as caches diferem de ROM_EXTERNAL e RAM_EXTERNAL do config_pkg"
     severity failure;
+  -- O núcleo lê a ISA e a presença das caches do config_pkg; a cache de dados que o SoC monta tem de ser a
+  -- que o núcleo espera, porque o FENCE.I do núcleo aguarda o fim do flush dela.
+  assert has_dcache = work.config_pkg.HAS_DCACHE
+    report "has_dcache difere de HAS_DCACHE do config_pkg"
+    severity failure;
 
   -- As regiões alcançadas pelas caches ou pela ponte de busca cabem na janela de
   -- 2**cache_window_bits bytes.
@@ -856,25 +863,10 @@ begin
 
   u_core : entity work.core
     generic map (
-      has_m        => has_m,
-      has_zmmul    => has_zmmul,
-      has_zicsr    => has_zicsr,
-      has_zicntr   => has_zicntr,
-      has_zifencei => has_zifencei,
-      has_zicclsm  => has_zicclsm,
-      has_e         => has_e,
-      has_zihpm    => has_zihpm,
-      hpm_counters => hpm_counters,
-      hpm_width    => hpm_width,
-      has_zimop    => has_zimop,
-      has_zicond   => has_zicond,
-      has_zihintntl   => has_zihintntl,
-      has_zihintpause => has_zihintpause,
-      has_interrupts  => has_interrupts and has_zicsr,
-      has_sscofpmf    => has_sscofpmf and has_zihpm and has_interrupts and has_zicsr,
-      time_external   => has_interrupts and has_zicsr,
-      has_access_faults => has_access_faults and has_zicsr,
-      periph_slots    => periph_slots
+      hpm_counters  => hpm_counters,
+      hpm_width     => hpm_width,
+      time_external => has_interrupts,
+      periph_slots  => periph_slots
     )
     port map (
       o_trap           => open,
@@ -913,7 +905,9 @@ begin
       i_ic_data        => ic_data,
       i_ic_ready       => ic_ready,
       o_ic_sel         => ic_sel,
-      o_ic_inval       => ic_inval
+      o_ic_inval       => ic_inval,
+      o_dc_flush       => dc_flush,
+      i_dc_done       => dc_done
     );
 
   -- A interconexão separa a janela de periféricos e entrega o pedido de dados à cache de dados ou,
@@ -1181,7 +1175,7 @@ begin
         i_mem_advance => mem_advance,
         o_ready       => m_ready,
         o_rdata       => m_rdata,
-        i_flush       => ic_inval,
+        i_flush       => dc_flush,
         i_invalidate  => '1',
         i_inval_region => i_inval_valid,
         i_inval_first => i_inval_first,
