@@ -98,7 +98,7 @@ package de0_nano_map_pkg is
 	constant FLASH_CTRL_OFFSET : std_logic_vector(31 downto 0) := x"30000000";
 	-- Tamanho do periférico FLASH_CTRL, em bytes.
 	constant FLASH_CTRL_SIZE   : std_logic_vector(31 downto 0) := x"00000020";
-	-- Padding reservado depois do tamanho do periférico FLASH_CTRL, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico FLASH_CTRL, em bytes.
 	constant FLASH_CTRL_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFE0";
 
 	-- Endereço base do periférico UART.
@@ -109,7 +109,7 @@ package de0_nano_map_pkg is
 	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
 	-- Tamanho do periférico UART, em bytes.
 	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico UART, em bytes.
 	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.

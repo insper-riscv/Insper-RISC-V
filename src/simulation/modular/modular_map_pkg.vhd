@@ -98,7 +98,7 @@ package modular_map_pkg is
 	constant TIMER_OFFSET : std_logic_vector(31 downto 0) := x"00000000";
 	-- Tamanho do periférico TIMER, em bytes.
 	constant TIMER_SIZE   : std_logic_vector(31 downto 0) := x"00000020";
-	-- Padding reservado depois do tamanho do periférico TIMER, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico TIMER, em bytes.
 	constant TIMER_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFE0";
 
 	-- Endereço base do periférico SWITCHES.
@@ -109,7 +109,7 @@ package modular_map_pkg is
 	constant SWITCHES_OFFSET : std_logic_vector(31 downto 0) := x"10000000";
 	-- Tamanho do periférico SWITCHES, em bytes.
 	constant SWITCHES_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
-	-- Padding reservado depois do tamanho do periférico SWITCHES, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico SWITCHES, em bytes.
 	constant SWITCHES_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico KEYS.
@@ -120,7 +120,7 @@ package modular_map_pkg is
 	constant KEYS_OFFSET : std_logic_vector(31 downto 0) := x"20000000";
 	-- Tamanho do periférico KEYS, em bytes.
 	constant KEYS_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
-	-- Padding reservado depois do tamanho do periférico KEYS, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico KEYS, em bytes.
 	constant KEYS_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico UART.
@@ -131,7 +131,7 @@ package modular_map_pkg is
 	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"30000000";
 	-- Tamanho do periférico UART, em bytes.
 	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico UART, em bytes.
 	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico UART_JTAG.
@@ -142,7 +142,7 @@ package modular_map_pkg is
 	constant UART_JTAG_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
 	-- Tamanho do periférico UART_JTAG, em bytes.
 	constant UART_JTAG_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico UART_JTAG, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico UART_JTAG, em bytes.
 	constant UART_JTAG_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico DISPLAY.
@@ -153,7 +153,7 @@ package modular_map_pkg is
 	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
 	-- Tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico DISPLAY, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico CLINT.
@@ -164,7 +164,7 @@ package modular_map_pkg is
 	constant CLINT_OFFSET : std_logic_vector(31 downto 0) := x"60000000";
 	-- Tamanho do periférico CLINT, em bytes.
 	constant CLINT_SIZE   : std_logic_vector(31 downto 0) := x"00010000";
-	-- Padding reservado depois do tamanho do periférico CLINT, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico CLINT, em bytes.
 	constant CLINT_PAD    : std_logic_vector(31 downto 0) := x"0FFF0000";
 
 	-- Endereço base do periférico PLIC.
@@ -175,7 +175,7 @@ package modular_map_pkg is
 	constant PLIC_OFFSET : std_logic_vector(31 downto 0) := x"70000000";
 	-- Tamanho do periférico PLIC, em bytes.
 	constant PLIC_SIZE   : std_logic_vector(31 downto 0) := x"00400000";
-	-- Padding reservado depois do tamanho do periférico PLIC, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico PLIC, em bytes.
 	constant PLIC_PAD    : std_logic_vector(31 downto 0) := x"0FC00000";
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.

@@ -98,7 +98,7 @@ package de10_lite_map_pkg is
 	constant FLASH_CTRL_OFFSET : std_logic_vector(31 downto 0) := x"30000000";
 	-- Tamanho do periférico FLASH_CTRL, em bytes.
 	constant FLASH_CTRL_SIZE   : std_logic_vector(31 downto 0) := x"00000020";
-	-- Padding reservado depois do tamanho do periférico FLASH_CTRL, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico FLASH_CTRL, em bytes.
 	constant FLASH_CTRL_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFE0";
 
 	-- Endereço base do periférico UART.
@@ -109,7 +109,7 @@ package de10_lite_map_pkg is
 	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"40000000";
 	-- Tamanho do periférico UART, em bytes.
 	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico UART, em bytes.
 	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico DISPLAY.
@@ -120,7 +120,7 @@ package de10_lite_map_pkg is
 	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
 	-- Tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico DISPLAY, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 	-- Endereço base do periférico CLINT.
@@ -131,7 +131,7 @@ package de10_lite_map_pkg is
 	constant CLINT_OFFSET : std_logic_vector(31 downto 0) := x"60000000";
 	-- Tamanho do periférico CLINT, em bytes.
 	constant CLINT_SIZE   : std_logic_vector(31 downto 0) := x"00010000";
-	-- Padding reservado depois do tamanho do periférico CLINT, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico CLINT, em bytes.
 	constant CLINT_PAD    : std_logic_vector(31 downto 0) := x"0FFF0000";
 
 	-- Endereço base do periférico PLIC.
@@ -142,7 +142,7 @@ package de10_lite_map_pkg is
 	constant PLIC_OFFSET : std_logic_vector(31 downto 0) := x"70000000";
 	-- Tamanho do periférico PLIC, em bytes.
 	constant PLIC_SIZE   : std_logic_vector(31 downto 0) := x"00400000";
-	-- Padding reservado depois do tamanho do periférico PLIC, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico PLIC, em bytes.
 	constant PLIC_PAD    : std_logic_vector(31 downto 0) := x"0FC00000";
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.

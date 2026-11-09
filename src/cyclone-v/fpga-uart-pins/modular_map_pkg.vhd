@@ -98,7 +98,7 @@ package modular_map_pkg is
 	constant UART_OFFSET : std_logic_vector(31 downto 0) := x"30000000";
 	-- Tamanho do periférico UART, em bytes.
 	constant UART_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico UART, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico UART, em bytes.
 	constant UART_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 end package modular_map_pkg;

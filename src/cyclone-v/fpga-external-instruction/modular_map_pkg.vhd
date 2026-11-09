@@ -98,7 +98,7 @@ package modular_map_pkg is
 	constant SWITCHES_OFFSET : std_logic_vector(31 downto 0) := x"10000000";
 	-- Tamanho do periférico SWITCHES, em bytes.
 	constant SWITCHES_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
-	-- Padding reservado depois do tamanho do periférico SWITCHES, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico SWITCHES, em bytes.
 	constant SWITCHES_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico KEYS.
@@ -109,7 +109,7 @@ package modular_map_pkg is
 	constant KEYS_OFFSET : std_logic_vector(31 downto 0) := x"20000000";
 	-- Tamanho do periférico KEYS, em bytes.
 	constant KEYS_SIZE   : std_logic_vector(31 downto 0) := x"00000040";
-	-- Padding reservado depois do tamanho do periférico KEYS, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico KEYS, em bytes.
 	constant KEYS_PAD    : std_logic_vector(31 downto 0) := x"0FFFFFC0";
 
 	-- Endereço base do periférico DISPLAY.
@@ -120,7 +120,7 @@ package modular_map_pkg is
 	constant DISPLAY_OFFSET : std_logic_vector(31 downto 0) := x"50000000";
 	-- Tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_SIZE   : std_logic_vector(31 downto 0) := x"00000400";
-	-- Padding reservado depois do tamanho do periférico DISPLAY, em bytes.
+	-- Padding (região de falha de acesso) reservado depois do tamanho do periférico DISPLAY, em bytes.
 	constant DISPLAY_PAD    : std_logic_vector(31 downto 0) := x"0FFFFC00";
 
 end package modular_map_pkg;
