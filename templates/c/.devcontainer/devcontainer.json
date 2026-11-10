@@ -1,0 +1,17 @@
+{
+  "name": "RV32 C application",
+  "dockerComposeFile": "compose.yaml",
+  "service": "rv32-app",
+  "workspaceFolder": "/workspace",
+  "remoteUser": "ubuntu",
+  "updateRemoteUserUID": true,
+  "postCreateCommand": "bash \"$RV32_SDK_ROOT/scripts/bootstrap-external.sh\" \"$RV32_PROJECT_ROOT\"",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.cpptools"
+      ]
+    }
+  },
+  "postAttachCommand": "bash \"$RV32_SDK_ROOT/scripts/install-vscode-extension.sh\""
+}

@@ -41,3 +41,14 @@ src/*/*/quartus/*.smsg
 
 # Tool logs are never versioned
 *.log
+
+# External-project SDK environment and managed Tools dependency
+.sdk/.venv/
+.sdk/tools/
+.sdk/.tools-*/
+.sdk/__pycache__/
+.sdk/.tools-prepare.lock
+.sdk/.tools-bootstrap.log
+.sdk/platforms/
+.sdk/.platform-*/
+.sdk/.views.lock

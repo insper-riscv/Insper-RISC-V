@@ -1,0 +1,43 @@
+name: SDK
+on:
+  push:
+    branches: [live-vscode, sdk-review]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  sdk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container:
+      image: ghcr.io/insper-riscv/dev_tools@sha256:5401f931999275baeb0f56b16501cef62e834853a60a2aa134c7b080975e5310
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Bootstrap pinned Tools and SDK
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          python3 .sdk/prepare_tools.py
+          uv sync --project .sdk --locked
+      - name: SDK lint and format
+        run: |
+          uv run --project .sdk ruff check .sdk
+          uv run --project .sdk ruff format --check .sdk
+          (cd .sdk && uv run deptry .)
+      - name: SDK unit tests
+        run: uv run --project .sdk python -m unittest discover -s .sdk/tests
+      - name: Real C compiler and GHDL integration
+        shell: bash
+        run: |
+          source scripts/env.sh
+          uv run --project .sdk python .sdk/tests/integration.py
+      - name: Diagnostic logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sdk-logs
+          path: |
+            .sdk/*.log
+            logs/
+          include-hidden-files: true

@@ -1,0 +1,21 @@
+services:
+  rv32-app:
+    image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/dev_tools:latest}"
+    command: sleep infinity
+    network_mode: host
+    security_opt:
+      - label=disable
+    environment:
+      RV32_SOF_CACHE_DIR: /home/ubuntu/.cache/sof
+      RV32_SDK_ROOT: /opt/rv32-sdk
+      RV32_PROJECT_ROOT: /workspace
+      RV32_TESTS_ROOT: /opt/rv32-sdk/Tests
+      RV32_TOOLCHAIN_ROOT: /opt/riscv-foundation/riscv32-elf
+      RV32_GCC: /opt/riscv-foundation/riscv32-elf/bin/riscv32-unknown-elf-gcc
+      QUARTUS_ROOTDIR: /opt/altera_lite/25.1std/quartus
+      PATH: /opt/ghdl/bin:/opt/rv32-sdk/scripts:/opt/altera_lite/25.1std/quartus/bin:/opt/riscv-foundation/riscv32-elf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - ..:/workspace:cached
+      - "${HOME}/.local/share/rv32-sdk:/opt/rv32-sdk:cached"
+      - "${HOME}/.local/share/rv32-quartus:/opt/altera_lite/25.1std:ro"
+      - "${HOME}/.cache/rv32:/home/ubuntu/.cache"

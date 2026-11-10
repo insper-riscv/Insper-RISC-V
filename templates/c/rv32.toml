@@ -1,0 +1,11 @@
+[project]
+name = "app"
+language = "c"
+source = "src/main.c"
+sources = []
+# Header search paths, relative to this project.
+include_dirs = ["include"]
+timeout_seconds = 15
+
+# Maximum simulated CPU cycles; independent of the FPGA timeout in seconds.
+simulation_timeout_cycles = 2000000

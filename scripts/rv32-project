@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_rv32_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=env.sh
+source "${_rv32_script_dir}/env.sh"
+
+uv_flags=(--quiet)
+for argument in "$@"; do
+    if [[ "${argument}" == "--debug" ]]; then
+        uv_flags=()
+    fi
+done
+
+python3 "${RV32_SDK_ROOT}/.sdk/prepare_tools.py"
+
+exec uv run "${uv_flags[@]}" --project "${RV32_SDK_ROOT}/.sdk" \
+    rv32-sdk "$@"

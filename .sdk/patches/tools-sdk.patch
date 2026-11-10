@@ -1,0 +1,87 @@
+diff --git a/src/riscv_tools/cli/toolchain.py b/src/riscv_tools/cli/toolchain.py
+index e0238c1..0d9b5bb 100644
+--- a/src/riscv_tools/cli/toolchain.py
++++ b/src/riscv_tools/cli/toolchain.py
+@@ -164,6 +164,7 @@ def build_setup(cfg: dict[str, Any], root: Path) -> BuildSetup:
+         isa_cfg=cfg["isa"],
+         default_timeout_s=cfg["quartus"]["default_timeout_s"],
+         include_dir=root / cfg["paths"]["include_dir"],
++        include_dirs=[root / directory for directory in cfg["paths"].get("include_dirs", [])],
+         link=LinkSetup(
+             crt0=optional_path(cfg, root, "crt0"),
+             linker=optional_path(cfg, root, "linker_script"),
+diff --git a/src/riscv_tools/compiler/__config__.py b/src/riscv_tools/compiler/__config__.py
+index 2096053..18bdaee 100644
+--- a/src/riscv_tools/compiler/__config__.py
++++ b/src/riscv_tools/compiler/__config__.py
+@@ -35,6 +35,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
+         # All project-specific (paths inside the CONSUMING repo, not
+         # this package), no sane generic default.
+         "include_dir": None,
++        "include_dirs": [],
+         # Optional: a project's own startup file and linker script.
+         # Leave both unset with toolchain.specs, which selects the
+         # toolchain's.
+diff --git a/src/riscv_tools/compiler/build.py b/src/riscv_tools/compiler/build.py
+index fd8b5f9..78a3622 100644
+--- a/src/riscv_tools/compiler/build.py
++++ b/src/riscv_tools/compiler/build.py
+@@ -131,6 +131,7 @@ class BuildSetup:
+     default_timeout_s: float
+     include_dir: Path
+     link: LinkSetup = field(default_factory=LinkSetup)
++    include_dirs: list[Path] = field(default_factory=list)
+ 
+ 
+ def abi_for(march: str) -> str:
+@@ -295,6 +296,7 @@ def compile_test(
+             # Own startup file: the toolchain's are turned off.
+             *(["-nostartfiles"] if crt0 is not None else []),
+             f"-I{setup.include_dir}",
++            *[f"-I{directory}" for directory in setup.include_dirs],
+             *_linker_script_flags(setup.link.linker),
+             *keep_results,
+             *setup.link.link_flags,
+diff --git a/src/riscv_tools/jtag/link.py b/src/riscv_tools/jtag/link.py
+index ef63f03..633ba96 100644
+--- a/src/riscv_tools/jtag/link.py
++++ b/src/riscv_tools/jtag/link.py
+@@ -103,7 +103,7 @@ def run_tcl(
+     """
+     script = TCL_DIR / script_name
+     cmd = [
+-        "quartus_stp",
++        "timeout", "--kill-after=5", "60", "quartus_stp",
+         "-t",
+         str(script),
+         link.hardware_name,
+diff --git a/src/riscv_tools/mem_edit/core.py b/src/riscv_tools/mem_edit/core.py
+index 5eb7564..8e06697 100644
+--- a/src/riscv_tools/mem_edit/core.py
++++ b/src/riscv_tools/mem_edit/core.py
+@@ -118,7 +118,24 @@ def read_words(
+     result = run_tcl(link, "read_words.tcl", instance, word_offset, word_count)
+     for line in result.stdout.splitlines():
+         if line.startswith("WORDS="):
+-            return [int(w) for w in line.split("=", 1)[1].split()]
++            tokens = line.split("=", 1)[1].split()
++            if tokens and all(
++                set(token) <= {"0", "1"} and len(token) % 32 == 0
++                for token in tokens
++            ):
++                bits = "".join(tokens)
++                if len(bits) != 32 * word_count:
++                    raise RuntimeError(
++                        "Unexpected Quartus memory vector length"
++                    )
++                return [
++                    int(bits[i : i + 32], 2)
++                    for i in range(len(bits) - 32, -1, -32)
++                ]
++            values = [int(token, 0) for token in tokens]
++            if len(values) != word_count:
++                raise RuntimeError("Unexpected Quartus word count")
++            return values
+     raise RuntimeError(
+         f"read_words.tcl produced no WORDS= line:\n{result.stdout}"
+     )
