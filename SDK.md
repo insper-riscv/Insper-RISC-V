@@ -7,7 +7,7 @@ for VS Code, Dev Containers and Remote - SSH setup.
 
 ## Source baseline
 
-- Processor: `c954c77120af6865c7ccc34f16e94a41fb7c5fbb` (main 0.5.0).
+- Processor: `dfdf585e87355a739916cd3140adc40e21982aa3` (main 0.5.0).
 - Tools: `0340eefe0e95c674d68f7516c392b5c8f17cf7f3` (1.13.0).
 - Processor submodules follow this checkout's gitlinks; clone with `--recurse-submodules`.
 - `.sdk/dependencies.json` pins Tools. `.sdk/patches/tools-sdk.patch` adds
