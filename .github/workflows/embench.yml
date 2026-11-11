@@ -151,8 +151,10 @@ jobs:
         working-directory: driver
         shell: bash
         run: |
-          mkdir -p results
-          if [ -d cache ]; then cp -a cache/. results/; fi
+          mkdir -p "$GITHUB_WORKSPACE/results"
+          if [ -d "$GITHUB_WORKSPACE/cache" ]; then
+            cp -a "$GITHUB_WORKSPACE/cache/." "$GITHUB_WORKSPACE/results/"
+          fi
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --scope "$SCOPE" --workload "$WORKLOAD" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results")
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci execute "${args[@]}"

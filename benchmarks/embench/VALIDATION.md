@@ -61,6 +61,13 @@ branch difference was +0.00%, as expected for unchanged processor sources.
 The report correctly marked overall/group coverage incomplete for this
 single-program control instead of presenting a complete suite score.
 
+The workflow's actual execution step was also exercised locally from its
+`driver` working directory, with a real 19-program Actions result record
+restored under `workspace/cache`. It copied that record into
+`workspace/results` and reused all 19 verified results in 0.82 seconds,
+without simulating the kernels again. This checks the workspace paths as
+well as the adapter's cache acceptance logic.
+
 ## Additional unchanged-loop test
 
 WikiSort was also executed locally in `full` mode on RV32IM with its
