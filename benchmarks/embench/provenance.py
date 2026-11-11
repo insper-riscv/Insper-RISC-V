@@ -54,19 +54,24 @@ def hash_files(root: Path, paths: list[Path]) -> str:
     return result.hexdigest()
 
 
+def source_files(folder: Path) -> list[Path]:
+    """Collect source files without generated build directories."""
+    paths: list[Path] = []
+    for directory, folders, files in folder.walk():
+        folders[:] = [name for name in folders if name not in EXCLUDED_DIRS]
+        paths.extend(
+            directory / name
+            for name in files
+            if Path(name).suffix in SOURCE_SUFFIXES
+        )
+    return paths
+
+
 def source_key(root: Path) -> str:
     """Include tracked RTL, profiles, platform maps and runtime."""
-    paths: list[Path] = []
-    for name in SOURCE_DIRS:
-        for directory, folders, files in (root / name).walk():
-            folders[:] = [
-                folder for folder in folders if folder not in EXCLUDED_DIRS
-            ]
-            paths.extend(
-                directory / file
-                for file in files
-                if Path(file).suffix in SOURCE_SUFFIXES
-            )
+    paths = [
+        path for name in SOURCE_DIRS for path in source_files(root / name)
+    ]
     if not paths:
         raise ValueError("No processor inputs found")
     return hash_files(root, paths)

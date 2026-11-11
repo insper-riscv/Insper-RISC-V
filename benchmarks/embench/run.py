@@ -553,6 +553,20 @@ def path_parser(description: str | None) -> argparse.ArgumentParser:
     return parser
 
 
+def validate_upstream(exp: Experiment) -> None:
+    """Require a clean checkout of the exact pinned Embench sources."""
+    revision = command(
+        ["git", "rev-parse", "HEAD"], exp.upstream, exp.output / "build.log"
+    ).strip()
+    if revision != exp.suite["commit"]:
+        raise ValueError("Embench source must match the pinned commit")
+    dirty = capture(
+        ["git", "status", "--porcelain", "--untracked-files=all"], exp.upstream
+    )
+    if dirty:
+        raise ValueError("Embench checkout must be clean")
+
+
 def main() -> None:
     """Run a profile without changing tracked CPU files."""
     parser = path_parser(__doc__)
@@ -572,18 +586,10 @@ def main() -> None:
     )
     exp.suite["workload"] = args.workload
     exp.provenance["contract"]["workload"] = args.workload
-    revision = command(
-        ["git", "rev-parse", "HEAD"], exp.upstream, exp.output / "build.log"
-    ).strip()
-    if revision != exp.suite["commit"]:
-        parser.error("Embench source must match the pinned commit")
-    dirty = capture(
-        ["git", "status", "--porcelain", "--untracked-files=all"], exp.upstream
-    )
-    if dirty:
-        parser.error(
-            "Embench checkout must be clean; restore the pinned sources"
-        )
+    try:
+        validate_upstream(exp)
+    except ValueError as error:
+        parser.error(str(error))
     programs = args.program or exp.suite["programs"]
     if set(programs) - set(exp.suite["programs"]):
         parser.error("Unknown Embench program")
