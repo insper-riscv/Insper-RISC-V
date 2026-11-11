@@ -50,20 +50,19 @@ The switches and keys are GPIO blocks, and the display is the `seg_display` regi
 
 ## 5. Map and generics
 
-The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The core reads the same map from the `config_pkg` that `platform.yaml` generates for the platform (`generate.config_pkg`), and the SoC checks in assertions that these generics agree with it. The core extensions (`has_*`), the caches (`has_icache`, `has_dcache` and the sizes), the interrupts (`has_interrupts`, `plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
+The memory map arrives by generics with no default: `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib` and `periph_base_kib`. The values come from `platform.yaml`, through the package that the top reads. The core reads the same map from the `config_pkg` that `platform.yaml` generates for the platform (`generate.config_pkg`), and the SoC checks in assertions that these generics agree with it. The base, the core extensions, the interrupts and the data cache (`IS_BASE_E`, `HAS_*`) are not generics: the core and the SoC read them from the `config_pkg`. The instruction cache (`has_icache` and the sizes), the PLIC and CLINT parameters (`plic_*`, `clint_*`) and the window indices of the peripherals are generics with a neutral value.
 
-### 5.1. Map and extension generics
+### 5.1. Map and cache generics
 
 | Group | Generics | Default |
 | :--- | :--- | :--- |
 | Map | `boot_memory_size_bytes`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` | none |
 | External regions | `rom_external`, `ram_external` | `false` |
-| Caches | `has_icache`, `has_dcache` | `false` |
+| Instruction cache | `has_icache` | `false` |
 | Cache sizes | `icache_size_bits`, `dcache_size_bits` | 4096 bits |
 | Cache window | `cache_window_bits`, from 26 to 29 (26 is 64 MiB, 27 is 128 MiB, the address window the tag covers) | 26 |
-| Core base and extensions (the core reads them from the `config_pkg`) | `has_e`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_m`, `has_zmmul`, `has_zifencei`, `has_zicclsm`, `has_access_faults` | `false` |
 | Zihpm counters | `hpm_counters`, from 0 to 29, and `hpm_width`, from 0 to 64 bits | 29 and 64 |
-| Interrupts | `has_interrupts`, `has_sscofpmf`, `periph_slots`, `clint_tick_cycles`, `clint_id`, `plic_id`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | off, windows 6 (CLINT) and 7 (PLIC), 6 sources, 3 bits, 20 bits |
+| Interrupts | `periph_slots`, `clint_tick_cycles`, `clint_id`, `plic_id`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | mask with every window, CLINT on 6 and PLIC on 7, 6 sources, 3 bits, 20 bits |
 | Peripheral windows | `timer_id`, `switches_id`, `keys_id`, `uart_pins_id`, `uart_jtag_id`, `display_id`, `flash_ctrl_id` | 0, 1, 2, 3, 4, 5 and 3 |
 | Peripheral presence | `has_timer`, `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Role widths | `switches_width`, `keys_width`, `display_digits` | 10, 4 and 6 |
@@ -92,12 +91,11 @@ Elaboration of the SoC stops with `severity failure` when a combination of gener
 | The map is ordered with no overlap: BOOT_MEMORY, ROM, RAM, external window and peripheral window | `rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib` |
 | The ROM reached through the port fits the cache window, and the RAM fits it with the data cache | `cache_window_bits`, `rom_end_kib`, `ram_base_kib`, `ram_end_kib` |
 | Each existing cache has a power-of-two size of at least 256 bits | `icache_size_bits`, `dcache_size_bits` |
-| The options of a cache only apply with it | `has_dcache_bypass` requires `has_dcache`, `fast_icache_select` requires `has_icache` |
-| The counters are CSRs | `has_zicntr` and `has_zihpm` require `has_zicsr` |
+| The options of a cache only apply with it | `has_dcache_bypass` requires `HAS_DCACHE` of the `config_pkg`, `fast_icache_select` requires `has_icache` |
 | The polarity of the UART pins only applies to the pins role | `uart_tx_invert` and `uart_rx_invert` require `has_uart_pins` |
 | Two present peripherals do not share a window index | `clint_id`, `plic_id`, `timer_id`, `switches_id`, `keys_id`, `display_id`, `uart_jtag_id`, `uart_pins_id`, `flash_ctrl_id` |
 
-`has_interrupts`, `has_sscofpmf` and `has_access_faults` do not fail without `has_zicsr`, because the SoC turns them off before handing them to the core.
+The coherence among the extensions (the counters require Zicsr, the interrupts and Sscofpmf require Zicsr) is checked by the `config_pkg`, which `riscv-tools generate-config-pkg` generates from `platform.yaml`.
 
 ## 6. PLIC lines
 

@@ -276,8 +276,7 @@
         "test_module": "tests.python.unittests.rtl.modular_interrupts",
         "parameters": {
             "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_to_rom.hex",
-            "rom_file": "tests/python/unittests/rtl/data/modular/rom_irq_program.hex",
-            "has_zicsr": true
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_irq_program.hex"
         },
         "build_args": [
             "--std=08"

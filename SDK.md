@@ -7,7 +7,7 @@ for VS Code, Dev Containers and Remote - SSH setup.
 
 ## Source baseline
 
-- Processor: `0ea346054db8f74d02910e81eda5f20504ec7a2f` (main 0.4.2).
+- Processor: `c954c77120af6865c7ccc34f16e94a41fb7c5fbb` (main 0.5.0).
 - Tools: `0340eefe0e95c674d68f7516c392b5c8f17cf7f3` (1.13.0).
 - Processor submodules follow this checkout's gitlinks; clone with `--recurse-submodules`.
 - `.sdk/dependencies.json` pins Tools. `.sdk/patches/tools-sdk.patch` adds
@@ -106,3 +106,8 @@ Controlled historical RTL comparisons, correctness regressions and raw physical
 measurements are collected in the [evidence dossier](.sdk/benchmarks/results/evidence-2026-11-10/README.md).
 It reports targeted arithmetic reuse gains and a load-use regression; it does
 not establish a general application speedup.
+
+The processor package release is 0.5.1; the isolated SDK and bundled extension
+remain 0.5.0. SDK CI runs on pushes to main and both review branches, as well
+as pull requests. Processor RTL and ordinary platform runtimes are unchanged
+by these SDK additions.

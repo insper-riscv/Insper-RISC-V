@@ -82,7 +82,7 @@ check-tops:
 # Every HAS_* constant of the generated package of a platform is a generic of its tops: the generics
 # that the generate step and riscv-tools platform sync pass to GHDL must exist there.
 check-generics:
-	python3 scripts/check_top_generics.py
+	uv run --no-project python scripts/check_top_generics.py
 
 # The numbers of the PLIC sources of the modular top and of every platform.yaml agree.
 check-irq-sources:

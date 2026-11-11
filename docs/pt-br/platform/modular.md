@@ -76,7 +76,7 @@ Os dois chips simulados atendem pedidos de palavra sem cache. A FLASH e a SDRAM 
 
 ## 4. Mapa de memória
 
-O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que são o padrão dos genéricos `has_*`, além de `BOOT_MEMORY_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP`, `HAS_ZICOND` e `HAS_SSCOFPMF` vêm do pacote, ligados pelo campo `extras` do `platform.yaml`; o último exige o Zihpm no perfil e `Interrupts` nos `extras`.
+O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que o topo não repassa como genéricos: o núcleo e o SoC leem a base e as extensões do `config_pkg`. Traz ainda `BOOT_MEMORY_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP`, `HAS_ZICOND` e `HAS_SSCOFPMF` vêm do pacote, ligados pelo campo `extras` do `platform.yaml`; o último exige o Zihpm no perfil e `Interrupts` nos `extras`.
 
 | Região | Início | Fim | Genéricos |
 | :--- | :--- | :--- | :--- |
@@ -126,7 +126,7 @@ riscv-tools --profile rv32im_zicclsm_zicntr_zihpm_zifencei \
   --output tools/riscv_build/config.generated.yaml
 ```
 
-O comando escreve, no repositório de teste, o `config.generated.yaml` com os genéricos `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE`, `HAS_DCACHE` e os `HAS_*` do perfil. Um arquivo que o estenda e aponte `paths.include_dir` para o diretório de cabeçalhos da plataforma modular (`tools/riscv_build/include-modular` do repositório de teste, com o mapa da seção 4) compila e simula os programas de `c/` e `asm/` com `compile --emit hex` e `sim`.
+O comando escreve, no repositório de teste, o `config.generated.yaml` com os genéricos `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`, e o texto do `config_pkg` do perfil em `sim.config_pkg`, que a simulação compila no lugar do `config_pkg.vhd` da plataforma (a base e as extensões do perfil não são genéricos do topo). Um arquivo que o estenda e aponte `paths.include_dir` para o diretório de cabeçalhos da plataforma modular (`tools/riscv_build/include-modular` do repositório de teste, com o mapa da seção 4) compila e simula os programas de `c/` e `asm/` com `compile --emit hex` e `sim`.
 
 | Item | Comportamento na plataforma modular |
 | :--- | :--- |
@@ -152,8 +152,8 @@ O comando escreve, no repositório de teste, o `config.generated.yaml` com os ge
 | `ModularBridgeDcache` | via porta, ponte de busca | via porta, cache de dados |
 | `ModularIcacheDirect` | via porta, cache de instruções | via porta, direto |
 | `ModularInternalCaches` | interna com cache de instruções | interna com cache de dados |
-| `ModularInterrupts` | do núcleo, com `has_zicsr` e CLINT na janela de periféricos | do núcleo |
+| `ModularInterrupts` | do núcleo, com `HAS_ZICSR` do `config_pkg` e CLINT na janela de periféricos | do núcleo |
 
 As entradas que estendem `ModularIntegrated` (`extends` no `tests.json`) herdam a lista de fontes e trocam só os parâmetros. `make check-tops` elabora o topo e `make check-generics` confere que o topo declara todo `HAS_*` do pacote gerado.
 
-O `ModularInterrupts` roda o modelo `integrated` com `has_zicsr` ligado e a imagem `rom_irq_program.hex`: o programa escreve o maior valor no `mtimecmp`, lê o `mip` (MTIP baixo), arma o `mtimecmp` poucos ticks à frente do `mtime` e espera o bit MTIP do `mip`. O `mtimecmp` do CLINT é limpo de forma síncrona e o gerador de clock para os clocks durante o reset, então o programa o escreve antes de ler o `mip`.
+O `ModularInterrupts` roda o modelo `integrated` com `HAS_ZICSR` ligado no `config_pkg` e a imagem `rom_irq_program.hex`: o programa escreve o maior valor no `mtimecmp`, lê o `mip` (MTIP baixo), arma o `mtimecmp` poucos ticks à frente do `mtime` e espera o bit MTIP do `mip`. O `mtimecmp` do CLINT é limpo de forma síncrona e o gerador de clock para os clocks durante o reset, então o programa o escreve antes de ler o `mip`.

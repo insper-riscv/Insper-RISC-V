@@ -1,7 +1,7 @@
 name: SDK
 on:
   push:
-    branches: [live-vscode, sdk-review]
+    branches: [main, live-vscode, sdk-review, kpi-benchmarks]
   pull_request:
 permissions:
   contents: read
