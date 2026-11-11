@@ -7,7 +7,7 @@ for VS Code, Dev Containers and Remote - SSH setup.
 
 ## Source baseline
 
-- Processor: `0ea346054db8f74d02910e81eda5f20504ec7a2f` (main 0.4.2).
+- Processor: `c954c77120af6865c7ccc34f16e94a41fb7c5fbb` (main 0.5.0).
 - Tools: `0340eefe0e95c674d68f7516c392b5c8f17cf7f3` (1.13.0).
 - Processor submodules follow this checkout's gitlinks; clone with `--recurse-submodules`.
 - `.sdk/dependencies.json` pins Tools. `.sdk/patches/tools-sdk.patch` adds
@@ -95,3 +95,8 @@ SDK CI covers its separate Python project and actual C/GHDL execution. The
 processor CI retains its own checks. Hardware acceptance additionally requires
 Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an available
 board; simulation is not a substitute for those tests.
+
+The processor package release is 0.5.1; the isolated SDK and bundled extension
+remain 0.5.0. SDK CI runs on pushes to main and both review branches, as well
+as pull requests. Processor RTL and ordinary platform runtimes are unchanged
+by these SDK additions.
