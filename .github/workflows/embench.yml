@@ -1,0 +1,225 @@
+name: embench
+
+on:
+  pull_request:
+  push:
+    branches: [main, embench-ci]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: Explicit Core profiles, or the complete generated matrix
+        type: choice
+        options: [named, all]
+        default: named
+      workload:
+        description: One local repetition for CI, or unchanged full Embench loops
+        type: choice
+        options: [ci, full]
+        default: ci
+
+permissions:
+  contents: read
+
+concurrency:
+  group: embench-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+  EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
+  SCOPE: ${{ inputs.scope || 'named' }}
+  WORKLOAD: ${{ inputs.workload || 'ci' }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      options: --memory=8g --memory-swap=8g --cpus=2
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: driver
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          path: candidate
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          submodules: recursive
+          persist-credentials: false
+      - name: Plan profiles from the target YAMLs
+        id: plan
+        working-directory: driver
+        shell: bash
+        run: |
+          git config --global --add safe.directory '*'
+          args=(--candidate "$GITHUB_WORKSPACE/candidate" --scope "$SCOPE" --workload "$WORKLOAD" --output "$GITHUB_WORKSPACE/plan.json")
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            args+=(--base "$GITHUB_WORKSPACE/base")
+          fi
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci plan "${args[@]}"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: embench-plan
+          path: plan.json
+          retention-days: 14
+
+  measure:
+    needs: plan
+    runs-on: ubuntu-26.04
+    timeout-minutes: 350
+    container:
+      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      options: --memory=8g --memory-swap=8g --cpus=2
+    strategy:
+      fail-fast: false
+      max-parallel: 11
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      PROFILES: ${{ toJSON(matrix.profiles) }}
+      PROGRAMS: ${{ toJSON(matrix.programs) }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: driver
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          path: candidate
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        if: github.event_name == 'pull_request'
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/checkout@v7
+        with:
+          repository: embench/embench-iot
+          ref: ${{ env.EMBENCH_COMMIT }}
+          path: upstream
+          persist-credentials: false
+      - name: Adapter unit tests and memory model equivalence
+        working-directory: driver
+        shell: bash
+        run: |
+          git config --global --add safe.directory '*'
+          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting -v
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/candidate" --output "$GITHUB_WORKSPACE/results/storage"
+      - name: Check retirement counts on a known assembly kernel
+        if: matrix.id == 0
+        working-directory: driver
+        shell: bash
+        run: |
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/candidate" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter"
+      - name: Fingerprint actual inputs on each side
+        id: keys
+        working-directory: driver
+        shell: bash
+        run: |
+          args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --workload "$WORKLOAD")
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci keys "${args[@]}"
+      - uses: actions/cache/restore@v5
+        with:
+          path: cache/candidate
+          key: ${{ steps.keys.outputs.candidate }}
+      - uses: actions/cache/restore@v5
+        if: github.event_name == 'pull_request'
+        with:
+          path: cache/base
+          key: ${{ steps.keys.outputs.base }}
+      - name: Run programs serially, verifying every result
+        working-directory: driver
+        shell: bash
+        run: |
+          mkdir -p results
+          if [ -d cache ]; then cp -a cache/. results/; fi
+          args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --scope "$SCOPE" --workload "$WORKLOAD" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results")
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci execute "${args[@]}"
+      - name: Keep small successful result records for reuse
+        if: success()
+        shell: bash
+        run: |
+          find results -name results.json -print0 | while IFS= read -r -d '' file; do
+            target="cache/${file#results/}"
+            mkdir -p "$(dirname "$target")"
+            cp "$file" "$target"
+          done
+      - uses: actions/cache/save@v5
+        if: success()
+        with:
+          path: cache/candidate
+          key: ${{ steps.keys.outputs.candidate }}
+      - uses: actions/cache/save@v5
+        if: success() && github.event_name == 'pull_request'
+        with:
+          path: cache/base
+          key: ${{ steps.keys.outputs.base }}
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: embench-batch-${{ matrix.id }}
+          path: |
+            results/**/results.json
+            results/**/counter-check.json
+            results/**/*.log
+            results/**/*-scale.json
+            results/**/config_pkg.vhd
+          if-no-files-found: error
+          retention-days: 14
+
+  embench:
+    name: embench
+    needs: [plan, measure]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      options: --memory=2g --memory-swap=2g --cpus=1
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v8
+        with:
+          name: embench-plan
+          path: plan
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: embench-batch-*
+          path: results
+          merge-multiple: true
+      - name: Publish profile/program tables and PR deltas
+        shell: bash
+        run: |
+          args=(--input results --plan plan/plan.json --output embench-summary.md)
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--compare); fi
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci aggregate "${args[@]}"
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: embench-summary
+          path: |
+            embench-summary.md
+            results/**/*.json
+            results/**/*.csv
+          retention-days: 14
+      - name: Require every measuring job to pass
+        if: always()
+        env:
+          MEASURE_RESULT: ${{ needs.measure.result }}
+        run: test "$MEASURE_RESULT" = success

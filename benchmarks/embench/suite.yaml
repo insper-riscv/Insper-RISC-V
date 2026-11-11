@@ -31,4 +31,4 @@ cpu_mhz: 1
 global_scale_factor: 1
 warmup: 1
 max_cycles: 500000000
-wall_timeout_seconds: 900
+wall_timeout_seconds: 3600

@@ -71,8 +71,11 @@ def metadata(root: Path) -> dict[str, Any]:
     """Separate target revision from its content fingerprint."""
     return {
         "revision": capture(["git", "rev-parse", "HEAD"], root),
-        "submodules": capture(
-            ["git", "submodule", "status", "--recursive"], root
+        "submodules": "\n".join(
+            " ".join(line.split()[:2])
+            for line in capture(
+                ["git", "submodule", "status", "--recursive"], root
+            ).splitlines()
         ),
         "source_sha256": source_key(root),
         "contract": contract(root),

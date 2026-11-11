@@ -3,8 +3,10 @@
 import argparse
 import hashlib
 import json
+import os
 import re
 import resource
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
@@ -29,19 +31,27 @@ def command(args: list[str], cwd: Path, log: Path, timeout: int = 900) -> str:
         stream.write("\n$ " + " ".join(args) + "\n")
         stream.flush()
         position = stream.tell()
-        result = subprocess.run(  # noqa: S603
+        with subprocess.Popen(  # noqa: S603
             args,
             cwd=cwd,
-            check=False,
             stdout=stream,
             stderr=subprocess.STDOUT,
             text=True,
-            timeout=timeout,
-        )
+            start_new_session=True,
+        ) as process:
+            try:
+                returncode = process.wait(timeout=timeout)
+            except subprocess.TimeoutExpired, KeyboardInterrupt:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                stream.write(
+                    f"\nTerminated command group after {timeout}s limit\n"
+                )
+                raise
         stream.seek(position)
         output = stream.read()
-    if result.returncode:
-        raise RuntimeError(f"Command failed ({result.returncode}): {log}")
+    if returncode:
+        raise RuntimeError(f"Command failed ({returncode}): {log}")
     return output
 
 
@@ -388,7 +398,7 @@ def measure(
         arguments,
         folder,
         log,
-        3600 if exp.suite["workload"] == "full" else 900,
+        int(exp.suite["wall_timeout_seconds"]),
     )
     return collect_metrics(exp, elf, time.monotonic() - started)
 
