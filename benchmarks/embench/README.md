@@ -5,6 +5,9 @@ This integration starts from the processor's main branch, independently of
 its memory map and runtime, and the explicit Core profile YAML files.
 Processor sources and checked-in platform configuration are not modified.
 
+See [validation evidence and tested limits](VALIDATION.md) for the first
+complete 209-measurement Actions run and the independent adapter checks.
+
 `suite.yaml` pins all 19 Embench IoT 2.0 programs. Upstream currently labels
 2.0 as development releases; results identify the exact snapshot, rather
 than claiming a final release. The upstream checkout and all verifiers stay intact; see workload modes below.
@@ -97,6 +100,12 @@ ISA, including Zicond where enabled, and its exact hardware configuration.
   in batches of three profiles (potentially expensive; manual only).
 - `scope=named, workload=full`: unchanged benchmark repetition loops,
   sharded by program and profile so individual jobs remain bounded.
+
+The GitHub UI only shows that manual button once the workflow file exists
+on the default branch; see the
+[GitHub event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch).
+While reviewing `embench-ci`, automatic pushes already exercise the default
+matrix without merging anything into main.
 
 `all + full` exceeds GitHub's 256-job matrix limit and is rejected with an
 explicit message. It is not silently reduced to a sample.
