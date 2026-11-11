@@ -27,6 +27,7 @@ programs:
   - xgboost
 cflags: [-O2, -fno-common, -fno-lto, -ffunction-sections, -fdata-sections]
 workload: ci
+c_standard: gnu17
 cpu_mhz: 1
 global_scale_factor: 1
 warmup: 1

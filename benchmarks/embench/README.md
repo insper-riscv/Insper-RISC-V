@@ -38,6 +38,10 @@ no algorithm, input, expected result or verifier is changed. This keeps RTL
 simulation practical on every PR. Each row records the original and used
 scale factors and ELF hash. The upstream checkout is never edited.
 
+Benchmarks are compiled as GNU C17, matching the upstream C sources
+(including WikiSort's `bool` typedef). The platform runtime is compiled
+separately as GNU C23. Compiler, libc and simulator identities are recorded.
+
 The displayed CI index per MHz is:
 
 ```

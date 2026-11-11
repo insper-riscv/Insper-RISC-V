@@ -296,6 +296,37 @@ def hex_image(elf: Path, target: Path, log: Path, origin: int = 0) -> Path:
     return target
 
 
+def compile_arguments(exp: Experiment, settings: dict[str, Any]) -> list[str]:
+    """Use the profile's ISA and ABI with fixed optimization flags."""
+    abi = "ilp32e" if "E" in settings["extensions"] else "ilp32"
+    return [
+        GCC + "gcc",
+        "-march=" + compiler_isa(settings),
+        "-mabi=" + abi,
+        *exp.suite["cflags"],
+    ]
+
+
+def build_runtime(
+    exp: Experiment, folder: Path, settings: dict[str, Any]
+) -> Path:
+    """Compile the platform runtime separately as C23."""
+    target = folder / "runtime.o"
+    command(
+        [
+            *compile_arguments(exp, settings),
+            "-std=gnu23",
+            "-c",
+            str(exp.platform / "runtime/_exit.c"),
+            "-o",
+            str(target),
+        ],
+        exp.root,
+        folder / "build.log",
+    )
+    return target
+
+
 def build_program(
     exp: Experiment, program: str, options: dict[str, Any]
 ) -> Path:
@@ -331,12 +362,8 @@ def build_program(
     support = exp.upstream / "support"
     runtime = exp.platform / "runtime"
     arguments = [
-        GCC + "gcc",
-        "-march=" + compiler_isa(options["settings"]),
-        "-mabi="
-        + ("ilp32e" if "E" in options["settings"]["extensions"] else "ilp32"),
-        "-std=gnu23",
-        *exp.suite["cflags"],
+        *compile_arguments(exp, options["settings"]),
+        "-std=" + str(exp.suite["c_standard"]),
         "-DCPU_MHZ=1",
         "-DGLOBAL_SCALE_FACTOR=1",
         "-DWARMUP_HEAT=" + str(exp.suite["warmup"]),
@@ -350,7 +377,7 @@ def build_program(
         str(support / "main.c"),
         str(support / "beebsc.c"),
         str(HERE / "board.c"),
-        str(runtime / "_exit.c"),
+        str(options["runtime"]),
         "-lm",
         "-o",
         str(elf),
@@ -449,11 +476,17 @@ def execute(
     """Keep a row and diagnostics for every attempted program."""
     folder, settings = build_simulator(exp, profile)
     boot = build_boot(exp)
+    runtime = build_runtime(exp, folder, settings)
     rows: list[dict[str, Any]] = []
     for program in programs:
         print(f"{profile}: {program}", flush=True)
         try:
-            options = {"folder": folder, "settings": settings, "boot": boot}
+            options = {
+                "folder": folder,
+                "settings": settings,
+                "boot": boot,
+                "runtime": runtime,
+            }
             elf = build_program(exp, program, options)
             row = measure(exp, elf, options)
         except (
