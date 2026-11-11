@@ -1,0 +1,23 @@
+Quartus Prime Shell
+Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Copyright (C) 2025  Altera Corporation. All rights reserved.
+a007bc325b1d99410a2454f50b41f2cb166c0e68d3a897548a84e6d1151c8aed  /home/artur/dev/riscv/kpi-benchmarks-20261110/SDK/src/simulation/internal-mem/quartus/output_files/core_fpga_test.sof
+a007bc325b1d99410a2454f50b41f2cb166c0e68d3a897548a84e6d1151c8aed  /home/artur/dev/riscv/publication-review-20261110/SDK/src/simulation/internal-mem/quartus/output_files/core_fpga_test.sof
+
+Type  : Fast 1100mV 0C Model Minimum Pulse Width 'u_pll|pll_inst|altera_pll_i|general[1].gpll~PLL_OUTPUT_COUNTER|divclk'
+Slack : 8.888
+TNS   : 0.000
+
+Type  : Fast 1100mV 0C Model Minimum Pulse Width 'u_pll|pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk'
+Slack : 8.892
+TNS   : 0.000
+
+Type  : Fast 1100mV 0C Model Minimum Pulse Width 'i_clock_50'
+Slack : 9.057
+TNS   : 0.000
+
+Type  : Fast 1100mV 0C Model Minimum Pulse Width 'altera_reserved_tck'
+Slack : 14.870
+TNS   : 0.000
+
+------------------------------------------------------------

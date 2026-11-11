@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+source "$(dirname -- "${BASH_SOURCE[0]}")/env.sh"
+python3 "${RV32_SDK_ROOT}/.sdk/prepare_tools.py"
+exec uv run --quiet --project "${RV32_SDK_ROOT}/.sdk" python -m rv32_sdk.bench "$@"

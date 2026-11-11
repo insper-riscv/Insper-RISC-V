@@ -20,7 +20,7 @@ riscv-tools = {path = "tools", editable = true}
 [tool.ruff]
 target-version = "py314"
 line-length = 79
-exclude = ["tools", ".venv", "platforms"]
+exclude = ["tools", ".venv", "platforms", "vendor", "benchmarks/results"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -30,7 +30,7 @@ ignore = ["E501"]
 dev = ["ruff>=0.14", "deptry>=0.20"]
 
 [tool.deptry]
-exclude = ["tools", ".venv", "platforms", "tests"]
+exclude = ["tools", ".venv", "platforms", "tests", "vendor", "benchmarks/results"]
 
 [tool.deptry.per_rule_ignores]
 # Imported by the SDK's generated upstream cocotb testbench, not the CLI package.

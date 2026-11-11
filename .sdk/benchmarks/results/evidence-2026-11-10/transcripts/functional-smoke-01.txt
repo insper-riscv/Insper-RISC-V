@@ -1,0 +1,4 @@
+FUNCTIONAL nettle-sha256 passed
+FUNCTIONAL slre passed
+FUNCTIONAL statemate passed
+FUNCTIONAL huffbench failed

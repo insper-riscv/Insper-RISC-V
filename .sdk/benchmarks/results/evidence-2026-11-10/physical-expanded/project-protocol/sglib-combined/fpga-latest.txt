@@ -1,0 +1,430 @@
+SDK: /review/SDK
+Project: /review/expanded-measurements/projects/sglib-combined
+Language: c
+Simulation: available
+FPGA: available
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
+Selected JTAG cable: USB-Blaster [1-2]
++ riscv-tools --config /review/expanded-measurements/projects/sglib-combined/.rv32/config.yaml --root /review/expanded-measurements/projects/sglib-combined generate-header
+Wrote /review/expanded-measurements/projects/sglib-combined/.rv32/include/rv32_test.h
++ riscv-tools --config /review/expanded-measurements/projects/sglib-combined/.rv32/config.yaml --root /review/expanded-measurements/projects/sglib-combined compile --emit mif
+In file included from /review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:16,
+                 from /review/expanded-measurements/projects/sglib-combined/src/workload0.c:10:
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib_dllist_concat':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:601:5: warning: this 'for' clause does not guard... [-Wmisleading-indentation]
+  601 |     for(_dlp_ = (first); _dlp_->next!=NULL; _dlp_=_dlp_->next) ;\
+      |     ^~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1359:4: note: in expansion of macro 'SGLIB_DL_LIST_CONCAT'
+ 1359 |    SGLIB_DL_LIST_CONCAT(type, *first, second, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:546:68: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'for'
+  546 | #define SGLIB_DL_LIST_ADD_AFTER(type, place, elem, previous, next) {\
+  547 |   if ((place) == NULL) {\
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:602:5: note: in expansion of macro 'SGLIB_DL_LIST_ADD_AFTER'
+  602 |     SGLIB_DL_LIST_ADD_AFTER(type, _dlp_, second, previous, next);\
+      |     ^~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1359:4: note: in expansion of macro 'SGLIB_DL_LIST_CONCAT'
+ 1359 |    SGLIB_DL_LIST_CONCAT(type, *first, second, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib_dllist_sort':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:662:5: warning: this 'for' clause does not guard... [-Wmisleading-indentation]
+  662 |     for(; _dll_->previous!=NULL; _dll_=_dll_->previous) ;\
+      |     ^~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1389:4: note: in expansion of macro 'SGLIB_DL_LIST_SORT'
+ 1389 |    SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:420:55: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'for'
+  420 | #define SGLIB_LIST_SORT(type, list, comparator, next) {\
+  421 |   /* a non-recursive merge sort on lists */\
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:663:5: note: in expansion of macro 'SGLIB_LIST_SORT'
+  663 |     SGLIB_LIST_SORT(type, _dll_, comparator, next);\
+      |     ^~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1389:4: note: in expansion of macro 'SGLIB_DL_LIST_SORT'
+ 1389 |    SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:659:25: warning: unused variable '_dlt_' [-Wunused-variable]
+  659 |   type *_dll_, *_dlp_, *_dlt_;\
+      |                         ^~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1389:4: note: in expansion of macro 'SGLIB_DL_LIST_SORT'
+ 1389 |    SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:659:17: warning: unused variable '_dlp_' [-Wunused-variable]
+  659 |   type *_dll_, *_dlp_, *_dlt_;\
+      |                 ^~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1389:4: note: in expansion of macro 'SGLIB_DL_LIST_SORT'
+ 1389 |    SGLIB_DL_LIST_SORT(type, *list, comparator, previous, next);\
+      |    ^~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib_dllist_len':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:404:9: warning: unused variable '_ce_' [-Wunused-variable]
+  404 |   type *_ce_;\
+      |         ^~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:693:5: note: in expansion of macro 'SGLIB_LIST_LEN'
+  693 |     SGLIB_LIST_LEN(type, list, previous, _r1_);\
+      |     ^~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1393:4: note: in expansion of macro 'SGLIB_DL_LIST_LEN'
+ 1393 |    SGLIB_DL_LIST_LEN(type, list, previous, next, res);\
+      |    ^~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:404:9: warning: unused variable '_ce_' [-Wunused-variable]
+  404 |   type *_ce_;\
+      |         ^~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:695:5: note: in expansion of macro 'SGLIB_LIST_LEN'
+  695 |     SGLIB_LIST_LEN(type, _dl_, next, _r2_);\
+      |     ^~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1393:4: note: in expansion of macro 'SGLIB_DL_LIST_LEN'
+ 1393 |    SGLIB_DL_LIST_LEN(type, list, previous, next, res);\
+      |    ^~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:59:1: note: in expansion of macro 'SGLIB_DEFINE_DL_LIST_FUNCTIONS'
+   59 | SGLIB_DEFINE_DL_LIST_FUNCTIONS (dllist, DLLIST_COMPARATOR, ptr_to_previous,
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib_ilist_len':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:404:9: warning: unused variable '_ce_' [-Wunused-variable]
+  404 |   type *_ce_;\
+      |         ^~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1181:4: note: in expansion of macro 'SGLIB_LIST_LEN'
+ 1181 |    SGLIB_LIST_LEN(type, list, next, res);\
+      |    ^~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:85:1: note: in expansion of macro 'SGLIB_DEFINE_LIST_FUNCTIONS'
+   85 | SGLIB_DEFINE_LIST_FUNCTIONS (ilist, ILIST_COMPARATOR, next)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib___rbtree_fix_left_insertion_discrepancy':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1454:35: warning: variable 'bl' set but not used [-Wunused-but-set-variable=]
+ 1454 |   type *t, *tl, *a, *b, *c, *ar, *bl, *br, *cl, *cr;\
+      |                                   ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1615:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY'
+ 1615 |   SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, left, right, bits, RED, BLACK);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1454:30: warning: variable 'ar' set but not used [-Wunused-but-set-variable=]
+ 1454 |   type *t, *tl, *a, *b, *c, *ar, *bl, *br, *cl, *cr;\
+      |                              ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1615:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY'
+ 1615 |   SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, left, right, bits, RED, BLACK);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib___rbtree_fix_right_insertion_discrepancy':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1454:35: warning: variable 'bl' set but not used [-Wunused-but-set-variable=]
+ 1454 |   type *t, *tl, *a, *b, *c, *ar, *bl, *br, *cl, *cr;\
+      |                                   ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1619:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY'
+ 1619 |   SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, right, left, bits, RED, BLACK);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1454:30: warning: variable 'ar' set but not used [-Wunused-but-set-variable=]
+ 1454 |   type *t, *tl, *a, *b, *c, *ar, *bl, *br, *cl, *cr;\
+      |                              ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1619:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY'
+ 1619 |   SGLIB___RBTREE_FIX_INSERTION_DISCREPANCY(type, tree, right, left, bits, RED, BLACK);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib___rbtree_fix_left_deletion_discrepancy':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1493:30: warning: variable 'ar' set but not used [-Wunused-but-set-variable=]
+ 1493 |   type  *t, *a, *b, *c, *d, *ar, *bl, *br, *cl, *cr, *dl, *dr;\
+      |                              ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1624:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_DELETION_DISCREPANCY'
+ 1624 |   SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, right, left, bits, RED, BLACK, res);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib___rbtree_fix_right_deletion_discrepancy':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1493:30: warning: variable 'ar' set but not used [-Wunused-but-set-variable=]
+ 1493 |   type  *t, *a, *b, *c, *d, *ar, *bl, *br, *cl, *cr, *dl, *dr;\
+      |                              ^~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1630:3: note: in expansion of macro 'SGLIB___RBTREE_FIX_DELETION_DISCREPANCY'
+ 1630 |   SGLIB___RBTREE_FIX_DELETION_DISCREPANCY(type, tree, left, right, bits, RED, BLACK, res);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib_rbtree_len':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1774:45: warning: variable 'e' set but not used [-Wunused-but-set-variable=]
+ 1774 |     SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, t, e, left, right, n++);\
+      |                                             ^
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:747:9: note: in definition of macro 'SGLIB___BIN_TREE_MAP_ON_ELEMENTS'
+  747 |   type *iteratedVariable;\
+      |         ^~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1774:5: note: in expansion of macro 'SGLIB_BIN_TREE_MAP_ON_ELEMENTS'
+ 1774 |     SGLIB_BIN_TREE_MAP_ON_ELEMENTS(type, t, e, left, right, n++);\
+      |     ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1772:12: warning: unused variable 'e' [-Wunused-variable]
+ 1772 |     type  *e;\
+      |            ^
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'sglib__rbtree_it_compute_current_elem':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1779:15: warning: unused variable 'cmp' [-Wunused-variable]
+ 1779 |     int   i,j,cmp;\
+      |               ^~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:1928:3: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL'
+ 1928 |   SGLIB_DEFINE_RBTREE_FUNCTIONS_GENERAL(type, left, right, colorbit, comparator, 1, 0)
+      |   ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:116:1: note: in expansion of macro 'SGLIB_DEFINE_RBTREE_FUNCTIONS'
+  116 | SGLIB_DEFINE_RBTREE_FUNCTIONS (rbtree, left, right, color_field, CMPARATOR)
+      | ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'warm_caches':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:176:8: warning: unused variable 'res' [-Wunused-variable]
+  176 |   int  res = benchmark_body (heat);
+      |        ^~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c: In function 'benchmark_body':
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:102:9: warning: unused variable '_tmp_' [-Wunused-variable]
+  102 |   type  _tmp_;\
+      |         ^~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/sglib.h:94:3: note: in expansion of macro 'SGLIB_ARRAY_QUICK_SORT'
+   94 |   SGLIB_ARRAY_QUICK_SORT(type, a, max, comparator, SGLIB_ARRAY_ELEMENTS_EXCHANGER);\
+      |   ^~~~~~~~~~~~~~~~~~~~~~
+/review/SDK/.sdk/vendor/embench/src/sglib-combined/combined.c:209:7: note: in expansion of macro 'SGLIB_ARRAY_SINGLE_QUICK_SORT'
+  209 |       SGLIB_ARRAY_SINGLE_QUICK_SORT (int, array2, 100,
+      |       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Building .rv32/sources/c/sglib-combined/src.c ...
+Wrote /review/expanded-measurements/projects/sglib-combined/build/real/manifest.json (1 test(s))
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40954 0
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:34 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40954 0
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40954 0
+Wrote 0 to instance 0 word 40954
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40955 0
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:35 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40955 0
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40955 0
+Wrote 0 to instance 0 word 40955
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/flash_loader.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) load 0 /tmp/tmppza4selg/image.txt 8192 4272461256 run
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:35 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/flash_loader.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" load 0 /tmp/tmppza4selg/image.txt 8192 4272461256 run
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} load 0 /tmp/tmppza4selg/image.txt 8192 4272461256 run
+OK 8192 4272461256
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40954 1
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:36 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40954 1
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40954 1
+WORDS=00000000000000000000000000000001
+SDK: /review/SDK
+Project: /review/expanded-measurements/projects/sglib-combined
+Language: c
+Simulation: available
+FPGA: available
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
+Selected JTAG cable: USB-Blaster [1-2]
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 24568 2
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:37 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 24568 2
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 24568 2
+WORDS=0000000000000000000000000000000000000000000000000000000000111001
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 24570 15
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:00:38 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 24570 15
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 24570 15
+WORDS=000000000000000000001010000010100011000100111101011001000110010101101001011001100110100101110010011001010111011000100000001100110011011100110001001101110011010100110110001100100011110101110011011011100110111101101001011101000110001101110101011100100111010001110011011011100110100100100000001101100011001100110111001100110011010000110110001101000011110101110011011001010110110001100011011110010110001100100000010010000100001101001110010001010100001000110010001100110101011001010010
+Program: PASS

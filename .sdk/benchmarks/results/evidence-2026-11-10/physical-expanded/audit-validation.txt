@@ -1,0 +1,5 @@
+Audited 54 physical runs across 18 workloads
+All 54 source digests match the pinned Embench files plus the tested main/counter harness
+PASS: rejected failed run
+PASS: rejected counter inconsistent with raw output
+PASS: rejected corrupted executable

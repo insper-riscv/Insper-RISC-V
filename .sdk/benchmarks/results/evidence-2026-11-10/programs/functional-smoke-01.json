@@ -1,0 +1,38 @@
+[
+  {
+    "workload": "nettle-sha256",
+    "scope": "Functional verification of one inner iteration; not full-scale benchmark performance",
+    "status": "passed",
+    "instrumentation_record": {
+      "cycles": 10186,
+      "instructions": 9060,
+      "cpi": 1.1242825607064018
+    }
+  },
+  {
+    "workload": "slre",
+    "scope": "Functional verification of one inner iteration; not full-scale benchmark performance",
+    "status": "passed",
+    "instrumentation_record": {
+      "cycles": 40620,
+      "instructions": 26437,
+      "cpi": 1.5364829594885956
+    }
+  },
+  {
+    "workload": "statemate",
+    "scope": "Functional verification of one inner iteration; not full-scale benchmark performance",
+    "status": "passed",
+    "instrumentation_record": {
+      "cycles": 1444,
+      "instructions": 852,
+      "cpi": 1.6948356807511737
+    }
+  },
+  {
+    "workload": "huffbench",
+    "scope": "Functional verification of one inner iteration; not full-scale benchmark performance",
+    "status": "failed",
+    "error": "Command '['/review/RV32/scripts/rv32-project', '--project', '/review/kpi-evidence/functional-smoke-01/huffbench', 'simulate']' timed out after 180 seconds"
+  }
+]

@@ -32,6 +32,12 @@ jobs:
         run: |
           source scripts/env.sh
           uv run --project .sdk python .sdk/tests/integration.py
+      - name: Benchmark counter smoke and pinned workload builds
+        shell: bash
+        run: |
+          scripts/rv32-bench run --benchmarks smoke --cycles 200000 --backend simulate --output build/kpi-ci-smoke
+          scripts/rv32-bench fetch .sdk/vendor/embench
+          scripts/rv32-bench run --backend build --output build/kpi-ci-embench
       - name: Diagnostic logs
         if: failure()
         uses: actions/upload-artifact@v4

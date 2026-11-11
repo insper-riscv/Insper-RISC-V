@@ -1,0 +1,199 @@
+toolchain:
+  gcc: riscv32-unknown-elf-gcc
+  objcopy: riscv32-unknown-elf-objcopy
+  libc: none
+  specs: /review/SDK/.sdk/platforms/internal-mem/runtime/rv32im-fpga.specs
+  nm: riscv32-unknown-elf-nm
+isa:
+  base: i
+  default_ext: ''
+  canonical_order: MAFDQLCBJTPVNH
+paths:
+  include_dir: /review/expanded-measurements/projects/nettle-aes/.rv32/include
+  include_dirs:
+  - /review/SDK/.sdk/benchmarks
+  - /review/SDK/.sdk/vendor/embench/support
+  - /review/SDK/.sdk/vendor/embench/src/nettle-aes
+  crt0: null
+  linker_script: null
+  sources:
+  - /review/SDK/.sdk/platforms/internal-mem/runtime/_exit.c
+  - /review/SDK/.sdk/platforms/internal-mem/runtime/stdio.c
+  - /review/expanded-measurements/projects/nettle-aes/.rv32/stdio-mode.c
+  - /review/expanded-measurements/projects/nettle-aes/src/workload0.c
+  - /review/SDK/.sdk/vendor/embench/support/beebsc.c
+  build_dir: /review/expanded-measurements/projects/nettle-aes/build
+  c_dir: /review/expanded-measurements/projects/nettle-aes/.rv32/sources/c
+  asm_dir: /review/expanded-measurements/projects/nettle-aes/.rv32/sources/asm
+  boot_memory: /review/SDK/.sdk/platforms/internal-mem/runtime/boot_memory.S
+  boot_memory_linker_script: /review/SDK/.sdk/platforms/internal-mem/runtime/boot_memory.ld
+quartus:
+  jtag_device: '@1: 5CE(BA4|FA4) (0x02B050DD)'
+  board: null
+  boards: null
+  sdram_debug_instance: 0
+  display_digits: 6
+  rom_mem_instances: []
+  rom_write_method: jtag_loader
+  ram_mem_instance: 0
+  poll_interval_seconds: 2.5
+  project_dir: /review/SDK/src/simulation/internal-mem/quartus
+  project_name: core_fpga_test
+  sof_file: output_files/core_fpga_test.sof
+  rom_mif_target: init.mif
+  generate: null
+  stale_cache_dirs:
+  - db
+  - incremental_db
+  - output_files
+  - simulation
+  program_wait_seconds: 15
+  default_timeout_s: 15
+  boot_memory_mif_target: boot_memory_init.mif
+memory:
+  rom_words: 7168
+  ram_words: 40960
+  ram_base: 32768
+  tohost_addr: 196584
+  fromhost_addr: 196592
+  boot_memory_base: 0
+  boot_memory_words: 1024
+  rom_base: 4096
+emulator:
+  spike_bin: spike
+  tohost_symbol: tohost
+  entry_symbol: _start
+  timeout_s: 60
+  sources:
+  - src/simulation/internal-mem/runtime/spike_exit.S
+  gcc_flags:
+  - -DRV32_SPIKE
+sim:
+  toplevel: rv32i3stage_core_sim_test
+  vhdl_sources:
+  - /review/SDK/Common-Components/src/utils_pkg.vhd
+  - /review/SDK/src/simulation/internal-mem/rtl/config_pkg.vhd
+  - /review/SDK/src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
+  - /review/SDK/src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+  - /review/SDK/Core/src/shared/pipeline_types.vhd
+  - /review/SDK/Core/src/shared/byte_mask_consts.vhd
+  - /review/SDK/Core/src/shared/opcode_consts.vhd
+  - /review/SDK/Core/src/shared/funct3_consts.vhd
+  - /review/SDK/Core/src/shared/funct7_consts.vhd
+  - /review/SDK/Core/src/shared/alu_consts.vhd
+  - /review/SDK/Core/src/shared/ext_imm_consts.vhd
+  - /review/SDK/Core/src/shared/ext_ram_consts.vhd
+  - /review/SDK/Core/src/shared/wb_sel_consts.vhd
+  - /review/SDK/Core/src/shared/pc_src_consts.vhd
+  - /review/SDK/Core/src/shared/mem_map_consts.vhd
+  - /review/SDK/Core/src/shared/word_consts.vhd
+  - /review/SDK/Core/src/shared/fwd_consts.vhd
+  - /review/SDK/Core/src/Zicond/zicond_consts.vhd
+  - /review/SDK/Core/src/M/muldiv_consts.vhd
+  - /review/SDK/Core/src/Zicsr/trap_consts.vhd
+  - /review/SDK/Core/src/Zicsr/csr_addr_consts.vhd
+  - /review/SDK/Core/src/Zicsr/csr_event_consts.vhd
+  - /review/SDK/Core/src/Zimop/zimop_consts.vhd
+  - /review/SDK/Core/src/Zicsr/csr_value_consts.vhd
+  - /review/SDK/Core/src/Zicsr/irq_consts.vhd
+  - /review/SDK/Core/src/Zihintntl/zihintntl_consts.vhd
+  - /review/SDK/Core/src/Zihintpause/zihintpause_consts.vhd
+  - /review/SDK/Common-Components/src/adder.vhd
+  - /review/SDK/Common-Components/src/generic_register.vhd
+  - /review/SDK/Common-Components/src/flip_flop.vhd
+  - /review/SDK/Common-Components/src/clearable_register.vhd
+  - /review/SDK/Common-Components/src/mux_2x1.vhd
+  - /review/SDK/Common-Components/src/mux_4x1.vhd
+  - /review/SDK/Common-Components/src/mux_8x1.vhd
+  - /review/SDK/Common-Components/src/mux_tree.vhd
+  - /review/SDK/Common-Components/src/mux_16x1.vhd
+  - /review/SDK/Common-Components/src/mux_32x1.vhd
+  - /review/SDK/Common-Components/src/mux_64x1.vhd
+  - /review/SDK/Common-Components/src/onehot_decoder.vhd
+  - /review/SDK/Core/src/shared/reg_file.vhd
+  - /review/SDK/Core/src/shared/control_unit.vhd
+  - /review/SDK/Core/src/shared/bubble_mux.vhd
+  - /review/SDK/Core/src/shared/forwarding_match.vhd
+  - /review/SDK/Core/src/shared/forwarding_unit.vhd
+  - /review/SDK/Core/src/shared/hazard_detection_unit.vhd
+  - /review/SDK/Core/src/shared/pc_fetch.vhd
+  - /review/SDK/Core/src/shared/reg_if_id.vhd
+  - /review/SDK/Core/src/shared/reg_id_ex.vhd
+  - /review/SDK/Core/src/shared/reg_ex_mem.vhd
+  - /review/SDK/Core/src/shared/reg_mem_wb.vhd
+  - /review/SDK/Core/src/I-E/alu.vhd
+  - /review/SDK/Core/src/I-E/extender_imm.vhd
+  - /review/SDK/Core/src/I-E/extender_ram.vhd
+  - /review/SDK/Core/src/I-E/store_manager.vhd
+  - /review/SDK/Core/src/M/m_decode.vhd
+  - /review/SDK/Core/src/M/booth_multiplier_rv32.vhd
+  - /review/SDK/Core/src/M/non_restoring_divider_rv32.vhd
+  - /review/SDK/Core/src/M/muldiv_fusion.vhd
+  - /review/SDK/Core/src/M/multdiv.vhd
+  - /review/SDK/Core/src/Zicclsm/misaligned_unit.vhd
+  - /review/SDK/Core/src/Zicond/zicond_decode.vhd
+  - /review/SDK/Core/src/Zicond/zicond_unit.vhd
+  - /review/SDK/Common-Components/src/counter64.vhd
+  - /review/SDK/Core/src/Zicntr/tick_divider.vhd
+  - /review/SDK/Core/src/Zihpm/hpm_counter_bank.vhd
+  - /review/SDK/Core/src/Zicsr/csr_decode.vhd
+  - /review/SDK/Core/src/Zicsr/csr_file.vhd
+  - /review/SDK/Core/src/Zicsr/trap_unit.vhd
+  - /review/SDK/Core/src/Zifencei/fencei_unit.vhd
+  - /review/SDK/Core/src/Zimop/zimop_decode.vhd
+  - /review/SDK/Core/src/Zihintntl/zihintntl_decode.vhd
+  - /review/SDK/Core/src/Zihintpause/zihintpause_decode.vhd
+  - /review/SDK/Core/src/core/stage_if.vhd
+  - /review/SDK/Core/src/core/stage_id.vhd
+  - /review/SDK/Core/src/core/stage_ex.vhd
+  - /review/SDK/Core/src/core/stage_mem.vhd
+  - /review/SDK/Core/src/core/stage_wb.vhd
+  - /review/SDK/Core/src/core/core.vhd
+  - /review/SDK/Memory/src/RAM/SoC/ram_simulation.vhd
+  - /review/SDK/Memory/src/ROM/SoC/rom_simulation.vhd
+  - /review/SDK/Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+  - /review/SDK/Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+  - /review/SDK/Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+  - /review/SDK/Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+  - /review/SDK/Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+  - /review/SDK/Peripherals/src/UART/serial/uart_fifo.vhd
+  - /review/SDK/Peripherals/src/UART/serial/uart.vhd
+  - /review/SDK/src/simulation/internal-mem/rtl/rv32i3stage_core_sim_test.vhd
+  test_module: testbench.test_c_program
+  ghdl_std: 08
+  parameters:
+    BOOT_MEMORY_FILE: '{boot_memory_hex_path}'
+    ROM_FILE: '{hex_path}'
+    boot_memory_addr_width: '10'
+    rom_addr_width: '13'
+    ram_addr_width: '16'
+    ROM_EXTERNAL: false
+    RAM_EXTERNAL: false
+    HAS_ICACHE: false
+    HAS_DCACHE: false
+    ICACHE_SIZE_BITS: '256'
+    DCACHE_SIZE_BITS: '256'
+  hex_format: words
+  image: hex
+  ghdl_flags: []
+  libraries: {}
+  run_files: {}
+  env:
+    SIM_TIMEOUT_CYCLES: '100000000'
+    TOHOST_ADDR: '0x0002FFE8'
+    STDOUT_ADDR: '0x0001FFE0'
+    RV32_SIM_STDOUT_FILE: /review/expanded-measurements/projects/nettle-aes/.rv32/sim-stdout.bin
+    RV32_STDOUT_CAPACITY: '65536'
+  python_path:
+  - /review/SDK/.sdk/platforms/internal-mem
+act:
+  vendor_dir: vendor/riscv-arch-test
+  target_config: null
+  extensions: I,M
+  jobs: 0
+  sim_parameters: {}
+  ram_tests: []
+  ram_target_config: null
+  ram_extensions: null
+run_log:
+  logs_dir: /review/expanded-measurements/projects/nettle-aes/logs

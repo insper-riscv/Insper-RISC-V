@@ -27,7 +27,9 @@ RESOURCE_PATTERNS = {
         r"Logic utilization \(in ALMs\)\s*;\s*([\d,]+)\s*/\s*([\d,]+)"
     ),
     "registers": r"Total registers\s*;\s*([\d,]+)",
-    "m9k_blocks": r"Total block memory bits\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
+    "block_memory_bits": (
+        r"Total block memory bits\s*;\s*([\d,]+)\s*/\s*([\d,]+)"
+    ),
     "dsp_blocks": r"DSP block 18-bit elements\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
     "plls": r"PLLs\s*;\s*([\d,]+)\s*/\s*([\d,]+)",
 }
@@ -63,19 +65,19 @@ def parse_pll_clock(quartus_dir: Path) -> Json:
     """Lê a frequência configurada no PLL da CPU no pll_0002.v."""
     pll_file = _find_pll_file(quartus_dir)
     if pll_file is None:
-        return {"error": "pll_0002.v nao encontrado", "fmax_mhz": None}
+        return {"error": "pll_0002.v nao encontrado", "configured_mhz": None}
     text = pll_file.read_text(encoding="utf-8", errors="replace")
     match = re.search(r'output_clock_frequency0\("([\d.]+)\s*MHz"\)', text)
     if match:
         return {
             "source": str(pll_file),
             "clock_name": "PLL output0 (CPU clock)",
-            "fmax_mhz": float(match.group(1)),
+            "configured_mhz": float(match.group(1)),
             "note": "Frequencia configurada no PLL (pll_0002.v)",
         }
     return {
         "error": "Padrao de frequencia nao encontrado em pll_0002.v",
-        "fmax_mhz": None,
+        "configured_mhz": None,
     }
 
 
@@ -91,7 +93,7 @@ def parse_fmax(report_path: Path) -> Json:
         return result
     text = report_path.read_text(encoding="utf-8", errors="replace")
     pattern = re.compile(
-        r";\s*([\d.]+)\s*MHz\s*;[^;]*;\s*([\w\[\].]+)\s*;", re.IGNORECASE
+        r";\s*([\d.]+)\s*MHz\s*;[^;]*;\s*([^;\n]+)\s*;", re.IGNORECASE
     )
     matches = pattern.findall(text)
     if not matches:
@@ -103,7 +105,10 @@ def parse_fmax(report_path: Path) -> Json:
     worst = min(cpu or parsed, key=lambda x: x[1])
     result["clock_name"] = worst[0]
     result["fmax_mhz"] = worst[1]
-    result["all_clocks"] = dict(parsed)
+    result["all_clocks"] = {
+        name: min(value for clock, value in parsed if clock == name)
+        for name, _ in parsed
+    }
     return result
 
 
@@ -306,14 +311,14 @@ def build_report(args: argparse.Namespace) -> Json:
     """Monta o relatório com os três KPIs."""
     quartus_dir = Path(args.quartus_dir)
     pll = parse_pll_clock(quartus_dir)
-    clock = (
-        pll if pll.get("fmax_mhz") else parse_fmax(quartus_dir / args.sta_rpt)
-    )
+    clock = parse_fmax(quartus_dir / args.sta_rpt)
     return {
+        "schema_version": 2,
         "generated_at": datetime.now().isoformat(timespec="seconds"),
         "project": "RV32IM, Capstone Insper/CTI 2026.1",
         "kpis": {
             "kpi1_clock_mhz": clock,
+            "kpi1_configured_clock": pll,
             "kpi1_resources": parse_resource_utilization(
                 quartus_dir / args.fit_rpt
             ),
@@ -385,7 +390,7 @@ def _parse_args() -> argparse.Namespace:
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--quartus-dir", default="TopLevel/platforms/internal-mem/quartus"
+        "--quartus-dir", default="src/simulation/internal-mem/quartus"
     )
     parser.add_argument(
         "--sta-rpt", default="output_files/core_fpga_test.sta.rpt"

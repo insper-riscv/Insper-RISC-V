@@ -1,0 +1,9 @@
+[project]
+name = "huffbench"
+language = "c"
+source = "src/main.c"
+sources = ["/review/expanded-measurements/projects/huffbench/src/workload0.c", "/review/SDK/.sdk/vendor/embench/support/beebsc.c"]
+include_dirs = ["/review/SDK/.sdk/benchmarks", "/review/SDK/.sdk/vendor/embench/support", "/review/SDK/.sdk/vendor/embench/src/huffbench"]
+simulation_timeout_cycles = 100000000
+timeout_seconds = 120
+jtag_hardware = "USB-Blaster [1-2]"

@@ -1,0 +1,3 @@
+RV32BENCH cycles=424318 instructions=248855 verified=1
+
+STDERR:

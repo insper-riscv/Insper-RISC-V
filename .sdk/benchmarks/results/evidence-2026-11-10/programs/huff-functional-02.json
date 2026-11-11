@@ -1,0 +1,14 @@
+[
+  {
+    "workload": "huffbench",
+    "scope": "Functional verification of one inner iteration; not full-scale benchmark performance",
+    "status": "passed",
+    "warmup_calls": 0,
+    "body_iterations": 1,
+    "instrumentation_record": {
+      "cycles": 424318,
+      "instructions": 248855,
+      "cpi": 1.7050812722267987
+    }
+  }
+]

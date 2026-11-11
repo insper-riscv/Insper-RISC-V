@@ -95,3 +95,14 @@ SDK CI covers its separate Python project and actual C/GHDL execution. The
 processor CI retains its own checks. Hardware acceptance additionally requires
 Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an available
 board; simulation is not a substitute for those tests.
+
+## Local KPI benchmark development
+
+The initial counter harness and pinned Embench workload runner are documented in
+[the benchmark guide](.sdk/benchmarks/README.md). It exports raw measurements and
+provenance; it does not yet produce an official Embench suite score.
+
+Controlled historical RTL comparisons, correctness regressions and raw physical
+measurements are collected in the [evidence dossier](.sdk/benchmarks/results/evidence-2026-11-10/README.md).
+It reports targeted arithmetic reuse gains and a load-use regression; it does
+not establish a general application speedup.

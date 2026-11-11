@@ -1,0 +1,150 @@
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/src/common/src/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/M/muldiv_fusion.vhd
+elaborate muldiv_fusion
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+VPI module loaded!
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333537
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.M.muldiv_fusion.test_no_hit_before_first_operation (1/5)
+                                                            Sem operação registrada nunca há acerto.
+   251.00ns INFO     cocotb.regression                  tests.python.unittests.M.muldiv_fusion.test_no_hit_before_first_operation passed
+   251.00ns INFO     cocotb.regression                  running tests.python.unittests.M.muldiv_fusion.test_pairing_rule (2/5)
+                                                            Todos os pares de funct3 batem com a regra da família.
+  2272.00ns INFO     cocotb.regression                  tests.python.unittests.M.muldiv_fusion.test_pairing_rule passed
+  2272.00ns INFO     cocotb.regression                  running tests.python.unittests.M.muldiv_fusion.test_operands_compared_by_value (3/5)
+                                                            Operandos diferentes (A ou B) não fundem.
+  2423.00ns INFO     cocotb.regression                  tests.python.unittests.M.muldiv_fusion.test_operands_compared_by_value passed
+  2423.00ns INFO     cocotb.regression                  running tests.python.unittests.M.muldiv_fusion.test_record_holds_full_result (4/5)
+                                                            O registro guarda o resultado completo e só muda com i_done.
+  2464.00ns INFO     cocotb.regression                  tests.python.unittests.M.muldiv_fusion.test_record_holds_full_result passed
+  2464.00ns INFO     cocotb.regression                  running tests.python.unittests.M.muldiv_fusion.test_reset_invalidates_record (5/5)
+                                                            O reset invalida o registro e zera o resultado guardado.
+  2545.00ns INFO     cocotb.regression                  tests.python.unittests.M.muldiv_fusion.test_reset_invalidates_record passed
+  2545.00ns INFO     cocotb.regression                  ***********************************************************************************************************************************
+                                                        ** TEST                                                                       STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***********************************************************************************************************************************
+                                                        ** tests.python.unittests.M.muldiv_fusion.test_no_hit_before_first_operation   PASS         251.00           0.00     215782.56  **
+                                                        ** tests.python.unittests.M.muldiv_fusion.test_pairing_rule                    PASS        2021.00           0.00     456447.44  **
+                                                        ** tests.python.unittests.M.muldiv_fusion.test_operands_compared_by_value      PASS         151.00           0.00     298378.28  **
+                                                        ** tests.python.unittests.M.muldiv_fusion.test_record_holds_full_result        PASS          41.00           0.00     111954.87  **
+                                                        ** tests.python.unittests.M.muldiv_fusion.test_reset_invalidates_record        PASS          81.00           0.00     224433.31  **
+                                                        ***********************************************************************************************************************************
+                                                        ** TESTS=5 PASS=5 FAIL=0 SKIP=0                                                            2545.00           0.01     315830.61  **
+                                                        ***********************************************************************************************************************************
+Executando teste específico: MuldivFusion
+Waves: /review/RV32/Core/tests/python/sim_build/misc/muldiv_fusion/waves.ghw (gerado)
+
+Teste MuldivFusion finalizado.
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/src/common/src/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/shared/byte_mask_consts.vhd
+analyze /review/RV32/Core/src/shared/ext_ram_consts.vhd
+analyze /review/RV32/Core/src/shared/mem_map_consts.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/Zicclsm/misaligned_unit.vhd
+elaborate misaligned_unit
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+VPI module loaded!
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333539
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.Zicclsm.misaligned_unit.test_aligned_never_crosses (1/5)
+                                                            Acessos que não cruzam, ou sem validade, não retêm o pipeline.
+   181.00ns INFO     cocotb.regression                  tests.python.unittests.Zicclsm.misaligned_unit.test_aligned_never_crosses passed
+   181.00ns INFO     cocotb.regression                  running tests.python.unittests.Zicclsm.misaligned_unit.test_load_cross_two_passes (2/5)
+                                                            O load que cruza retém a primeira passagem e libera a segunda.
+   452.00ns INFO     cocotb.regression                  tests.python.unittests.Zicclsm.misaligned_unit.test_load_cross_two_passes passed
+   452.00ns INFO     cocotb.regression                  running tests.python.unittests.Zicclsm.misaligned_unit.test_waits_for_advance_and_ready (3/5)
+                                                            A primeira passagem espera o avanço e, na SDRAM, o pronto.
+   633.00ns INFO     cocotb.regression                  tests.python.unittests.Zicclsm.misaligned_unit.test_waits_for_advance_and_ready passed
+   633.00ns INFO     cocotb.regression                  running tests.python.unittests.Zicclsm.misaligned_unit.test_second_pass_holds_until_base_run (4/5)
+                                                            A segunda passagem dura até o pipeline avançar.
+   714.00ns INFO     cocotb.regression                  tests.python.unittests.Zicclsm.misaligned_unit.test_second_pass_holds_until_base_run passed
+   714.00ns INFO     cocotb.regression                  running tests.python.unittests.Zicclsm.misaligned_unit.test_store_data_and_mask (5/5)
+                                                            O store reparte dado e máscara entre as duas passagens.
+   895.00ns INFO     cocotb.regression                  tests.python.unittests.Zicclsm.misaligned_unit.test_store_data_and_mask passed
+   895.00ns INFO     cocotb.regression                  **********************************************************************************************************************************************
+                                                        ** TEST                                                                                  STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **********************************************************************************************************************************************
+                                                        ** tests.python.unittests.Zicclsm.misaligned_unit.test_aligned_never_crosses              PASS         181.00           0.00      84586.99  **
+                                                        ** tests.python.unittests.Zicclsm.misaligned_unit.test_load_cross_two_passes              PASS         271.00           0.00     152946.88  **
+                                                        ** tests.python.unittests.Zicclsm.misaligned_unit.test_waits_for_advance_and_ready        PASS         181.00           0.00     144987.32  **
+                                                        ** tests.python.unittests.Zicclsm.misaligned_unit.test_second_pass_holds_until_base_run   PASS          81.00           0.00     133613.76  **
+                                                        ** tests.python.unittests.Zicclsm.misaligned_unit.test_store_data_and_mask                PASS         181.00           0.00     160836.42  **
+                                                        **********************************************************************************************************************************************
+                                                        ** TESTS=5 PASS=5 FAIL=0 SKIP=0                                                                        895.00           0.01     111409.31  **
+                                                        **********************************************************************************************************************************************
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+Executando teste específico: MisalignedUnit
+Waves: /review/RV32/Core/tests/python/sim_build/misc/misaligned_unit/waves.ghw (gerado)
+
+Teste MisalignedUnit finalizado.
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+ghdl:error: cannot open /review/RV32/Core/build/configs/no_m/config_pkg.vhd
+Executando teste específico: CoreMisaligned
+Traceback (most recent call last):
+  File "/review/RV32/Core/tests/python/runner.py", line 209, in <module>
+    main()
+    ~~~~^^
+  File "/review/RV32/Core/tests/python/runner.py", line 201, in main
+    _run_named(configs, args.test_name)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/Core/tests/python/runner.py", line 175, in _run_named
+    _run_config(config)
+    ~~~~~~~~~~~^^^^^^^^
+  File "/review/RV32/Core/tests/python/runner.py", line 123, in _run_config
+    run_cocotb_test(
+    ~~~~~~~~~~~~~~~^
+        **{k: v for k, v in config.items() if k not in _OPT_OUT_KEYS}
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/review/RV32/Core/tests/python/runner.py", line 77, in run_cocotb_test
+    runner.build(
+    ~~~~~~~~~~~~^
+        vhdl_sources=[repo_root / src for src in sources],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        build_args=simulator_args.get("build_args") or [],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb_tools/runner.py", line 471, in build
+    self._execute(cmds, cwd=self.cwd)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb_tools/runner.py", line 723, in _execute
+    self._execute_cmds(cmds, cwd)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb_tools/runner.py", line 744, in _execute_cmds
+    raise RuntimeError(
+        f"Command failed with return code: {result.returncode}"
+    )
+RuntimeError: Command failed with return code: 1

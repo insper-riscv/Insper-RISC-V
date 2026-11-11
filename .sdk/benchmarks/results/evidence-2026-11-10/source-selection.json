@@ -1,0 +1,7 @@
+{
+  "baseline_commit": "2115e4c8f49f75f9ef045bb59cf375c36f02b3ca",
+  "baseline_selection": "Last first-parent commit found before 2026-07-01 in available main history",
+  "git_log_evidence": "2115e4c8f49f75f9ef045bb59cf375c36f02b3ca 2026-05-26 22:09:39 -0300 Merge pull request #24 from insper-riscv/test-pipeline\n3bd48495e943fb85aff899fb5fcbf9bfd9a063e7 2026-05-26 21:33:48 -0300 Update full.json\nd74b461e25291937129eba2003f07ebe45003e76 2026-04-16 17:34:04 -0300 fix: corre\u00e7\u00f5es do uso do funct3 no pipeline core\n",
+  "core_commit": "eab41af8fb6464ca22819ac06bdb0a3c63f9c313",
+  "hardware_changes_in_this_task": []
+}

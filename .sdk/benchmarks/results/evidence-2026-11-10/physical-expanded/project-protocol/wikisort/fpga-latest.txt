@@ -1,0 +1,244 @@
+SDK: /review/SDK
+Project: /review/expanded-measurements/projects/wikisort
+Language: c
+Simulation: available
+FPGA: available
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
+Selected JTAG cable: USB-Blaster [1-2]
++ riscv-tools --config /review/expanded-measurements/projects/wikisort/.rv32/config.yaml --root /review/expanded-measurements/projects/wikisort generate-header
+Wrote /review/expanded-measurements/projects/wikisort/.rv32/include/rv32_test.h
++ riscv-tools --config /review/expanded-measurements/projects/wikisort/.rv32/config.yaml --root /review/expanded-measurements/projects/wikisort compile --emit mif
+In file included from /review/expanded-measurements/projects/wikisort/src/workload0.c:11:
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingRandom':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:896:21: warning: unused parameter 'index' [-Wunused-parameter]
+  896 | TestingRandom (long index, long total)
+      |                ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:896:33: warning: unused parameter 'total' [-Wunused-parameter]
+  896 | TestingRandom (long index, long total)
+      |                            ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingMostlyAscending':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:908:42: warning: unused parameter 'total' [-Wunused-parameter]
+  908 | TestingMostlyAscending (long index, long total)
+      |                                     ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingAscending':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:914:36: warning: unused parameter 'total' [-Wunused-parameter]
+  914 | TestingAscending (long index, long total)
+      |                               ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingEqual':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:926:20: warning: unused parameter 'index' [-Wunused-parameter]
+  926 | TestingEqual (long index, long total)
+      |               ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:926:32: warning: unused parameter 'total' [-Wunused-parameter]
+  926 | TestingEqual (long index, long total)
+      |                           ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingJittered':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:932:35: warning: unused parameter 'total' [-Wunused-parameter]
+  932 | TestingJittered (long index, long total)
+      |                              ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'TestingMostlyEqual':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:938:26: warning: unused parameter 'index' [-Wunused-parameter]
+  938 | TestingMostlyEqual (long index, long total)
+      |                     ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:938:38: warning: unused parameter 'total' [-Wunused-parameter]
+  938 | TestingMostlyEqual (long index, long total)
+      |                                 ~~~~~^~~~~
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c: In function 'warm_caches':
+/review/SDK/.sdk/vendor/embench/src/wikisort/libwikisort.c:1051:8: warning: unused variable 'res' [-Wunused-variable]
+ 1051 |   int  res = benchmark_body (heat);
+      |        ^~~
+Building .rv32/sources/c/wikisort/src.c ...
+Wrote /review/expanded-measurements/projects/wikisort/build/real/manifest.json (1 test(s))
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40954 0
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:17 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40954 0
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40954 0
+Wrote 0 to instance 0 word 40954
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40955 0
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:17 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/write_word.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40955 0
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40955 0
+Wrote 0 to instance 0 word 40955
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/flash_loader.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) load 0 /tmp/tmphwh2rvr9/image.txt 8192 707159493 run
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:18 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/flash_loader.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" load 0 /tmp/tmphwh2rvr9/image.txt 8192 707159493 run
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} load 0 /tmp/tmphwh2rvr9/image.txt 8192 707159493 run
+OK 8192 707159493
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 40954 1
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:19 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 40954 1
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 40954 1
+WORDS=00000000000000000000000000000001
+SDK: /review/SDK
+Project: /review/expanded-measurements/projects/wikisort
+Language: c
+Simulation: available
+FPGA: available
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
+Selected JTAG cable: USB-Blaster [1-2]
+JTAG:
+1) USB-Blaster [1-2]
+  02B050DD   5CE(BA4|FA4)
+
+2) USB-Blaster [1-3]
+  020F70DD   10CL120(Y|Z)/EP3C120/..
+
+3) USB-Blaster [1-5]
+  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22
+
+4) USB-Blaster [1-6]
+  031050DD   10M50DA(.|ES)/10M50DC
+
+
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 24568 2
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:20 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 24568 2
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 24568 2
+WORDS=0000000000000000000000000000000000000000000000000000000000111001
++ timeout --kill-after=5 60 quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl USB-Blaster [1-2] @1: 5CE(BA4|FA4) (0x02B050DD) 0 24570 15
+Info: *******************************************************************
+Info: Running Quartus Prime Signal Tap
+    Info: Version 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+    Info: Copyright (C) 2025  Altera Corporation. All rights reserved.
+    Info: Your use of Altera Corporation's design tools, logic functions 
+    Info: and other software and tools, and any partner logic 
+    Info: functions, and any output files from any of the foregoing 
+    Info: (including device programming or simulation files), and any 
+    Info: associated documentation or information are expressly subject 
+    Info: to the terms and conditions of the Altera Program License 
+    Info: Subscription Agreement, the Altera Quartus Prime License Agreement,
+    Info: the Altera IP License Agreement, or other applicable license
+    Info: agreement, including, without limitation, that your use is for
+    Info: the sole purpose of programming logic devices manufactured by
+    Info: Altera and sold by Altera or its authorized distributors.  Please
+    Info: refer to the Altera Software License Subscription Agreements 
+    Info: on the Quartus Prime software download page.
+    Info: Processing started: Tue Nov 10 20:02:21 2026
+Info: Command: quartus_stp -t /review/SDK/.sdk/tools/src/riscv_tools/jtag/tcl/read_words.tcl "USB-Blaster [1-2]" "@1: 5CE(BA4|FA4) (0x02B050DD)" 0 24570 15
+Info: Quartus(args): {USB-Blaster [1-2]} {@1: 5CE(BA4|FA4) (0x02B050DD)} 0 24570 15
+WORDS=000000000000000000001010000010100011000100111101011001000110010101101001011001100110100101110010011001010111011000100000001110000011011100110101001100000011100100110100001100010011110101110011011011100110111101101001011101000110001101110101011100100111010001110011011011100110100100100000001100010011000000110001001100110011001100110011001100110011110101110011011001010110110001100011011110010110001100100000010010000100001101001110010001010100001000110010001100110101011001010010
+Program: PASS

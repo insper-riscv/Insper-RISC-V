@@ -1,0 +1,574 @@
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/build/configs/no_m/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/shared/fwd_consts.vhd
+analyze /review/RV32/Core/src/shared/mem_map_consts.vhd
+analyze /review/RV32/Core/src/shared/pc_src_consts.vhd
+analyze /review/RV32/Core/src/shared/word_consts.vhd
+analyze /review/RV32/Core/src/common/src/adder.vhd
+analyze /review/RV32/Core/src/common/src/mux_4x1.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/shared/pc_fetch.vhd
+analyze /review/RV32/Core/src/core/stage_if.vhd
+analyze /review/RV32/Core/src/shared/reg_if_id.vhd
+analyze /review/RV32/Core/src/shared/ext_imm_consts.vhd
+analyze /review/RV32/Core/src/shared/opcode_consts.vhd
+analyze /review/RV32/Core/src/shared/funct3_consts.vhd
+analyze /review/RV32/Core/src/shared/alu_consts.vhd
+analyze /review/RV32/Core/src/shared/funct7_consts.vhd
+analyze /review/RV32/Core/src/shared/ext_ram_consts.vhd
+analyze /review/RV32/Core/src/shared/wb_sel_consts.vhd
+analyze /review/RV32/Core/src/shared/control_unit.vhd
+analyze /review/RV32/Core/src/M/m_decode.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_consts.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_decode.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_consts.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_decode.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_consts.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_decode.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_consts.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_decode.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_decode.vhd
+analyze /review/RV32/Core/src/I-E/extender_imm.vhd
+analyze /review/RV32/Core/src/shared/forwarding_match.vhd
+analyze /review/RV32/Core/src/common/src/onehot_decoder.vhd
+analyze /review/RV32/Core/src/common/src/mux_tree.vhd
+analyze /review/RV32/Core/src/common/src/mux_2x1.vhd
+analyze /review/RV32/Core/src/shared/reg_file.vhd
+analyze /review/RV32/Core/src/shared/hazard_detection_unit.vhd
+analyze /review/RV32/Core/src/shared/bubble_mux.vhd
+analyze /review/RV32/Core/src/core/stage_id.vhd
+analyze /review/RV32/Core/src/shared/reg_id_ex.vhd
+analyze /review/RV32/Core/src/shared/byte_mask_consts.vhd
+analyze /review/RV32/Core/src/shared/forwarding_unit.vhd
+analyze /review/RV32/Core/src/I-E/alu.vhd
+analyze /review/RV32/Core/src/M/muldiv_consts.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/M/booth_multiplier_rv32.vhd
+analyze /review/RV32/Core/src/M/non_restoring_divider_rv32.vhd
+analyze /review/RV32/Core/src/M/muldiv_fusion.vhd
+analyze /review/RV32/Core/src/M/multdiv.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_unit.vhd
+analyze /review/RV32/Core/src/Zifencei/fencei_unit.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_addr_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_event_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_value_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/irq_consts.vhd
+analyze /review/RV32/Core/src/common/src/counter64.vhd
+analyze /review/RV32/Core/src/Zicntr/tick_divider.vhd
+analyze /review/RV32/Core/src/Zihpm/hpm_counter_bank.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_file.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_unit.vhd
+analyze /review/RV32/Core/src/I-E/store_manager.vhd
+analyze /review/RV32/Core/src/core/stage_ex.vhd
+analyze /review/RV32/Core/src/shared/reg_ex_mem.vhd
+analyze /review/RV32/Core/src/Zicclsm/misaligned_unit.vhd
+analyze /review/RV32/Core/src/core/stage_mem.vhd
+analyze /review/RV32/Core/src/shared/reg_mem_wb.vhd
+analyze /review/RV32/Core/src/I-E/extender_ram.vhd
+analyze /review/RV32/Core/src/core/stage_wb.vhd
+analyze /review/RV32/Core/src/core/core.vhd
+elaborate core
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+VPI module loaded!
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333623
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.misaligned.test_ram (1/3)
+                                                            Every case in the internal RAM.
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning  4861.00ns INFO     cocotb.regression                  tests.python.unittests.cores.misaligned.test_ram passed
+  4861.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.misaligned.test_sdram_without_stall (2/3)
+                                                            Every case in the SDRAM, the slave ready in the same cycle.
+  9732.00ns INFO     cocotb.regression                  tests.python.unittests.cores.misaligned.test_sdram_without_stall passed
+  9732.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.misaligned.test_sdram_with_stalls (3/3)
+                                                            Verifica sdram with stalls.
+ 19233.00ns INFO     cocotb.regression                  tests.python.unittests.cores.misaligned.test_sdram_with_stalls passed
+ 19233.00ns INFO     cocotb.regression                  **************************************************************************************************************************
+                                                        ** TEST                                                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **************************************************************************************************************************
+                                                        ** tests.python.unittests.cores.misaligned.test_ram                   PASS        4861.00           0.19      26004.85  **
+                                                        ** tests.python.unittests.cores.misaligned.test_sdram_without_stall   PASS        4871.00           0.20      24900.90  **
+                                                        ** tests.python.unittests.cores.misaligned.test_sdram_with_stalls     PASS        9501.00           0.23      41876.16  **
+                                                        **************************************************************************************************************************
+                                                        ** TESTS=3 PASS=3 FAIL=0 SKIP=0                                                  19233.00           0.61      31494.45  **
+                                                        **************************************************************************************************************************
+ FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+/review/RV32/Core/src/core/core.vhd:507:17:@0ms:(assertion note): ISA configurada: rv32i_zicclsm
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+Executando teste específico: CoreMisaligned
+Waves: /review/RV32/Core/tests/python/sim_build/misc/core/waves.ghw (gerado)
+
+Teste CoreMisaligned finalizado.
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+/review/RV32/Core/build/configs/no_m_zicsr/config_pkg.vhd:25:1:warning: package "config_pkg" was also defined in file "/review/RV32/Core/build/configs/no_m/config_pkg.vhd" [-Wlibrary]
+library ieee;
+^
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/build/configs/no_m_zicsr/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/shared/fwd_consts.vhd
+analyze /review/RV32/Core/src/shared/mem_map_consts.vhd
+analyze /review/RV32/Core/src/shared/pc_src_consts.vhd
+analyze /review/RV32/Core/src/shared/word_consts.vhd
+analyze /review/RV32/Core/src/common/src/adder.vhd
+analyze /review/RV32/Core/src/common/src/mux_4x1.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/shared/pc_fetch.vhd
+analyze /review/RV32/Core/src/core/stage_if.vhd
+analyze /review/RV32/Core/src/shared/reg_if_id.vhd
+analyze /review/RV32/Core/src/shared/ext_imm_consts.vhd
+analyze /review/RV32/Core/src/shared/opcode_consts.vhd
+analyze /review/RV32/Core/src/shared/funct3_consts.vhd
+analyze /review/RV32/Core/src/shared/alu_consts.vhd
+analyze /review/RV32/Core/src/shared/funct7_consts.vhd
+analyze /review/RV32/Core/src/shared/ext_ram_consts.vhd
+analyze /review/RV32/Core/src/shared/wb_sel_consts.vhd
+analyze /review/RV32/Core/src/shared/control_unit.vhd
+analyze /review/RV32/Core/src/M/m_decode.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_consts.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_decode.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_consts.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_decode.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_consts.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_decode.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_consts.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_decode.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_decode.vhd
+analyze /review/RV32/Core/src/I-E/extender_imm.vhd
+analyze /review/RV32/Core/src/shared/forwarding_match.vhd
+analyze /review/RV32/Core/src/common/src/onehot_decoder.vhd
+analyze /review/RV32/Core/src/common/src/mux_tree.vhd
+analyze /review/RV32/Core/src/common/src/mux_2x1.vhd
+analyze /review/RV32/Core/src/shared/reg_file.vhd
+analyze /review/RV32/Core/src/shared/hazard_detection_unit.vhd
+analyze /review/RV32/Core/src/shared/bubble_mux.vhd
+analyze /review/RV32/Core/src/core/stage_id.vhd
+analyze /review/RV32/Core/src/shared/reg_id_ex.vhd
+analyze /review/RV32/Core/src/shared/byte_mask_consts.vhd
+analyze /review/RV32/Core/src/shared/forwarding_unit.vhd
+analyze /review/RV32/Core/src/I-E/alu.vhd
+analyze /review/RV32/Core/src/M/muldiv_consts.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/M/booth_multiplier_rv32.vhd
+analyze /review/RV32/Core/src/M/non_restoring_divider_rv32.vhd
+analyze /review/RV32/Core/src/M/muldiv_fusion.vhd
+analyze /review/RV32/Core/src/M/multdiv.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_unit.vhd
+analyze /review/RV32/Core/src/Zifencei/fencei_unit.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_addr_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_event_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_value_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/irq_consts.vhd
+analyze /review/RV32/Core/src/common/src/counter64.vhd
+analyze /review/RV32/Core/src/Zicntr/tick_divider.vhd
+analyze /review/RV32/Core/src/Zihpm/hpm_counter_bank.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_file.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_unit.vhd
+analyze /review/RV32/Core/src/I-E/store_manager.vhd
+analyze /review/RV32/Core/src/core/stage_ex.vhd
+analyze /review/RV32/Core/src/shared/reg_ex_mem.vhd
+analyze /review/RV32/Core/src/Zicclsm/misaligned_unit.vhd
+analyze /review/RV32/Core/src/core/stage_mem.vhd
+analyze /review/RV32/Core/src/shared/reg_mem_wb.vhd
+analyze /review/RV32/Core/src/I-E/extender_ram.vhd
+analyze /review/RV32/Core/src/core/stage_wb.vhd
+analyze /review/RV32/Core/src/core/core.vhd
+elaborate core
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+VPI module loaded!
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333630
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.misaligned_half.test_halfword_at_offset_one_runs_and_the_rest_traps (1/1)
+                                                            Verifica halfword at offset one runs and the rest traps.
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1738:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+/review/RV32/Core/src/core/core.vhd:507:17:@0ms:(assertion note): ISA configurada: rv32i_zicclsm_zicsr
+../../src/iee   971.00ns INFO     cocotb.regression                  tests.python.unittests.cores.misaligned_half.test_halfword_at_offset_one_runs_and_the_rest_traps passed
+   971.00ns INFO     cocotb.regression                  **********************************************************************************************************************************************************
+                                                        ** TEST                                                                                              STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        **********************************************************************************************************************************************************
+                                                        ** tests.python.unittests.cores.misaligned_half.test_halfword_at_offset_one_runs_and_the_rest_traps   PASS         971.00           0.03      28761.08  **
+                                                        **********************************************************************************************************************************************************
+                                                        ** TESTS=1 PASS=1 FAIL=0 SKIP=0                                                                                    971.00           0.03      28307.88  **
+                                                        **********************************************************************************************************************************************************
+e2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1890:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+Executando teste específico: CoreMisalignedHalf
+Waves: /review/RV32/Core/tests/python/sim_build/misc/core/waves.ghw (gerado)
+
+Teste CoreMisalignedHalf finalizado.
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+/review/RV32/Core/build/configs/no_m_zifencei/config_pkg.vhd:25:1:warning: package "config_pkg" was also defined in file "/review/RV32/Core/build/configs/no_m_zicsr/config_pkg.vhd" [-Wlibrary]
+library ieee;
+^
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/build/configs/no_m_zifencei/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/shared/fwd_consts.vhd
+analyze /review/RV32/Core/src/shared/mem_map_consts.vhd
+analyze /review/RV32/Core/src/shared/pc_src_consts.vhd
+analyze /review/RV32/Core/src/shared/word_consts.vhd
+analyze /review/RV32/Core/src/common/src/adder.vhd
+analyze /review/RV32/Core/src/common/src/mux_4x1.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/shared/pc_fetch.vhd
+analyze /review/RV32/Core/src/core/stage_if.vhd
+analyze /review/RV32/Core/src/shared/reg_if_id.vhd
+analyze /review/RV32/Core/src/shared/ext_imm_consts.vhd
+analyze /review/RV32/Core/src/shared/opcode_consts.vhd
+analyze /review/RV32/Core/src/shared/funct3_consts.vhd
+analyze /review/RV32/Core/src/shared/alu_consts.vhd
+analyze /review/RV32/Core/src/shared/funct7_consts.vhd
+analyze /review/RV32/Core/src/shared/ext_ram_consts.vhd
+analyze /review/RV32/Core/src/shared/wb_sel_consts.vhd
+analyze /review/RV32/Core/src/shared/control_unit.vhd
+analyze /review/RV32/Core/src/M/m_decode.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_consts.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_decode.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_consts.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_decode.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_consts.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_decode.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_consts.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_decode.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_decode.vhd
+analyze /review/RV32/Core/src/I-E/extender_imm.vhd
+analyze /review/RV32/Core/src/shared/forwarding_match.vhd
+analyze /review/RV32/Core/src/common/src/onehot_decoder.vhd
+analyze /review/RV32/Core/src/common/src/mux_tree.vhd
+analyze /review/RV32/Core/src/common/src/mux_2x1.vhd
+analyze /review/RV32/Core/src/shared/reg_file.vhd
+analyze /review/RV32/Core/src/shared/hazard_detection_unit.vhd
+analyze /review/RV32/Core/src/shared/bubble_mux.vhd
+analyze /review/RV32/Core/src/core/stage_id.vhd
+analyze /review/RV32/Core/src/shared/reg_id_ex.vhd
+analyze /review/RV32/Core/src/shared/byte_mask_consts.vhd
+analyze /review/RV32/Core/src/shared/forwarding_unit.vhd
+analyze /review/RV32/Core/src/I-E/alu.vhd
+analyze /review/RV32/Core/src/M/muldiv_consts.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/M/booth_multiplier_rv32.vhd
+analyze /review/RV32/Core/src/M/non_restoring_divider_rv32.vhd
+analyze /review/RV32/Core/src/M/muldiv_fusion.vhd
+analyze /review/RV32/Core/src/M/multdiv.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_unit.vhd
+analyze /review/RV32/Core/src/Zifencei/fencei_unit.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_addr_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_event_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_value_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/irq_consts.vhd
+analyze /review/RV32/Core/src/common/src/counter64.vhd
+analyze /review/RV32/Core/src/Zicntr/tick_divider.vhd
+analyze /review/RV32/Core/src/Zihpm/hpm_counter_bank.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_file.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_unit.vhd
+analyze /review/RV32/Core/src/I-E/store_manager.vhd
+analyze /review/RV32/Core/src/core/stage_ex.vhd
+analyze /review/RV32/Core/src/shared/reg_ex_mem.vhd
+analyze /review/RV32/Core/src/Zicclsm/misaligned_unit.vhd
+analyze /review/RV32/Core/src/core/stage_mem.vhd
+analyze /review/RV32/Core/src/shared/reg_mem_wb.vhd
+analyze /review/RV32/Core/src/I-E/extender_ram.vhd
+analyze /review/RV32/Core/src/core/stage_wb.vhd
+analyze /review/RV32/Core/src/core/core.vhd
+elaborate core
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+VPI module loaded!
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333637
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.fence_i.test_fence_i_makes_the_new_instruction_run (1/3)
+                                                            Verifica fence i makes the new instruction run.
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning   462.00ns INFO     cocotb.regression                  tests.python.unittests.cores.fence_i.test_fence_i_makes_the_new_instruction_run passed
+   462.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.fence_i.test_without_fence_i_the_cache_is_stale (2/3)
+                                                            Verifica without fence i the cache is stale.
+   914.00ns INFO     cocotb.regression                  tests.python.unittests.cores.fence_i.test_without_fence_i_the_cache_is_stale passed
+   914.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.fence_i.test_fence_i_with_other_latencies (3/3)
+                                                            Verifica fence i with other latencies.
+  2446.00ns INFO     cocotb.regression                  tests.python.unittests.cores.fence_i.test_fence_i_with_other_latencies passed
+  2446.00ns INFO     cocotb.regression                  *****************************************************************************************************************************************
+                                                        ** TEST                                                                             STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        *****************************************************************************************************************************************
+                                                        ** tests.python.unittests.cores.fence_i.test_fence_i_makes_the_new_instruction_run   PASS         462.00           0.02      25171.54  **
+                                                        ** tests.python.unittests.cores.fence_i.test_without_fence_i_the_cache_is_stale      PASS         452.00           0.01      40150.83  **
+                                                        ** tests.python.unittests.cores.fence_i.test_fence_i_with_other_latencies            PASS        1532.00           0.04      37335.84  **
+                                                        *****************************************************************************************************************************************
+                                                        ** TESTS=3 PASS=3 FAIL=0 SKIP=0                                                                  2446.00           0.07      34056.36  **
+                                                        *****************************************************************************************************************************************
+ FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+/review/RV32/Core/src/core/core.vhd:507:17:@0ms:(assertion note): ISA configurada: rv32i_zicclsm_zifencei
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+Executando teste específico: CoreFenceI
+Waves: /review/RV32/Core/tests/python/sim_build/misc/core/waves.ghw (gerado)
+
+Teste CoreFenceI finalizado.
+/review/RV32/Core/tests/python/runner.py:77: DeprecationWarning: Simulator.build *vhdl_sources* parameter is deprecated. Use the language-agnostic *sources* parameter instead.
+  runner.build(
+/review/RV32/Core/build/configs/dcache_no_m_zifencei/config_pkg.vhd:25:1:warning: package "config_pkg" was also defined in file "/review/RV32/Core/build/configs/no_m_zifencei/config_pkg.vhd" [-Wlibrary]
+library ieee;
+^
+analyze /review/RV32/Core/src/common/src/utils_pkg.vhd
+analyze /review/RV32/Core/build/configs/dcache_no_m_zifencei/config_pkg.vhd
+analyze /review/RV32/Core/src/shared/pipeline_types.vhd
+analyze /review/RV32/Core/src/shared/fwd_consts.vhd
+analyze /review/RV32/Core/src/shared/mem_map_consts.vhd
+analyze /review/RV32/Core/src/shared/pc_src_consts.vhd
+analyze /review/RV32/Core/src/shared/word_consts.vhd
+analyze /review/RV32/Core/src/common/src/adder.vhd
+analyze /review/RV32/Core/src/common/src/mux_4x1.vhd
+analyze /review/RV32/Core/src/common/src/generic_register.vhd
+analyze /review/RV32/Core/src/shared/pc_fetch.vhd
+analyze /review/RV32/Core/src/core/stage_if.vhd
+analyze /review/RV32/Core/src/shared/reg_if_id.vhd
+analyze /review/RV32/Core/src/shared/ext_imm_consts.vhd
+analyze /review/RV32/Core/src/shared/opcode_consts.vhd
+analyze /review/RV32/Core/src/shared/funct3_consts.vhd
+analyze /review/RV32/Core/src/shared/alu_consts.vhd
+analyze /review/RV32/Core/src/shared/funct7_consts.vhd
+analyze /review/RV32/Core/src/shared/ext_ram_consts.vhd
+analyze /review/RV32/Core/src/shared/wb_sel_consts.vhd
+analyze /review/RV32/Core/src/shared/control_unit.vhd
+analyze /review/RV32/Core/src/M/m_decode.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_consts.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_decode.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_consts.vhd
+analyze /review/RV32/Core/src/Zimop/zimop_decode.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_consts.vhd
+analyze /review/RV32/Core/src/Zihintntl/zihintntl_decode.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_consts.vhd
+analyze /review/RV32/Core/src/Zihintpause/zihintpause_decode.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_decode.vhd
+analyze /review/RV32/Core/src/I-E/extender_imm.vhd
+analyze /review/RV32/Core/src/shared/forwarding_match.vhd
+analyze /review/RV32/Core/src/common/src/onehot_decoder.vhd
+analyze /review/RV32/Core/src/common/src/mux_tree.vhd
+analyze /review/RV32/Core/src/common/src/mux_2x1.vhd
+analyze /review/RV32/Core/src/shared/reg_file.vhd
+analyze /review/RV32/Core/src/shared/hazard_detection_unit.vhd
+analyze /review/RV32/Core/src/shared/bubble_mux.vhd
+analyze /review/RV32/Core/src/core/stage_id.vhd
+analyze /review/RV32/Core/src/shared/reg_id_ex.vhd
+analyze /review/RV32/Core/src/shared/byte_mask_consts.vhd
+analyze /review/RV32/Core/src/shared/forwarding_unit.vhd
+analyze /review/RV32/Core/src/I-E/alu.vhd
+analyze /review/RV32/Core/src/M/muldiv_consts.vhd
+analyze /review/RV32/Core/src/common/src/flip_flop.vhd
+analyze /review/RV32/Core/src/M/booth_multiplier_rv32.vhd
+analyze /review/RV32/Core/src/M/non_restoring_divider_rv32.vhd
+analyze /review/RV32/Core/src/M/muldiv_fusion.vhd
+analyze /review/RV32/Core/src/M/multdiv.vhd
+analyze /review/RV32/Core/src/Zicond/zicond_unit.vhd
+analyze /review/RV32/Core/src/Zifencei/fencei_unit.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_addr_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_event_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_value_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/irq_consts.vhd
+analyze /review/RV32/Core/src/common/src/counter64.vhd
+analyze /review/RV32/Core/src/Zicntr/tick_divider.vhd
+analyze /review/RV32/Core/src/Zihpm/hpm_counter_bank.vhd
+analyze /review/RV32/Core/src/Zicsr/csr_file.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_consts.vhd
+analyze /review/RV32/Core/src/Zicsr/trap_unit.vhd
+analyze /review/RV32/Core/src/I-E/store_manager.vhd
+analyze /review/RV32/Core/src/core/stage_ex.vhd
+analyze /review/RV32/Core/src/shared/reg_ex_mem.vhd
+analyze /review/RV32/Core/src/Zicclsm/misaligned_unit.vhd
+analyze /review/RV32/Core/src/core/stage_mem.vhd
+analyze /review/RV32/Core/src/shared/reg_mem_wb.vhd
+analyze /review/RV32/Core/src/I-E/extender_ram.vhd
+analyze /review/RV32/Core/src/core/stage_wb.vhd
+analyze /review/RV32/Core/src/core/core.vhd
+elaborate core
+loading VPI module '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/libs/libcocotbvpi_ghdl.so'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:242  in gpi_load_users                  Loaded entry library: '/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/libpython3.14.so.1.0'
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:233  in gpi_load_users                  Running entry func 'initialize' from loaded library '/review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb/simulator.cpython-314-x86_64-linux-gnu.so'
+     -.--ns INFO     pygpi                              ..ib/pygpi/embed.cpp:114  in initialize                      Using Python 3.14.0 interpreter at /review/RV32/.sdk/.venv/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:74   in gpi_print_registered_impl       GPI: VPI support registered
+VPI module loaded!
+     0.00ns INFO     cocotb.initialize                  Seeding Python random module with 1794333643
+     0.00ns WARNING  gpi                                vpi_iterate returned NULL for type vpiInstance for object NULL
+     0.00ns INFO     cocotb.initialize                  Initialized cocotb v2.1.0 from /review/RV32/.sdk/.venv/lib/python3.14/site-packages/cocotb
+     0.00ns INFO     cocotb.initialize                  Running on GHDL version 6.0.0 (tarball) [Dunoon edition]
+     0.00ns INFO     cocotb.regression                  Running tests
+     0.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.fence_i_dcache.test_fence_i_flushes_the_data_cache_first (1/2)
+                                                            Verifica fence i flushes the data cache first.
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1793:7:@0ms:(assertion warning): NUMERIC_STD."=": metavalue detected, returning  2662.00ns INFO     cocotb.regression                  tests.python.unittests.cores.fence_i_dcache.test_fence_i_flushes_the_data_cache_first passed
+  2662.00ns INFO     cocotb.regression                  running tests.python.unittests.cores.fence_i_dcache.test_without_fence_i_the_dirty_store_is_not_seen (2/2)
+                                                            Verifica without fence i the dirty store is not seen.
+  3114.00ns INFO     cocotb.regression                  tests.python.unittests.cores.fence_i_dcache.test_without_fence_i_the_dirty_store_is_not_seen passed
+  3114.00ns INFO     cocotb.regression                  ******************************************************************************************************************************************************
+                                                        ** TEST                                                                                          STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ******************************************************************************************************************************************************
+                                                        ** tests.python.unittests.cores.fence_i_dcache.test_fence_i_flushes_the_data_cache_first          PASS        2662.00           0.07      38139.40  **
+                                                        ** tests.python.unittests.cores.fence_i_dcache.test_without_fence_i_the_dirty_store_is_not_seen   PASS         452.00           0.01      40696.37  **
+                                                        ******************************************************************************************************************************************************
+                                                        ** TESTS=2 PASS=2 FAIL=0 SKIP=0                                                                               3114.00           0.08      38065.97  **
+                                                        ******************************************************************************************************************************************************
+ FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1337:7:@0ms:(assertion warning): NUMERIC_STD."<": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:1641:7:@0ms:(assertion warning): NUMERIC_STD.">=": metavalue detected, returning FALSE
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+/review/RV32/Core/src/core/core.vhd:507:17:@0ms:(assertion note): ISA configurada: rv32i_zicclsm_zifencei
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+../../src/ieee2008/numeric_std-body.vhdl:3053:7:@0ms:(assertion warning): NUMERIC_STD.TO_INTEGER: metavalue detected, returning 0
+Executando teste específico: CoreFenceIDcache
+Waves: /review/RV32/Core/tests/python/sim_build/misc/core/waves.ghw (gerado)
+
+Teste CoreFenceIDcache finalizado.

@@ -1,0 +1,47 @@
+{
+  "baseline_commit": "2115e4c8f49f75f9ef045bb59cf375c36f02b3ca",
+  "comparison_repetitions": 3,
+  "controlled_repeated_simulations": 36,
+  "other_comparison_simulations": 12,
+  "alignment_simulations": 14,
+  "sdk_tests_passed": 42,
+  "rtl_tests_passed": 19,
+  "embench_workloads_built": 18,
+  "embench_workloads_attempted": 19,
+  "new_fullscale_fpga_runs": 54,
+  "new_fullscale_fpga_status": "complete: 54/54 verified, 18 workloads x 3 repetitions",
+  "prior_fullscale_fpga_runs": 15,
+  "prior_fullscale_fpga_workloads": [
+    "crc32",
+    "edn",
+    "matmult-int"
+  ],
+  "functional_only_new_workloads": [
+    "nettle-sha256",
+    "slre",
+    "statemate",
+    "huffbench"
+  ],
+  "global_speedup_proven": false,
+  "new_fullscale_fpga_workloads": [
+    "aha-mont64",
+    "crc32",
+    "edn",
+    "huffbench",
+    "matmult-int",
+    "minver",
+    "nbody",
+    "nettle-aes",
+    "nettle-sha256",
+    "nsichneu",
+    "picojpeg",
+    "qrduino",
+    "sglib-combined",
+    "slre",
+    "st",
+    "statemate",
+    "ud",
+    "wikisort"
+  ],
+  "physical_count_warning": "15 previous runs and 54 new runs use different harness versions; datasets remain separate"
+}

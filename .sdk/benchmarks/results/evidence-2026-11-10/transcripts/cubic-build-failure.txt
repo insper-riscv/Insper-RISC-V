@@ -1,0 +1,66 @@
++ riscv-tools --config /review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/config.yaml --root /review/RV32/build/kpi-evidence-compact-build/projects/cubic generate-header
+Wrote /review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/include/rv32_test.h
++ riscv-tools --config /review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/config.yaml --root /review/RV32/build/kpi-evidence-compact-build/projects/cubic compile --emit mif
+In file included from /review/RV32/build/kpi-evidence-compact-build/projects/cubic/src/workload0.c:10:
+/review/RV32/.sdk/vendor/embench/src/cubic/basicmath_small.c: In function 'warm_caches':
+/review/RV32/.sdk/vendor/embench/src/cubic/basicmath_small.c:52:8: warning: unused variable 'res' [-Wunused-variable]
+   52 |   int  res = benchmark_body (heat);
+      |        ^~~
+/opt/riscv-foundation/riscv32-elf/riscv32-unknown-elf/bin/ld: /review/RV32/build/kpi-evidence-compact-build/projects/cubic/build/real/cubic.elf section `.text' will not fit in region `flash'
+/opt/riscv-foundation/riscv32-elf/riscv32-unknown-elf/bin/ld: section .data VMA [00008000,0000801f] overlaps section .text VMA [00001060,0000c48f]
+/opt/riscv-foundation/riscv32-elf/riscv32-unknown-elf/bin/ld: region `flash' overflowed by 19196 bytes
+collect2: error: ld returned 1 exit status
+Building .rv32/sources/c/cubic/src.c ...
+Traceback (most recent call last):
+  File "/review/RV32/.sdk/.venv/bin/riscv-tools", line 10, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/review/RV32/.sdk/tools/src/riscv_tools/cli/parser.py", line 143, in main
+    args.func(args)
+    ~~~~~~~~~^^^^^^
+  File "/review/RV32/.sdk/tools/src/riscv_tools/cli/compile_cmd.py", line 74, in cmd_compile
+    _compile_one(args, cfg, root, src, build_dir) for src in sources
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/.sdk/tools/src/riscv_tools/cli/compile_cmd.py", line 180, in _compile_one
+    bin_, march, kind, timeout_s = compiler_mod.compile_test(
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        build_setup(cfg, root), src, name, build_dir
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/review/RV32/.sdk/tools/src/riscv_tools/compiler/build.py", line 291, in compile_test
+    run_gcc(
+    ~~~~~~~^
+        toolchain_cfg,
+        ^^^^^^^^^^^^^^
+    ...<15 lines>...
+        ],
+        ^^
+    )
+    ^
+  File "/review/RV32/.sdk/tools/src/riscv_tools/compiler/build.py", line 201, in run_gcc
+    subprocess.run([str(toolchain_cfg["gcc"]), *args], check=True)
+    ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/uv/python/cpython-3.14.8-linux-x86_64-gnu/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['riscv32-unknown-elf-gcc', '-march=rv32im', '-mabi=ilp32', '-Os', '-std=c23', '-Wall', '-Wextra', '-Wpedantic', '-Werror', '--specs=/review/RV32/.sdk/platforms/internal-mem/runtime/rv32im-fpga.specs', '-I/review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/include', '-I/review/RV32/.sdk/benchmarks', '-I/review/RV32/.sdk/vendor/embench/support', '-I/review/RV32/.sdk/vendor/embench/src/cubic', '/review/RV32/.sdk/platforms/internal-mem/runtime/_exit.c', '/review/RV32/.sdk/platforms/internal-mem/runtime/stdio.c', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/stdio-mode.c', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/src/workload0.c', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/src/workload1.c', '/review/RV32/.sdk/vendor/embench/support/beebsc.c', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/sources/c/cubic/src.c', '-o', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/build/real/cubic.elf']' returned non-zero exit status 1.
+Traceback (most recent call last):
+  File "/review/RV32/.sdk/rv32_sdk/cli.py", line 852, in main
+    execute(args, root, project)
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/.sdk/rv32_sdk/cli.py", line 830, in execute
+    build(root, project, "mif")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/.sdk/rv32_sdk/cli.py", line 528, in build
+    tool(config, "compile", "--emit", emit)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/review/RV32/.sdk/rv32_sdk/cli.py", line 314, in tool
+    result = run(
+        [
+    ...<8 lines>...
+        check=check,
+    )
+  File "/review/RV32/.sdk/rv32_sdk/cli.py", line 117, in run
+    raise subprocess.CalledProcessError(result.returncode, command)
+subprocess.CalledProcessError: Command '['riscv-tools', '--config', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic/.rv32/config.yaml', '--root', '/review/RV32/build/kpi-evidence-compact-build/projects/cubic', 'compile', '--emit', 'mif']' returned non-zero exit status 1.

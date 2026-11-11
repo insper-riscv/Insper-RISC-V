@@ -52,3 +52,11 @@ src/*/*/quartus/*.smsg
 .sdk/platforms/
 .sdk/.platform-*/
 .sdk/.views.lock
+
+# Downloaded benchmark sources (pinned by the local benchmark runner)
+.sdk/vendor/
+
+# Curated experiment evidence is intentional data, including original reports.
+!/.sdk/benchmarks/results/evidence-2026-11-10/**
+.sdk/benchmarks/results/**/__pycache__/
+.sdk/benchmarks/results/**/*.pyc

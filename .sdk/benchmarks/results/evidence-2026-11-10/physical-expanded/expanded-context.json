@@ -1,0 +1,15 @@
+{
+  "captured_utc": "2026-11-10T20:02:40.671442+00:00",
+  "sdk_commit": "3cc70ad2e8ca8e19e2dedd6d179caff57beab53d",
+  "submodules": "88189fc103b4e8335b44fb4575397c2b99536025 Common-Components (heads/main)\n eab41af8fb6464ca22819ac06bdb0a3c63f9c313 Core (remotes/origin/agent/ponteiro-common-060-1-geab41af)\n 00b546883b82c220162e8e0e09689be36494ef2b Core/src/common (remotes/origin/agent/super-common-1-1-g00b5468)\n fb4f375b4df350234e80ecca3cf37399900f075e Memory (remotes/origin/agent/ponteiro-common-060-1-gfb4f375)\n 00b546883b82c220162e8e0e09689be36494ef2b Memory/src/common (remotes/origin/agent/super-common-1-1-g00b5468)\n 7bb31b1767472f5a8e102bd8e64e07d6da38f6cc Peripherals (remotes/origin/agent/ponteiro-common-060-1-g7bb31b1)\n 00b546883b82c220162e8e0e09689be36494ef2b Peripherals/src/common (remotes/origin/agent/super-common-1-1-g00b5468)",
+  "core_dirty": "",
+  "jtag_inventory": "1) USB-Blaster [1-2]\n  02B050DD   5CE(BA4|FA4)\n\n2) USB-Blaster [1-3]\n  020F70DD   10CL120(Y|Z)/EP3C120/..\n\n3) USB-Blaster [1-5]\n  020F30DD   10CL025(Y|Z)/EP3C25/EP4CE22\n\n4) USB-Blaster [1-6]\n  031050DD   10M50DA(.|ES)/10M50DC",
+  "selected_cable": "USB-Blaster [1-2]",
+  "selected_idcode": "02B050DD",
+  "bitstream_path": "/review/SDK/src/simulation/internal-mem/quartus/output_files/core_fpga_test.sof",
+  "bitstream_sha256": "a007bc325b1d99410a2454f50b41f2cb166c0e68d3a897548a84e6d1151c8aed",
+  "clock_hz_nominal": 50000000,
+  "clock_measurement": "PLL configuration; no external frequency measurement",
+  "unchanged_hardware_report_reference": "physical-previous/quartus",
+  "note": "Only the authorized Cyclone V cable was programmed; no global jtagd reset."
+}
