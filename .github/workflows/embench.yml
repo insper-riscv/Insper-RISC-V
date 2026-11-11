@@ -117,12 +117,18 @@ jobs:
           git config --global --add safe.directory '*'
           /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting -v
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/candidate" --output "$GITHUB_WORKSPACE/results/storage"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/base" --output "$GITHUB_WORKSPACE/results/storage-base"
+          fi
       - name: Check retirement counts on a known assembly kernel
         if: matrix.id == 0
         working-directory: driver
         shell: bash
         run: |
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/candidate" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter"
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/base" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter-base"
+          fi
       - name: Fingerprint actual inputs on each side
         id: keys
         working-directory: driver
