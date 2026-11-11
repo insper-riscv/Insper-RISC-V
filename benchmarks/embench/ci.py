@@ -12,7 +12,7 @@ from typing import Any
 from benchmarks.embench import report, run
 from benchmarks.embench.provenance import cache_key, capture, metadata
 
-FULL_BATCH = 5
+FULL_BATCH = 3
 MAX_MATRIX_JOBS = 256
 SUMMARY_BYTES = 900000
 

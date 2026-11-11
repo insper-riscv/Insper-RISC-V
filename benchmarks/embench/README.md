@@ -94,7 +94,7 @@ ISA, including Zicond where enabled, and its exact hardware configuration.
 
 - `scope=named, workload=ci`: the normal 11-profile suite.
 - `scope=all, workload=ci`: the generated Core matrix plus explicit variants,
-  in batches of five profiles (potentially expensive; manual only).
+  in batches of three profiles (potentially expensive; manual only).
 - `scope=named, workload=full`: unchanged benchmark repetition loops,
   sharded by program and profile so individual jobs remain bounded.
 
@@ -104,7 +104,7 @@ explicit message. It is not silently reduced to a sample.
 Up to 11 measuring jobs run concurrently on separate GitHub machines.
 Within each job all programs and comparison sides run serially. Containers have a hard 8 GiB RAM limit and
 no swap; the summary job has a 2 GiB limit. No waveforms are generated.
-Both workloads have a one-hour wall limit per program, and the workflow
+Both workloads have a two-hour wall limit per program, and the workflow
 bounds each measuring job. RTL execution of large kernels can be slow even
 with one local repetition; this check can take substantially longer than
 functional smoke tests. Cache hits and cancellation avoid redundant runs. New
