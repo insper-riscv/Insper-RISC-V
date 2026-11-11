@@ -60,6 +60,14 @@ normalization. The reference times come from the pinned suite's own
 `baseline-data/speed.json` (the Embench reference platform, not an older
 Insper CPU). Neither mode measures FPGA maximum frequency.
 
+The upstream XGBoost verifier is permissive at GSF below 12 (its integer
+threshold becomes zero). A link-time wrapper retains that original check
+and additionally requires exactly 126 correct classifications out of 128
+for one repetition. This exact result was independently reproduced using
+the pinned source and dataset on the host compiler. The extra check runs
+after `stop_trigger`, so it does not enter the measured interval. No
+benchmark algorithm or expected dataset is changed.
+
 Overall scores require all 19 programs to pass. Category summaries use the
 fixed high-intensity groups in Table 1 of the paper, DOI
 [10.1109/MC.2024.3511352](https://doi.org/10.1109/MC.2024.3511352): branching

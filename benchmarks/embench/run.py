@@ -364,8 +364,8 @@ def build_program(
     arguments = [
         *compile_arguments(exp, options["settings"]),
         "-std=" + str(exp.suite["c_standard"]),
-        "-DCPU_MHZ=1",
-        "-DGLOBAL_SCALE_FACTOR=1",
+        "-DCPU_MHZ=" + str(exp.suite["cpu_mhz"]),
+        "-DGLOBAL_SCALE_FACTOR=" + str(exp.suite["global_scale_factor"]),
         "-DWARMUP_HEAT=" + str(exp.suite["warmup"]),
         "-I",
         str(support),
@@ -382,8 +382,23 @@ def build_program(
         "-o",
         str(elf),
     ]
+    arguments.extend(guard_arguments(exp, program))
     command(arguments, exp.root, folder / "build.log")
     return elf
+
+
+def guard_arguments(exp: Experiment, program: str) -> list[str]:
+    """Add exact-result checks alongside upstream verification."""
+    if program not in exp.suite["exact_results"]:
+        return []
+    expected = int(exp.suite["exact_results"][program]) * int(
+        exp.suite["global_scale_factor"]
+    )
+    return [
+        str(HERE / "xgboost_guard.c"),
+        "-DEMBENCH_EXPECTED_CORRECT=" + str(expected),
+        "-Wl,--wrap=verify_benchmark",
+    ]
 
 
 def measure(
@@ -464,6 +479,7 @@ def collect_metrics(
         },
         "score_per_mhz": float(reference[elf.stem])
         * 1000
+        * int(exp.suite["global_scale_factor"])
         / (cycles * normalization),
         "elf_sha256": digest(elf),
         "wall_seconds": elapsed,
@@ -554,6 +570,14 @@ def path_parser(description: str | None) -> argparse.ArgumentParser:
     return parser
 
 
+def prepare_paths(parser: argparse.ArgumentParser) -> argparse.Namespace:
+    """Parse shared paths and create the isolated output directory."""
+    args = parser.parse_args()
+    args.output = args.output.resolve()
+    args.output.mkdir(parents=True, exist_ok=True)
+    return args
+
+
 def validate_upstream(exp: Experiment) -> None:
     """Require a clean checkout of the exact pinned Embench sources."""
     revision = command(
@@ -575,9 +599,7 @@ def main() -> None:
     parser.add_argument("--program", action="append")
     parser.add_argument("--reuse", action="store_true")
     parser.add_argument("--workload", choices=("ci", "full"), default="ci")
-    args = parser.parse_args()
-    args.output = args.output.resolve()
-    args.output.mkdir(parents=True, exist_ok=True)
+    args = prepare_paths(parser)
     exp = Experiment(
         args.root.resolve(),
         args.upstream.resolve(),

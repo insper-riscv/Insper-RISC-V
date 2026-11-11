@@ -15,6 +15,7 @@ from benchmarks.embench.run import (
     command,
     hex_image,
     path_parser,
+    prepare_paths,
     read_yaml,
 )
 
@@ -79,9 +80,7 @@ def run_kernel(exp: Experiment, folder: Path, boot: Path, code: int) -> None:
 def main() -> None:
     """Require exact counts and rejection of a failing program exit."""
     parser = path_parser(__doc__)
-    args = parser.parse_args()
-    args.output = args.output.resolve()
-    args.output.mkdir(parents=True, exist_ok=True)
+    args = prepare_paths(parser)
     _, hard = resource.getrlimit(resource.RLIMIT_STACK)
     resource.setrlimit(resource.RLIMIT_STACK, (64 * 1024 * 1024, hard))
     exp = Experiment(

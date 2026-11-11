@@ -125,6 +125,7 @@ jobs:
         working-directory: driver
         shell: bash
         run: |
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_oracle --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/oracle"
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/candidate" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter"
           if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
             /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/base" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter-base"
@@ -181,6 +182,7 @@ jobs:
           path: |
             results/**/results.json
             results/**/counter-check.json
+            results/**/oracle-check.json
             results/**/*.log
             results/**/*-scale.json
             results/**/config_pkg.vhd

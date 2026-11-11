@@ -89,3 +89,5 @@ The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is written by `riscv-too
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](LICENSE).
+
+The `embench` workflow runs all 19 Embench IoT programs on the explicit Core profiles and publishes per-program, per-profile and operation-intensity tables in the Actions summary. PRs compare the target base with the proposed merge result. Automatic mode uses one repetition per algorithm and labels its score as a CI index; manual mode keeps the full repetition counts. Configuration, methodology, limits and reproduction are documented in [benchmarks/embench/README.md](benchmarks/embench/README.md).
