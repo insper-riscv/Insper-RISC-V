@@ -511,12 +511,18 @@ def reusable(
     return None
 
 
-def main() -> None:
-    """Run a profile without changing tracked CPU files."""
-    parser = argparse.ArgumentParser(description=__doc__)
+def path_parser(description: str | None) -> argparse.ArgumentParser:
+    """Build the shared source, upstream and output path arguments."""
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--upstream", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    return parser
+
+
+def main() -> None:
+    """Run a profile without changing tracked CPU files."""
+    parser = path_parser(__doc__)
     parser.add_argument("--profile", required=True)
     parser.add_argument("--program", action="append")
     parser.add_argument("--reuse", action="store_true")

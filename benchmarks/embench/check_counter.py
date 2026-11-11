@@ -1,6 +1,5 @@
 """Check the RTL observer against eight known instructions."""
 
-import argparse
 import json
 import resource
 from pathlib import Path
@@ -15,6 +14,7 @@ from benchmarks.embench.run import (
     build_simulator,
     command,
     hex_image,
+    path_parser,
     read_yaml,
 )
 
@@ -78,10 +78,7 @@ def run_kernel(exp: Experiment, folder: Path, boot: Path, code: int) -> None:
 
 def main() -> None:
     """Require exact counts and rejection of a failing program exit."""
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--upstream", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser = path_parser(__doc__)
     args = parser.parse_args()
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=True)
