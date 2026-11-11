@@ -526,6 +526,7 @@ def reusable(
         saved: dict[str, Any] = json.loads(path.read_text())
         valid = (
             intact(saved)
+            and saved.get("profile") == profile
             and saved.get("schema") == SCHEMA
             and (
                 cache_key(saved["provenance"], profile)

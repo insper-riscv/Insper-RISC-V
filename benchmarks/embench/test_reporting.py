@@ -156,6 +156,7 @@ class ReportingTests(unittest.TestCase):
             run.write_json(path, self.data)
             programs = self.data["suite"]["programs"]
             self.assertIsNotNone(run.reusable(path, exp, "rv32im", programs))
+            self.assertIsNone(run.reusable(path, exp, "rv32i", programs))
             damaged = json.loads(path.read_text())
             damaged["results"][0]["cycles"] += 1
             path.write_text(json.dumps(damaged))
