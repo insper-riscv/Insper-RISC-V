@@ -107,7 +107,7 @@ measurements are collected in the [evidence dossier](.sdk/benchmarks/results/evi
 It reports targeted arithmetic reuse gains and a load-use regression; it does
 not establish a general application speedup.
 
-The processor package release is 0.5.1; the isolated SDK and bundled extension
+The processor package release is 0.5.2; the isolated SDK and bundled extension
 remain 0.5.0. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.

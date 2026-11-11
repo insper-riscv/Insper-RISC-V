@@ -57,9 +57,11 @@ arquivado e a release upstream fixada; não pressupõe binários idênticos sob 
 caminho, compilador ou versão de SDK. Fontes upstream e licenças:
 https://github.com/embench/embench-iot/tree/0466a18e4f6b47e19598d7c6ba72916d54b68f65
 
-Execute na raiz desta pasta:
+A partir da raiz do dossiê, restaure os scripts históricos em uma pasta nova:
 
 ```bash
+python3 verify.py --restore /tmp/rv32-evidence-restored
+cd /tmp/rv32-evidence-restored/physical-expanded
 python3 protocol/audit_physical.py .
 ```
 

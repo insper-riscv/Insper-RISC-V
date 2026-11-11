@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 r"""Compara os KPIs da versão base (2025.2) com os da atual (2026.1).
 
+Requires schema_version=2 for both reports; regenerate legacy reports.
+
 Uso:
   # 1. Gerar o JSON da versão base (uma vez, e commitar):
   python3 scripts/kpi_report.py \
@@ -26,6 +28,9 @@ from typing import Any
 
 # Os relatórios são JSON: um objeto cujos valores têm tipos variados.
 type Json = dict[str, Any]
+
+# Versão que distingue Fmax do STA do clock configurado no PLL.
+SCHEMA_VERSION = 2
 
 # Largura de cada coluna de valor da tabela impressa.
 COL_W = 22
@@ -157,6 +162,15 @@ def main() -> None:
 
     base = load(args.baseline)
     curr = load(args.current)
+    if any(
+        report.get("schema_version") != SCHEMA_VERSION
+        for report in (base, curr)
+    ):
+        parser.error(
+            "Both reports require schema_version=2. Regenerate baseline and "
+            "current reports with kpi_report.py; legacy reports may label "
+            "configured PLL frequency as STA Fmax."
+        )
     sep = "=" * 70
 
     print(f"\n{sep}")

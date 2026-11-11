@@ -194,7 +194,8 @@ feito nesta etapa. Tudo permanece local na branch `kpi-benchmarks`.
 Para auditar somente os resultados arquivados (Python padrão, sem FPGA):
 
 ```bash
-python3 verify.py
+python3 verify.py --restore /tmp/rv32-evidence-restored
+cd /tmp/rv32-evidence-restored
 python3 protocol/audit_comparisons.py comparisons/repetition-1.json \
   comparisons/repetition-2.json comparisons/repetition-3.json \
   --output /tmp/rv32-audit-reproduced
@@ -203,3 +204,11 @@ python3 protocol/audit_comparisons.py comparisons/repetition-1.json \
 O arquivo de hashes detecta alterações após o empacotamento; não representa
 uma assinatura externa ou certificação independente. O auditor e seus testes
 estão preservados em `protocol/`.
+
+Os fontes históricos são armazenados como `.py.snapshot`, preservando seus bytes
+e hashes originais. `snapshot-paths.json` registra a mudança de nomes e o hash do
+manifesto anterior. Isso os distingue do código Python ativo na análise de CI.
+`verify.py --restore` primeiro verifica a integridade e depois cria uma cópia
+externa com os nomes `.py` originais e um manifesto recalculado para esses nomes.
+O destino deve ser novo; nenhum diretório existente é sobrescrito. Os resultados
+brutos e os fontes históricos não foram alterados por esta migração.

@@ -1,0 +1,52 @@
+{
+  "format": 1,
+  "previous_manifest_sha256": "f0f622f104209166f28dfbdc26e7313825781e7a373e1b54be38c96f19e9da34",
+  "reason": "Immutable historical source is stored as data, separately from active Python code.",
+  "snapshots": [
+    {
+      "original_path": "physical-expanded/capture-expanded.py",
+      "stored_path": "physical-expanded/capture-expanded.py.snapshot",
+      "sha256": "68c99575c03eae657110741d965a7fa44db3341cecaf8c0fadba74e7bb5403a8"
+    },
+    {
+      "original_path": "physical-expanded/protocol/audit_physical.py",
+      "stored_path": "physical-expanded/protocol/audit_physical.py.snapshot",
+      "sha256": "525f0c46cce3cf378f84d3ead8650f13412a9174ac2b22cf1d167e505ab0aa98"
+    },
+    {
+      "original_path": "physical-expanded/protocol/bench.py",
+      "stored_path": "physical-expanded/protocol/bench.py.snapshot",
+      "sha256": "c02d194c1a4c8ffd34570da89bc6040495106e657e97965a5af59d812b099875"
+    },
+    {
+      "original_path": "physical-previous/protocol/bench.py",
+      "stored_path": "physical-previous/protocol/bench.py.snapshot",
+      "sha256": "9636773674088b466675f91c0ff3cdd9cecd67cc1384d906aaf42e4921987538"
+    },
+    {
+      "original_path": "protocol/audit_comparisons.py",
+      "stored_path": "protocol/audit_comparisons.py.snapshot",
+      "sha256": "3537b79dc1bb7f8093d8de04b77db04b167429f55262b9bfa19d22e8484b87dd"
+    },
+    {
+      "original_path": "protocol/protocol-compare-final.py",
+      "stored_path": "protocol/protocol-compare-final.py.snapshot",
+      "sha256": "b926b769366d214969da46de165c724b2d2702a3e366467188accd00bc967011"
+    },
+    {
+      "original_path": "protocol/protocol-marker-monitor.py",
+      "stored_path": "protocol/protocol-marker-monitor.py.snapshot",
+      "sha256": "1b61d472a35a6ea7319b2308bb20ac194ff09e747b89ba0586ad1c0eae29c317"
+    },
+    {
+      "original_path": "protocol/protocol-misalignment-cost.py",
+      "stored_path": "protocol/protocol-misalignment-cost.py.snapshot",
+      "sha256": "c799af4eac52263cae63f72cd38ca1b28e772b6b083001798cddda02ffa9fedf"
+    },
+    {
+      "original_path": "protocol/test_evidence.py",
+      "stored_path": "protocol/test_evidence.py.snapshot",
+      "sha256": "44162d727a3562772aea64369bc9ceef0eabe16dc10f67512c3dff529a912756"
+    }
+  ]
+}

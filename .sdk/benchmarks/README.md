@@ -112,3 +112,10 @@ com três repetições cada**, com contadores idênticos por workload. Consulte 
 O procedimento está em `evidence/run_extended.sh`; antes de executá-lo, confirme
 a identidade do cabo/chip e programe o bitstream correspondente a este SDK.
 As 15 medições físicas anteriores usam o harness anterior e ficam separadas.
+
+Comparações com `scripts/compare_kpis.py` exigem dois relatórios de schema 2.
+Regenere relatórios antigos com o `kpi_report.py` atual, inclusive o da baseline:
+o campo antigo podia conter clock configurado no PLL em vez de Fmax do STA.
+Relatórios legados ou de schema desconhecido são rejeitados antes da tabela.
+Para executar os auditores arquivados, use o procedimento `verify.py --restore`
+do dossiê; os snapshots preservam os mesmos bytes das medições originais.
