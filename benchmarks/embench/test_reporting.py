@@ -13,7 +13,7 @@ from typing import Any, override
 from unittest.mock import patch
 
 from benchmarks.embench import ci, report, run
-from benchmarks.embench.provenance import cache_key, hash_files
+from benchmarks.embench.provenance import cache_key, hash_files, source_key
 
 
 class ReportingTests(unittest.TestCase):
@@ -201,6 +201,21 @@ class ReportingTests(unittest.TestCase):
             self.assertTrue(
                 all(len(b["programs"]) == 1 for b in planned["batches"])
             )
+
+    def test_source_key_covers_scripts_and_untracked_sources(self) -> None:
+        """Invalidate results when generators or new RTL change."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            directory = root / "Core/formal"
+            directory.mkdir(parents=True)
+            script = directory / "config_variant.sh"
+            script.write_text("original")
+            initial = source_key(root)
+            script.write_text("changed")
+            updated = source_key(root)
+            self.assertNotEqual(initial, updated)
+            (directory / "new.vhd").write_text("entity new")
+            self.assertNotEqual(updated, source_key(root))
 
     def test_timeout_terminates_descendant_process(self) -> None:
         """Do not leave simulator children running after a timeout."""

@@ -544,6 +544,13 @@ def main() -> None:
     ).strip()
     if revision != exp.suite["commit"]:
         parser.error("Embench source must match the pinned commit")
+    dirty = capture(
+        ["git", "status", "--porcelain", "--untracked-files=all"], exp.upstream
+    )
+    if dirty:
+        parser.error(
+            "Embench checkout must be clean; restore the pinned sources"
+        )
     programs = args.program or exp.suite["programs"]
     if set(programs) - set(exp.suite["programs"]):
         parser.error("Unknown Embench program")

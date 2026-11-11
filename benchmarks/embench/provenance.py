@@ -9,7 +9,31 @@ from typing import Any
 
 HERE = Path(__file__).resolve().parent
 SOURCE_DIRS = ("src", "Core", "Memory", "Peripherals", "Common-Components")
-SOURCE_SUFFIXES = {".vhd", ".yaml", ".yml", ".S", ".h", ".c", ".specs", ".ld"}
+SOURCE_SUFFIXES = {
+    ".vhd",
+    ".vhdl",
+    ".yaml",
+    ".yml",
+    ".S",
+    ".h",
+    ".c",
+    ".specs",
+    ".ld",
+    ".sh",
+    ".json",
+    ".hex",
+    ".mif",
+}
+EXCLUDED_DIRS = {
+    ".git",
+    ".venv",
+    "build",
+    "sim_build",
+    "db",
+    "incremental_db",
+    "output_files",
+    "__pycache__",
+}
 
 
 def capture(arguments: list[str], root: Path) -> str:
@@ -32,12 +56,17 @@ def hash_files(root: Path, paths: list[Path]) -> str:
 
 def source_key(root: Path) -> str:
     """Include tracked RTL, profiles, platform maps and runtime."""
-    names = capture(["git", "ls-files", "--recurse-submodules"], root)
-    paths = [
-        root / n
-        for n in names.splitlines()
-        if n.split("/")[0] in SOURCE_DIRS and Path(n).suffix in SOURCE_SUFFIXES
-    ]
+    paths: list[Path] = []
+    for name in SOURCE_DIRS:
+        for directory, folders, files in (root / name).walk():
+            folders[:] = [
+                folder for folder in folders if folder not in EXCLUDED_DIRS
+            ]
+            paths.extend(
+                directory / file
+                for file in files
+                if Path(file).suffix in SOURCE_SUFFIXES
+            )
     if not paths:
         raise ValueError("No processor inputs found")
     return hash_files(root, paths)
