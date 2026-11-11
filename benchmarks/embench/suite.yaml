@@ -26,6 +26,7 @@ programs:
   - wikisort
   - xgboost
 cflags: [-O2, -fno-common, -fno-lto, -ffunction-sections, -fdata-sections]
+workload: ci
 cpu_mhz: 1
 global_scale_factor: 1
 warmup: 1
