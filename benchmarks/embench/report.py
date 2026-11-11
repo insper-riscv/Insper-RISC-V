@@ -257,20 +257,48 @@ def write_csv(path: Path, data: dict[str, Any]) -> None:
         "profile",
         "program",
         "status",
+        "revision",
+        "workload",
         "cycles",
         "instructions",
         "cpi",
+        "score_kind",
         "score_per_mhz",
-        *BUCKETS,
+        "local_scale_original",
+        "local_scale_executed",
+        "global_scale_factor",
     ]
+    fields.extend(
+        f"{bucket}_{unit}"
+        for bucket in BUCKETS
+        for unit in ("instructions", "percent")
+    )
     with path.open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
         for row in data["results"]:
-            value = {k: row[k] for k in fields if k in row}
-            value["profile"] = data["profile"]
-            value.update(row.get("operations", {}))
-            writer.writerow(value)
+            writer.writerow(csv_row(data, row, fields))
+
+
+def csv_row(
+    data: dict[str, Any], row: dict[str, Any], fields: list[str]
+) -> dict[str, Any]:
+    """Keep score kinds, scale factors and units explicit."""
+    value = {key: row[key] for key in fields if key in row}
+    value.update(
+        {
+            "profile": data["profile"],
+            "revision": data["provenance"]["revision"],
+            "workload": data["suite"].get("workload"),
+            "global_scale_factor": data["suite"].get("global_scale_factor"),
+            "local_scale_original": row.get("scale", {}).get("original"),
+            "local_scale_executed": row.get("scale", {}).get("executed"),
+        }
+    )
+    for bucket, count in row.get("operations", {}).items():
+        value[bucket + "_instructions"] = count
+        value[bucket + "_percent"] = 100 * count / row["instructions"]
+    return value
 
 
 def main() -> None:

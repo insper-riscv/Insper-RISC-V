@@ -8,6 +8,18 @@ from pathlib import Path
 from typing import Any
 
 HERE = Path(__file__).resolve().parent
+MEASUREMENT_FILES = (
+    "run.py",
+    "provenance.py",
+    "records.py",
+    "suite.yaml",
+    "board.c",
+    "monitor.vhd.in",
+    "top.vhd.in",
+    "ram.vhd.in",
+    "rom.vhd.in",
+    "xgboost_guard.c",
+)
 SOURCE_DIRS = ("src", "Core", "Memory", "Peripherals", "Common-Components")
 SOURCE_SUFFIXES = {
     ".vhd",
@@ -79,9 +91,7 @@ def source_key(root: Path) -> str:
 
 def contract(root: Path) -> dict[str, str]:
     """Identify the adapter and exact tools used."""
-    paths = [
-        p for p in HERE.iterdir() if p.suffix in {".py", ".in", ".c", ".yaml"}
-    ]
+    paths = [HERE / name for name in MEASUREMENT_FILES]
     return {
         "adapter_sha256": hash_files(HERE, paths),
         "gcc": capture(

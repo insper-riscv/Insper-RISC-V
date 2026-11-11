@@ -113,11 +113,14 @@ commits cancel superseded runs.
 Successful results are cached by the actual RTL, profile YAMLs, maps,
 runtime inputs and the adapter/suite/tool identities. Base and candidate
 have independent caches so an unchanged target base can be reused across
-PR updates. Only small JSON records are cached. A cache hit must also match
+PR updates. Only small JSON records are cached. Presentation and unit-test edits do
+not invalidate measured results; those checks still run on every job. A cache hit must also match
 the requested program set and pass all result-integrity checks; its revision
 label is refreshed to the current target. The summary shows failures and
 missing results, and fails when required results are absent. JSON, CSV,
 Markdown tables and diagnostic logs are uploaded with 14-day retention.
+CSV exports include the workload, score type, scale factors, revision and
+explicit count/percentage units.
 
 All PR code runs with read-only repository permissions, no deployment
 credentials and no lab/FPGA access. This workflow adds no PR comments,

@@ -467,7 +467,9 @@ def collect_metrics(
     normalization = scaling["original"] / scaling["executed"]
     return {
         "scale": scaling,
-        "score_kind": "CI estimate" if normalization != 1 else "Embench",
+        "score_kind": "CI estimate"
+        if exp.suite["workload"] == "ci"
+        else "Embench",
         "program": elf.stem,
         "status": "pass",
         "cycles": cycles,
