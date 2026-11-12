@@ -14,13 +14,19 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class DriversTest(unittest.TestCase):
-    def test_modular_map_generates_two_instances_and_one_driver(self):
+    def test_modular_map_generates_two_instances_and_enabled_drivers(self):
         files, metadata = drivers.plan(
             ROOT,
             {"cpu_profile": "rv32im"},
             ROOT / "src/simulation/modular/platform.yaml",
         )
-        self.assertEqual(metadata["sources"], ["vendor/GPIO/rv32_gpio.c"])
+        self.assertEqual(
+            {Path(source).parent.name for source in metadata["sources"]},
+            {"DISPLAY", "GPIO", "TIMER", "UART"},
+        )
+        self.assertEqual(
+            metadata["sources"].count("vendor/GPIO/rv32_gpio.c"), 1
+        )
         self.assertIn(b"0x90000000", files["rv32_platform.h"])
         self.assertIn(b"0xA0000000", files["rv32_platform.h"])
         self.assertIn(
@@ -32,8 +38,9 @@ class DriversTest(unittest.TestCase):
         files, metadata = drivers.plan(
             ROOT, {}, ROOT / "src/cyclone-v/fpga-uart-jtag/platform.yaml"
         )
-        self.assertEqual(metadata["sources"], [])
-        self.assertEqual(set(files), {"rv32_platform.h"})
+        self.assertEqual(metadata["sources"], ["vendor/UART/rv32_uart.c"])
+        self.assertIn("UART/rv32_uart_config.h", files)
+        self.assertFalse(any(name.startswith("GPIO/") for name in files))
         self.assertIn(b"0xC0000000", files["rv32_platform.h"])
         self.assertNotIn(b"GPIO", files["rv32_platform.h"])
 
@@ -95,7 +102,7 @@ class DriversTest(unittest.TestCase):
                 json.loads((root / "vendor/.rv32-drivers.json").read_text())[
                     "sources"
                 ],
-                [],
+                ["vendor/UART/rv32_uart.c"],
             )
 
     def test_unmanaged_and_symlink_paths_are_rejected(self):
@@ -161,6 +168,59 @@ class DriversTest(unittest.TestCase):
         self.assertIn(
             b"RV32_PERIPH_KEYS_IRQ UINT32_C(4)", files["rv32_platform.h"]
         )
+
+    def test_interrupt_fabric_follows_the_actual_cpu_profile(self):
+        files, metadata = drivers.plan(
+            ROOT,
+            {"cpu_profile": "rv32im_zicsr_irq"},
+            ROOT / "src/simulation/modular/platform.yaml",
+        )
+        self.assertIn("vendor/CLINT/rv32_clint.c", metadata["sources"])
+        self.assertIn("vendor/PLIC/rv32_plic.c", metadata["sources"])
+        files, metadata = drivers.plan(
+            ROOT,
+            {"cpu_profile": "rv32im"},
+            ROOT / "src/simulation/modular/platform.yaml",
+        )
+        self.assertNotIn("vendor/CLINT/rv32_clint.c", metadata["sources"])
+        self.assertNotIn("PLIC/rv32_plic.h", files)
+        self.assertIn(b"RV32_PERIPH_PLIC_BASE", files["rv32_platform.h"])
+
+    def test_flash_controller_and_console_irq_aliases(self):
+        files, metadata = drivers.plan(
+            ROOT, {}, ROOT / "src/cyclone-v/de0-cv/platform.yaml"
+        )
+        self.assertIn("vendor/FLASH/rv32_flash.c", metadata["sources"])
+        self.assertIn(
+            b"RV32_FLASH_FLASH_CTRL_BASE", files["FLASH/rv32_flash_config.h"]
+        )
+        self.assertIn(
+            b"RV32_PERIPH_FLASH_CTRL_IRQ UINT32_C(6)",
+            files["rv32_platform.h"],
+        )
+        self.assertIn(
+            b"RV32_PERIPH_UART_IRQ UINT32_C(2)", files["rv32_platform.h"]
+        )
+        self.assertNotIn("GPIO/rv32_gpio.c", files)
+
+    def test_driver_base_follows_changed_platform_offset(self):
+        with TemporaryDirectory() as temp:
+            platform = yaml.safe_load(
+                (ROOT / "src/simulation/modular/platform.yaml").read_text()
+            )
+            platform["profiles"] = str(ROOT / "Core/profiles/matrix.yaml")
+            switches = platform["peripherals"][1]
+            switches.pop("offset")
+            switches["base"] = 0x90000100
+            switches["padding"] -= 0x100
+            path = Path(temp) / "platform.yaml"
+            path.write_text(yaml.safe_dump(platform))
+            files, _ = drivers.plan(ROOT, {}, path)
+            self.assertIn(
+                b"RV32_PERIPH_SWITCHES_BASE UINT32_C(0x90000100)",
+                files["rv32_platform.h"],
+            )
+            self.assertNotIn(b"0x90000000", files["rv32_platform.h"])
 
     def test_too_small_window_and_corrupt_ownership_are_rejected(self):
         with TemporaryDirectory() as temp:

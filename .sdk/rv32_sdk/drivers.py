@@ -62,6 +62,11 @@ def descriptors(sdk: Path) -> list[tuple[Path, dict[str, Any]]]:
             raise SystemExit(f"Driver descriptor needs instance names: {path}")
         for alias in aliases:
             safe_name(alias)
+        requirements = spec.get("requires_cpu_flags", [])
+        if not isinstance(requirements, list):
+            raise SystemExit(f"Invalid CPU requirements: {path}")
+        for flag in requirements:
+            safe_name(flag)
         size = spec.get("register_bytes")
         if type(size) is not int or size <= 0 or size % 4:
             raise SystemExit(f"Invalid register window: {path}")
@@ -89,10 +94,29 @@ def header(lines: list[str], guard: str) -> bytes:
     """Render a deterministic C23 configuration header."""
     return (
         "/* Generated from platform.yaml; regenerate with RV32: Refresh Peripheral Drivers. */\n"
-        f"#ifndef {guard}\n#define {guard}\n#include <stdint.h>\n"
+        f"#ifndef {guard}\n#define {guard}\n\n#include <stdint.h>\n\n"
         + "\n".join(lines)
-        + "\n#endif\n"
+        + "\n\n#endif\n"
     ).encode()
+
+
+def instance_irqs(platform: dict[str, Any]) -> dict[str, int]:
+    """Match platform instance names to canonical interrupt source names."""
+    sources = dict(sources_of(platform))
+    irq = dict(sources)
+    if "FLASH" in sources:
+        irq["FLASH_CTRL"] = sources["FLASH"]
+    if "UART" in {p["name"] for p in peripheral_list(platform)}:
+        if platform.get("console") == "jtag" or (
+            "UART" not in sources and "UART_JTAG" in sources
+        ):
+            if "UART_JTAG" in sources:
+                irq["UART"] = sources["UART_JTAG"]
+            else:
+                irq.pop("UART", None)
+        if platform.get("console") == "pins" and "UART" not in sources:
+            irq.pop("UART", None)
+    return irq
 
 
 def plan(
@@ -111,7 +135,7 @@ def plan(
     )
     table = symbols(platform)
     peripherals = peripheral_list(platform)
-    irq = dict(sources_of(platform))
+    irq = instance_irqs(platform)
     files: dict[str, bytes] = {}
     flags = (
         selected["flags"]
@@ -146,6 +170,11 @@ def plan(
     sources, includes, umbrella, claimed = [], ["vendor"], [], set()
     for descriptor, spec in descriptors(sdk):
         name = spec["name"]
+        if any(
+            not flags.get(flag, False)
+            for flag in spec.get("requires_cpu_flags", [])
+        ):
+            continue
         instances = [p for p in peripherals if p["name"] in spec["instances"]]
         if not instances:
             continue

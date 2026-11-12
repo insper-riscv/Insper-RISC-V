@@ -282,7 +282,10 @@ def export_stdout(image: RamImage) -> None:
                             "boot_memory": ".sdk/platforms/modular/runtime/boot_memory.S",
                             "boot_memory_linker_script": ".sdk/platforms/modular/runtime/boot_memory.ld",
                         },
-                        "sim": {"python_path": [".sdk/platforms/modular"]},
+                        "sim": {
+                            "python_path": [".sdk/platforms/modular"],
+                            "parameters": {"HAS_DISPLAY": "true"},
+                        },
                     },
                     sort_keys=False,
                 )

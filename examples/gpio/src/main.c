@@ -1,23 +1,93 @@
-#include <stdio.h>
 #include "rv32_drivers.h"
-static void settle(void) {for(volatile unsigned i=0;i<100;i=i+1) {}}
-int main(void) {
- rv32_gpio_t gpio={RV32_GPIO_SWITCHES_BASE};
- rv32_gpio_t keys={RV32_GPIO_KEYS_BASE};
- rv32_gpio_direction(gpio,1u);rv32_gpio_write(gpio,0u);settle();
- rv32_gpio_set(gpio,1u);settle();
- if (rv32_gpio_read_output(gpio)!=1u || !(rv32_gpio_read(gpio)&1u)) return 1;
- rv32_gpio_clear(gpio,1u);settle();if (rv32_gpio_read_output(gpio)!=0u) return 2;
- rv32_gpio_toggle(gpio,1u);settle();if (rv32_gpio_read_output(gpio)!=1u) return 3;
- rv32_gpio_irq_configure(gpio,1u,1u,1u,0u);
- (void)rv32_gpio_irq_read_clear(gpio);
- rv32_gpio_write(gpio,0u);settle();
- if (!(rv32_gpio_irq_read_clear(gpio)&1u)) return 4;
- settle(); if (rv32_gpio_irq_read_clear(gpio)&1u) return 5;
- rv32_gpio_write(gpio,1u);settle();
- if (!(rv32_gpio_irq_read_clear(gpio)&1u)) return 6;
- rv32_gpio_direction(keys,2u);rv32_gpio_write(keys,2u);settle();
- if(rv32_gpio_read_output(keys)!=2u || !(rv32_gpio_read(keys)&2u)) return 7;
- rv32_gpio_direction(gpio,0u);rv32_gpio_direction(keys,0u);
- puts("GPIO set/clear/toggle, pins, IRQ read-clear and two instances: PASS");return 0;
+
+#include <stdio.h>
+
+/* Poll budgets bound attempts; they are not calibrated time delays. */
+static bool wait_pin(rv32_gpio_t gpio, size_t pin, bool expected)
+{
+    for (size_t attempt = 0; attempt < 2048; ++attempt) {
+        bool value = false;
+
+        if (!rv32_gpio_pin_read(gpio, pin, &value)) {
+            return false;
+        }
+
+        if (value == expected) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool wait_irq(rv32_gpio_t gpio, size_t pin)
+{
+    for (size_t attempt = 0; attempt < 2048; ++attempt) {
+        uint32_t events = rv32_gpio_irq_read_clear(gpio);
+
+        if (rv32_gpio_irq_contains(events, pin)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int main(void)
+{
+    /* These widths match the modular simulation top, not its MMIO slot size. */
+    rv32_gpio_t gpio = rv32_gpio_new(RV32_GPIO_SWITCHES_BASE, 10);
+    rv32_gpio_t keys = rv32_gpio_new(RV32_GPIO_KEYS_BASE, 4);
+
+    if (!rv32_gpio_valid(gpio) || !rv32_gpio_valid(keys)) {
+        return 1;
+    }
+
+    if (!rv32_gpio_pin_direction(gpio, 0, RV32_GPIO_OUTPUT_PIN) ||
+        !rv32_gpio_pin_write(gpio, 0, false) || !wait_pin(gpio, 0, false)) {
+        return 2;
+    }
+
+    if (!rv32_gpio_pin_write(gpio, 0, true) || !wait_pin(gpio, 0, true)) {
+        return 3;
+    }
+
+    if (!rv32_gpio_pin_write(gpio, 0, false) || !wait_pin(gpio, 0, false)) {
+        return 4;
+    }
+
+    if (!rv32_gpio_pin_toggle(gpio, 0) || !wait_pin(gpio, 0, true)) {
+        return 5;
+    }
+
+    if (!rv32_gpio_pin_irq_configure(gpio, 0, RV32_GPIO_IRQ_BOTH_EDGES)) {
+        return 6;
+    }
+
+    (void)rv32_gpio_irq_read_clear(gpio);
+
+    if (!rv32_gpio_pin_write(gpio, 0, false) || !wait_irq(gpio, 0)) {
+        return 7;
+    }
+
+    if (rv32_gpio_irq_contains(rv32_gpio_irq_read_clear(gpio), 0)) {
+        return 8;
+    }
+
+    if (!rv32_gpio_pin_write(gpio, 0, true) || !wait_irq(gpio, 0)) {
+        return 9;
+    }
+
+    if (!rv32_gpio_pin_direction(keys, 1, RV32_GPIO_OUTPUT_PIN) ||
+        !rv32_gpio_pin_write(keys, 1, true) || !wait_pin(keys, 1, true)) {
+        return 10;
+    }
+
+    (void)rv32_gpio_pin_irq_configure(gpio, 0, RV32_GPIO_IRQ_DISABLED);
+    (void)rv32_gpio_pin_direction(gpio, 0, RV32_GPIO_INPUT);
+    (void)rv32_gpio_pin_direction(keys, 1, RV32_GPIO_INPUT);
+
+    puts("GPIO constructors, pin indices, read-clear IRQ and two instances: PASS");
+
+    return 0;
 }

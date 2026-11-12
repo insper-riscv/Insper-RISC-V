@@ -1,4 +1,4 @@
-# Live SDK 0.7.0 (review candidate)
+# Live SDK 0.7.1 (review candidate)
 
 This SDK adds external C/Rust application projects and the Live VS Code
 extension to the current processor tree. It does not replace upstream RTL or
@@ -107,7 +107,7 @@ Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an availabl
 board; simulation is not a substitute for those tests.
 
 The processor package release is 0.5.1; the isolated SDK and bundled extension
-are 0.7.0. SDK CI runs on pushes to main and both review branches, as well
+are 0.7.1. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.
 
@@ -143,14 +143,20 @@ include_dirs = ["include"]
 
 Prepare Project, Simulate and Program FPGA regenerate drivers before compiling when `generate_drivers` is enabled. New C templates enable it. Existing projects without that field retain their prior behavior. Use **RV32: Refresh Peripheral Drivers** or `scripts/rv32-drivers --project /path/to/app` to inspect/regenerate files separately. Keep `generate_drivers = true` to include generated C sources automatically in the application build.
 
-The generator reads the selected platform's canonical YAML, resolves and validates its addresses with Tools, reads the named CPU profile, and discovers descriptors under `Peripherals/src/<peripheral>/<implementation>/driver/c/driver.yaml`. A descriptor lists its C sources, headers, mapped instance names and required register-window size. It does not duplicate memory addresses. Future UART and other drivers can use the same mechanism.
+The generator reads the selected platform's canonical YAML, resolves and validates its addresses with Tools, reads the named CPU profile, and discovers descriptors under `Peripherals/src/<peripheral>/<implementation>/driver/c/driver.yaml`. A descriptor lists its C sources, headers, mapped instance names and required register-window size. It does not duplicate memory addresses. The descriptors now cover GPIO, TIMER, CLINT, PLIC, UART serial/JTAG, DISPLAY and FLASH_CTRL. Optional `requires_cpu_flags` lists hardware elaboration requirements: CLINT/PLIC are not vendored when the selected CPU profile removes the interrupt fabric.
 
 `vendor/rv32_platform.h` describes the declared MMIO map and CPU feature flags. `vendor/GPIO` contains the reusable driver and generated per-instance configuration. The SDK adds its include paths and C sources; applications include `rv32_drivers.h`. One GPIO implementation serves both SWITCHES and KEYS. The platform declares addresses; CPU interrupt capability and the platform's actual I/O instantiation still determine which operations hardware implements.
 
 A managed-file manifest protects hand edits and unrelated vendor files. Regeneration refuses to overwrite edited/unmanaged files, removes only unchanged files it previously generated, and rejects symlink/traversal paths. Customize driver sources in Peripherals, or preserve local changes elsewhere before regeneration. The copied Apache license accompanies vendored sources. Generated driver changes do not invalidate hardware bitstreams; platform/RTL changes still do.
 
-The first driver supports direction, output load/set/clear/toggle, synchronized pin reads and IRQ masks. IRQ status is read-and-clear for the whole instance, not W1C. The driver does not configure the CPU interrupt handler or PLIC. See `examples/gpio` for a C program that exercises GPIO on the actual modular CPU/peripheral RTL.
+All device structs have `rv32_<device>_new(...)` constructors. They are non-owning values: no malloc and no MMIO writes during construction. Use the constructor and public operations; applications do not change a handle's base address or calculate register offsets. Invalid pin/digit/source indices are rejected before MMIO. GPIO accepts `size_t` pin numbers, DISPLAY accepts digit numbers, and PLIC accepts source numbers. Whole-mask GPIO operations remain available for compatibility.
+
+The base address comes from the canonical platform map (`base`, or peripheral window plus `offset`). Internal register offsets come from the peripheral RTL and are private C constants. Pin numbers become bit masks inside the driver, not hexadecimal addresses. Pin counts, display digit counts, UART backend/FIFO capacity, PLIC source/priority widths and FLASH page size must match the actual RTL instance; they are not inferred from the slot size. The C driver neither installs CPU trap handlers nor enables machine interrupts.
+
+GPIO/TIMER IRQ status is read-to-clear; FLASH IRQ status is W1C. PLIC claim consumes one pending source. JTAG UART status reads acknowledge dropped TX bytes, unlike serial UART status. UART writes are nonblocking or use an explicit total poll budget, not an unlimited wait. CLINT reads its 64-bit counter high/low/high and writes deadlines low=all-ones/high/low. Flash commands are asynchronous; true means submitted, and callers still check busy/refused/completion. Execute erase/program routines outside the FLASH being modified.
+
+See `examples/gpio` for constructor/pin operations and bounded synchronization/IRQ polling with no arbitrary settle delay. `examples/peripherals` additionally exercises TIMER, serial/JTAG UART and DISPLAY, plus CLINT and PLIC/GPIO when `HAS_INTERRUPTS` is enabled. The private modular SDK view enables its mapped display; the normal processor configuration is unchanged. All C code uses the Peripherals `.clang-format`, one statement per line and blank lines between logical blocks.
 
 `platform = "modular"` is a simulation-only SDK view of the stock modular platform with internal memories. It uses compact storage models and the public RAM observation ports to stay within the container's 8 GiB limit. Its runtime/testbench/stdout adjustments are private; main's source files are unchanged. FPGA actions reject this selection before accessing a board. Explicit CPU profiles now also work on this simulation platform.
 
-The default internal-mem and de0-cv maps, and the fpga-uart-jtag example map, do not declare GPIO. They must not acquire invented GPIO addresses or a GPIO driver. Only GPIO is implemented as a reusable C driver in this initial version; other declared peripherals receive address definitions and acquire drivers when descriptors/sources are added.
+The default internal-mem and de0-cv maps, and the fpga-uart-jtag example map, do not declare GPIO. They must not acquire invented GPIO addresses or a GPIO driver. Only mapped instances with a supported descriptor and satisfied elaboration requirements acquire drivers. A FLASH memory region is not a FLASH_CTRL peripheral and must never be treated as one.
