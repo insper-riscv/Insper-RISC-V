@@ -99,6 +99,23 @@ class HardwareTests(unittest.TestCase):
         self.assertNotIn("--privileged", arguments)
         self.assertFalse(any("docker.sock" in value for value in arguments))
 
+    def test_reduced_hpm_generics(self) -> None:
+        """Apply reduced HPM counts and widths to the board entity."""
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            top = folder / "de0_cv_de0_cv_top.vhd"
+            top.write_text(
+                "HPM_COUNTERS : natural range 0 to 29 := 29;\n"
+                "HPM_WIDTH : natural range 0 to 64 := 64\n"
+            )
+            hardware_build.apply_generics(
+                folder, {"hpm_counters": 4, "hpm_width": 40}
+            )
+            self.assertIn("29 := 4;", top.read_text())
+            self.assertIn("64 := 40", top.read_text())
+            with self.assertRaisesRegex(ValueError, "Missing generated"):
+                hardware_build.apply_generics(folder, {"unknown": 1})
+
     def test_verifier_failure_does_not_restart_jtag(self) -> None:
         """A normal failure must not stop other users' JTAG daemon."""
         with (

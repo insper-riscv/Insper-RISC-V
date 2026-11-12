@@ -72,13 +72,8 @@ def prepare_board(exp: run.Experiment, settings: dict[str, Any]) -> Path:
         exp.output / "build.log",
     )
     config = run.build_config(exp, folder, settings)
-    text = restore_platform(config)
-    for key, value in settings["generics"].items():
-        pattern = rf"(constant {key.upper()}\s*:[^;]*?:=\s*)\d+"
-        text, count = re.subn(pattern, rf"\g<1>{int(value)}", text)
-        if count != 1:
-            raise ValueError(f"Missing generated profile generic: {key}")
-    config.write_text(text)
+    config.write_text(restore_platform(config))
+    apply_generics(folder, settings["generics"])
     patch_project(exp, folder, config)
     prepare_boot(exp, folder, settings)
     for name in ("flash_init.mif", "init.mif"):
@@ -86,6 +81,18 @@ def prepare_board(exp: run.Experiment, settings: dict[str, Any]) -> Path:
             mif_text(65536, ["[0000..FFFF] : 00000000;"])
         )
     return folder
+
+
+def apply_generics(folder: Path, generics: dict[str, Any]) -> None:
+    """Apply HPM limits to the generated board entity."""
+    top = folder / f"{PROJECT}_top.vhd"
+    text = top.read_text()
+    for key, value in generics.items():
+        pattern = rf"(?m)^(\s*{key.upper()}\s*:[^;\n]*?:=\s*)\d+"
+        text, count = re.subn(pattern, rf"\g<1>{int(value)}", text)
+        if count != 1:
+            raise ValueError(f"Missing generated profile generic: {key}")
+    top.write_text(text)
 
 
 def patch_project(exp: run.Experiment, folder: Path, config: Path) -> None:
