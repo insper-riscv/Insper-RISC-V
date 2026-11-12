@@ -14,7 +14,7 @@ from riscv_tools.memory_map.interrupts import sources_of
 from riscv_tools.memory_map.problems import platform_problems
 from riscv_tools.memory_map.profile import resolve
 
-from rv32_sdk import cpu_profiles
+from rv32_sdk import cpu_profiles, driver_examples
 
 IDENTIFIER = re.compile(r"[A-Z][A-Z0-9_]*")
 
@@ -86,6 +86,12 @@ def descriptors(sdk: Path) -> list[tuple[Path, dict[str, Any]]]:
                     or not source.is_file()
                 ):
                     raise SystemExit(f"Invalid driver source: {source}")
+        if "example" in spec:
+            example = path.parent / relative_file(spec["example"])
+            if not example.is_file() or not example.resolve().is_relative_to(
+                path.parent.resolve()
+            ):
+                raise SystemExit(f"Invalid driver example: {example}")
         result.append((path, spec))
     return result
 
@@ -136,6 +142,12 @@ def plan(
     table = symbols(platform)
     peripherals = peripheral_list(platform)
     irq = instance_irqs(platform)
+    examples_enabled = project.get("generate_driver_examples", True)
+    if not isinstance(examples_enabled, bool):
+        raise SystemExit(
+            "project.generate_driver_examples must be true or false"
+        )
+    examples = []
     files: dict[str, bytes] = {}
     flags = (
         selected["flags"]
@@ -207,6 +219,19 @@ def plan(
                     umbrella.append(target)
                 else:
                     sources.append("vendor/" + target)
+        if examples_enabled and "example" in spec:
+            rendered = driver_examples.project_files(
+                sdk,
+                project,
+                platform_file,
+                platform,
+                descriptor,
+                spec,
+                instances[0],
+            )
+            files.update(rendered)
+            if rendered:
+                examples.append(f"vendor/{name}/example")
     if claimed:
         files["LICENSE.peripherals"] = (
             sdk / "Peripherals/LICENSE"
@@ -218,6 +243,7 @@ def plan(
         "platform": str(platform["platform"]),
         "platform_sha256": digest(platform_file.read_bytes()),
         "sources": sources,
+        "example_projects": examples,
         "include_dirs": includes,
         "umbrella": ["rv32_platform.h", *umbrella],
     }

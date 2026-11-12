@@ -1,3 +1,5 @@
 .rv32/
 build/
 logs/
+
+target/
