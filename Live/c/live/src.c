@@ -11,7 +11,7 @@ int main(void)
     results[2] = 2;
     results[3] = 3;
 
-    for (int i = 0; i < 4; i++)
+    for (uint32_t i = 0; i < 4; i++)
         if (results[i] != i)
             RV32_FAIL();
 

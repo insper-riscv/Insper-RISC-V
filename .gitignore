@@ -2,13 +2,7 @@
 __pycache__/
 *.pyc
 .venv/
-.env
-.devcontainer/.env
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.coverage
-htmlcov/
+.cache/
 
 # Simulation and Quartus outputs
 build/
@@ -24,8 +18,37 @@ output_files/
 *.pof
 *.rpt
 *.summary
-*.qws
-*.jdi
-*.done
-*.smsg
-c5_pin_model_dump.txt
+
+# Quartus-generated state of the platforms (the project files and the MIF images stay tracked)
+src/*/*/db/
+src/*/*/incremental_db/
+src/*/*/output_files/
+src/*/*/simulation/
+src/*/*/c5_pin_model_dump.txt
+src/*/*/*.qws
+src/*/*/*.jdi
+src/*/*/*.done
+src/*/*/*.smsg
+src/*/*/quartus/db/
+src/*/*/quartus/incremental_db/
+src/*/*/quartus/output_files/
+src/*/*/quartus/simulation/
+src/*/*/quartus/c5_pin_model_dump.txt
+src/*/*/quartus/*.qws
+src/*/*/quartus/*.jdi
+src/*/*/quartus/*.done
+src/*/*/quartus/*.smsg
+
+# Tool logs are never versioned
+*.log
+
+# External-project SDK environment and managed Tools dependency
+.sdk/.venv/
+.sdk/tools/
+.sdk/.tools-*/
+.sdk/__pycache__/
+.sdk/.tools-prepare.lock
+.sdk/.tools-bootstrap.log
+.sdk/platforms/
+.sdk/.platform-*/
+.sdk/.views.lock

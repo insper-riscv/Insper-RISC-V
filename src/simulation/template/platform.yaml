@@ -1,0 +1,58 @@
+# O mapa de memória da plataforma modelo: a fonte do pacote `template_map_pkg`, dos parâmetros do
+# linker e do cabeçalho do runtime. A plataforma é só de simulação, com a BOOT_MEMORY, a ROM e a RAM
+# dentro do chip, e o guia de nova arquitetura (docs/pt-br/guide/nova-arquitetura.md) a copia no passo 1.
+#
+#   riscv-tools --root . generate-memory-map --platform src/simulation/template/platform.yaml
+platform: template
+# O perfil da plataforma: a base RV32I, sem extensões. `--profile NOME` do riscv-tools o troca por uma
+# execução; `profiles` é a especificação dos perfis.
+profile: rv32i
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
+  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
+  - {name: RAM,      base: 0x00008000, size: 32K, kind: ram}
+
+# Palavras no topo da RAM: o contrato entre a BOOT_MEMORY, o programa e o hospedeiro (a BOOT_MEMORY as zera
+# a cada reset).
+reserved:
+  stdout:   {base: 0x0000FBE0, size: 1K+8}
+  tohost:   {base: 0x0000FFE8, size: 8}
+  fromhost: {base: 0x0000FFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
+# A UART sobre JTAG é opcional: o topo a instancia quando o genérico has_uart é verdadeiro.
+peripherals:
+  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+
+generate:
+  specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  boot_ld: {path: src/simulation/template/runtime/boot_memory.ld}
+  runtime: {path: src/simulation/template/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/simulation/template/rtl/template_map_pkg.vhd
+    package: template_map_pkg
+    rom: ROM
+    ram: RAM
+    rom_external: false
+    ram_external: false
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/simulation/template/rtl/config_pkg.vhd}
+
+# O que o config.yaml da plataforma lê deste mapa (`memory_map: platform.yaml`): as bases e as palavras
+# das memórias, tohost e fromhost. Os tamanhos das memórias de simulação são os genéricos do topo, cujo
+# padrão vem de template_map_pkg.
+config:
+  rom: ROM
+  ram: RAM
+
+checks: []

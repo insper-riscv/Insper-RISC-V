@@ -1,0 +1,22 @@
+# Família de dispositivos Cyclone IV E. Esquema: docs/pt-br/boards/familias.md.
+# A faixa do oscilador e o número de saídas do PLL vêm do manual da família; o Fmax é a frequência de núcleo medida por grau
+# (null quando não há medida) e a calibração é o arquivo medido pelo estimador de cabimento (null até existir).
+family: cyclone-iv-e
+quartus_family: Cyclone IV E
+logic_unit: le
+pll:
+  ip: altpll
+  vco_mhz: [600, 1300]
+  clock_node_pattern: "<instance>|altpll_component|auto_generated|pll1|clk[N]"
+  outputs_max: 5
+block_ram: {kind: m9k, bits_per_block: 9216}
+memory_ip: altsyncram
+virtual_jtag: true
+# O Quartus recusa SLEW_RATE nos pinos 3.3-V LVTTL desta família (erro 169303).
+slew_rate: false
+onchip_flash: null
+fmax:
+  core_mhz_by_grade: {C7: null, C8: null}
+calibration: calibration/cyclone-iv-e.yaml
+# O ajuste do Quartus recusa a opção SLEW_RATE nos pinos 3.3-V LVTTL da Cyclone IV E (erro 169303), e o gerador de pinos a omite.
+slew_rate: false

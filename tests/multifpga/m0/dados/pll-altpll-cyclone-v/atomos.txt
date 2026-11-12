@@ -1,0 +1,2 @@
+ATOMO PLL m0_pll:pll_inst|altpll:altpll_component|altpll_qo52:auto_generated|generic_pll1
+ATOMO PLL m0_pll:pll_inst|altpll:altpll_component|altpll_qo52:auto_generated|generic_pll2

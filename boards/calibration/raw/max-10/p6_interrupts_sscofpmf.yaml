@@ -1,0 +1,130 @@
+id: p6_interrupts_sscofpmf
+group: 6
+family: max-10
+unit: le
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+extras:
+- Interrupts
+- Sscofpmf
+icache_kbit: 32
+dcache_kbit: 32
+generics: {}
+holdout: false
+seed: 5
+tool: Quartus 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+device: 10M50DAF484C7G
+measured_on: '2026-11-07'
+sources_hash: e88093253b90cf4406325ebd4e33a8e9daf75e6603f42d55cf23cec3c2d7a3c2
+revisions:
+  .: 0ab137972a150360e2263ef5aa5802f7e86c0530
+  Common-Components: 8bf1ce31f33006bec37f4525b0e699274376e822
+  Core: 451f5fcceb4bd2aef6cf4f9046a59d30961d40a0
+  Memory: 59e75c4173558b1c71b0864af133f659e45cde5e
+  Peripherals: c9ec80ce1085b03bbbeb0ffa79dc8ee5a3df3641
+added_constants: []
+command:
+- quartus_sh
+- -t
+- compile.tcl
+- de10_lite_de10_lite
+- '5'
+- map
+elapsed_s: 89
+result:
+  logic: 20146
+  registers: 8982
+  ram_bits: 370944
+  multipliers: 0
+  plls: 1
+  pins: 93
+entities:
+- name: de10_lite_de10_lite_top
+  depth: 0
+  luts: 16368
+  registers: 8982
+  memory_bits: 370944
+- name: boot_memory:boot_inst
+  depth: 1
+  luts: 0
+  registers: 0
+  memory_bits: 32768
+- name: de10_lite_de10_lite_pll:pll_inst
+  depth: 1
+  luts: 1
+  registers: 1
+  memory_bits: 0
+- name: flash:flash_store_inst
+  depth: 1
+  luts: 140
+  registers: 4
+  memory_bits: 262144
+- name: flash_chip:flash_chip_inst
+  depth: 1
+  luts: 91
+  registers: 166
+  memory_bits: 0
+- name: flash_cmd_port:flash_cmd_inst
+  depth: 1
+  luts: 140
+  registers: 102
+  memory_bits: 0
+- name: flash_jtag_shell:flash_jtag_inst
+  depth: 1
+  luts: 183
+  registers: 161
+  memory_bits: 0
+- name: flash_loader:flash_loader_inst
+  depth: 1
+  luts: 172
+  registers: 167
+  memory_bits: 0
+- name: sdram_arbiter:sdram_arbiter_inst
+  depth: 1
+  luts: 189
+  registers: 461
+  memory_bits: 0
+- name: sdram_cpu_bridge:sdram_data_bridge
+  depth: 1
+  luts: 19
+  registers: 422
+  memory_bits: 0
+- name: sdram_cpu_bridge:sdram_instruction_bridge
+  depth: 1
+  luts: 14
+  registers: 287
+  memory_bits: 0
+- name: sdram_ctrl:sdram_ctrl_inst
+  depth: 1
+  luts: 271
+  registers: 378
+  memory_bits: 0
+- name: sdram_dbg_master:sdram_debug_inst
+  depth: 1
+  luts: 263
+  registers: 229
+  memory_bits: 0
+- name: sdram_jtag_shell:sdram_jtag_inst
+  depth: 1
+  luts: 78
+  registers: 134
+  memory_bits: 0
+- name: sld_hub:auto_hub
+  depth: 1
+  luts: 177
+  registers: 98
+  memory_bits: 0
+- name: soc:soc_inst
+  depth: 1
+  luts: 14577
+  registers: 6352
+  memory_bits: 76032
+- name: virtual_jtag:display_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0
+- name: virtual_jtag:uart_vjtag
+  depth: 1
+  luts: 2
+  registers: 0
+  memory_bits: 0

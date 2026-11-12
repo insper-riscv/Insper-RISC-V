@@ -1,0 +1,109 @@
+# The memory map of the modular simulation platform: the source of truth for the generics of
+# `modular_sim_top` and for the linker script of the programs that run on it.
+#
+#   riscv-tools --root . generate-memory-map --platform src/simulation/modular/platform.yaml
+#
+# Every combination of memories and caches shares this map: the choice only changes where each memory sits
+# and which cache stands in front of it. The ROM starts right after the BOOT_MEMORY. The `memory` section below
+# is the default (both memories inside the core, no cache); a test replaces it for one run (`--memory`, or
+# the rom_external, ram_external, has_icache and has_dcache generics of the top).
+#
+# The programs of the Tests repository run on it with `riscv-tools --profile P --memory M --config
+# src/simulation/modular/config.yaml`, in the four architectures A (rom=int,ram=int), B (rom=int,ram=ext,
+# dcache=on), C (rom=ext,ram=int,icache=on) and D (both external, both caches) and in the other twelve.
+platform: modular
+# The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
+# `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
+profile: rv32im_zicclsm_zicsr
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,       kind: rom, exec: true}
+  - {name: ROM,      base: 0x00001000, size: 1M-4K,    kind: rom, exec: true}
+  - {name: RAM,      base: 0x00100000, size: 1M,       kind: ram}
+
+# Words at the top of RAM, as in the other platforms: where the host and the program meet (the boot memory clears
+# them at every reset, the program writes tohost at its end).
+reserved:
+  stdout:   {base: 0x001FFBE0, size: 1K+8}
+  tohost:   {base: 0x001FFFE8, size: 8}
+  fromhost: {base: 0x001FFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
+# The window of the peripherals (0x80000000 and above), in the four models: the general-purpose timer, the slide
+# switches and the push buttons (GPIO), the UART on two pins, the UART on the JTAG cable, the display, the CLINT (64 KiB
+# slot) and the PLIC (4 MiB window). The outputs of the CLINT and the PLIC are the MTIP, MSIP and MEIP of the core, which
+# only takes them with Zicsr, which the default profile has.
+peripherals:
+  - {name: TIMER,     offset: 0x00000000, id: 0, size: 32, padding: 0x0FFFFFE0}
+  - {name: SWITCHES,  offset: 0x10000000, id: 1, size: 64, padding: 0x0FFFFFC0}
+  - {name: KEYS,      offset: 0x20000000, id: 2, size: 64, padding: 0x0FFFFFC0}
+  - {name: UART,      offset: 0x30000000, id: 3, size: 1K, padding: 0x0FFFFC00}
+  - {name: UART_JTAG, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+  - {name: DISPLAY,   offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
+  - {name: CLINT,     offset: 0x60000000, id: 6, size: 64K, padding: 0x0FFF0000}
+  - {name: PLIC,      offset: 0x70000000, id: 7, size: 4M, padding: 0x0FC00000}
+
+# The mtime of the CLINT counts at mtime_hz, one tick per clock cycle of the core in the simulation, and is
+# mirrored by the CSR time of Zicntr (o_mtime of the CLINT into i_mtime of the core).
+interrupts:
+  clock_hz: 10000000
+  mtime_hz: 10000000
+  # The PLIC: three-bit priorities, and the line of each peripheral (the numbers of the LINE_* constants of
+  # modular_sim_top, which `make check-irq-sources` compares).
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART,      id: 1}
+    - {name: UART_JTAG, id: 2}
+    - {name: SWITCHES,  id: 3}
+    - {name: KEYS,      id: 4}
+    - {name: TIMER,     id: 5}
+    - {name: FLASH,     id: 6}
+
+# The default memory choice: both memories inside the chip, no cache. The sizes of the caches are in bits.
+memory:
+  rom:    {external: false}
+  ram:    {external: false}
+  icache: {enabled: false}
+  dcache: {enabled: false}
+
+# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the
+# package), as in the other platforms, so the programs of the Tests repository that use them run here too.
+extras: [Zimop, Zicond, Interrupts]
+
+generate:
+  specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  boot_ld: {path: src/simulation/modular/runtime/boot_memory.ld}
+  runtime: {path: src/simulation/modular/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/simulation/modular/modular_map_pkg.vhd
+    package: modular_map_pkg
+    rom: ROM
+    ram: RAM
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/simulation/modular/config_pkg.vhd}
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`). The sizes of the
+# memories are generics of the top, whose default comes from modular_map_pkg, so no address width is passed.
+config:
+  rom: ROM
+  ram: RAM
+  addr_widths: []
+
+# The copies that the tests of this platform hold by hand.
+checks:
+  - {name: modular_common RAM_BASE, file: tests/python/unittests/rtl/modular_common.py, pattern: '^RAM_BASE = (0x[0-9A-Fa-f]+)', expect: RAM.base}
+  - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
+  - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
+  - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+  - {name: Tests header RV32_TOHOST, file: ../Tests/tools/riscv_build/include-modular/rv32_platform.h, optional: true, pattern: '#define RV32_TOHOST\s+(0x[0-9A-Fa-f]+)', expect: tohost.base}
+  - {name: Tests header RV32_PLIC_BASE, file: ../Tests/tools/riscv_build/include-plic/rv32_platform.h, optional: true, pattern: '#define RV32_PLIC_BASE\s+(0x[0-9A-Fa-f]+)', expect: PLIC.base}
+  - {name: Tests header RV32_RAM_BASE (PLIC), file: ../Tests/tools/riscv_build/include-plic/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}

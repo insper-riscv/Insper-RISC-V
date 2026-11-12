@@ -1,0 +1,1 @@
+ATOMO JTAG_ELA altera_internal_jtag

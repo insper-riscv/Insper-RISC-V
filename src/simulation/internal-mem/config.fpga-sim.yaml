@@ -1,0 +1,152 @@
+# Simulation profile: the REAL hardware top (core_fpga_test), with the
+# real Quartus memory IP (altsyncram) running on Intel's own simulation
+# models, instead of config.yaml's simulation top, whose memories are
+# plain VHDL arrays (ROM_simulation/RAM_simulation).
+#
+#   QUARTUS_ROOTDIR=/opt/altera_lite/25.1std/quartus \
+#     riscv-tools --config tools/riscv_build/config.fpga-sim.yaml compile --emit mif
+#   QUARTUS_ROOTDIR=... \
+#     riscv-tools --config tools/riscv_build/config.fpga-sim.yaml sim
+#
+# Only `sim:` differs from config.yaml (see docs/SIMULACAO_TOPO_FPGA.md).
+# Needs Quartus' altera_mf simulation library (QUARTUS_ROOTDIR/eda/sim_lib),
+# so it runs where Quartus is installed, not on a hosted runner.
+extends: config.yaml
+
+sim:
+  toplevel: core_fpga_test
+  # The images the hardware loads, from `compile --emit mif`.
+  image: mif
+  # altera_mf needs -fsynopsys (ieee.std_logic_unsigned) and -fexplicit.
+  ghdl_flags: ["-fsynopsys", "-frelaxed", "-fexplicit"]
+  libraries:
+    altera_mf:
+      - $QUARTUS_ROOTDIR/eda/sim_lib/altera_mf_components.vhd
+      - $QUARTUS_ROOTDIR/eda/sim_lib/altera_mf.vhd
+  # The hardware top has no VHDL generics: the memory IP reads its
+  # initial content from the files named below.
+  parameters: null
+  # altsyncram's init_file is "./init.mif" (FLASH) and
+  # "./boot_memory_init.mif" (BOOT_MEMORY), read from the simulator's working
+  # directory at time zero; the same names the Quartus flow uses.
+  run_files:
+    init.mif: "{mif_path}"
+    boot_memory_init.mif: "{boot_memory_mif_path}"
+  test_module: testbench.test_c_program
+  # What test_c_program.py drives: the hardware top's ports, not the
+  # simulation top's i_clk/i_rst.
+  env:
+    SIM_CLOCK: i_clock_50
+    SIM_CLOCK_PERIOD_NS: "20"
+    SIM_RESET: i_fpga_reset_n
+    SIM_RESET_ACTIVE: "0"
+    # The RAM and the core run on the PLL's second output, so the write
+    # bus is sampled on that clock, once per core cycle.
+    SIM_SAMPLE_CLOCK: pll_clk_idexmem
+    # config.yaml counts ticks of the simulation top's base clock, three per
+    # core cycle; here one tick is one core cycle.
+    # uart-errors fills both 16-byte queues and exchanges 32 raw bytes at
+    # 115200 baud, so its coordinated protocol needs about 8 ms.
+    SIM_TIMEOUT_CYCLES: "500000"
+  # In dependency order. The core is the same as config.yaml's, the
+  # memories are the Quartus IP wrappers of the hardware project, the
+  # PLL is a behavioral stand-in (its real model is SystemVerilog) and
+  # the top is the hardware top itself, unchanged.
+  # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
+  vhdl_sources:
+    - src/simulation/internal-mem/pll/pll_sim.vhd
+    - Common-Components/src/utils_pkg.vhd
+    - src/simulation/internal-mem/rtl/config_pkg.vhd
+    - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
+    - src/simulation/internal-mem/rtl/Blinky.vhd
+    - Core/src/shared/pipeline_types.vhd
+    - Core/src/shared/byte_mask_consts.vhd
+    - Core/src/shared/opcode_consts.vhd
+    - Core/src/shared/funct3_consts.vhd
+    - Core/src/shared/funct7_consts.vhd
+    - Core/src/shared/alu_consts.vhd
+    - Core/src/shared/ext_imm_consts.vhd
+    - Core/src/shared/ext_ram_consts.vhd
+    - Core/src/shared/wb_sel_consts.vhd
+    - Core/src/shared/pc_src_consts.vhd
+    - Core/src/shared/mem_map_consts.vhd
+    - Core/src/shared/word_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
+    - Core/src/Zicond/zicond_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
+    - Core/src/Zimop/zimop_consts.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
+    - Common-Components/src/adder.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/clearable_register.vhd
+    - Common-Components/src/mux_2x1.vhd
+    - Common-Components/src/mux_4x1.vhd
+    - Common-Components/src/mux_8x1.vhd
+    - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
+    - Common-Components/src/onehot_decoder.vhd
+    - Core/src/shared/reg_file.vhd
+    - Core/src/shared/control_unit.vhd
+    - Core/src/shared/bubble_mux.vhd
+    - Core/src/shared/forwarding_match.vhd
+    - Core/src/shared/forwarding_unit.vhd
+    - Core/src/shared/hazard_detection_unit.vhd
+    - Core/src/shared/pc_fetch.vhd
+    - Core/src/shared/reg_if_id.vhd
+    - Core/src/shared/reg_id_ex.vhd
+    - Core/src/shared/reg_ex_mem.vhd
+    - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/I-E/alu.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
+    - Common-Components/src/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/Zimop/zimop_decode.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
+    - Core/src/core/stage_if.vhd
+    - Core/src/core/stage_id.vhd
+    - Core/src/core/stage_ex.vhd
+    - Core/src/core/stage_mem.vhd
+    - Core/src/core/stage_wb.vhd
+    - Core/src/core/core.vhd
+    - Memory/src/block_ram/altera/block_ram.vhd
+    - Memory/src/RAM/FPGA/Cyclone-V/ram.vhd
+    - Memory/src/ROM/Cyclone-V/boot_memory.vhd
+    - Memory/src/ROM/Cyclone-V/flash.vhd
+    - Common-Components/src/synchronizer.vhd
+    - Memory/src/ROM/SoC/flash_jtag_core.vhd
+    - Memory/src/ROM/SoC/flash_loader.vhd
+    - Common-Components/src/altera/virtual_jtag.vhd
+    - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
+    - Peripherals/src/UART/serial/uart.vhd
+    - src/simulation/internal-mem/quartus/core_fpga_test.vhd

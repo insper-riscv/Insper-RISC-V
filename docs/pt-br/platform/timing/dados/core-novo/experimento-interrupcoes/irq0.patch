@@ -1,0 +1,22 @@
+--- a/src/cyclone-v/de0-cv/de0-cv_top.vhd
++++ a/src/cyclone-v/de0-cv/de0-cv_top.vhd
+@@ -265,7 +265,8 @@
+ 			has_zimop    => HAS_ZIMOP,
+ 			has_zicond   => HAS_ZICOND,
+ 			has_zihintntl   => HAS_ZIHINTNTL,
+-			has_zihintpause => HAS_ZIHINTPAUSE
++			has_zihintpause => HAS_ZIHINTPAUSE,
++			has_interrupts => true
+ 		)
+ 		port map (
+ 			i_clk          => pll_clk_idexmem,
+@@ -298,6 +299,9 @@
+ 			o_mem_advance   => mem_advance,
+ 
+ 			o_trap => core_trap,
++			i_irq_software => '0',
++			i_irq_timer => '0',
++			i_irq_external => '0',
+ 
+ 			i_hpm_ext_events => hpm_ext_events,
+ 			i_ic_data  => ic_data,

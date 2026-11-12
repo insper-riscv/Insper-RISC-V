@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+project_root="${1:-${RV32_PROJECT_ROOT:-/workspace}}"
+manifest="${project_root}/rv32.toml"
+
+if [[ ! -f "${manifest}" ]]; then
+    echo "Missing ${manifest}" >&2
+    exit 1
+fi
+
+language="$({ python3 - "${manifest}" <<'PY'
+import sys
+import tomllib
+
+with open(sys.argv[1], "rb") as stream:
+    print(tomllib.load(stream)["project"]["language"])
+PY
+} )"
+
+if [[ "${language}" == "rust" ]]; then
+    export RUSTUP_HOME="${RUSTUP_HOME:-/home/ubuntu/.rustup}"
+    export CARGO_HOME="${CARGO_HOME:-/home/ubuntu/.cargo}"
+    export PATH="${CARGO_HOME}/bin:${PATH}"
+
+    if ! command -v rustup >/dev/null 2>&1; then
+        echo "Installing the shared RV32 Rust toolchain (first Rust project only)..."
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
+            | sh -s -- -y --profile minimal --default-toolchain 1.85.1
+    fi
+    rustup target add riscv32im-unknown-none-elf
+    rustup component add rust-src
+fi
+
+bash "${RV32_SDK_ROOT}/scripts/install-vscode-extension.sh"
+
+exec "${RV32_SDK_ROOT}/scripts/rv32-project" \
+    --project "${project_root}" setup

@@ -1,0 +1,77 @@
+## Analysis & Synthesis Resource Usage Summary
++------------------------------------------------------------------------------------------------------------------+
+; Analysis & Synthesis Resource Usage Summary ;
++---------------------------------------------+--------------------------------------------------------------------+
+; Resource ; Usage ;
++---------------------------------------------+--------------------------------------------------------------------+
+; Estimate of Logic utilization (ALMs needed) ; 9569 ;
+; ; ;
+; Combinational ALUT usage for logic ; 12633 ;
+; -- 7 input functions ; 69 ;
+; -- 6 input functions ; 4539 ;
+; -- 5 input functions ; 2192 ;
+; -- 4 input functions ; 1507 ;
+; -- <=3 input functions ; 4326 ;
+; ; ;
+; Dedicated logic registers ; 9086 ;
+; ; ;
+; I/O pins ; 93 ;
+; Total MLAB memory bits ; 0 ;
+; Total block memory bits ; 2205952 ;
+; ; ;
+; Total DSP Blocks ; 0 ;
+; ; ;
+; Total PLLs ; 4 ;
+; -- PLLs ; 4 ;
+; ; ;
+; Maximum fan-out node ; sdram_platform_pll:pll_inst|altera_pll:altera_pll_i|outclk_wire[3] ;
+; Maximum fan-out ; 8521 ;
+; Total fan-out ; 124493 ;
+; Average fan-out ; 5.38 ;
++---------------------------------------------+--------------------------------------------------------------------+
+
+## Analysis & Synthesis RAM Summary (name; type; mode; depth A; width A; depth B; width B; size bits)
+boot_memory:BOOT_MEMORY|altsyncram:u_altsyncram|altsyncram_4t34:auto_generated|ALTSYNCRAM; AUTO; Single Port; 1024; 32; --; --; 32768; ./boot_memory_init.mif
+dcache:DCACHE|altsyncram:\gen_lane:0:lane[0][7]__2|altsyncram_09n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 1024; 8; 1024; 8; 8192; None
+dcache:DCACHE|altsyncram:\gen_lane:1:lane[0][7]__3|altsyncram_09n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 1024; 8; 1024; 8; 8192; None
+dcache:DCACHE|altsyncram:\gen_lane:2:lane[0][7]__4|altsyncram_09n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 1024; 8; 1024; 8; 8192; None
+dcache:DCACHE|altsyncram:\gen_lane:3:lane[0][7]__5|altsyncram_09n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 1024; 8; 1024; 8; 8192; None
+dcache:DCACHE|altsyncram:tag_ram_rtl_0|altsyncram_8er1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 256; 15; 256; 15; 3840; db/de0-cv.ram0_dcache_5a90c03a.hdl.mif
+flash:FLASH_STORE|altsyncram:u_altsyncram|altsyncram_5n44:auto_generated|ALTSYNCRAM; AUTO; True Dual Port; 65536; 32; 65536; 32; 2097152; ./init.mif
+flash_controller:FLASH_CTRL|altsyncram:page_rtl_0|altsyncram_ods1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 64; 32; 64; 32; 2048; db/de0-cv.ram0_flash_controller_fb1345c1.hdl.mif
+icache:ICACHE|altsyncram:data_ram_rtl_0|altsyncram_pmr1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 1024; 32; 1024; 32; 32768; db/de0-cv.ram0_icache_3c9aabf5.hdl.mif
+icache:ICACHE|altsyncram:tag_ram_rtl_0|altsyncram_mhr1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 256; 15; 256; 15; 3840; db/de0-cv.ram1_icache_3c9aabf5.hdl.mif
+icache:ICACHE|altsyncram:valid_ram[0]__1|altsyncram_c3n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 256; 1; 256; 1; 256; None
+jtag_uart_shell:JTAG_UART|jtag_uart:u_uart|altsyncram:rx_mem_rtl_0|altsyncram_d2n1:auto_generated|ALTSYNCRAM; AUTO; Simple Dual Port; 64; 8; 64; 8; 512; db/de0-cv.ram0_jtag_uart_f821b931.hdl.mif
+
+## Resource Utilization by Entity (hierarchy name; combinational ALUTs; registers; block memory bits), depth <= 2 and the stage_id register file
+|core_fpga_sdram_flash; 12633; 9086; 2205952
+|core_fpga_sdram_flash|boot_memory:BOOT_MEMORY; 0; 0; 32768
+|core_fpga_sdram_flash|clint:\g_irq:CLINT; 243; 137; 0
+|core_fpga_sdram_flash|core:CORE; 7499; 4557; 0
+|core_fpga_sdram_flash|core:CORE|stage_ex:u_stage_ex|csr_file:\gen_csr:u_csr_file|hpm_counter_bank:\gen_zihpm:u_hpm_bank; 3905; 2120; 0
+|core_fpga_sdram_flash|core:CORE|stage_id:u_stage_id; 144; 992; 0
+|core_fpga_sdram_flash|core:CORE|stage_id:u_stage_id|reg_file:u_regfile; 48; 992; 0
+|core_fpga_sdram_flash|dcache:DCACHE; 1218; 560; 36608
+|core_fpga_sdram_flash|ext_interconnect:INTERCONNECT; 135; 66; 0
+|core_fpga_sdram_flash|flash:FLASH_STORE; 454; 10; 2097152
+|core_fpga_sdram_flash|flash_arbiter:FLASH_ARBITER; 29; 4; 0
+|core_fpga_sdram_flash|flash_chip:FLASH_CHIP; 421; 176; 0
+|core_fpga_sdram_flash|flash_cmd_port:FLASH_CMD; 233; 194; 0
+|core_fpga_sdram_flash|flash_controller:FLASH_CTRL; 23; 44; 2048
+|core_fpga_sdram_flash|flash_jtag_shell:FLASH_JTAG; 88; 161; 0
+|core_fpga_sdram_flash|flash_loader:FLASH_LOADER; 100; 170; 0
+|core_fpga_sdram_flash|icache:ICACHE; 222; 134; 36864
+|core_fpga_sdram_flash|jtag_uart_shell:JTAG_UART; 1055; 728; 512
+|core_fpga_sdram_flash|mem_region_router:ROUTER_D; 40; 1; 0
+|core_fpga_sdram_flash|mem_region_router:ROUTER_I; 6; 1; 0
+|core_fpga_sdram_flash|plic:\g_irq:PLIC; 80; 31; 0
+|core_fpga_sdram_flash|sdram_arbiter:SDRAM_ARBITER; 56; 461; 0
+|core_fpga_sdram_flash|sdram_cpu_bridge:IBRIDGE; 14; 287; 0
+|core_fpga_sdram_flash|sdram_cpu_bridge:SDRAM_BRIDGE; 20; 422; 0
+|core_fpga_sdram_flash|sdram_ctrl:SDRAM_CTRL; 222; 378; 0
+|core_fpga_sdram_flash|sdram_dbg_master:SDRAM_DEBUG; 195; 230; 0
+|core_fpga_sdram_flash|sdram_jtag_shell:SDRAM_JTAG; 17; 135; 0
+|core_fpga_sdram_flash|sdram_platform_pll:pll_inst; 0; 0; 0
+|core_fpga_sdram_flash|seg_display_shell:DISPLAY; 58; 82; 0
+|core_fpga_sdram_flash|sld_hub:auto_hub; 144; 98; 0

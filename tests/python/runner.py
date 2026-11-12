@@ -1,0 +1,339 @@
+"""Runner dos testes cocotb do projeto RV32I (tests.json)."""
+
+import argparse
+import importlib
+import json
+import os
+import resource
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+# cocotb 2.0 split the Python test-runner API out of the main cocotb
+# package into cocotb-tools, imported as cocotb_tools.runner. This
+# repo's requirements.txt pulls unpinned cocotb, which now resolves to
+# 2.x, so the old `cocotb.runner` import 404s. See insper-riscv/Tools'
+# own sim_runner module for the same migration.
+from cocotb_tools.check_results import get_results
+from cocotb_tools.runner import get_runner
+
+TESTS_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SKIP_KEYS = ("skip", "skip_reason")
+
+
+def _group_of(test_module: str) -> str:
+    """Classify a test module as entities, instructions or misc."""
+    if ".entities." in test_module:
+        return "entities"
+    if ".instructions." in test_module:
+        return "instructions"
+    return "misc"
+
+
+def _build_dir(toplevel: str, test_module: str) -> Path:
+    """Return (and create) the simulator build directory of a test."""
+    group = _group_of(test_module)
+    if group == "instructions":
+        leaf = test_module.rsplit(".", maxsplit=1)[-1]
+    else:
+        leaf = toplevel
+    build_dir = TESTS_ROOT / "python/sim_build" / group / leaf
+    build_dir.mkdir(parents=True, exist_ok=True)
+    return build_dir
+
+
+def _resolve_parameter(value: object) -> str:
+    """Convert a generic value into a simulator string."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    # Path relative to the current directory, then to the repository
+    # root; anything that is not a path is kept as it is.
+    for candidate in (Path(str(value)), REPO_ROOT / str(value)):
+        if candidate.exists():
+            return str(candidate.resolve())
+    return str(value)
+
+
+def _raise_stack_limit() -> None:
+    """Raise the soft stack limit of this process to the hard one.
+
+    The memories of the simulation tops are arrays of hundreds of
+    thousands of words, and GHDL allocates them on the stack of the
+    simulation; the child process inherits the limit.
+    """
+    _soft, hard = resource.getrlimit(resource.RLIMIT_STACK)
+    resource.setrlimit(resource.RLIMIT_STACK, (hard, hard))
+
+
+def run_cocotb_test(config: dict[str, Any]) -> None:
+    """Build and run one cocotb test described by a tests.json entry.
+
+    Parameters
+    ----------
+    config : dict of {str: Any}
+        Entry with ``toplevel``, ``sources`` and ``test_module`` and,
+        optionally, ``parameters``, ``build_args``, ``test_args``,
+        ``plusargs`` (simulation options, placed after the top unit) and
+        ``cases`` (see `_runs`).
+
+    Raises
+    ------
+    RuntimeError
+        If any cocotb test of the module fails.
+    """
+    toplevel = config["toplevel"]
+    test_module = config["test_module"]
+    sys.path.append(str(REPO_ROOT))
+
+    _raise_stack_limit()
+    runner = get_runner(os.getenv("SIM", "ghdl"))
+    build_dir = _build_dir(toplevel, test_module)
+    raw_parameters: dict[str, object] = config.get("parameters") or {}
+    parameters = {
+        key: _resolve_parameter(value) for key, value in raw_parameters.items()
+    }
+
+    runner.build(
+        vhdl_sources=[REPO_ROOT / src for src in config["sources"]],
+        hdl_toplevel=toplevel,
+        always=True,
+        build_dir=build_dir,
+        parameters=parameters,
+        build_args=config.get("build_args") or [],
+    )
+
+    failed_runs = [
+        failure
+        for run in _runs(config, build_dir)
+        if (failure := _simulate(runner, config, build_dir, parameters, run))
+    ]
+    if failed_runs:
+        message = f"cocotb tests failed ({'; '.join(failed_runs)})"
+        raise RuntimeError(message)
+
+
+def _simulate(
+    runner: Any,
+    config: dict[str, Any],
+    build_dir: Path,
+    parameters: dict[str, str],
+    run: dict[str, Any],
+) -> str | None:
+    """Run the cocotb tests of one simulation of an entry.
+
+    Parameters
+    ----------
+    runner : Any
+        The cocotb runner that built the design.
+    config : dict of {str: Any}
+        The tests.json entry.
+    build_dir : Path
+        Where the simulator build is.
+    parameters : dict of {str: str}
+        The generics of the build.
+    run : dict of {str: Any}
+        The simulation (see `_runs`); empty for an entry without cases.
+
+    Returns
+    -------
+    str or None
+        A description of the failure, or None when every test passed.
+    """
+    toplevel = config["toplevel"]
+    label = run.get("name", "")
+    suffix = f"-{label}" if label else ""
+    wave_file = build_dir / f"waves{suffix}.ghw"
+    waves = [f"--wave={wave_file}"] if run.get("wave", True) else []
+    case_parameters: dict[str, object] = run.get("parameters") or {}
+    results_xml = runner.test(
+        hdl_toplevel=toplevel,
+        hdl_toplevel_lang="vhdl",
+        test_module=config["test_module"],
+        build_dir=build_dir,
+        plusargs=[*waves, *(config.get("plusargs") or [])],
+        test_args=config.get("test_args") or [],
+        parameters={
+            **parameters,
+            **{
+                key: _resolve_parameter(value)
+                for key, value in case_parameters.items()
+            },
+        },
+        extra_env=run.get("env") or {},
+        results_xml=f"results{suffix}.xml",
+    )
+    if waves:
+        print(f"Waves: {wave_file} (gerado)")
+
+    # runner.test() returns normally when a cocotb test fails; the
+    # failures are only in results.xml.
+    total, failed = get_results(results_xml)
+    return f"{label or toplevel}: {failed} of {total}" if failed else None
+
+
+def _runs(config: dict[str, Any], build_dir: Path) -> list[dict[str, Any]]:
+    """List the simulations a tests.json entry runs after one build.
+
+    An entry with ``cases`` names a function ``module:function`` that
+    receives the build directory and returns one dict per simulation,
+    with a ``name``, extra ``parameters`` (generics set when the
+    simulation starts, such as the image of a ROM), ``env``
+    (environment variables of the test module) and, optionally,
+    ``wave`` set to false to skip the waveform file. The files the
+    cases need are written by that function. An entry without ``cases``
+    runs once.
+
+    Parameters
+    ----------
+    config : dict of {str: Any}
+        The tests.json entry.
+    build_dir : Path
+        Where the simulator build is.
+
+    Returns
+    -------
+    list of dict of {str: Any}
+        The simulations, at least one.
+    """
+    hook = config.get("cases")
+    if not hook:
+        return [{}]
+    module, _, function = str(hook).partition(":")
+    return getattr(importlib.import_module(module), function)(build_dir)
+
+
+def _run_entry(config: dict[str, Any]) -> None:
+    """Run a tests.json entry without its skip bookkeeping keys."""
+    run_cocotb_test({k: v for k, v in config.items() if k not in SKIP_KEYS})
+
+
+def _expand(configs: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Complete the entries that extend another one.
+
+    An entry with ``extends`` takes every key of the entry it names
+    (the sources, the build options) and replaces or adds its own; the
+    ``parameters`` of the two are merged, those of the extending entry
+    winning. The same simulation top can then be built with other
+    generics without repeating its list of sources.
+
+    Parameters
+    ----------
+    configs : dict of {str: dict of {str: Any}}
+        The entries as read from tests.json.
+
+    Returns
+    -------
+    dict of {str: dict of {str: Any}}
+        The entries with the inherited keys filled in.
+    """
+    expanded: dict[str, dict[str, Any]] = {}
+    for name, config in configs.items():
+        base_name = config.get("extends")
+        if base_name is None:
+            expanded[name] = config
+            continue
+        base = expanded[base_name]
+        own = {key: value for key, value in config.items() if key != "extends"}
+        parameters: dict[str, Any] = {
+            **(base.get("parameters") or {}),
+            **(own.get("parameters") or {}),
+        }
+        expanded[name] = {**base, **own, "parameters": parameters}
+    return expanded
+
+
+def _load_configs() -> dict[str, dict[str, Any]]:
+    """Read tests.json, exiting with a message when it is unusable."""
+    json_path = TESTS_ROOT / "python/tests.json"
+    try:
+        with json_path.open() as handle:
+            return _expand(json.load(handle))
+    except FileNotFoundError:
+        print(f"Erro: Arquivo de configuração '{json_path}' não encontrado.")
+    except json.JSONDecodeError:
+        print(f"Erro: O arquivo JSON '{json_path}' está mal formatado.")
+    sys.exit(1)
+
+
+def _run_all(configs: dict[str, dict[str, Any]]) -> None:
+    """Run every non-skipped test and exit 1 when any of them fails.
+
+    A ``skip``/``skip_reason`` entry is a config-level opt-out (not a
+    removal) for a test that is currently known to be broken. It is
+    only skipped in this sweep; running it by name still attempts it.
+    """
+    print("Executando TODOS os testes definidos em tests.json...")
+    failures: list[str] = []
+    for name, config in configs.items():
+        title = name.upper()
+        if config.get("skip"):
+            reason = config.get("skip_reason", "no reason given")
+            print(f"\n{'=' * 20} PULANDO TESTE: {title} {'=' * 20}")
+            print(f"[SKIP] {reason}")
+            continue
+        print(f"\n{'=' * 20} INICIANDO TESTE: {title} {'=' * 20}")
+        try:
+            _run_entry(config)
+            print(
+                f"{'-' * 20} TESTE {title} FINALIZADO COM SUCESSO {'-' * 20}"
+            )
+        except (
+            RuntimeError,
+            OSError,
+            ValueError,
+            subprocess.SubprocessError,
+        ) as error:
+            failures.append(name)
+            print(f"[ERRO] O teste '{name}' falhou: {error}")
+    print("\nTodos os testes foram executados.")
+    if failures:
+        print(
+            f"[ERRO] {len(failures)} teste(s) falharam: {', '.join(failures)}"
+        )
+        sys.exit(1)
+
+
+def _run_named(name: str, config: dict[str, Any]) -> None:
+    """Run one test chosen by name, even when it is marked as skip."""
+    print(f"Executando teste específico: {name}")
+    if config.get("skip"):
+        reason = config.get("skip_reason", "no reason given")
+        print(
+            f"[AVISO] '{name}' está marcado como skip ({reason}) "
+            "-- rodando mesmo assim, por ter sido pedido explicitamente."
+        )
+    _run_entry(config)
+    print(f"\nTeste {name} finalizado.")
+
+
+def main() -> None:
+    """Parse the command line and run the requested tests."""
+    configs = _load_configs()
+    options = [*configs, "all"]
+    parser = argparse.ArgumentParser(
+        description="Runner de Testes Cocotb para o projeto RV32I"
+    )
+    parser.add_argument(
+        "test_name",
+        nargs="?",
+        default="all",
+        help=f"Nome do teste a ser executado. Opções: {options}",
+    )
+    name = parser.parse_args().test_name
+
+    if name == "all":
+        _run_all(configs)
+    elif name in configs:
+        _run_named(name, configs[name])
+    else:
+        print(f"Erro: Teste '{name}' não encontrado em tests.json.")
+        print(f"Opções disponíveis: {options}")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

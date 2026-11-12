@@ -2,11 +2,14 @@
 # Source this file to configure a host shell, or let scripts/rv32.sh source it.
 
 _rv32_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-export RV32_ROOT="${RV32_ROOT:-$(cd -- "${_rv32_script_dir}/.." && pwd)}"
-export RV32_TESTS_ROOT="${RV32_TESTS_ROOT:-${RV32_ROOT}/Tests}"
-export RV32_LIVE_ROOT="${RV32_LIVE_ROOT:-${RV32_ROOT}/Live}"
-export RV32_CONFIG="${RV32_CONFIG:-${RV32_LIVE_ROOT}/config.yaml}"
-export RV32_PLATFORM="${RV32_PLATFORM:-${RV32_ROOT}/TopLevel/platforms/internal-mem/platform.yaml}"
+# The invoked SDK determines the root, even when another SDK was exported earlier.
+export RV32_SDK_ROOT="$(cd -- "${_rv32_script_dir}/.." && pwd)"
+export RV32_ROOT="${RV32_SDK_ROOT}"
+
+case ":${PATH}:" in
+    *":${RV32_SDK_ROOT}/scripts:"*) ;;
+    *) export PATH="${RV32_SDK_ROOT}/scripts:${PATH}" ;;
+esac
 
 if [[ -n "${RV32_TOOLCHAIN_ROOT:-}" ]]; then
     export RV32_GCC="${RV32_GCC:-${RV32_TOOLCHAIN_ROOT}/bin/riscv32-unknown-elf-gcc}"
@@ -23,5 +26,12 @@ if [[ -n "${QUARTUS_ROOTDIR:-}" ]]; then
     esac
 fi
 
-unset _rv32_script_dir
+# The published dev image installs GHDL here. Compose may replace its PATH.
+if [[ -d /opt/ghdl/bin ]]; then
+    case ":${PATH}:" in
+        *":/opt/ghdl/bin:"*) ;;
+        *) export PATH="/opt/ghdl/bin:${PATH}" ;;
+    esac
+fi
 
+unset _rv32_script_dir

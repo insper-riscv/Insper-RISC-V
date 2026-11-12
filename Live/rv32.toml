@@ -1,0 +1,6 @@
+[project]
+name = "live-demo"
+language = "c"
+source = "c/live/src.c"
+include_dirs = ["include"]
+cpu_profile = "auto"

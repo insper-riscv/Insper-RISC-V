@@ -1,0 +1,160 @@
+# The external-data platform: the DE0-CV board (Cyclone V) with the ROM inside the core and the RAM outside it.
+# The BOOT_MEMORY and the FLASH are inside the FPGA, the FLASH as one copy of a two-port memory that the host rewrites
+# over JTAG while the core is stopped (the same FLASH and loader as internal-mem); the SDRAM (64 MB at 0x40000000,
+# 143 MHz) is THE RAM and is reached through a write-through data cache. There is no instruction cache and no FLASH
+# chip: the instruction fetch reads port A of the FLASH and the data port of the core reads port B. The host reads and
+# writes the SDRAM through the debug port (JTAG). Only what differs from de0-cv is written here.
+extends: ../de0-cv/config.yaml
+
+toolchain:
+  specs: src/cyclone-v/external-data/runtime/rv32im-fpga.specs
+
+# O boot salta direto para a FLASH em 0x1000, sem escolher banco por cabeçalho: os programas são gravados como
+# binário puro, e não no formato de imagem de banco que a de0-cv herdada declara.
+flash_image: null
+
+# The addresses and the sizes come from the map of the platform (platform.yaml): the SDRAM is the RAM and the FLASH sits
+# right after the BOOT_MEMORY.
+memory_map: platform.yaml
+
+paths:
+  sources:
+    - src/cyclone-v/external-data/runtime/_exit.c
+    - src/cyclone-v/external-data/runtime/stdio.c
+  boot_memory: src/cyclone-v/external-data/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/external-data/runtime/boot_memory.ld
+
+emulator:
+  sources:
+    - src/cyclone-v/external-data/runtime/spike_exit.S
+
+sim:
+  toplevel: rv32im_external_data_sim_test
+  # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
+  vhdl_sources:
+    - Common-Components/src/utils_pkg.vhd
+    - src/cyclone-v/external-data/config_pkg.vhd
+    - src/cyclone-v/external-data/external_data_map_pkg.vhd
+    - src/interconnect/ext_interconnect.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - Core/src/shared/pipeline_types.vhd
+    - Core/src/shared/byte_mask_consts.vhd
+    - Core/src/shared/opcode_consts.vhd
+    - Core/src/shared/funct3_consts.vhd
+    - Core/src/shared/funct7_consts.vhd
+    - Core/src/shared/alu_consts.vhd
+    - Core/src/shared/ext_imm_consts.vhd
+    - Core/src/shared/ext_ram_consts.vhd
+    - Core/src/shared/wb_sel_consts.vhd
+    - Core/src/shared/pc_src_consts.vhd
+    - Core/src/shared/mem_map_consts.vhd
+    - Core/src/shared/word_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
+    - Core/src/Zicond/zicond_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
+    - Core/src/Zimop/zimop_consts.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
+    - Common-Components/src/adder.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/clearable_register.vhd
+    - Common-Components/src/mux_2x1.vhd
+    - Common-Components/src/mux_4x1.vhd
+    - Common-Components/src/mux_8x1.vhd
+    - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
+    - Common-Components/src/onehot_decoder.vhd
+    - Core/src/shared/reg_file.vhd
+    - Core/src/shared/control_unit.vhd
+    - Core/src/shared/bubble_mux.vhd
+    - Core/src/shared/forwarding_match.vhd
+    - Core/src/shared/forwarding_unit.vhd
+    - Core/src/shared/hazard_detection_unit.vhd
+    - Core/src/shared/pc_fetch.vhd
+    - Core/src/shared/reg_if_id.vhd
+    - Core/src/shared/reg_id_ex.vhd
+    - Core/src/shared/reg_ex_mem.vhd
+    - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/I-E/alu.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
+    - Common-Components/src/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/Zimop/zimop_decode.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
+    - Core/src/core/stage_if.vhd
+    - Core/src/core/stage_id.vhd
+    - Core/src/core/stage_ex.vhd
+    - Core/src/core/stage_mem.vhd
+    - Core/src/core/stage_wb.vhd
+    - Core/src/core/core.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/flash_simulation.vhd
+    - Common-Components/src/synchronizer.vhd
+    - Memory/src/ROM/SoC/flash_jtag_core.vhd
+    - Memory/src/ROM/SoC/flash_loader.vhd
+    - Memory/src/ROM/SoC/chip_timing_pkg.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
+    - Memory/src/RAM/SoC/sim/sdram_model.vhd
+    - Memory/src/RAM/SoC/sim/sdram_system.vhd
+    - Memory/src/cache/SoC/cache_pkg.vhd
+    - Memory/src/cache/SoC/dcache.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/display/soc/hex_to_seg7.vhd
+    - Peripherals/src/display/soc/seg_display.vhd
+    - src/cyclone-v/external-data/external-data_sim_top.vhd
+  test_module: testbench.test_c_program
+  # The cocotb testbench of the SDRAM platform drives this top too: the ports and the signals it reads are the same.
+  python_path:
+    - src/cyclone-v/de0-cv
+  # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
+  # power-up wait (200 us) comes before the first access: ticks of i_clk are counted for the timeout.
+  env:
+    SIM_EXTRA_CLOCKS: "i_clk_mem:10"
+    SIM_SAMPLE_CLOCK: pll_clk_idexmem
+    SIM_TIMEOUT_CYCLES: "2000000"
+
+quartus:
+  project_dir: src/cyclone-v/external-data
+  project_name: external-data
+  sof_file: output_files/external-data.sof
+  # The path (relative to project_dir) the FLASH IP reads its initial contents from at synthesis time.
+  rom_mif_target: init.mif
+  boot_memory_mif_target: boot_memory_init.mif
+  # The host reaches the RAM (the SDRAM) through the debug port, not the memory editor. The top gives the port the
+  # Virtual JTAG instance 3 (the FLASH loader has the 0, the JTAG UART the 1 and the display the 2).
+  ram_backend: sdram_debug
+  sdram_debug_instance: 3
+  # The FLASH is a single true dual-port copy that the JTAG loader of the Memory repository rewrites per test with the
+  # core halted: it has no In-System Memory Content Editor instance, and neither has the BOOT_MEMORY.
+  rom_write_method: jtag_loader
+  rom_mem_instances: []

@@ -1,0 +1,3 @@
+RESULTADO pll_altera_pll "Cyclone IV E" EP4CE115F29C7 FALHA
+MENSAGEM ERROR: Error(s) found while running an executable. See report file(s) for error message(s). Message log indicates which executable was run last.
+

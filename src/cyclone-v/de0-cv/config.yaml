@@ -1,0 +1,178 @@
+# The de0-cv platform: the DE0-CV board (Cyclone V) with the FLASH as a chip behind the caches (the
+# design of a real SoC). The core holds only the BOOT_MEMORY; the FLASH (254 KiB right after the BOOT_MEMORY) and the SDRAM
+# (64 MB at 0x40000000, 143 MHz) are reached through an instruction cache and a write-through data
+# cache, whose line requests a region router sends to the FLASH chip model (through its arbiter) or to
+# the SDRAM controller. The SDRAM is THE RAM: it holds .data, .bss, the heap, the stack and the words
+# the host shares with the program (tohost, fromhost, stdout); there is no RAM inside the FPGA. The host
+# reads and writes the SDRAM through the debug port (JTAG). Only what differs from internal-mem is
+# written here.
+extends: ../../simulation/internal-mem/config.yaml
+
+# The tests are linked for bank A (from the end of its header page) and packed as its image: the boot memory
+# only runs a bank whose header (magic, size and CRC-32s) is valid.
+toolchain:
+  specs: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-a.specs
+
+flash_image: {bank: A, version: 1}
+
+# The addresses and the sizes come from the map of the platform (platform.yaml), as in internal-mem: the SDRAM is
+# the RAM and the FLASH sits right after the BOOT_MEMORY.
+memory_map: platform.yaml
+
+paths:
+  sources:
+    - src/cyclone-v/de0-cv/runtime/_exit.c
+    - src/cyclone-v/de0-cv/runtime/stdio.c
+  boot_memory: src/cyclone-v/de0-cv/runtime/boot_memory.S
+  boot_memory_linker_script: src/cyclone-v/de0-cv/runtime/boot_memory.ld
+
+emulator:
+  sources:
+    - src/cyclone-v/de0-cv/runtime/spike_exit.S
+
+sim:
+  toplevel: rv32im_sdram_flash_sim_test
+  # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
+  vhdl_sources:
+    - Common-Components/src/utils_pkg.vhd
+    - src/cyclone-v/de0-cv/config_pkg.vhd
+    - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+    - src/interconnect/ext_interconnect.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - Core/src/shared/pipeline_types.vhd
+    - Core/src/shared/byte_mask_consts.vhd
+    - Core/src/shared/opcode_consts.vhd
+    - Core/src/shared/funct3_consts.vhd
+    - Core/src/shared/funct7_consts.vhd
+    - Core/src/shared/alu_consts.vhd
+    - Core/src/shared/ext_imm_consts.vhd
+    - Core/src/shared/ext_ram_consts.vhd
+    - Core/src/shared/wb_sel_consts.vhd
+    - Core/src/shared/pc_src_consts.vhd
+    - Core/src/shared/mem_map_consts.vhd
+    - Core/src/shared/word_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
+    - Core/src/Zicond/zicond_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
+    - Core/src/Zimop/zimop_consts.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
+    - Common-Components/src/adder.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/clearable_register.vhd
+    - Common-Components/src/mux_2x1.vhd
+    - Common-Components/src/mux_4x1.vhd
+    - Common-Components/src/mux_8x1.vhd
+    - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
+    - Common-Components/src/onehot_decoder.vhd
+    - Core/src/shared/reg_file.vhd
+    - Core/src/shared/control_unit.vhd
+    - Core/src/shared/bubble_mux.vhd
+    - Core/src/shared/forwarding_match.vhd
+    - Core/src/shared/forwarding_unit.vhd
+    - Core/src/shared/hazard_detection_unit.vhd
+    - Core/src/shared/pc_fetch.vhd
+    - Core/src/shared/reg_if_id.vhd
+    - Core/src/shared/reg_id_ex.vhd
+    - Core/src/shared/reg_ex_mem.vhd
+    - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/I-E/alu.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
+    - Common-Components/src/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/Zimop/zimop_decode.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
+    - Core/src/core/stage_if.vhd
+    - Core/src/core/stage_id.vhd
+    - Core/src/core/stage_ex.vhd
+    - Core/src/core/stage_mem.vhd
+    - Core/src/core/stage_wb.vhd
+    - Core/src/core/core.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/ROM/SoC/flash_simulation.vhd
+    - Memory/src/ROM/SoC/chip_timing_pkg.vhd
+    - Memory/src/cache/SoC/flash_cmd_port.vhd
+    - Common-Components/src/synchronizer.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
+    - Memory/src/RAM/SoC/sdram/sdram_arbiter.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_dbg_master.vhd
+    - Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
+    - Memory/src/RAM/SoC/sim/sdram_model.vhd
+    - Memory/src/RAM/SoC/sim/sdram_system.vhd
+    - Memory/src/cache/SoC/cache_pkg.vhd
+    - Memory/src/cache/SoC/dcache.vhd
+    - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
+    - Memory/src/cache/SoC/flash_chip.vhd
+    - Memory/src/cache/SoC/flash_arbiter.vhd
+    - Memory/src/cache/SoC/mem_region_router.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/display/soc/hex_to_seg7.vhd
+    - Peripherals/src/display/soc/seg_display.vhd
+    - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
+    - Peripherals/src/CLINT/soc/clint_consts.vhd
+    - Peripherals/src/CLINT/soc/clint.vhd
+    - Peripherals/src/PLIC/soc/plic_consts.vhd
+    - Peripherals/src/PLIC/soc/plic_gateway.vhd
+    - Peripherals/src/PLIC/soc/plic_arbiter.vhd
+    - Peripherals/src/PLIC/soc/plic.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
+    - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  test_module: testbench.test_c_program
+  python_path:
+    - src/cyclone-v/de0-cv
+  # The testbench also drives the SDRAM clock (7 ns, no relation to the core clock), and the SDRAM's
+  # power-up wait (200 us) comes before the first access: ticks of i_clk are counted for the timeout,
+  # so it is longer than internal-mem's. The boot memory also checks the CRC-32 of the image before the
+  # jump, about 850 ticks of i_clk for each word of the program (a program of 8 KiB takes 1.7 million).
+  env:
+    SIM_EXTRA_CLOCKS: "i_clk_mem:10"
+    SIM_SAMPLE_CLOCK: pll_clk_idexmem
+    SIM_TIMEOUT_CYCLES: "12000000"
+    UART_START_ON_ACCESS: "1"
+    UART_SLOT: "4"
+
+quartus:
+  # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`
+  # writes it before compiling: nothing under build/ is versioned.
+  generate: {platform: src/cyclone-v/de0-cv/platform.yaml, out: build, boards_dir: boards, chips_dir: Memory/chips}
+  project_dir: build/de0-cv-de0-cv
+  project_name: de0_cv_de0_cv
+  sof_file: output_files/de0_cv_de0_cv.sof
+  rom_mif_target: init.mif
+  boot_memory_mif_target: boot_memory_init.mif
+  # the host reaches the RAM (the SDRAM) through the debug port, not the memory editor
+  ram_backend: sdram_debug
+  # The FLASH is a two-port storage with no memory editor instance: the host rewrites it through the FLASH loader (a
+  # Virtual JTAG instance 0 that halts the core while it writes port B); the BOOT_MEMORY is written once by the full
+  # compile and the SDRAM is reached through the debug port (Virtual JTAG instance 3: the JTAG UART is 1, the display 2).
+  rom_mem_instances: []
+  rom_write_method: jtag_loader
+  sdram_debug_instance: 3

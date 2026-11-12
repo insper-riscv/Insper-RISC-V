@@ -1,0 +1,174 @@
+# A configuração do pipeline de compilação e simulação da plataforma test-external-instruction (Test platform, ROM outside, behind the instruction cache, and the RAM inside the core; no peripheral.)
+# O topo é o modular_sim_top; o mapa, a combinação de memórias e os genéricos HAS_* vêm do platform.yaml.
+#
+#   riscv-tools --profile PERFIL --config src/simulation/test-external-instruction/config.yaml ...
+
+toolchain:
+  gcc: riscv32-unknown-elf-gcc
+  objcopy: riscv32-unknown-elf-objcopy
+  # O mapa e o crt0 são um arquivo de specs, gerado do platform.yaml.
+  specs: src/simulation/test-external-instruction/runtime/rv32im-fpga.specs
+
+isa:
+  base: i
+  default_ext: ""
+  canonical_order: "MAFDQLCBJTPVNH"
+
+memory_map: platform.yaml
+
+paths:
+  # As partes do runtime próprias da plataforma, compiladas em todo programa.
+  sources:
+    - src/simulation/test-external-instruction/runtime/_exit.c
+    - src/simulation/test-external-instruction/runtime/stdio.c
+  # O carregador fixo, construído uma vez para a BOOT_MEMORY.
+  boot_memory: src/simulation/test-external-instruction/runtime/boot_memory.S
+  boot_memory_linker_script: src/simulation/test-external-instruction/runtime/boot_memory.ld
+
+sim:
+  toplevel: modular_sim_top
+  # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
+  vhdl_sources:
+    - Common-Components/src/utils_pkg.vhd
+    - src/simulation/test-external-instruction/config_pkg.vhd
+    - src/simulation/test-external-instruction/modular_map_pkg.vhd
+    - src/interconnect/ext_interconnect.vhd
+    - Core/src/shared/pipeline_types.vhd
+    - Core/src/shared/byte_mask_consts.vhd
+    - Core/src/shared/opcode_consts.vhd
+    - Core/src/shared/funct3_consts.vhd
+    - Core/src/shared/funct7_consts.vhd
+    - Core/src/shared/alu_consts.vhd
+    - Core/src/shared/ext_imm_consts.vhd
+    - Core/src/shared/ext_ram_consts.vhd
+    - Core/src/shared/wb_sel_consts.vhd
+    - Core/src/shared/pc_src_consts.vhd
+    - Core/src/shared/mem_map_consts.vhd
+    - Core/src/shared/word_consts.vhd
+    - Core/src/shared/fwd_consts.vhd
+    - Core/src/Zicond/zicond_consts.vhd
+    - Core/src/M/muldiv_consts.vhd
+    - Core/src/Zicsr/trap_consts.vhd
+    - Core/src/Zicsr/csr_addr_consts.vhd
+    - Core/src/Zicsr/csr_event_consts.vhd
+    - Core/src/Zimop/zimop_consts.vhd
+    - Core/src/Zicsr/csr_value_consts.vhd
+    - Core/src/Zicsr/irq_consts.vhd
+    - Core/src/Zihintntl/zihintntl_consts.vhd
+    - Core/src/Zihintpause/zihintpause_consts.vhd
+    - Common-Components/src/adder.vhd
+    - Common-Components/src/generic_register.vhd
+    - Common-Components/src/flip_flop.vhd
+    - Common-Components/src/clearable_register.vhd
+    - Common-Components/src/mux_2x1.vhd
+    - Common-Components/src/mux_4x1.vhd
+    - Common-Components/src/mux_8x1.vhd
+    - Common-Components/src/mux_tree.vhd
+    - Common-Components/src/mux_16x1.vhd
+    - Common-Components/src/mux_32x1.vhd
+    - Common-Components/src/mux_64x1.vhd
+    - Common-Components/src/onehot_decoder.vhd
+    - Core/src/shared/reg_file.vhd
+    - Core/src/shared/control_unit.vhd
+    - Core/src/shared/bubble_mux.vhd
+    - Core/src/shared/forwarding_match.vhd
+    - Core/src/shared/forwarding_unit.vhd
+    - Core/src/shared/hazard_detection_unit.vhd
+    - Core/src/shared/pc_fetch.vhd
+    - Core/src/shared/reg_if_id.vhd
+    - Core/src/shared/reg_id_ex.vhd
+    - Core/src/shared/reg_ex_mem.vhd
+    - Core/src/shared/reg_mem_wb.vhd
+    - Core/src/I-E/alu.vhd
+    - Core/src/I-E/extender_imm.vhd
+    - Core/src/I-E/extender_ram.vhd
+    - Core/src/I-E/store_manager.vhd
+    - Core/src/M/m_decode.vhd
+    - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/non_restoring_divider_rv32.vhd
+    - Core/src/M/muldiv_fusion.vhd
+    - Core/src/M/multdiv.vhd
+    - Core/src/Zicclsm/misaligned_unit.vhd
+    - Core/src/Zicond/zicond_decode.vhd
+    - Core/src/Zicond/zicond_unit.vhd
+    - Common-Components/src/counter64.vhd
+    - Core/src/Zicntr/tick_divider.vhd
+    - Core/src/Zihpm/hpm_counter_bank.vhd
+    - Core/src/Zicsr/csr_decode.vhd
+    - Core/src/Zicsr/csr_file.vhd
+    - Core/src/Zicsr/trap_unit.vhd
+    - Core/src/Zifencei/fencei_unit.vhd
+    - Core/src/Zimop/zimop_decode.vhd
+    - Core/src/Zihintntl/zihintntl_decode.vhd
+    - Core/src/Zihintpause/zihintpause_decode.vhd
+    - Core/src/core/stage_if.vhd
+    - Core/src/core/stage_id.vhd
+    - Core/src/core/stage_ex.vhd
+    - Core/src/core/stage_mem.vhd
+    - Core/src/core/stage_wb.vhd
+    - Core/src/core/core.vhd
+    - Memory/src/cache/SoC/cache_pkg.vhd
+    - Memory/src/cache/SoC/dcache.vhd
+    - Memory/src/cache/SoC/icache.vhd
+    - Memory/src/cache/SoC/flash_arbiter.vhd
+    - Memory/src/cache/SoC/mem_region_router.vhd
+    - Memory/src/cache/SoC/ifetch_bridge.vhd
+    - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
+    - Peripherals/src/CLINT/soc/clint_consts.vhd
+    - Peripherals/src/CLINT/soc/clint.vhd
+    - Peripherals/src/PLIC/soc/plic_consts.vhd
+    - Peripherals/src/PLIC/soc/plic_gateway.vhd
+    - Peripherals/src/PLIC/soc/plic_arbiter.vhd
+    - Peripherals/src/PLIC/soc/plic.vhd
+    - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/TIMER/soc/counter_overflow.vhd
+    - Peripherals/src/TIMER/soc/clock_prescaler.vhd
+    - Peripherals/src/TIMER/soc/timer_operation_decoder.vhd
+    - Peripherals/src/TIMER/soc/timer.vhd
+    - Common-Components/src/synchronizer.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
+    - Peripherals/src/display/soc/hex_to_seg7.vhd
+    - Peripherals/src/display/soc/seg_display.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
+    - Peripherals/src/UART/serial/uart.vhd
+    - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/UART/console/console.vhd
+    - Peripherals/src/flash-controller/soc/flash_controller.vhd
+    - src/soc/soc.vhd
+    - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
+    - Memory/src/latency/SoC/latency_counter.vhd
+    - Memory/src/RAM/SoC/ram_pkg.vhd
+    - Memory/src/RAM/SoC/onchip_ram_port.vhd
+    - Memory/src/RAM/SoC/ram_chip.vhd
+    - Memory/src/RAM/SoC/ram_simulation.vhd
+    - Memory/src/ROM/SoC/rom_simulation.vhd
+    - Memory/src/cache/SoC/flash_chip.vhd
+    - src/simulation/modular/modular_sim_top.vhd
+  test_module: testbench.test_c_program
+  python_path:
+    - src/simulation/modular
+  env:
+    # O tempo conta ciclos do núcleo (o clock da amostragem); com as memórias atrás de caches, a latência dos
+    # chips alonga os programas.
+    SIM_SAMPLE_CLOCK: pll_clk_idexmem
+    SIM_TIMEOUT_CYCLES: "2000000"
+  ghdl_std: "08"
+  # As imagens: a BOOT_MEMORY é construída uma vez e a ROM vem do programa de cada teste. Os tamanhos das
+  # memórias são os genéricos do topo, cujo padrão vem de modular_map_pkg.
+  parameters:
+    BOOT_MEMORY_FILE: "{boot_memory_hex_path}"
+    ROM_FILE: "{hex_path}"
+
+# O Spike executa a imagem de cada programa, que termina no rv32_wait_restart de spike_exit.S.
+emulator:
+  sources:
+    - src/simulation/test-external-instruction/runtime/spike_exit.S
+  gcc_flags:
+    - -DRV32_SPIKE

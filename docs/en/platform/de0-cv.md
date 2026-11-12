@@ -1,0 +1,81 @@
+# The `de0-cv` platform: the FLASH as a chip behind the caches
+
+## 1. What it is
+
+The core keeps only the BOOT_MEMORY. The FLASH (program and constants) and the SDRAM (data) live outside it, as in a real SoC, and the core reaches them through an instruction cache and a data cache. Each cache miss becomes a four-word line request, which a region router takes to the FLASH chip model, through an arbiter, or to the SDRAM controller.
+
+```
+            core (BOOT_MEMORY only)
+              |                |
+        instruction          data cache
+        cache                (write-through)
+              |                |
+        router I            router D
+         |        \          /      |  \
+         |         FLASH arbiter      |
+         |              |             |
+         |         FLASH chip         |
+         |         (storage)          |
+         +------------+---------------+
+                      |
+              SDRAM (bridge, arbiter, controller)
+```
+
+## 2. Memory map
+
+| Region | Base | Size | Access |
+| :--- | :--- | :--- | :--- |
+| BOOT_MEMORY | `0x00000000` | 4 KiB | Fetch and read, direct, uncached |
+| FLASH | `0x00001000` | 252 KiB window, up to `0x00040000` | Fetch and read through the caches, read-only |
+| SDRAM | `0x40000000` | 64 MB | Fetch, read and write through the caches |
+| Peripherals | `0x80000000` | 256 MB windows | Read and write, uncached |
+
+The top 4 KB of the SDRAM hold the words the host writes behind the caches (`tohost`, `fromhost` and the `stdout` buffer). The data cache ignores them, so a load goes to memory as a word, without bringing a line, and a store is only forwarded.
+
+## 3. Behavior
+
+1. **Fetch.** The PC feeds only the instruction cache and the BOOT_MEMORY. The cache tag carries the region bit, which separates the FLASH lines from the SDRAM ones; the FLASH region is the range `[4 KiB, 256 KiB)` of the core address.
+2. **Data.** Loads and stores to the FLASH and the SDRAM go through the data cache, with 16-byte lines and 4 KB direct mapping. A store to the FLASH never changes the cache and the router completes it with no effect, like a write-protected chip.
+3. **FLASH.** The chip serves line or word requests with two latency parameters, edges up to the first word and edges between the following words. Outside the chip window a read returns zero.
+4. **Restart.** The boot memory executes `fence.i` before reading the FLASH. The instruction invalidates the instruction cache and the data cache, so the check of the banks and the new program the host wrote do not find lines of the previous one. The FLASH has two banks, and the boot memory jumps to the one with the larger version whose header and CRC-32 match ([entry contract](contrato-de-entrada.md), section 6.6); with no valid bank the core waits in the restart loop.
+5. **Host.** The host writes the FLASH image through the JTAG loader (Virtual JTAG instance 0), which holds the core in reset while it writes port B of the storage and releases it at the end, and the data through the SDRAM debug port (instance 3). Every program change therefore restarts the core, the CLINT and the PLIC.
+6. **Trap.** The `LEDR1` of the top lights when the core pulses `o_trap_take` and stays lit until the next reset, including the one of the `KEY4` button (`FPGA_RESET_N`), which clears it even with the clock stopped. The program stays in memory, so on releasing the button it may trap again and relight the LED. `o_trap_take` pulses when the core takes an exception, with or without Zicsr, including the one it handles at `mtvec`.
+
+## 4. Sizes and latencies
+
+| Item | Simulation | Board |
+| :--- | :--- | :--- |
+| FLASH chip window | 256 KB (`size_bytes` equal to 262144), of which the FLASH takes the 252 KiB after the BOOT_MEMORY | The same |
+| FLASH storage | 256 KB array | 256 KB in two-port RAM blocks: port A is read by the chip, port B belongs to the JTAG loader (core halted) and to the FLASH controller (core running) |
+| Chip latency | 24 edges to the first word and 4 between the following ones (default) | The same |
+
+The storage has 256 KB because the largest ACT4 test (`I-jal-00`) takes 131,872 bytes and the first 4 KB of the array stand for the BOOT_MEMORY, which the FLASH program does not use. A 1 MB array does not run in GHDL.
+
+## 5. How to run
+
+| Goal | Command |
+| :--- | :--- |
+| Simulation of the existing programs | `riscv-tools --config tools/riscv_build/config.sdram-flash-regression.yaml compile --emit hex`, then `sim --exclude uart-echo,uart-tx,uart-errors` (in the Tests repository) |
+| Simulation of the SDRAM and FLASH programs | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml compile --emit hex`, then `sim --exclude cpi-kernels,hex-id` |
+| Program update | `config.sdram-flash-update.yaml` and `-update-slow.yaml` of the Tests repository, which turn on `HAS_FLASH_CONTROLLER` in the simulation top (see [atualizacao-de-programa.md](atualizacao-de-programa.md)) |
+| Chip latency | The `config.sdram-flash-lat2.yaml`, `-lat20.yaml` and `-lat60.yaml` configurations, and the `-regression-lat*` ones |
+| Program update on the board | `tools/board/board_update.py` of the Tests repository (see [atualizacao-de-programa.md](atualizacao-de-programa.md), section 8) |
+| Compile the board | `riscv-tools --config src/cyclone-v/de0-cv/config.yaml program --compile-only --stop-after map` (synthesis only) |
+| Reduced Zihpm | `program --compile-only --seed 1 --generic HPM_COUNTERS=4 --generic HPM_WIDTH=40`, leaving the defaults of the top unchanged |
+| Program the board | `riscv-tools --config src/cyclone-v/de0-cv/config.yaml program <image.mif>`, which writes the project, compiles and programs in the same chain |
+| Programs on the board | `riscv-tools --config tools/riscv_build/config.sdram-flash.yaml run --skip-reconfigure --skip-recompile` |
+| ACT4 on the board | `gen_profiles.py --profile <profile> --board --out build/target` and `certify-board` with the generated `config.yaml`, in the Certification repository; `tools/board/board_run.py act` of the Tests repository splits the ELFs between the two boards |
+
+The `platform.yaml` is the only source of the map. `riscv-tools generate-memory-map` (`make generate`) writes from it the `de0_cv_map_pkg.vhd` package, which the generated board top, the simulation top and the generated Quartus project (`build/de0-cv-de0-cv/`) use for the limits of the regions, the size of the FLASH chip and the page of the SDRAM that the host shares with the program, plus the link flags, the linker script of the boot memory and the `memory_map.h` with the addresses of `tohost`, `fromhost`, `stdout` and the UART for the runtime. The package also carries the `HAS_*` of the platform (`HAS_E` among them), `BOOT_MEMORY_BITS` (12) and `ROM_STORAGE_BYTES` (262144). `config.yaml` declares `memory_map: platform.yaml` and receives from the map the bases, the words, `tohost`, `fromhost` and the address width of the simulation memories. The `check-memory-map` checker covers only what is left written by hand: the boot memory, the VHDL of the core and the header of the programs.
+
+The peripherals take the upper 2 GiB of the address space (bit 31 set), with one 256 MiB window per peripheral chosen by bits 30:28: the JTAG UART at id 4 (`0xC0000000`) and the seven-segment display at id 5 (`0xD0000000`), the CLINT at id 6 (`0xE0000000`, a 64 KiB window) and the external interrupt controller at id 7 (`0xF0000000`). The MTIP, MSIP and MEIP lines reach the core (see the [interconnect](../interconnect/ext_interconnect.md)), and the `mtime` of the CLINT counts at 1 MHz (`mtime_hz` of `platform.yaml`, 50 cycles of 50 MHz per tick), independent of the CSR `time`. The BOOT_MEMORY, the FLASH and the SDRAM sit in the lower 2 GiB.
+
+## 6. ACT4
+
+The ACT4 ELFs have code and constants in the FLASH and data, stack and the HTIF words in the SDRAM. The `Zifencei-fence.i-00` test rewrites its own code, and the FLASH ignores stores, so it uses a variant of the target where the test body sits in the SDRAM and only the entry, the model macros and the constants stay in the FLASH.
+
+## 7. Simulation top test
+
+The catalog `tests/python/tests.json` has the entries `De0CvBootBanks` (the real boot memory choosing the bank, one simulation per case, see [atualizacao-de-programa.md](atualizacao-de-programa.md)) and `De0CvSimTop`, which runs the top `rv32im_sdram_flash_sim_test` with a minimal program in each region. The BOOT_MEMORY stores a mark in the SDRAM and jumps to the FLASH, the FLASH stores another mark, writes to the display and jumps to the code the SDRAM has held since time zero (`SDRAM_FILE`), and that code stores the third mark and writes `tohost`. The test reads the SDRAM through the debug port of the chip and checks the three marks, `tohost` and the display value. The images come from `tests/python/gen_de0_cv_images.py`, built from `platform.yaml`.
+
+The program simulation testbench (`testbench/test_c_program.py`) starts the UART console only at the first access of the core to the UART window (`UART_START_ON_ACCESS` and `UART_SLOT` in `config.yaml`, the latter equal to `UART.id`), because the boot memory checks the banks and the startup of the program takes much longer than the 64-byte receive queue holds what the host sends. `UART_SCANS_PER_BYTE` sets how many scans separate two bytes sent.

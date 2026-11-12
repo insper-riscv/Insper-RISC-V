@@ -1,0 +1,67 @@
+# The memory map of the fpga-external platform: DE0-CV platform, FLASH chip and SDRAM behind the instruction and data caches; switches, buttons and displays.
+#
+#   riscv-tools --root . generate-memory-map --platform src/cyclone-v/fpga-external/platform.yaml
+#
+# The SDRAM of the board has 64 MiB; the platform maps 32 MiB of it, the largest chip model (ram_chip) of the simulation.
+# The source of truth of the generics of modular_sim_top and of the linker script of the programs. The
+# `memory` section is the combination of this platform; a test replaces it for one run (`--memory`).
+platform: fpga-external
+profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+profiles: ../../../Core/profiles/matrix.yaml
+
+regions:
+  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
+  - {name: FLASH, base: 0x00001000, size: 252K, kind: rom, exec: true}
+  - {name: RAM, base: 0x40000000, size: 32M, kind: ram}
+
+reserved:
+  stdout:   {base: 0x41FFFBE0, size: 1K+8}
+  tohost:   {base: 0x41FFFFE8, size: 8}
+  fromhost: {base: 0x41FFFFF0, size: 8}
+
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+
+# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
+# the config_pkg carries it as STRICT_PERIPH.
+strict_periph: true
+
+# The slots of the peripheral window (bits 30:28 of the address, base 0x80000000 | id << 28).
+peripherals:
+  - {name: SWITCHES, offset: 0x10000000, id: 1, size: 64, padding: 0x0FFFFFC0}   # the ten slide switches SW (GPIO)
+  - {name: KEYS, offset: 0x20000000, id: 2, size: 64, padding: 0x0FFFFFC0}   # the four push buttons KEY (GPIO)
+  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}   # the six seven-segment displays HEX0 to HEX5 (display)
+
+memory:
+  rom:    {external: true}
+  ram:    {external: true}
+  icache: {enabled: true, size_bits: 32768}
+  dcache: {enabled: true, size_bits: 32768}
+
+extras: [Zimop, Zicond]
+
+generate:
+  specs: {path: src/cyclone-v/fpga-external/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
+  boot_ld: {path: src/cyclone-v/fpga-external/runtime/boot_memory.ld}
+  runtime: {path: src/cyclone-v/fpga-external/runtime/memory_map.h, ram: RAM}
+  vhdl:
+    path: src/cyclone-v/fpga-external/modular_map_pkg.vhd
+    package: modular_map_pkg
+    rom: FLASH
+    ram: RAM
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/cyclone-v/fpga-external/config_pkg.vhd}
+
+# What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`).
+config:
+  rom: FLASH
+  ram: RAM
+  addr_widths: []
+
+checks:
+  - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include-fpga-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
+  - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-fpga-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
+  - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-fpga-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+  - {name: Tests header RV32_TOHOST, file: ../Tests/tools/riscv_build/include-fpga-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_TOHOST\s+(0x[0-9A-Fa-f]+)', expect: tohost.base}

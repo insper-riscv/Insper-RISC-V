@@ -1,0 +1,293 @@
+name: ci
+
+# One run per commit: a pull request (a new commit cancels the run of the previous one) or a push to
+# main. The four jobs have fixed names, which a ruleset of the organization can require as checks.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  # Reuses the pull request result: a push to main whose merge commit joins a head that this same
+  # workflow already passed in a run that started after the first parent (the base) existed, holds
+  # the tree that was tested, because main did not move in between; the jobs below are skipped.
+  # Any doubt (no match, API error) runs everything.
+  reuse:
+    name: reuse
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      skip: ${{ steps.lookup.outputs.skip }}
+      images: ${{ steps.plan.outputs.images }}
+      gates: ${{ steps.plan.outputs.gates }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # The CI images (tag latest) and, for each gate, the key of its inputs: a gate whose
+      # key already has a pass (artifact ci-pass-<gate>-<key>) is skipped, whatever the commit, branch or event.
+      - name: Read the image digests and look for a pass of the same inputs
+        id: plan
+        uses: insper-riscv/Infra/.github/actions/ci-plan@main
+        with:
+          gates: |
+            formal|ci-vhdl|src/interconnect formal Makefile .github/workflows/ci.yml
+            unit-tests|ci-vhdl|!docs/** !**/*.md !LICENSE !AUTHORS* !CITATION.cff !codeclone.baseline.json !.github/workflows/version-bump.yml !.github/workflows/tree.yml !formal/**
+
+      - name: Look for a passed pull request run of the same tree
+        id: lookup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+          WORKFLOW: ${{ github.workflow }}
+        run: |
+          skip=false
+          if [ "$EVENT" = push ]; then
+            parents=$(gh api "repos/$REPO/commits/$SHA" --jq '[.parents[].sha] | join(" ")' || true)
+            read -r base head extra <<< "$parents"
+            if [ -n "${head:-}" ] && [ -z "${extra:-}" ]; then
+              basedate=$(gh api "repos/$REPO/commits/$base" --jq '.commit.committer.date' || true)
+              export BASEDATE="${basedate:-9999}"
+              found=$(gh api "repos/$REPO/actions/runs?head_sha=$head&event=pull_request&status=success&per_page=100" \
+                --jq '[.workflow_runs[] | select(.name == $ENV.WORKFLOW and .created_at >= $ENV.BASEDATE)] | length' || echo 0)
+              if [ "${found:-0}" -gt 0 ]; then
+                skip=true
+                echo "::notice::Reusing the passed pull request run of $head over base $base."
+              fi
+            fi
+          fi
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+
+  vhdl-syntax:
+    name: vhdl-syntax
+    needs: reuse
+    if: ${{ needs.reuse.outputs.skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    # GHDL, Yosys, SymbiYosys, the SMT solvers, uv and riscv-tools of insper-riscv/Infra.
+    container:
+      image: ${{ fromJSON(needs.reuse.outputs.images)['ci-vhdl'] }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Every referenced path exists, in this repository and in each submodule
+        run: make paths
+
+      - name: VHDL style (header, ports, docstrings, naming)
+        run: riscv-tools --root . check-vhdl-style
+
+      - name: VHDL syntax check of every repository (GHDL, dependency order)
+        run: make check
+
+  unit-tests:
+    name: unit-tests
+    needs: reuse
+    if: ${{ needs.reuse.outputs.skip != 'true' && fromJSON(needs.reuse.outputs.gates)['unit-tests'].skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 60
+    container:
+      image: ${{ fromJSON(needs.reuse.outputs.images)['ci-vhdl'] }}
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Per-entity cocotb tests of each repository and the memory map check
+        run: make unit-tests
+
+      - name: Record the pass of these inputs
+        # Only reached when every step above passed: a later run with the same key skips this gate.
+        env:
+          KEY: ${{ fromJSON(needs.reuse.outputs.gates)['unit-tests'].key }}
+        run: echo "$KEY" > ci-pass.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ fromJSON(needs.reuse.outputs.gates)['unit-tests'].artifact }}
+          path: ci-pass.txt
+          overwrite: true
+
+      - name: Upload waveforms
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: waveforms
+          path: "**/*.ghw"
+          if-no-files-found: ignore
+
+  formal-engine:
+    # The proofs of this repository run once per engine. The jobs of the matrix are not required checks: the
+    # job `formal` below joins their results and is the one the ruleset requires.
+    name: formal - ${{ matrix.engine }}
+    needs: reuse
+    if: ${{ needs.reuse.outputs.skip != 'true' && fromJSON(needs.reuse.outputs.gates)['formal'].skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 45
+    container:
+      image: ${{ fromJSON(needs.reuse.outputs.images)['ci-vhdl'] }}
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [yices, bitwuzla, boolector, abc-bmc3]
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Prove the interconnect of this repository, with the engine
+        run: make formal FORMAL_ENGINE=${{ matrix.engine }}
+
+      - name: Upload the results
+        # The proofs write a table of tab-separated lines (result-<engine>.tsv) that formal/aggregate.sh reads.
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: formal-result-${{ matrix.engine }}
+          path: |
+            build/formal/result-*.tsv
+          if-no-files-found: ignore
+
+      - name: Upload the logs
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: formal-logs-${{ matrix.engine }}
+          path: |
+            build/formal/**/*.log
+          if-no-files-found: ignore
+
+  formal:
+    # Decides from the results of every engine, with formal/aggregate.sh: it passes when each proof was answered and the engines that answered agree with each other and with
+    # what is wanted. The condition is what makes it run when an engine job failed; without it the job would be
+    # skipped, and a skipped job counts as a success for a required check. `!cancelled()` and not `always()`, so
+    # that a run cancelled by a newer commit does not start it. When the push to main reuses a passed pull
+    # request run, the engines are skipped and so is this job, like the other required jobs.
+    name: formal
+    needs: [reuse, formal-engine]
+    if: ${{ !cancelled() && needs.reuse.outputs.skip != 'true' && fromJSON(needs.reuse.outputs.gates)['formal'].skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: true
+
+      - name: Download the results of the engines
+        uses: actions/download-artifact@v8
+        with:
+          pattern: formal-result-*
+          path: formal-results
+
+      - name: Decide
+        run: bash formal/aggregate.sh formal-results
+
+      - name: Record the pass of these inputs
+        # Only reached when every step above passed: a later run with the same key skips this gate.
+        env:
+          KEY: ${{ fromJSON(needs.reuse.outputs.gates)['formal'].key }}
+        run: echo "$KEY" > ci-pass.txt
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ fromJSON(needs.reuse.outputs.gates)['formal'].artifact }}
+          path: ci-pass.txt
+          overwrite: true
+
+  python-static-analysis:
+    name: python-static-analysis
+    needs: reuse
+    if: ${{ needs.reuse.outputs.skip != 'true' }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 15
+    # The tools that need no project environment come pinned in the image (pylint, pyright, deptry and uv audit run with `uv run` in the environment `uv sync` builds).
+    container:
+      image: ${{ fromJSON(needs.reuse.outputs.images)['ci-vhdl'] }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install the project
+        run: uv sync
+
+      - name: ruff lint
+        if: ${{ !cancelled() }}
+        run: ruff check .
+
+      - name: ruff format
+        if: ${{ !cancelled() }}
+        run: ruff format . --check
+
+      - name: pycodestyle
+        if: ${{ !cancelled() }}
+        run: pycodestyle --max-line-length=79 --max-doc-length=72 --exclude=.sdk,Common-Components,build,.venv,sim_build,__pycache__ .
+
+      - name: pydocstyle
+        if: ${{ !cancelled() }}
+        run: pydocstyle --convention=pep257 --match-dir='^(?!(\.sdk|Common-Components|build|\.venv|sim_build|__pycache__)).*' .
+
+      - name: pylint
+        if: ${{ !cancelled() }}
+        run: uv run pylint .
+
+      - name: pyright
+        if: ${{ !cancelled() }}
+        run: uv run pyright
+
+      - name: pyrefly
+        if: ${{ !cancelled() }}
+        run: pyrefly check
+
+      - name: deptry
+        if: ${{ !cancelled() }}
+        run: uv run deptry .
+
+      - name: complexipy
+        if: ${{ !cancelled() }}
+        run: complexipy .
+
+      - name: codeclone
+        if: ${{ !cancelled() }}
+        run: codeclone . --fail-on-new
+
+      - name: semgrep
+        if: ${{ !cancelled() }}
+        run: semgrep scan --config p/python --error .
+
+      - name: uv audit
+        if: ${{ !cancelled() }}
+        run: uv audit
+
+  boot-memory-images:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 10
+    container:
+      image: ghcr.io/insper-riscv/ci-elf:latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          submodules: recursive
+      - name: The boot memory images of the tests are the ones the sources build
+        run: |
+          export PYTHONPATH=.
+          /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_de0_cv_boot_images.py --check
+          /opt/riscv-tools/riscv-tools/bin/python tests/python/gen_external_data_images.py
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --exit-code tests/python/unittests/rtl/data
