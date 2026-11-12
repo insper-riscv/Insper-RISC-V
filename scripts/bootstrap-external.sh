@@ -9,6 +9,8 @@ if [[ ! -f "${manifest}" ]]; then
     exit 1
 fi
 
+python3 "${RV32_SDK_ROOT}/.sdk/rv32_sdk/source_check.py" "${RV32_SDK_ROOT}"
+
 language="$({ python3 - "${manifest}" <<'PY'
 import sys
 import tomllib

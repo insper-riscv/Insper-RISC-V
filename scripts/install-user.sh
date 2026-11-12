@@ -37,6 +37,8 @@ while (($#)); do
     esac
 done
 
+python3 "${sdk_root}/.sdk/rv32_sdk/source_check.py" "${sdk_root}"
+
 install -d "${data_root}" "${cache_root}/rv32-cargo" \
     "${data_root}/rv32-rustup" "${bin_root}"
 

@@ -22,6 +22,16 @@ recreation after an intentional SDK update. The lockfile pins Python packages.
 
 On the Docker/FPGA host:
 
+Initialize the processor submodules before registering a Git checkout:
+
+```bash
+git clone --recurse-submodules --branch live-vscode https://github.com/insper-riscv/Insper-RISC-V.git
+cd Insper-RISC-V
+git submodule update --init --recursive
+```
+
+Run the last command again after pulling a branch that changes module pointers. A plain clone/pull leaves uninitialized module folders empty. The SDK checks their source files before container setup and reports the recovery command. A complete source ZIP already includes these sources and needs no Git initialization.
+
 ```bash
 bash scripts/install-user.sh --quartus /path/to/altera/std25.1
 ~/.local/bin/rv32-new c /path/to/new-c-app
