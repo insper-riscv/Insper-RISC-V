@@ -58,9 +58,13 @@ jobs:
     needs: authorize
     runs-on:
       group: FPGA
-      labels: [self-hosted, Linux, X64]
+      labels: [self-hosted, Linux, X64, rv32-de0-cv]
     timeout-minutes: 90
     steps:
+      - name: Verify the dedicated lab runner
+        env:
+          SELECTED_RUNNER: ${{ runner.name }}
+        run: test "$SELECTED_RUNNER" = D-20003267-LINUX
       - uses: actions/checkout@v7
         with:
           ref: d725e986893bd69daaf7144f951b7d6f7fb31f8a
