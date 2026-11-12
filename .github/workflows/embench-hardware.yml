@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 880e2526b1ef3d6f1bb47a664981e701e1f1ebd5
+          ref: d725e986893bd69daaf7144f951b7d6f7fb31f8a
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
