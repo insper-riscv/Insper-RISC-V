@@ -1,0 +1,12 @@
+[project]
+name = "app"
+language = "rust"
+manifest = "Cargo.toml"
+timeout_seconds = 15
+
+
+# Maximum simulated CPU cycles; independent of the FPGA timeout in seconds.
+simulation_timeout_cycles = 2000000
+
+# auto preserves the platform default; or use a name from Core/profiles/.
+cpu_profile = "auto"

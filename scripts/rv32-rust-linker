@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${RV32_GCC:=riscv32-unknown-elf-gcc}"
+: "${RV32_RUST_SPECS:?RV32_RUST_SPECS is required}"
+: "${RV32_RUST_EXIT_OBJ:?RV32_RUST_EXIT_OBJ is required}"
+: "${RV32_RUST_STDIO_OBJ:?RV32_RUST_STDIO_OBJ is required}"
+
+# rustc's bare-metal target normally suppresses the platform startup files and
+# C libraries. This platform deliberately reuses picolibc's crt0 and linker
+# script so Rust and C receive identical .data/.bss, stack and exit handling.
+filtered=()
+for argument in "$@"; do
+    case "${argument}" in
+        -nostartfiles|-nodefaultlibs|-nostdlib|-fuse-ld=*|-Wl,-Bdynamic|-pie|-no-pie) ;;
+        *) filtered+=("${argument}") ;;
+    esac
+done
+
+exec "${RV32_GCC}" \
+    -static \
+    "-march=${RV32_RUST_MARCH:-rv32im}" \
+    -mabi=ilp32 \
+    "--specs=${RV32_RUST_SPECS}" \
+    "${filtered[@]}" \
+    "${RV32_RUST_EXIT_OBJ}" \
+    "${RV32_RUST_STDIO_OBJ}" ${RV32_RUST_MODE_OBJ:+"${RV32_RUST_MODE_OBJ}"}

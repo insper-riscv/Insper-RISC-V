@@ -1,6 +1,6 @@
 [project]
 name = "insper-riscv"
-version = "0.5.0"
+version = "0.5.1"
 description = "The RV32 SoC: the platforms (top levels, Quartus project, runtime, memory map), their testbenches and the KPI scripts."
 license = "Apache-2.0"
 # Same Python as the ci-vhdl image of Infra, which also carries riscv-tools.
@@ -28,7 +28,7 @@ dev = [
 [tool.ruff]
 target-version = "py314"
 line-length = 79
-extend-exclude = ["Core", "Memory", "Peripherals", "Common-Components", "build", "sim_build"]
+extend-exclude = ["Core", "Memory", "Peripherals", "Common-Components", "build", "sim_build", ".sdk"]
 
 [tool.ruff.lint]
 select = [
@@ -101,6 +101,7 @@ paths = ["scripts", "src", "tests"]
 max-complexity-allowed = 10
 
 [tool.deptry]
+extend_exclude = [".sdk"]
 # The testbench package of src/simulation/modular is imported by its test module.
 known_first_party = ["testbench"]
 
@@ -129,7 +130,7 @@ search-path = [".", "/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages",
 python-version = "3.14"
 
 [tool.pylint.main]
-ignore = [".venv", "build", "sim_build", "Core", "Memory", "Peripherals", "Common-Components"]
+ignore = [".venv", "build", "sim_build", "Core", "Memory", "Peripherals", "Common-Components", ".sdk"]
 fail-under = 10
 # riscv-tools is installed by the ci-vhdl image, outside the project environment; the testbench package of the
 # modular platform sits in src/simulation/modular.

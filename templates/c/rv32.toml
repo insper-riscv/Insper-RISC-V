@@ -1,0 +1,17 @@
+[project]
+name = "app"
+language = "c"
+source = "src/main.c"
+sources = []
+# Header search paths, relative to this project.
+include_dirs = ["include"]
+timeout_seconds = 15
+
+# Maximum simulated CPU cycles; independent of the FPGA timeout in seconds.
+simulation_timeout_cycles = 2000000
+
+# auto preserves the platform default; or use a name from Core/profiles/.
+cpu_profile = "auto"
+
+# Generate mapped C peripheral headers and vendor available drivers.
+generate_drivers = true
