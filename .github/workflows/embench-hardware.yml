@@ -25,12 +25,15 @@ jobs:
     steps:
       - name: Restrict physical execution to maintainer-owned revisions
         env:
+          FPGA_ENABLED: ${{ vars.EMBENCH_FPGA_ENABLED }}
           BASE_SHA: ${{ inputs.base_sha }}
           PROFILE: ${{ inputs.profile }}
           WORKLOAD: ${{ inputs.workload }}
         run: |
           python3 - <<'PY'
           import json, os, re
+          if os.environ['FPGA_ENABLED'] != 'true':
+              raise SystemExit('FPGA runner setup incomplete; see benchmarks/embench/FPGA-SETUP.md')
           with open(os.environ['GITHUB_EVENT_PATH']) as stream:
               event = json.load(stream)
           if os.environ['GITHUB_REPOSITORY'] != 'insper-riscv/Insper-RISC-V':
