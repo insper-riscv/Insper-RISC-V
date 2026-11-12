@@ -20,7 +20,9 @@ spec.loader.exec_module(module)
 
 
 class FpgaFlowTest(unittest.TestCase):
-    def invoke(self, mode, result=1, cached=True):
+    def invoke(
+        self, mode, result=1, cached=True, profile=False, programmed=False
+    ):
         with TemporaryDirectory() as temporary:
             root = Path(temporary)
             manifest = root / "build/real/manifest.json"
@@ -57,7 +59,15 @@ class FpgaFlowTest(unittest.TestCase):
                     "memory": {"boot_memory_words": 1024},
                 }
             )
+            if profile:
+                cfg["sdk_cpu_profile"] = {"name": "rv32i"}
+            if programmed:
+                name, _ = module.cpu_profiles.hardware_stamp("cable", "key")
+                (root / (".programmed-" + name)).write_text("key")
             with (
+                patch.object(
+                    module.sof_cache, "cache_root", return_value=root
+                ),
                 patch.object(module.boot_memory, "build_boot_memory") as boot,
                 patch.object(module.bin_to_image, "bin_to_mif"),
                 patch.object(module, "doctor"),
@@ -97,7 +107,7 @@ class FpgaFlowTest(unittest.TestCase):
                     "store": store.call_count,
                     "program": program.call_count,
                     "synth": synth.call_count,
-                    "run_root": run.call_args.args[-1],
+                    "run_root": run.call_args.args[-1] if run.called else None,
                     "root": root,
                     "stdout": stdout.call_count,
                     "error": error,
@@ -133,3 +143,11 @@ class FpgaFlowTest(unittest.TestCase):
         self.assertEqual(result["synth"], 1)
         self.assertEqual(result["program"], 0)
         self.assertEqual(result["store"], 1)
+
+    def test_explicit_profile_fast_requires_matching_programming_record(self):
+        rejected = self.invoke("fast", profile=True)
+        self.assertIn("Program FPGA first", rejected["error"])
+        self.assertIsNone(rejected["run_root"])
+        accepted = self.invoke("fast", profile=True, programmed=True)
+        self.assertIsNone(accepted["error"])
+        self.assertEqual(accepted["synth"], 0)

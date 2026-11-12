@@ -100,3 +100,21 @@ The processor package release is 0.5.1; the isolated SDK and bundled extension
 remain 0.5.0. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.
+
+## CPU profiles in application TOML
+
+```toml
+[project]
+name = "app"
+language = "c"
+platform = "internal-mem"
+cpu_profile = "rv32im_zicsr"
+source = "src/main.c"
+include_dirs = ["include"]
+```
+
+`cpu_profile` accepts the eleven named `Core/profiles/rv32*.yaml` profiles. Omission or `"auto"` preserves the existing platform CPU/compiler behavior. Explicit overrides currently target `internal-mem`; CPU profiles do not change a platform's peripheral or memory map. ISA constants and HPM parameters are applied in private `.rv32/cpu` files; tracked processor sources remain untouched. C receives the selected ISA; a source's `RV32_EXT` request outside that profile is rejected. Rust selects the compatible built-in RV32I or RV32IM target and links the platform C runtime with the selected GCC ISA (no unsupported extension is required by the Rust target). Run Prepare Project to install a newly selected Rust target.
+
+Changing a profile invalidates the SOF cache. C-only changes do not. For an explicit profile, Fast Update requires a matching previous successful Program FPGA on that cable. After another tool programs the board, run Program FPGA again; this software record cannot detect arbitrary external reprogramming. Cache schema changed once in this release, so existing projects may need their first bitstream regenerated.
+
+The development toolchain needs library variants for the selected ISA. A toolchain with only RV32IM libraries cannot safely run RV32I-only applications. See the profile integration checks before installing on another machine.

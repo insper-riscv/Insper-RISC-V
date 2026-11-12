@@ -67,15 +67,21 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
         )
     digest = hashlib.sha256()
     quartus_cfg = dict(cfg["quartus"])
-    quartus_cfg["project_dir"] = str(
-        (sdk / cfg["quartus"]["project_dir"])
-        .resolve()
-        .relative_to(sdk.resolve())
+    quartus_cfg["project_dir"] = (
+        "<project-profile>"
+        if cfg.get("sdk_cpu_profile")
+        else str(
+            (sdk / cfg["quartus"]["project_dir"])
+            .resolve()
+            .relative_to(sdk.resolve())
+        )
     )
     digest.update(
         json.dumps(
             {
-                "schema": 5,
+                "schema": 6,
+                "cpu_profile": cfg.get("sdk_cpu_profile"),
+                "hardware_inputs": cfg.get("sdk_hardware_inputs"),
                 "quartus": version,
                 "memory": cfg["memory"],
                 "quartus_config": quartus_cfg,
@@ -116,6 +122,9 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
                 digest.update(str(path.relative_to(sdk)).encode() + b"\0")
                 digest.update(path.read_bytes())
                 digest.update(b"\0")
+    profile_builder = sdk / ".sdk/rv32_sdk/cpu_profiles.py"
+    if profile_builder.is_file():
+        digest.update(b"cpu-profile-builder\0" + profile_builder.read_bytes())
     # Build-flow changes may change the synthesized ROM or compiler invocation.
     for relative in (
         "boot_memory/core.py",

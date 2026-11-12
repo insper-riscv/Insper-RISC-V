@@ -34,7 +34,7 @@ from riscv_tools.memory_map.expressions import evaluate
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
-from rv32_sdk import sof_cache, views
+from rv32_sdk import cpu_profiles, sof_cache, views
 
 RUST_TARGET = "riscv32im-unknown-none-elf"
 HARDWARE_TOOLS = ["quartus_sh", "quartus_pgm", "quartus_stp", "jtagconfig"]
@@ -83,6 +83,11 @@ def env_path(name: str, default: Path | None = None) -> Path:
 
 
 SDK = env_path("RV32_SDK_ROOT", Path(__file__).resolve().parents[2])
+
+
+def rust_target(project: dict[str, Any]) -> str:
+    selected = cpu_profiles.selected(SDK, project)
+    return selected["rust_target"] if selected else RUST_TARGET
 
 
 def platform_dir(project: dict[str, Any]) -> Path:
@@ -139,6 +144,7 @@ def read_project(root: Path) -> dict[str, Any]:
     language = project.get("language")
     if language not in {"c", "rust"}:
         raise SystemExit("project.language must be `c` or `rust`")
+    cpu_profiles.selected(SDK, project)
     return project
 
 
@@ -264,6 +270,9 @@ def write_config(
         }
     data = deep_merge(base, data)
     data.pop("extends", None)
+    selected = cpu_profiles.selected(SDK, project)
+    if selected is not None:
+        cpu_profiles.apply(SDK, root, platform_dir(project), data, selected)
     # Tools knows more optional ISA switches than every pinned platform top.
     # Disabled switches may be omitted; enabled unsupported features are errors.
     declared = None
@@ -338,6 +347,11 @@ def prepare_c_source(root: Path, project: dict[str, Any]) -> None:
     canonical_source = destination / "src.c"
     if copied_source != canonical_source:
         copied_source.replace(canonical_source)
+    selected = cpu_profiles.selected(SDK, project)
+    if selected is not None:
+        canonical_source.write_text(
+            cpu_profiles.prepare_source(canonical_source.read_text(), selected)
+        )
 
 
 def compile_runtime(root: Path, config: Path) -> dict[str, str]:
@@ -347,6 +361,9 @@ def compile_runtime(root: Path, config: Path) -> dict[str, str]:
     output = generated_paths(root)["state"] / "rust-runtime"
     output.mkdir(parents=True, exist_ok=True)
     objects: dict[str, str] = {}
+    march = cfg.get("sdk_cpu_profile", {}).get("march", "rv32im")
+    stamp = output / ".march"
+    changed = not stamp.exists() or stamp.read_text() != march
     for stem in ("_exit", "stdio", "mode"):
         source = (
             (generated_paths(root)["state"] / "stdio-mode.c")
@@ -355,7 +372,8 @@ def compile_runtime(root: Path, config: Path) -> dict[str, str]:
         )
         object_path = output / f"{stem}.o"
         object_is_stale = (
-            not object_path.exists()
+            changed
+            or not object_path.exists()
             or object_path.stat().st_mtime
             < max(
                 source.stat().st_mtime,
@@ -367,7 +385,7 @@ def compile_runtime(root: Path, config: Path) -> dict[str, str]:
             run(
                 [
                     str(cfg["toolchain"]["gcc"]),
-                    "-march=rv32im",
+                    "-march=" + march,
                     "-mabi=ilp32",
                     "-std=c23",
                     "-Os",
@@ -382,7 +400,9 @@ def compile_runtime(root: Path, config: Path) -> dict[str, str]:
                 cwd=root,
             )
         objects[stem] = str(object_path)
+    stamp.write_text(march)
     return {
+        "RV32_RUST_MARCH": march,
         "RV32_RUST_SPECS": str(specs),
         "RV32_RUST_EXIT_OBJ": objects["_exit"],
         "RV32_RUST_STDIO_OBJ": objects["stdio"],
@@ -399,7 +419,8 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
     env["RV32_GCC"] = (
         shutil.which("riscv32-unknown-elf-gcc") or "riscv32-unknown-elf-gcc"
     )
-    env["CARGO_TARGET_RISCV32IM_UNKNOWN_NONE_ELF_LINKER"] = str(
+    target = rust_target(project)
+    env["CARGO_TARGET_" + target.upper().replace("-", "_") + "_LINKER"] = str(
         SDK / "scripts" / "rv32-rust-linker"
     )
     # The built-in target normally invokes rust-lld directly. This project
@@ -427,7 +448,7 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
         "--manifest-path",
         str(manifest),
         "--target",
-        RUST_TARGET,
+        target,
         "--target-dir",
         str(generated_paths(root)["build"] / "cargo"),
         "--message-format=json-render-diagnostics",
@@ -493,7 +514,7 @@ def package_rust(
     flash_pad_words = int(cfg["memory"]["rom_base"]) // 4
     entry: dict[str, Any] = {
         "name": name,
-        "march": "rv32im",
+        "march": cfg.get("sdk_cpu_profile", {}).get("march", "rv32im"),
         "kind": "unit",
         "lang": "Rust",
     }
@@ -585,6 +606,15 @@ def doctor(
             "riscv32-unknown-elf-objcopy",
         ]
     )
+    selected = cpu_profiles.selected(SDK, project)
+    if selected is not None and "m" not in selected["extensions"]:
+        variants = subprocess.check_output(
+            ["riscv32-unknown-elf-gcc", "--print-multi-lib"], text=True
+        ).splitlines()
+        if len(variants) < 2:
+            raise SystemExit(
+                "This single-variant toolchain cannot validate libraries for a CPU without M. Rebuild with the SDK's pinned multilib Dev Container image."
+            )
     if project["language"] == "rust":
         require_commands(["cargo", "rustc", "rustup"])
         installed = subprocess.run(
@@ -593,9 +623,10 @@ def doctor(
             text=True,
             check=False,
         ).stdout.splitlines()
-        if RUST_TARGET not in installed:
+        target = rust_target(project)
+        if target not in installed:
             raise SystemExit(
-                f"Missing Rust target; run `rustup target add {RUST_TARGET}`"
+                f"Missing Rust target; run `rustup target add {target}`"
             )
     print(f"SDK: {SDK}")
     print(f"Project: {root}")
@@ -622,7 +653,7 @@ def setup(root: Path, project: dict[str, Any]) -> None:
     run(["uv", "sync", "--project", str(SDK / ".sdk")], cwd=SDK)
     if project["language"] == "rust":
         require_commands(["rustup"])
-        run(["rustup", "target", "add", RUST_TARGET], cwd=root)
+        run(["rustup", "target", "add", rust_target(project)], cwd=root)
     config = write_config(root, project)
     if project["language"] == "c":
         tool(config, "generate-header")
@@ -681,6 +712,22 @@ def fpga_locked(root: Path, project: dict[str, Any], mode: str) -> None:
     entry = next(
         item for item in entries if item["name"] == project_name(project)
     )
+    name, _ = cpu_profiles.hardware_stamp(link.hardware_name, key)
+    programming_record = sof_cache.cache_root() / (".programmed-" + name)
+    if (
+        cfg.get("sdk_cpu_profile")
+        and mode == "fast"
+        and (
+            not programming_record.exists()
+            or programming_record.read_text() != key
+        )
+    ):
+        raise SystemExit(
+            "Selected CPU profile has not been programmed on this cable. Use Program FPGA first."
+        )
+    if mode != "fast":
+        programming_record.parent.mkdir(parents=True, exist_ok=True)
+        programming_record.unlink(missing_ok=True)
     if mode != "fast":
         cached = sof_cache.restore(key, sof)
         if mode == "reprogram" and not cached:
@@ -745,6 +792,7 @@ def fpga_locked(root: Path, project: dict[str, Any], mode: str) -> None:
                 "Hardware changed during programming; rerun Program FPGA."
             )
         sof_cache.store(key, sof)
+        programming_record.write_text(key)
     entry["timeout_s"] = float(
         project.get("timeout_seconds", entry["timeout_s"])
     )

@@ -19,7 +19,7 @@ done
 
 exec "${RV32_GCC}" \
     -static \
-    -march=rv32im \
+    "-march=${RV32_RUST_MARCH:-rv32im}" \
     -mabi=ilp32 \
     "--specs=${RV32_RUST_SPECS}" \
     "${filtered[@]}" \
