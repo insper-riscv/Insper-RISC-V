@@ -190,7 +190,10 @@ class ReportingTests(unittest.TestCase):
                 workload="ci",
                 output=root / "plan.json",
             )
-            with patch("benchmarks.embench.ci.emit"):
+            with (
+                patch("benchmarks.embench.ci.emit"),
+                patch("benchmarks.embench.ci.capture", return_value="a" * 40),
+            ):
                 ci.plan(args)
                 planned = json.loads(args.output.read_text())
                 self.assertEqual(planned["profiles"], ["rv32i", "rv32im"])

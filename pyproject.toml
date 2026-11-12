@@ -73,6 +73,10 @@ extend-select = [
     "D402",  # summary line must not repeat the signature
 ]
 
+[tool.ruff.per-file-target-version]
+# The trusted lab launcher runs on Ubuntu's host Python, outside the image.
+"benchmarks/embench/hardware_host.py" = "py312"
+
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 

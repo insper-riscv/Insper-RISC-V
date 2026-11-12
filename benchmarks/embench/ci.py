@@ -69,7 +69,21 @@ def plan(args: argparse.Namespace) -> None:
             "select named profiles or use the CI workload"
         )
     emit("matrix", {"include": batches})
-    args.output.write_text(json.dumps({"profiles": names, "batches": batches}))
+    emit("hardware", {"profile": names if args.scope == "named" else []})
+    revisions = {
+        "candidate": capture(["git", "rev-parse", "HEAD"], args.candidate)
+    }
+    if args.base:
+        revisions["base"] = capture(["git", "rev-parse", "HEAD"], args.base)
+    args.output.write_text(
+        json.dumps(
+            {
+                "profiles": names,
+                "batches": batches,
+                "revisions": revisions,
+            }
+        )
+    )
 
 
 def make_batches(

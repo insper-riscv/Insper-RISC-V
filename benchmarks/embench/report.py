@@ -272,6 +272,11 @@ def write_csv(path: Path, data: dict[str, Any]) -> None:
         "status",
         "revision",
         "workload",
+        "backend",
+        "configured_mhz",
+        "core_domain_fmax_mhz",
+        "mips_nominal",
+        "elapsed_seconds_nominal",
         "cycles",
         "instructions",
         "cpi",
@@ -302,6 +307,11 @@ def csv_row(
     value.update(
         {
             "profile": data["profile"],
+            "backend": data.get("backend", "simulation"),
+            "configured_mhz": data.get("configured_mhz"),
+            "core_domain_fmax_mhz": data.get("timing", {}).get(
+                "core_domain_fmax_mhz"
+            ),
             "revision": data["provenance"]["revision"],
             "workload": data["suite"].get("workload"),
             "global_scale_factor": data["suite"].get("global_scale_factor"),
