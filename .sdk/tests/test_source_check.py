@@ -34,6 +34,7 @@ class SourceCheckTest(unittest.TestCase):
             for name in (
                 "Core/src/common/src/config_pkg.vhd",
                 "Peripherals/src/GPIO/soc/driver/c/driver.yaml",
+                "Peripherals/src/GPIO/soc/driver/c/examples/main.c.in",
             ):
                 with self.subTest(name=name):
                     path = root / name

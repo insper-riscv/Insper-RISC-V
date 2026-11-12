@@ -3,17 +3,19 @@
 
 use core::panic::PanicInfo;
 
-extern "C" {
+unsafe extern "C" {
     fn puts(message: *const u8) -> i32;
     fn _exit(code: i32) -> !;
 }
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn main() -> i32 {
     static MESSAGE: &[u8] = b"Hello from an external RV32 Rust project.\0";
+
     unsafe {
         puts(MESSAGE.as_ptr());
     }
+
     0
 }
 

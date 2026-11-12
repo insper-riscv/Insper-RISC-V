@@ -1,0 +1,26 @@
+{
+  "C_Cpp.default.compilerPath": "${env:RV32_GCC}",
+  "C_Cpp.default.cStandard": "c23",
+  "C_Cpp.default.includePath": [
+    "${workspaceFolder}/include",
+    "${workspaceFolder}/.rv32/include",
+    "${workspaceFolder}/vendor/**"
+  ],
+  "rust-analyzer.cargo.target": "riscv32im-unknown-none-elf",
+  "files.associations": {
+    "*.S": "asm"
+  },
+  "task.allowAutomaticTasks": "on",
+  "workbench.editor.editorActionsLocation": "default",
+  "workbench.editor.alwaysShowEditorActions": true,
+  "terminal.integrated.scrollback": 100000,
+  "rust-analyzer.cargo.allTargets": false,
+  "rust-analyzer.check.allTargets": false,
+  "files.exclude": {
+    "**/.devcontainer": true,
+    "**/.rv32": true,
+    "**/.vscode": true,
+    "**/build": true,
+    "**/logs": true
+  }
+}
