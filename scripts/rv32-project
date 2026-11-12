@@ -12,6 +12,7 @@ for argument in "$@"; do
     fi
 done
 
+python3 "${RV32_SDK_ROOT}/.sdk/rv32_sdk/source_check.py" "${RV32_SDK_ROOT}"
 python3 "${RV32_SDK_ROOT}/.sdk/prepare_tools.py"
 
 exec uv run "${uv_flags[@]}" --project "${RV32_SDK_ROOT}/.sdk" \

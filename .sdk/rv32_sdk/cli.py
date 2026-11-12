@@ -34,7 +34,7 @@ from riscv_tools.memory_map.expressions import evaluate
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
-from rv32_sdk import cpu_profiles, drivers, sof_cache, views
+from rv32_sdk import cpu_profiles, drivers, sof_cache, source_check, views
 
 RUST_TARGET = "riscv32im-unknown-none-elf"
 HARDWARE_TOOLS = ["quartus_sh", "quartus_pgm", "quartus_stp", "jtagconfig"]
@@ -137,6 +137,7 @@ def require_commands(commands: list[str]) -> None:
 
 
 def read_project(root: Path) -> dict[str, Any]:
+    source_check.check(SDK)
     path = root / "rv32.toml"
     if not path.is_file():
         raise SystemExit(
@@ -179,6 +180,7 @@ def generated_paths(root: Path) -> dict[str, Path]:
 def write_config(
     root: Path, project: dict[str, Any], *, simulation: bool = False
 ) -> Path:
+    source_check.check(SDK)
     cycles = project.get("simulation_timeout_cycles", 2_000_000)
     if type(cycles) is not int or cycles <= 0:
         raise SystemExit(
