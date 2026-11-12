@@ -84,10 +84,8 @@ The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is written by `riscv-too
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
+`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md). The `embench` workflow compares each PR base with its proposed merge using all 19 Embench IoT programs on the explicit Core profiles. Its summary joins simulation and FPGA results, including instructions, IPC, MIPS, configured clock, estimated Fmax and per-program/profile/operation-category indices. The `ci` workload uses one local repetition per algorithm and labels its index as an estimate; `workload=full` preserves the original loops. Physical execution requires [runner provisioning](benchmarks/embench/FPGA-SETUP.md). Methodology, limits and reproduction are documented in [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
 
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](LICENSE).
-
-The `embench` workflow compares each PR base with its proposed merge using all 19 Embench IoT programs on the explicit Core profiles. Its summary joins simulation and FPGA results, including instructions, IPC, MIPS, configured clock, estimated Fmax and per-program/profile/operation-category indices. The `ci` workload uses one local repetition per algorithm and labels its index as an estimate; `workload=full` preserves the original loops. Physical execution requires [runner provisioning](benchmarks/embench/FPGA-SETUP.md). Methodology, limits and reproduction are documented in [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
