@@ -95,3 +95,26 @@ class SofCacheTest(unittest.TestCase):
             self.assertEqual(
                 before, sof_cache.fingerprint(second, cfg, "25.1")
             )
+
+    def test_c_driver_edits_do_not_invalidate_but_gpio_rtl_does(self):
+        with TemporaryDirectory() as temp:
+            sdk = Path(temp)
+            c_header = sdk / "Peripherals/src/GPIO/soc/driver/c/gpio.h"
+            c_header.parent.mkdir(parents=True)
+            c_header.write_text("driver v1")
+            rtl = sdk / "Peripherals/src/GPIO/soc/gpio.vhd"
+            rtl.write_text("hardware v1")
+            cfg = {
+                "memory": {},
+                "quartus": {
+                    "project_dir": "quartus",
+                    "rom_mif_target": "init.mif",
+                },
+            }
+            before = sof_cache.fingerprint(sdk, cfg, "test")
+            c_header.write_text("driver v2")
+            self.assertEqual(before, sof_cache.fingerprint(sdk, cfg, "test"))
+            rtl.write_text("hardware v2")
+            self.assertNotEqual(
+                before, sof_cache.fingerprint(sdk, cfg, "test")
+            )

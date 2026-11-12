@@ -72,14 +72,19 @@ def apply(
     spec: dict[str, Any],
 ) -> None:
     """Replace just CPU constants and HPM generics in an isolated build."""
-    if platform.name != "internal-mem":
+    if platform.name not in {"internal-mem", "modular"}:
         raise SystemExit(
-            "Explicit CPU profiles currently require project.platform = internal-mem"
+            "Explicit CPU profiles currently require project.platform = internal-mem or modular"
         )
     state = root / ".rv32/cpu"
     state.mkdir(parents=True, exist_ok=True)
     platform_file = platform / "platform.yaml"
     data = load_platform(platform_file)
+    # A declared interrupt fabric may remain wired while the selected CPU masks
+    # it out. The elaboration flags, not the platform default ISA, are authoritative.
+    if not spec["flags"].get("HAS_INTERRUPTS", False):
+        data = dict(data)
+        data.pop("interrupts", None)
     config_text = render_variant(data, platform_file, sdk, spec["flags"])
     config_path = state / "config_pkg.vhd"
     write_if_changed(config_path, config_text)
@@ -102,6 +107,8 @@ def apply(
     }
     # Clone the hardware project once per project/profile. External source and IP
     # assignments keep their original absolute paths; tracked files stay intact.
+    if platform.name == "modular":
+        return
     original = Path(cfg["quartus"]["project_dir"])
     target = state / "quartus"
     target.mkdir(exist_ok=True)

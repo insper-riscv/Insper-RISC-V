@@ -34,7 +34,7 @@ from riscv_tools.memory_map.expressions import evaluate
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
-from rv32_sdk import cpu_profiles, sof_cache, views
+from rv32_sdk import cpu_profiles, drivers, sof_cache, views
 
 RUST_TARGET = "riscv32im-unknown-none-elf"
 HARDWARE_TOOLS = ["quartus_sh", "quartus_pgm", "quartus_stp", "jtagconfig"]
@@ -94,12 +94,17 @@ def platform_dir(project: dict[str, Any]) -> Path:
     selected = project.get("platform", "internal-mem")
     if selected == "internal-mem":
         views.ensure_internal_mem(SDK)
+    elif selected == "modular":
+        views.ensure_modular(SDK)
     choices = {
         "internal-mem": SDK / ".sdk/platforms/internal-mem",
         "de0-cv": SDK / "src/cyclone-v/de0-cv",
+        "modular": SDK / ".sdk/platforms/modular",
     }
     if selected not in choices:
-        raise SystemExit("project.platform must be internal-mem or de0-cv")
+        raise SystemExit(
+            "project.platform must be internal-mem, modular or de0-cv"
+        )
     return choices[selected]
 
 
@@ -195,6 +200,20 @@ def write_config(
     for directory in include_paths:
         if not directory.is_dir():
             raise SystemExit(f"Header directory does not exist: {directory}")
+    enabled = project.get("generate_drivers", False)
+    if not isinstance(enabled, bool):
+        raise SystemExit("project.generate_drivers must be true or false")
+    generated_sources = []
+    if enabled:
+        if project["language"] != "c":
+            raise SystemExit(
+                "Automatic peripheral driver linking currently supports C projects"
+            )
+        generated = drivers.generate(
+            SDK, root, project, platform_dir(project) / "platform.yaml"
+        )
+        include_paths.extend(root / p for p in generated["include_dirs"])
+        generated_sources = [root / p for p in generated["sources"]]
     uart_stdio = project.get("simulation_uart_stdio", False)
     if not isinstance(uart_stdio, bool):
         raise SystemExit("project.simulation_uart_stdio must be true or false")
@@ -207,7 +226,12 @@ def write_config(
     if not mode_source.exists() or mode_source.read_text() != mode_text:
         mode_source.write_text(mode_text)
     runtime = platform_dir(project) / "runtime"
-    extra_sources = [root / str(item) for item in project.get("sources", [])]
+    extra_sources = [
+        root / str(item) for item in project.get("sources", [])
+    ] + generated_sources
+    extra_sources = list(
+        dict.fromkeys(path.resolve() for path in extra_sources)
+    )
     data = {
         "extends": str(platform_dir(project) / "config.yaml"),
         "paths": {
@@ -249,7 +273,11 @@ def write_config(
     data["toolchain"] = {"specs": absolute(base["toolchain"]["specs"])}
     for key in ("boot_memory", "boot_memory_linker_script"):
         data["paths"][key] = absolute(base["paths"][key])
-    data["quartus"] = {"project_dir": absolute(base["quartus"]["project_dir"])}
+    data["quartus"] = {
+        "project_dir": absolute(
+            base["quartus"]["project_dir"] or ".rv32/simulation-only"
+        )
+    }
     data["sim"]["vhdl_sources"] = [
         absolute(value) for value in base["sim"]["vhdl_sources"]
     ]
@@ -273,6 +301,8 @@ def write_config(
     selected = cpu_profiles.selected(SDK, project)
     if selected is not None:
         cpu_profiles.apply(SDK, root, platform_dir(project), data, selected)
+    if project.get("platform") == "modular":
+        views.modular_storage(SDK, root, data)
     # Tools knows more optional ISA switches than every pinned platform top.
     # Disabled switches may be omitted; enabled unsupported features are errors.
     declared = None
@@ -594,6 +624,7 @@ def doctor(
         SDK / "src",
         SDK / ".sdk" / "tools",
         SDK / "Common-Components",
+        SDK / "Peripherals",
     ]
     missing = [path for path in required if not path.exists()]
     if missing:
@@ -686,6 +717,10 @@ def simulate(root: Path, project: dict[str, Any]) -> None:
 
 
 def fpga(root: Path, project: dict[str, Any], mode: str) -> None:
+    if project.get("platform") == "modular":
+        raise SystemExit(
+            "The modular SDK platform is simulation-only; select an FPGA platform before programming."
+        )
     cache = sof_cache.cache_root()
     cache.mkdir(parents=True, exist_ok=True)
     with (cache / ".hardware.lock").open("w") as lock:
@@ -852,7 +887,14 @@ def parser() -> argparse.ArgumentParser:
     )
     result.add_argument("--project", help="project directory; defaults to cwd")
     sub = result.add_subparsers(dest="command", required=True)
-    for command in ("doctor", "setup", "build", "simulate", "stdout"):
+    for command in (
+        "doctor",
+        "setup",
+        "build",
+        "simulate",
+        "stdout",
+        "drivers",
+    ):
         command_parser = sub.add_parser(command)
         command_parser.add_argument(
             "--debug", action="store_true", default=argparse.SUPPRESS
@@ -878,6 +920,10 @@ def execute(
         build(root, project, "mif")
     elif args.command == "simulate":
         simulate(root, project)
+    elif args.command == "drivers":
+        drivers.generate(
+            SDK, root, project, platform_dir(project) / "platform.yaml"
+        )
     elif args.command == "stdout":
         read_stdout(root, project)
     else:

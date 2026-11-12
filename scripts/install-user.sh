@@ -65,7 +65,12 @@ cat >"${bin_root}/rv32-project" <<'EOF'
 exec "${XDG_DATA_HOME:-${HOME}/.local/share}/rv32-sdk/scripts/rv32-project" "$@"
 EOF
 
-chmod +x "${bin_root}/rv32-new" "${bin_root}/rv32-project"
+cat >"${bin_root}/rv32-drivers" <<'EOF'
+#!/usr/bin/env bash
+exec "${XDG_DATA_HOME:-${HOME}/.local/share}/rv32-sdk/scripts/rv32-drivers" "$@"
+EOF
+
+chmod +x "${bin_root}/rv32-drivers" "${bin_root}/rv32-new" "${bin_root}/rv32-project"
 
 echo "RV32 SDK: ${data_root}/rv32-sdk -> ${sdk_root}"
 echo "Quartus:  ${quartus_link}"

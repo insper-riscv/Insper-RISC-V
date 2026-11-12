@@ -3,7 +3,8 @@
   "C_Cpp.default.cStandard": "c23",
   "C_Cpp.default.includePath": [
     "${workspaceFolder}/include",
-    "${workspaceFolder}/.rv32/include"
+    "${workspaceFolder}/.rv32/include",
+    "${workspaceFolder}/vendor/**"
   ],
   "rust-analyzer.cargo.target": "riscv32im-unknown-none-elf",
   "files.associations": {

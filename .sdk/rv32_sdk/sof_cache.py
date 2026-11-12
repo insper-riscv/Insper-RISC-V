@@ -114,6 +114,15 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
             )
             for name in sorted(files):
                 path = Path(directory) / name
+                c_driver_path = "/driver/c/" in (
+                    "/" + path.relative_to(sdk).as_posix()
+                )
+                if (
+                    tree == "Peripherals"
+                    and c_driver_path
+                    and (path.suffix == ".h" or path.name == "driver.yaml")
+                ):
+                    continue
                 if (
                     path.suffix.lower() not in SUFFIXES
                     or path.resolve() in dynamic
