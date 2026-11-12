@@ -27,6 +27,7 @@ io:
   switches: {signals: "SW[9:0]",        active: high}
   keys:     {signals: "KEY[1:0]",       active: low}
   display:  {signals: "HEX[5:0][6:0]",  active: low}
+  video:    {kind: vga, channel_bits: 4, signals: VGA, default_mode: 640x480@60, modes: [640x480@60]}
 memories:
   sdram:
     chip: IS42S16320D-7

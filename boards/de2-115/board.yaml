@@ -27,6 +27,7 @@ io:
   switches: {signals: "SW[17:0]",       active: high}
   keys:     {signals: "KEY[3:0]",       active: low}
   display:  {signals: "HEX[7:0][6:0]",  active: low}
+  video:    {kind: vga, channel_bits: 8, signals: VGA, default_mode: 640x480@60, modes: [640x480@60, 640x480@85, 800x600@60, 1024x768@60, 1280x1024@60]}
 memories:
   sdram:
     chip: IS42S16320B-7
@@ -55,3 +56,4 @@ notes:
   - "O codigo do dispositivo na cadeia e compartilhado com o 10CL120 e o EP3C120; a placa e distinguida pelo inventario do host (documento 03 do plano)."
   - "A fase do DRAM_CLK (6000 ps a 100 MHz) foi medida na placa: o teste de preenchimento e de pontos esparsos das 2^25 palavras pela porta de depuracao passa com 4000, 6000, 8000 e 0 ps e falha com 2000 ps; 6000 ps fica no meio da janela que passa."
   - "O mapa da plataforma usa os 128 MB da SDRAM: o gerador deriva a janela da tag das caches (27 bits) da regiao RAM, e a porta de depuracao alcanca as 2^25 palavras."
+  - "O video e um ADV7123 de 10 bits por canal com so os 8 bits altos ligados; VGA_CLK, VGA_BLANK_N e VGA_SYNC_N ficam sob controle do fabric. O manual cita ate 1280x1024 com banda de 100 MHz, e a tabela de modos do manual vai ate 108 MHz."

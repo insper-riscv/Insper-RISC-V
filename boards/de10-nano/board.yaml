@@ -32,6 +32,7 @@ io:
   leds:     {signals: "LED[7:0]", active: high}
   switches: {signals: "SW[3:0]",  active: high}
   keys:     {signals: "KEY[1:0]", active: low}
+  video:    {kind: hdmi, channel_bits: 8, signals: HDMI_TX, default_mode: 640x480@60, modes: [640x480@60, 1024x768@60, 1280x1024@60, 1920x1080@60]}
 console:
   default: jtag
 pins: pins.yaml
@@ -44,3 +45,4 @@ notes:
   - "Os multiplicadores sao contados em 18x18 (112 blocos DSP). O total de ALMs (41910) e o maximo da familia no membro A6; o numero exato do 5CSEBA6 nao foi aberto."
   - "O manual nao informa os bancos de E/S dos tres relogios de 50 MHz; FPGA_CLK3_50 compartilha o sinal de FPGA_CLK1_50 segundo a tabela 3-5."
   - "A configuracao persistente usa o EPCS128 (modo AS, MSEL = 10010); ele nao e memoria de usuario neste pacote."
+  - "O video sai pelo ADV7513 (HDMI), que recebe RGB de 24 bits em HDMI_TX_D, DE, HS, VS e CLK. A configuracao do chip e feita por I2C_SCL e I2C_SDA (pins.yaml), que nao fazem parte do prefixo HDMI_TX. O manual so diz que o chip aceita ate 165 MHz de clock de pixel, sem tabela de modos."

@@ -1,0 +1,68 @@
+# Catalogo de modos de video. Esquema: docs/pt-br/boards/formato.md, secao 4.3.
+# Cada modo traz, por eixo, os quatro intervalos do ciclo (sync, back_porch, visible, front_porch) e o total, que e a soma
+# dos quatro. Polaridade neg quer dizer pulso de sincronismo em nivel baixo. O clock de pixel esta em MHz.
+# Fontes: manuais Terasic (DE0-CV Tabelas 3-8 e 3-9, DE2-115 Tabelas 4-14 e 4-15), VESA DMT e CTA-861 (VIC 4 e VIC 16).
+modes:
+  640x480@60:
+    width: 640
+    height: 480
+    refresh_hz: 60
+    aspect: "4:3"
+    pixel_clock_mhz: 25.0
+    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: neg}
+    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: neg}
+    source: "DE0-CV Tabelas 3-8 e 3-9; DE10-Lite Tabelas 3-9 e 3-10; DE2-115 Tabelas 4-14 e 4-15 (o VESA DMT usa 25,175 MHz)"
+  640x480@85:
+    width: 640
+    height: 480
+    refresh_hz: 85
+    aspect: "4:3"
+    pixel_clock_mhz: 36.0
+    horizontal: {total: 832, sync: 56, back_porch: 80, visible: 640, front_porch: 56, polarity: neg}
+    vertical:   {total: 509, sync: 3, back_porch: 25, visible: 480, front_porch: 1, polarity: neg}
+    source: "VESA DMT; DE2-115 Tabelas 4-14 e 4-15 (linhas em us, vertical em linhas)"
+  800x600@60:
+    width: 800
+    height: 600
+    refresh_hz: 60
+    aspect: "4:3"
+    pixel_clock_mhz: 40.0
+    horizontal: {total: 1056, sync: 128, back_porch: 88, visible: 800, front_porch: 40, polarity: pos}
+    vertical:   {total: 628, sync: 4, back_porch: 23, visible: 600, front_porch: 1, polarity: pos}
+    source: "VESA DMT; DE2-115 Tabelas 4-14 e 4-15"
+  1024x768@60:
+    width: 1024
+    height: 768
+    refresh_hz: 60
+    aspect: "4:3"
+    pixel_clock_mhz: 65.0
+    horizontal: {total: 1344, sync: 136, back_porch: 160, visible: 1024, front_porch: 24, polarity: neg}
+    vertical:   {total: 806, sync: 6, back_porch: 29, visible: 768, front_porch: 3, polarity: neg}
+    source: "VESA DMT; DE2-115 Tabelas 4-14 e 4-15"
+  1280x720@60:
+    width: 1280
+    height: 720
+    refresh_hz: 60
+    aspect: "16:9"
+    pixel_clock_mhz: 74.25
+    horizontal: {total: 1650, sync: 40, back_porch: 220, visible: 1280, front_porch: 110, polarity: pos}
+    vertical:   {total: 750, sync: 5, back_porch: 20, visible: 720, front_porch: 5, polarity: pos}
+    source: "CTA-861 VIC 4"
+  1280x1024@60:
+    width: 1280
+    height: 1024
+    refresh_hz: 60
+    aspect: "5:4"
+    pixel_clock_mhz: 108.0
+    horizontal: {total: 1688, sync: 112, back_porch: 248, visible: 1280, front_porch: 48, polarity: pos}
+    vertical:   {total: 1066, sync: 3, back_porch: 38, visible: 1024, front_porch: 1, polarity: pos}
+    source: "VESA DMT; DE2-115 Tabelas 4-14 e 4-15"
+  1920x1080@60:
+    width: 1920
+    height: 1080
+    refresh_hz: 60
+    aspect: "16:9"
+    pixel_clock_mhz: 148.5
+    horizontal: {total: 2200, sync: 44, back_porch: 148, visible: 1920, front_porch: 88, polarity: pos}
+    vertical:   {total: 1125, sync: 5, back_porch: 36, visible: 1080, front_porch: 4, polarity: pos}
+    source: "CTA-861 VIC 16"
