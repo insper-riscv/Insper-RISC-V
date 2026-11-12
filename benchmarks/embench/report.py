@@ -195,6 +195,25 @@ def format_row(
     )
 
 
+def counter_summary(data: dict[str, Any]) -> str:
+    """Summarize counts only for a complete verified suite."""
+    rows = [row for row in data["results"] if valid_row(row)]
+    if not rows or {row["program"] for row in rows} != set(
+        data["suite"]["programs"]
+    ):
+        return (
+            "Aggregate instruction/IPC metrics unavailable: incomplete suite."
+        )
+    instructions = sum(row["instructions"] for row in rows)
+    cycles = sum(row["cycles"] for row in rows)
+    return (
+        "Mean retired instructions/program: "
+        f"**{instructions / len(rows):,.1f}**; "
+        f"weighted IPC (total instructions / total cycles): "
+        f"**{instructions / cycles:.4f}**."
+    )
+
+
 def render(data: dict[str, Any], base: dict[str, Any] | None) -> str:
     """Build a self-contained Actions summary for one profile."""
     provenance = data["provenance"]
@@ -241,7 +260,7 @@ def render(data: dict[str, Any], base: dict[str, Any] | None) -> str:
                 "",
             ]
         )
-    lines.extend(table(data, changes))
+    lines.extend([counter_summary(data), "", *table(data, changes)])
     if base is not None:
         lines.extend(["", *comparison_summaries(data, changes), ""])
     lines.extend(
@@ -259,7 +278,14 @@ def render(data: dict[str, Any], base: dict[str, Any] | None) -> str:
     )
     if base is not None:
         lines.extend(
-            ["### Target-base measurements", "", *table(base, {}), ""]
+            [
+                "### Target-base measurements",
+                "",
+                counter_summary(base),
+                "",
+                *table(base, {}),
+                "",
+            ]
         )
     return "\n".join(lines)
 

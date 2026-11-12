@@ -84,7 +84,7 @@ O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md). O workflow `embench` compara a base de cada PR com o merge proposto usando os 19 programas do Embench IoT nos perfis explícitos do Core. O resumo reúne simulação e FPGA, incluindo instruções, IPC, MIPS, clock configurado, estimativa de Fmax e notas por programa, perfil e tipo de operação. O modo `ci` usa uma repetição local por algoritmo e identifica a nota como estimativa; `workload=full` preserva os loops originais. A execução física exige a [configuração do runner](benchmarks/embench/FPGA-SETUP.md). Método, limites e reprodução estão em [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
+`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md). O workflow `embench` compara a base de cada PR com o merge proposto usando os 19 programas do Embench IoT nos perfis explícitos do Core. O resumo usa apenas simulação GHDL, incluindo ciclos, instruções, CPI/IPC e notas por programa, perfil e tipo de operação. Clock físico, Fmax e MIPS não são medidos pela simulação. O modo `ci` usa uma repetição local por algoritmo e identifica a nota como estimativa; `workload=full` preserva os loops originais. Não exige placa nem runner de laboratório. Método, limites e reprodução estão em [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
 
 ---
 

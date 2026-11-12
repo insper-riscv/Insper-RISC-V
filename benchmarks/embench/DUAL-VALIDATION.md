@@ -1,3 +1,6 @@
+> Historical dual-backend experiment. Current PR automation is simulation-only;
+> FPGA runner provisioning is no longer required. See [AUTOMATION.md](AUTOMATION.md).
+
 # Dual-backend acceptance — 2026-11-12
 
 This is a validation of the benchmark infrastructure, not a claim of CPU improvements.
@@ -21,4 +24,7 @@ The raw firmware, manifests, generated configuration, observer logs, Quartus tim
 
 The merge-tree audit against the stated main revision reports no conflicts. All 800 existing main files other than README.md, README.en.md, pyproject.toml and uv.lock remain byte-identical. No `src/`, processor submodule pointer, board definition, path catalog, or existing processor CI workflow is changed.
 
-**Do not treat the complete PR automation as accepted yet.** Organization administration must enable the dedicated FPGA runner and SHA-pinned reusable workflow as described in [FPGA-SETUP.md](FPGA-SETUP.md), then a real Actions run must pass both backends. The provisioning gate intentionally stays red until then. No main merge was performed.
+The historical dual-backend automation was not accepted because runner access
+was unavailable. That gate has been removed by the simulation-only policy;
+these physical results remain historical evidence, not current PR requirements.
+No main merge was performed.

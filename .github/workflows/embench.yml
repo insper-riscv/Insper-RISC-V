@@ -44,7 +44,6 @@ jobs:
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       base: ${{ steps.plan.outputs.base }}
-      hardware: ${{ steps.plan.outputs.hardware }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -123,7 +122,7 @@ jobs:
         shell: bash
         run: |
           git config --global --add safe.directory '*'
-          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting benchmarks.embench.test_hardware -v
+          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting -v
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/candidate" --output "$GITHUB_WORKSPACE/results/storage"
           if [ -n "$BASE_SHA" ]; then
             /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/base" --output "$GITHUB_WORKSPACE/results/storage-base"
@@ -135,12 +134,6 @@ jobs:
         run: |
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_oracle --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/oracle"
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/candidate" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter"
-          mkdir -p "$GITHUB_WORKSPACE/results/hardware-counter"
-          pushd "$GITHUB_WORKSPACE/results/hardware-counter"
-          ghdl -a --std=08 "$GITHUB_WORKSPACE/driver/benchmarks/embench/retirement_counter.vhd.in" "$GITHUB_WORKSPACE/driver/benchmarks/embench/retirement_counter_tb.vhd.in"
-          ghdl -e --std=08 retirement_counter_tb
-          ghdl -r --std=08 retirement_counter_tb > counter.log 2>&1
-          popd
           if [ -n "$BASE_SHA" ]; then
             /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/base" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter-base"
           fi
@@ -205,22 +198,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  hardware:
-    needs: plan
-    if: inputs.scope != 'all'
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-      matrix: ${{ fromJSON(needs.plan.outputs.hardware) }}
-    uses: insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@ddab4dbcf30674c44351367ede0f4fb20244504c
-    with:
-      profile: ${{ matrix.profile }}
-      workload: ${{ inputs.workload || 'ci' }}
-      base_sha: ${{ needs.plan.outputs.base }}
-
   embench:
     name: embench
-    needs: [plan, measure, hardware]
+    needs: [plan, measure]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-26.04
     timeout-minutes: 10
@@ -242,22 +222,12 @@ jobs:
           pattern: embench-batch-*
           path: results
           merge-multiple: true
-      - uses: actions/download-artifact@v8
-        if: inputs.scope != 'all'
-        with:
-          pattern: embench-fpga-results-*
-          path: hardware
-          merge-multiple: true
       - name: Publish profile/program tables and PR deltas
         shell: bash
         run: |
           args=(--plan plan/plan.json --output embench-summary.md)
           if [ -n "$BASE_SHA" ]; then args+=(--compare); fi
-          if [ "$SCOPE" = all ]; then
-            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci aggregate --input results "${args[@]}"
-          else
-            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.combined --simulation results --hardware hardware "${args[@]}"
-          fi
+          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci aggregate --input results "${args[@]}"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -266,14 +236,12 @@ jobs:
             embench-summary.md
             results/**/*.json
             results/**/*.csv
-            hardware/**/*.json
-            hardware/**/*.csv
           retention-days: 14
       - name: Require every measuring job to pass
         if: always()
         env:
           MEASURE_RESULT: ${{ needs.measure.result }}
-          HARDWARE_RESULT: ${{ needs.hardware.result }}
+          PLAN_RESULT: ${{ needs.plan.result }}
         run: |
           test "$MEASURE_RESULT" = success
-          if [ "$SCOPE" != all ]; then test "$HARDWARE_RESULT" = success; fi
+          test "$PLAN_RESULT" = success

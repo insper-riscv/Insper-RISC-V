@@ -50,6 +50,87 @@ class ReportingTests(unittest.TestCase):
             ],
         }
 
+    def test_simulation_aggregate_needs_no_hardware(self) -> None:
+        """Publish both PR sides without physical artifacts."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            for side in ("candidate", "base"):
+                folder = root / side / "rv32im"
+                folder.mkdir(parents=True)
+                run.write_json(folder / "results.json", self.data)
+            plan = root / "plan.json"
+            plan.write_text(
+                json.dumps(
+                    {
+                        "profiles": ["rv32im"],
+                        "revisions": {"candidate": "abc", "base": "abc"},
+                        "available": {
+                            "candidate": ["rv32im"],
+                            "base": ["rv32im"],
+                        },
+                        "programs": self.data["suite"]["programs"],
+                    }
+                )
+            )
+            args = argparse.Namespace(
+                input=root, plan=plan, compare=True, output=root / "summary.md"
+            )
+            with patch("benchmarks.embench.ci.publish_summary"):
+                ci.aggregate(args)
+            text = args.output.read_text()
+            self.assertIn("Target-base measurements", text)
+            self.assertIn("Mean retired instructions/program: **50.0**", text)
+            self.assertIn("**0.5000**", text)
+            self.assertIn("+0.00%", text)
+            self.assertTrue((root / "candidate/rv32im/results.csv").is_file())
+            (root / "base/rv32im/results.json").unlink()
+            with (
+                patch("benchmarks.embench.ci.publish_summary"),
+                self.assertRaises(SystemExit),
+            ):
+                ci.aggregate(args)
+            self.assertIn("missing results (FAIL)", args.output.read_text())
+
+    def test_simulation_artifact_identity_is_checked(self) -> None:
+        """Preserve provenance gates without a hardware backend."""
+        expected: dict[str, Any] = {
+            "revisions": {"candidate": "abc"},
+            "available": {"candidate": ["rv32im"]},
+            "programs": self.data["suite"]["programs"],
+        }
+        ci.validate_simulation(self.data, "rv32im", "candidate", expected)
+        for field, value in (
+            ("backend", "fpga"),
+            ("profile", "rv32i"),
+            ("provenance", {"revision": "stale"}),
+            ("suite", {"programs": ["crc32"]}),
+        ):
+            with self.subTest(field=field):
+                changed = copy.deepcopy(self.data)
+                changed[field] = value
+                with self.assertRaises(ValueError):
+                    ci.validate_simulation(
+                        changed, "rv32im", "candidate", expected
+                    )
+        absent = copy.deepcopy(self.data)
+        for row in absent["results"]:
+            row["status"] = "profile unavailable"
+        with self.assertRaisesRegex(ValueError, "availability"):
+            ci.validate_simulation(absent, "rv32im", "candidate", expected)
+        expected["available"]["candidate"] = []
+        ci.validate_simulation(absent, "rv32im", "candidate", expected)
+        self.assertTrue(ci.acceptable(absent))
+        self.data["results"][0]["status"] = "unfinished"
+        self.assertFalse(ci.acceptable(self.data))
+
+    def test_weighted_ipc_uses_total_counts(self) -> None:
+        """Weight IPC using total instructions and cycles."""
+        self.data["results"][0]["cycles"] = 300
+        text = report.counter_summary(self.data)
+        self.assertIn("**0.2500**", text)
+        self.data["results"].pop()
+        self.assertIn("unavailable", report.counter_summary(self.data))
+
     def test_identical_inputs_have_zero_delta(self) -> None:
         """Identical timing must produce zero speedup."""
         changed = copy.deepcopy(self.data)

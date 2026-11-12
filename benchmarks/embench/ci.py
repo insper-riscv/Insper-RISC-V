@@ -71,7 +71,6 @@ def plan(args: argparse.Namespace) -> None:
             "select named profiles or use the CI workload"
         )
     emit("matrix", {"include": batches})
-    emit("hardware", {"profile": names if args.scope == "named" else []})
     revisions = {
         "candidate": capture(["git", "rev-parse", "HEAD"], args.candidate)
     }
@@ -245,6 +244,36 @@ def complete(data: dict[str, Any]) -> bool:
     )
 
 
+def validate_simulation(
+    data: dict[str, Any], name: str, side: str, expected: dict[str, Any]
+) -> None:
+    """Reject stale records and false profile absence."""
+    if data.get("backend", "simulation") != "simulation":
+        raise ValueError("Expected simulation measurements")
+    if data["provenance"]["revision"] != expected["revisions"][side]:
+        raise ValueError("Artifact revision does not match the source plan")
+    rows = data["results"]
+    absent = bool(rows) and all(
+        row.get("status") == "profile unavailable" for row in rows
+    )
+    available = name in expected["available"][side]
+    if data["profile"] != name or absent == available:
+        raise ValueError("Profile availability does not match the source plan")
+    if sorted(data["suite"]["programs"]) != sorted(expected["programs"]):
+        raise ValueError("Program coverage does not match the source plan")
+
+
+def acceptable(data: dict[str, Any]) -> bool:
+    """Require verified results or an explicit absent profile."""
+    return complete(data) and (
+        all(report.valid_row(row) for row in data["results"])
+        or all(
+            row.get("status") == "profile unavailable"
+            for row in data["results"]
+        )
+    )
+
+
 def profile_summary(name: str, args: argparse.Namespace) -> tuple[str, bool]:
     """Render one profile or a missing-artifact failure."""
     head = args.input / "candidate" / name
@@ -255,10 +284,14 @@ def profile_summary(name: str, args: argparse.Namespace) -> tuple[str, bool]:
         return f"## `{name}` - missing results (FAIL)\n", True
     candidate = combine(head_paths)
     before = combine(base_paths) if args.compare else None
+    validate_simulation(candidate, name, "candidate", args.expected)
+    if before is not None:
+        validate_simulation(before, name, "base", args.expected)
+        report.write_csv(base / "results.csv", before)
     text = report.render(candidate, before)
     report.write_csv(head / "results.csv", candidate)
-    failed = not complete(candidate) or (
-        before is not None and not complete(before)
+    failed = not acceptable(candidate) or (
+        before is not None and not acceptable(before)
     )
     return text, failed
 
@@ -266,9 +299,12 @@ def profile_summary(name: str, args: argparse.Namespace) -> tuple[str, bool]:
 def aggregate(args: argparse.Namespace) -> None:
     """Require expected artifacts and publish tables."""
     expected: dict[str, Any] = json.loads(args.plan.read_text())
+    args.expected = expected
     sections = [
-        "# Embench processor benchmarks",
+        "# Embench processor benchmarks (simulation)",
         "",
+        "Hosted GHDL simulation only; no FPGA runner is required. "
+        "Physical clock, Fmax and instructions/second are not measured. "
         "Scores use the pinned Embench reference, not an old "
         "version of this processor. Full JSON/CSV and logs are "
         "attached to this run.",

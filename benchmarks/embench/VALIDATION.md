@@ -1,10 +1,13 @@
+> Current policy: simulation-only PR benchmarks, with no lab-runner gate.
+> See [SIMULATION-VALIDATION.md](SIMULATION-VALIDATION.md) for the rollback checks.
+> The entries below preserve their original measurement context.
+
 # Integration validation — 2026-11-11
 
 This file records the earlier simulation-only validation. The current
-dual-backend implementation and required lab setup are documented in
-[AUTOMATION.md](AUTOMATION.md) and [FPGA-SETUP.md](FPGA-SETUP.md). Historical
-successful runs below do not establish that the physical PR runner has
-been provisioned or that the later combined workflow has passed.
+simulation-only contract is documented in [AUTOMATION.md](AUTOMATION.md).
+The intervening physical experiment is preserved in
+[DUAL-VALIDATION.md](DUAL-VALIDATION.md) as historical evidence.
 
 The first complete Actions run passed on commit
 `ed7db18b57fd1fc52e0357674c8dc77445fa30c6`:

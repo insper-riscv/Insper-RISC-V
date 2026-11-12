@@ -2,18 +2,18 @@
 
 This integration starts from the processor's main branch, independently of
 `kpi-benchmarks` and the Live SDK. It uses the modular simulation platform
-and the DE0-CV, their memory maps/runtimes, and explicit Core profile YAMLs.
+with its memory map/runtime and explicit Core profile YAMLs.
 Processor sources and checked-in platform configuration are not modified.
 
 See [validation evidence and tested limits](VALIDATION.md) for the first
 complete 209-measurement Actions run and the independent adapter checks.
 The separate [manual FPGA experiment](HARDWARE.md) records 57 passing
 physical runs, an independent clock check and the fresh Quartus reports.
-The current PR workflow requires **both simulation and FPGA** results.
-See [AUTOMATION.md](AUTOMATION.md) for the physical observer, combined
-tables and metric definitions, and [FPGA-SETUP.md](FPGA-SETUP.md) for the
-required administrator provisioning. A missing physical runner fails the
-check; earlier successful simulation runs do not satisfy that requirement.
+The current PR workflow uses **simulation only** on hosted GitHub runners.
+No FPGA, Quartus, JTAG or lab runner provisioning is required.
+See [AUTOMATION.md](AUTOMATION.md) for the current contract and metrics.
+Physical evidence and manual harnesses are retained as historical material;
+they are not part of the required PR check.
 
 `suite.yaml` pins all 19 Embench IoT 2.0 programs. Upstream currently labels
 2.0 as development releases; results identify the exact snapshot, rather
@@ -43,9 +43,8 @@ Per-program tables and CSV also report IPC (retired instructions per core
 cycle), calculated as `instructions / cycles`, alongside CPI (`cycles /
 instructions`). With an established operating frequency, throughput is
 `instructions/second = IPC * frequency_Hz`, or `MIPS = IPC * frequency_MHz`.
-IPC is therefore numerically equal to MIPS/MHz. The FPGA table derives
-MIPS from its configured PLL frequency and measured retired instructions;
-simulation does not fabricate an operating clock. Host simulation speed
+IPC is therefore numerically equal to MIPS/MHz. Simulation does not
+fabricate an operating clock, physical MIPS or Fmax. Host simulation speed
 is not processor instruction throughput.
 These quantities describe the measured kernel; instruction count and ISA
 can differ between profiles, so Embench scores and cycle deltas remain
@@ -73,16 +72,15 @@ reference_ms * 1000 / (measured_cycles * original_local_scale)
 This extrapolates one local repetition to the original workload. Trigger
 and loop overhead are not perfectly linear, so this is explicitly an
 **estimated CI index, not an official full-duration Embench score**. PR
-speed deltas use measured cycles in simulation and elapsed time from
-cycles/configured MHz on the FPGA, with the same workload on both sides;
+speed deltas use measured simulation cycles with the same workload on
+both sides;
 they do not use this extrapolation.
 
 Manual `full` mode leaves the upstream loops unchanged (GSF=1). Its
 score/MHz is `reference_ms * 1000 / measured_cycles`, following the upstream
 normalization. The reference times come from the pinned suite's own
 `baseline-data/speed.json` (the Embench reference platform, not an older
-Insper CPU). Quartus separately reports restricted intra-core Fmax for the
-instrumented FPGA build; it is not a measured system maximum frequency.
+Insper CPU). There is no Quartus synthesis or physical timing stage in CI.
 
 The upstream XGBoost verifier is permissive at GSF below 12 (its integer
 threshold becomes zero). A link-time wrapper retains that original check
@@ -124,7 +122,7 @@ ISA, including Zicond where enabled, and its exact hardware configuration.
 - `scope=named, workload=full`: unchanged benchmark repetition loops,
   sharded by program and profile so individual jobs remain bounded.
 - `compare_ref=main`: resolve a manual comparison target once and use its
-  exact SHA on both backends; an empty value disables manual comparison.
+  exact SHA for the simulated comparison; an empty value disables manual comparison.
 
 The GitHub UI only shows that manual button once the workflow file exists
 on the default branch; see the
@@ -146,9 +144,7 @@ Both workloads have a two-hour wall limit per program, and the workflow
 bounds each measuring job. RTL execution of large kernels can be slow even
 with one local repetition; this check can take substantially longer than
 functional smoke tests. Cache hits and cancellation avoid redundant runs. New
-commits cancel superseded runs. Physical jobs execute serially on the lab
-runner, with locked board access and three verified repetitions per
-program. Their compilation and JTAG stages have separate timeouts.
+commits cancel superseded runs. No lab board is accessed.
 
 Successful results are cached by the actual RTL, profile YAMLs, maps,
 runtime inputs and the adapter/suite/tool identities. Base and candidate
@@ -163,10 +159,7 @@ CSV exports include the workload, score type, scale factors, revision and
 explicit count/percentage units.
 
 All jobs use read-only repository permissions and no deployment credentials.
-The physical workflow and host driver are pinned to reviewed SHAs; PR
-scripts run only in an offline, bounded compiler container. Only a
-separate trusted controller accesses the lab FPGA. Fork PRs require a
-maintainer-owned review branch. See [FPGA-SETUP.md](FPGA-SETUP.md).
+All benchmark jobs run on hosted GitHub machines, without board access.
 This workflow adds no PR comments, merges or automatic commits. Existing
 CI checks remain intact.
 
@@ -178,7 +171,7 @@ container, from this repository's root:
 
 ```sh
 PY=/opt/riscv-tools/riscv-tools/bin/python
-$PY -m unittest benchmarks.embench.test_reporting benchmarks.embench.test_hardware -v
+$PY -m unittest benchmarks.embench.test_reporting -v
 $PY -m benchmarks.embench.check_storage --output /tmp/storage-check
 $PY -m benchmarks.embench.check_counter --upstream /path/to/embench-iot \
   --output /tmp/counter-check

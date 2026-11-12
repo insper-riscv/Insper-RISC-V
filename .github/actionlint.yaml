@@ -1,3 +1,0 @@
-self-hosted-runner:
-  labels:
-    - rv32-de0-cv
