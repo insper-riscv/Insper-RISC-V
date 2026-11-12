@@ -63,7 +63,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: f900df938f3408fa9f681f52f44514b64dbe1dca
+          ref: 880e2526b1ef3d6f1bb47a664981e701e1f1ebd5
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
@@ -114,6 +114,11 @@ jobs:
             hardware-output/**/*.fit.summary
             hardware-output/**/*.sof
             hardware-output/**/*.elf
+            hardware-output/**/board/**/config_pkg.vhd
+            hardware-output/**/board/**/*top.vhd
+            hardware-output/**/board/**/core_observed.vhd
+            hardware-output/**/board/**/*.qsf
+            hardware-output/**/board/**/*.sdc
           if-no-files-found: error
           retention-days: 14
       - name: Remove only generated job files
