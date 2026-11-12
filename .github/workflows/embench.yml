@@ -212,7 +212,7 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix: ${{ fromJSON(needs.plan.outputs.hardware) }}
-    uses: insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@993cd7610ce8420ddfa2a1aed70599de1e7c2ee1
+    uses: insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@11f321222bdd4d4bf1da311875798bb882cf0f22
     with:
       profile: ${{ matrix.profile }}
       workload: ${{ inputs.workload || 'ci' }}

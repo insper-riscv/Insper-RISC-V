@@ -16,17 +16,20 @@ In organization Settings → Actions → Runner groups → FPGA:
    existing approved workflows and append this exact immutable reference:
 
    ```text
-   insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@993cd7610ce8420ddfa2a1aed70599de1e7c2ee1
+   insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@11f321222bdd4d4bf1da311875798bb882cf0f22
    ```
 
 3. Do not allow the caller `embench.yml`, arbitrary PR workflow files or a
    mutable branch reference onto the persistent self-hosted runner.
+4. After access is confirmed, set the repository Actions variable
+   `EMBENCH_FPGA_ENABLED=true`. Until then the hosted authorization job fails
+   immediately, rather than leaving physical jobs queued for hours.
 
 The allowlisted workflow pins its host/measurement driver to:
 `f900df938f3408fa9f681f52f44514b64dbe1dca`.
 
 Source for review:
-[trusted workflow](https://github.com/insper-riscv/Insper-RISC-V/blob/993cd7610ce8420ddfa2a1aed70599de1e7c2ee1/.github/workflows/embench-hardware.yml),
+[trusted workflow](https://github.com/insper-riscv/Insper-RISC-V/blob/11f321222bdd4d4bf1da311875798bb882cf0f22/.github/workflows/embench-hardware.yml),
 [measurement driver](https://github.com/insper-riscv/Insper-RISC-V/tree/f900df938f3408fa9f681f52f44514b64dbe1dca/benchmarks/embench).
 
 The shared runner must remain running and registered in its current group.
