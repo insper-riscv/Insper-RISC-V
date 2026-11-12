@@ -102,6 +102,8 @@ used a hard 8 GiB memory limit with swap disabled; no waveforms were saved.
 
 No PR was created to test an actual `pull_request` event, and nothing was
 merged into main. The two-checkout comparison engine was exercised locally;
-the deployed Actions execution above used the push event. FPGA frequency,
-area and power were not measured by this integration. CI indices are not
+the deployed Actions execution above used the push event. The automatic
+workflow remains simulation-only; later [manual FPGA validation](HARDWARE.md)
+records physical counters, clock verification and Quartus timing/resources.
+Power was not measured. CI indices are not
 certified full-duration Embench scores or comparisons with an old Insper CPU.

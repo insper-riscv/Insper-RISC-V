@@ -7,6 +7,9 @@ Processor sources and checked-in platform configuration are not modified.
 
 See [validation evidence and tested limits](VALIDATION.md) for the first
 complete 209-measurement Actions run and the independent adapter checks.
+The separate [manual FPGA experiment](HARDWARE.md) records 57 passing
+physical runs, an independent clock check and the fresh Quartus reports.
+Automatic PR checks remain simulation-only.
 
 `suite.yaml` pins all 19 Embench IoT 2.0 programs. Upstream currently labels
 2.0 as development releases; results identify the exact snapshot, rather

@@ -223,6 +223,14 @@ def render(data: dict[str, Any], base: dict[str, Any] | None) -> str:
                 "",
             ]
         )
+    else:
+        lines.extend(
+            [
+                "PR speed delta unavailable: no target-base measurements "
+                "were supplied. A dash does not mean zero percent.",
+                "",
+            ]
+        )
     if data["suite"].get("workload") == "ci":
         lines.extend(
             [
