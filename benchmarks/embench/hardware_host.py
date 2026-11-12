@@ -176,6 +176,10 @@ def build(
 
 def program_and_measure(folder: Path, args: argparse.Namespace) -> None:
     """Check device identity before programming the selected cable."""
+    if not (folder / "build/hardware-manifest.json").is_file():
+        if absent_build(folder, args.profile):
+            return
+        raise ValueError("Missing hardware build manifest")
     mount = ["--mount", f"type=bind,src={folder},dst=/work"]
     scan = jtag_execute(
         docker(
@@ -269,6 +273,21 @@ def program_and_measure(folder: Path, args: argparse.Namespace) -> None:
         1800,
     )
     (folder / "measure.log").write_text(output)
+
+
+def absent_build(folder: Path, profile: str) -> bool:
+    """Require explicit absence before skipping board access."""
+    data = json.loads(
+        (folder / "build/results.json").read_text(encoding="utf-8")
+    )
+    rows = data.get("results", [])
+    return (
+        data.get("backend") == "fpga"
+        and data.get("profile_available") is False
+        and data.get("profile") == profile
+        and bool(rows)
+        and all(row.get("status") == "profile unavailable" for row in rows)
+    )
 
 
 def main() -> None:

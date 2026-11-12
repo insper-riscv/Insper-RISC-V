@@ -24,6 +24,9 @@ def main() -> None:
         workload=args.workload,
         programs=None,
     )
+    if not (target / "Core/profiles" / f"{args.profile}.yaml").is_file():
+        write_absent(options)
+        return
     previous = Path("/previous/hardware-manifest.json")
     if previous.is_file():
         identity = hardware_build.identity(target)
@@ -40,6 +43,28 @@ def main() -> None:
             run.write_json(options.output / previous.name, old)
             return
     hardware_build.build(options)
+
+
+def write_absent(args: argparse.Namespace) -> None:
+    """Record a named profile absent from this revision."""
+    suite = run.read_yaml(run.HERE / "suite.yaml")
+    suite.update(platform=str(hardware_build.PLATFORM), workload=args.workload)
+    args.output.mkdir()
+    run.write_json(
+        args.output / "results.json",
+        {
+            "schema": 1,
+            "backend": "fpga",
+            "profile": args.profile,
+            "profile_available": False,
+            "suite": suite,
+            "provenance": hardware_build.identity(args.root),
+            "results": [
+                {"program": name, "status": "profile unavailable"}
+                for name in suite["programs"]
+            ],
+        },
+    )
 
 
 if __name__ == "__main__":

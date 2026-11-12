@@ -22,7 +22,7 @@ def speed_changes(
     base: dict[str, Any] | None, candidate: dict[str, Any]
 ) -> dict[str, float]:
     """Compare elapsed hardware time or simulated core cycles."""
-    if base is None:
+    if base is None or absent(base) or absent(candidate):
         return {}
     changes = report.compare(base, candidate)
     if candidate.get("backend") == "fpga":
@@ -35,7 +35,7 @@ def speed_changes(
 
 
 def program_table(
-    data: dict[str, Any], changes: dict[str, float]
+    data: dict[str, Any], changes: dict[str, float], side: str = "candidate"
 ) -> list[str]:
     """Show physical throughput only when a board clock is available."""
     backend = data.get("backend", "simulation")
@@ -44,11 +44,11 @@ def program_table(
     for row in data["results"]:
         if not report.valid_row(row):
             lines.append(
-                f"| {row['program']} | {backend} | {row['status']} | "
+                f"| {row['program']} | {backend} | {side} | {row['status']} | "
                 "— | — | — | — | — | — | — | — | — | — | — |"
             )
             continue
-        lines.append(program_row(row, backend, mhz, changes))
+        lines.append(program_row(row, backend, mhz, changes, side))
     return lines
 
 
@@ -57,6 +57,7 @@ def program_row(
     backend: str,
     mhz: float | None,
     changes: dict[str, float],
+    side: str,
 ) -> str:
     """Format verified work and optional physical throughput."""
     ipc = row["instructions"] / row["cycles"]
@@ -73,7 +74,7 @@ def program_row(
         for name in run.BUCKETS
     )
     return (
-        f"| {row['program']} | {backend} | {row['cycles']} | "
+        f"| {row['program']} | {backend} | {side} | {row['cycles']} | "
         f"{row['instructions']} | {ipc:.4f} | {mips} | {elapsed} | "
         f"{clock} | {row['score_per_mhz']:.5f} | {mix} | {delta} |"
     )
@@ -96,29 +97,50 @@ def profile(name: str, args: argparse.Namespace) -> tuple[str, bool]:
             continue
         head = ci.combine(head_paths)
         base = ci.combine(base_paths) if args.compare else None
-        require_pair(head, base, args)
+        require_pair(head, base, args, name)
         if head.get("backend", "simulation") != backend:
             raise ValueError("Artifact backend does not match its directory")
         changes = speed_changes(base, head)
-        tables.extend(program_table(head, changes))
+        tables.extend(export_pair(root, head, base, changes))
         section, bad = backend_summary(head, base, changes)
         lines.extend(section)
         failed = failed or bad
-        report.write_csv(root / "candidate" / name / "results.csv", head)
     lines.extend(
         [
             "### Combined program measurements",
             "",
-            "| Program | Backend | Cycles | Instructions | IPC | MIPS | "
+            "| Program | Backend | Side | Cycles | Instructions | IPC | "
+            "MIPS | "
             "Time ms | CPU MHz | Index/MHz | Branch % | Memory % | "
             "Compute % | Other % | PR speed Δ |",
-            "|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"
+            "|---|---|---|---:|---:|---:|---:|---:|---:|---:|---:|"
             "---:|---:|---:|---:|",
-            *tables,
+            *sorted(tables),
             "",
         ]
     )
     return "\n".join(lines), failed
+
+
+def export_pair(
+    root: Path,
+    head: dict[str, Any],
+    base: dict[str, Any] | None,
+    changes: dict[str, float],
+) -> list[str]:
+    """Export both revision sides without substituting their metrics."""
+    lines: list[str] = []
+    for side, data in (("candidate", head), ("base", base)):
+        if data is not None:
+            report.write_csv(
+                root / side / data["profile"] / "results.csv", data
+            )
+            lines.extend(
+                program_table(
+                    data, changes if side == "candidate" else {}, side
+                )
+            )
+    return lines
 
 
 def require_revision(data: dict[str, Any], expected: str | None) -> None:
@@ -131,11 +153,42 @@ def require_pair(
     head: dict[str, Any],
     base: dict[str, Any] | None,
     args: argparse.Namespace,
+    name: str,
 ) -> None:
     """Check exact candidate and target revisions independently."""
     require_revision(head, args.revisions.get("candidate"))
+    require_available(
+        head,
+        name,
+        args.available.get("candidate", args.profiles),
+        args.programs,
+    )
     if base is not None:
         require_revision(base, args.revisions.get("base"))
+        require_available(
+            base,
+            name,
+            args.available.get("base", args.profiles),
+            args.programs,
+        )
+
+
+def require_available(
+    data: dict[str, Any], name: str, available: list[str], programs: list[str]
+) -> None:
+    """Validate profile absence against the source plan."""
+    if data["profile"] != name or absent(data) == (name in available):
+        raise ValueError("Profile availability does not match the source plan")
+    if sorted(data["suite"]["programs"]) != sorted(programs):
+        raise ValueError("Program coverage does not match the source plan")
+
+
+def absent(data: dict[str, Any]) -> bool:
+    """Recognize explicit unavailable rows."""
+    rows = data["results"]
+    return bool(rows) and all(
+        row.get("status") == "profile unavailable" for row in rows
+    )
 
 
 def complete(data: dict[str, Any]) -> bool:
@@ -143,6 +196,11 @@ def complete(data: dict[str, Any]) -> bool:
     return ci.complete(data) and all(
         report.valid_row(row) for row in data["results"]
     )
+
+
+def acceptable(data: dict[str, Any]) -> bool:
+    """Require coverage and valid work or declared absence."""
+    return ci.complete(data) and (complete(data) or absent(data))
 
 
 def backend_summary(
@@ -158,12 +216,12 @@ def backend_summary(
         f"Candidate: `{head['provenance']['revision']}`",
         "",
     ]
-    failed = not complete(head)
+    failed = not acceptable(head)
     if base is not None:
         lines.extend(
             [f"PR target base: `{base['provenance']['revision']}`", ""]
         )
-        failed = failed or not complete(base)
+        failed = failed or not acceptable(base)
     if complete(head):
         mean, ipc, _ = metrics(head)
         lines.append(
@@ -181,7 +239,7 @@ def backend_summary(
                 "Overall suite index at configured clock: "
                 f"**{score * head['configured_mhz']:.5f}**."
             )
-    if backend == "fpga":
+    if backend == "fpga" and complete(head):
         lines.extend(hardware_summary(head))
     lines.extend(["", *report.summaries(head), ""])
     if base is not None:
@@ -210,6 +268,9 @@ def aggregate(args: argparse.Namespace) -> None:
     """Publish partial evidence and fail on missing measurements."""
     expected = json.loads(args.plan.read_text())
     args.revisions = expected.get("revisions", {})
+    args.available = expected.get("available", {})
+    args.profiles = expected["profiles"]
+    args.programs = expected["programs"]
     lines = [
         "# Embench — simulation + FPGA",
         "",

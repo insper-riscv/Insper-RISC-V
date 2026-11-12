@@ -147,9 +147,131 @@ class HardwareTests(unittest.TestCase):
             ["/usr/bin/sudo", "-n", "killall", "jtagd"],
         )
 
+    def test_absence_cannot_skip_numeric_hardware_results(self) -> None:
+        """Reject measured rows without a hardware manifest."""
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            (folder / "build").mkdir()
+            path = folder / "build/results.json"
+            data = {
+                "backend": "fpga",
+                "profile_available": False,
+                "profile": "rv32im",
+                "results": [{"status": "pass"}],
+            }
+            path.write_text(json.dumps(data))
+            self.assertFalse(hardware_host.absent_build(folder, "rv32im"))
+            data["results"] = [{"status": "profile unavailable"}]
+            path.write_text(json.dumps(data))
+            self.assertTrue(hardware_host.absent_build(folder, "rv32im"))
+
+
+def report_fixture(
+    backend: str, side: str, absent_base: bool
+) -> dict[str, Any]:
+    """Build synthetic measurements with independently chosen clocks."""
+    fixture = test_reporting.ReportingTests()
+    fixture.setUp()
+    data = copy.deepcopy(fixture.data)
+    data["backend"] = backend
+    if backend == "fpga":
+        physical_fixture(data, side)
+    if side == "base" and absent_base:
+        data["profile_available"] = False
+        data["results"] = [
+            {"program": name, "status": "profile unavailable"}
+            for name in data["suite"]["programs"]
+        ]
+    return data
+
+
+def physical_fixture(data: dict[str, Any], side: str) -> None:
+    """Set independent physical cycles and clocks for report testing."""
+    data["configured_mhz"] = 50 if side == "candidate" else 40
+    data["timing"] = {
+        "core_domain_fmax_mhz": 80,
+        "minimum_slack_ns": 0.2,
+    }
+    for row in data["results"]:
+        row["cycles"] = 120 if side == "candidate" else 150
+        row["cpi"] = row["cycles"] / row["instructions"]
+
 
 class CombinedTests(unittest.TestCase):
     """Keep physical speed, IPC and incomplete coverage unambiguous."""
+
+    @staticmethod
+    def matrix_fixture(
+        root: Path, absent_base: bool = False
+    ) -> argparse.Namespace:
+        """Write an independent four-way report fixture."""
+        for backend in ("simulation", "fpga"):
+            for side in ("candidate", "base"):
+                data = report_fixture(backend, side, absent_base)
+                target = root / backend / side / "rv32im"
+                target.mkdir(parents=True)
+                run.write_json(target / "results.json", data)
+        plan = root / "plan.json"
+        plan.write_text(
+            json.dumps(
+                {
+                    "profiles": ["rv32im"],
+                    "programs": ["crc32", "aha-mont64"],
+                    "available": {
+                        "candidate": ["rv32im"],
+                        "base": [] if absent_base else ["rv32im"],
+                    },
+                    "revisions": {"candidate": "abc", "base": "abc"},
+                }
+            )
+        )
+        return argparse.Namespace(
+            simulation=root / "simulation",
+            hardware=root / "fpga",
+            plan=plan,
+            output=root / "summary.md",
+            compare=True,
+        )
+
+    def test_both_sides_and_backends(self) -> None:
+        """Show both backends and revisions with different clocks."""
+        with tempfile.TemporaryDirectory() as directory:
+            args = self.matrix_fixture(Path(directory))
+            combined.aggregate(args)
+            text = args.output.read_text()
+            for backend in ("simulation", "fpga"):
+                for side in ("base", "candidate"):
+                    self.assertIn(f"| crc32 | {backend} | {side} |", text)
+            self.assertIn("+56.25%", text)
+
+    def test_added_profile_has_no_fake_baseline(self) -> None:
+        """Show an added profile without inventing baseline scores."""
+        with tempfile.TemporaryDirectory() as directory:
+            args = self.matrix_fixture(Path(directory), absent_base=True)
+            combined.aggregate(args)
+            text = args.output.read_text()
+            self.assertIn("| crc32 | fpga | base | profile unavailable", text)
+            self.assertIn("| crc32 | fpga | candidate | 120 |", text)
+
+    def test_false_absence_is_rejected(self) -> None:
+        """Reject false claims of profile absence."""
+        with tempfile.TemporaryDirectory() as directory:
+            args = self.matrix_fixture(Path(directory), absent_base=True)
+            plan = json.loads(args.plan.read_text())
+            plan["available"]["base"] = ["rv32im"]
+            args.plan.write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError, "availability"):
+                combined.aggregate(args)
+
+    def test_wrong_program_set_is_rejected(self) -> None:
+        """Reject suites that do not match the source plan."""
+        with tempfile.TemporaryDirectory() as directory:
+            args = self.matrix_fixture(Path(directory))
+            plan = json.loads(args.plan.read_text())
+            plan["programs"] = ["crc32"]
+            args.plan.write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError, "coverage"):
+                combined.aggregate(args)
 
     def test_stale_revision_is_rejected(self) -> None:
         """Reject stale cached revisions."""
@@ -222,6 +344,7 @@ class CombinedTests(unittest.TestCase):
                 json.dumps(
                     {
                         "profiles": ["rv32im"],
+                        "programs": ["crc32", "aha-mont64"],
                         "revisions": {"candidate": "abc"},
                     }
                 )

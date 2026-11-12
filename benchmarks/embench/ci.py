@@ -56,9 +56,11 @@ def emit(name: str, value: object) -> None:
 
 def plan(args: argparse.Namespace) -> None:
     """Plan both sides, including added and removed profiles."""
-    names = set(profiles(args.candidate, args.scope))
+    available = {"candidate": profiles(args.candidate, args.scope)}
+    names = set(available["candidate"])
     if args.base:
-        names.update(profiles(args.base, args.scope))
+        available["base"] = profiles(args.base, args.scope)
+        names.update(available["base"])
     names = sorted(names)
     width = FULL_BATCH if args.scope == "all" else 1
     programs = run.read_yaml(run.HERE / "suite.yaml")["programs"]
@@ -81,6 +83,8 @@ def plan(args: argparse.Namespace) -> None:
                 "profiles": names,
                 "batches": batches,
                 "revisions": revisions,
+                "available": available,
+                "programs": programs,
             }
         )
     )
