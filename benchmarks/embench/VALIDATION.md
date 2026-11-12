@@ -68,6 +68,13 @@ restored under `workspace/cache`. It copied that record into
 without simulating the kernels again. This checks the workspace paths as
 well as the adapter's cache acceptance logic.
 
+The later IPC presentation change was checked against all 209 verified
+measurements: CSV IPC values equal retired instructions divided by cycles,
+and IPC times CPI equals one within floating-point tolerance. Failed and
+missing rows retain aligned Markdown columns and expose no numeric IPC.
+The 16 adapter tests, report lint/type/complexity checks and workflow lint
+also passed after changing automatic triggers to PR events only.
+
 ## Additional unchanged-loop test
 
 WikiSort was also executed locally in `full` mode on RV32IM with its

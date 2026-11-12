@@ -2,8 +2,7 @@ name: embench
 
 on:
   pull_request:
-  push:
-    branches: [main, embench-ci]
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
       scope:

@@ -32,6 +32,16 @@ The first implementation uses internal ROM/RAM and no caches, identically
 for every profile and comparison side. Simulation scores describe this
 memory configuration, not FPGA Fmax or hardware wall-clock measurements.
 
+Per-program tables and CSV also report IPC (retired instructions per core
+cycle), calculated as `instructions / cycles`, alongside CPI (`cycles /
+instructions`). With an established operating frequency, throughput is
+`instructions/second = IPC * frequency_Hz`, or `MIPS = IPC * frequency_MHz`.
+IPC is therefore numerically equal to MIPS/MHz. No board frequency is
+assumed, and host simulation speed is not processor instruction throughput.
+These quantities describe the measured kernel; instruction count and ISA
+can differ between profiles, so Embench scores and cycle deltas remain
+necessary for comparing useful work.
+
 ## Workload modes and scores
 
 The automatic `ci` mode executes every complete algorithm and its original
@@ -81,8 +91,10 @@ the per-program instruction percentages are measured on our RTL.
 
 ## Actions
 
-The `embench` workflow runs on new PR commits, on main, and on the review
-branch `embench-ci`. Each PR compares the exact target `base.sha` with the
+The `embench` workflow runs automatically only when a PR is opened,
+updated with new commits, or reopened. Ordinary branch pushes and pushes
+to main do not trigger it. Manual dispatch remains available. Each PR
+compares the exact target `base.sha` with the
 proposed merge tree (`github.sha`). Both use the same adapter and immutable
 CI image, tool versions, benchmark commit, workload and memory settings.
 The summary records the full revisions. No historical Insper CPU is used.
@@ -104,8 +116,12 @@ ISA, including Zicond where enabled, and its exact hardware configuration.
 The GitHub UI only shows that manual button once the workflow file exists
 on the default branch; see the
 [GitHub event documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch).
-While reviewing `embench-ci`, automatic pushes already exercise the default
-matrix without merging anything into main.
+For this already registered workflow, the review branch can also be run
+through the GitHub CLI without merging anything into main:
+
+```sh
+gh workflow run embench.yml --ref embench-ci -f scope=named -f workload=ci
+```
 
 `all + full` exceeds GitHub's 256-job matrix limit and is rejected with an
 explicit message. It is not silently reduced to a sample.

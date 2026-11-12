@@ -164,16 +164,16 @@ def table(data: dict[str, Any], changes: dict[str, float]) -> list[str]:
         else "Embench/MHz"
     )
     lines = [
-        f"| Program | Cycles | Instructions | CPI | {label} | "
+        f"| Program | Cycles | Instructions | CPI | IPC | {label} | "
         "Branch % | Memory % | Compute % | Other % | PR speed Δ |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
+        "|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
     ]
     for name in data["suite"]["programs"]:
         row = rows.get(name)
         if row is None or not valid_row(row):
             status = "not run" if row is None else row["status"]
             lines.append(
-                f"| {name} | {status} | — | — | — | — | — | — | — | — |"
+                f"| {name} | {status} | — | — | — | — | — | — | — | — | — |"
             )
             continue
         lines.append(format_row(name, row, changes))
@@ -189,7 +189,8 @@ def format_row(
     delta = f"{changes[name]:+.2f}%" if name in changes else "—"
     return (
         f"| {name} | {row['cycles']} | {row['instructions']} | "
-        f"{row['cpi']:.3f} | {row['score_per_mhz']:.5f} | "
+        f"{row['cpi']:.3f} | {row['instructions'] / row['cycles']:.3f} | "
+        f"{row['score_per_mhz']:.5f} | "
         f"{percentages} | {delta} |"
     )
 
@@ -203,6 +204,10 @@ def render(data: dict[str, Any], base: dict[str, Any] | None) -> str:
         "",
         "Simulation: internal ROM/RAM, no caches. "
         "IoT 2.0 development snapshot; all kernels, GSF=1, warmup=1.",
+        "",
+        "IPC = retired instructions / core cycles. "
+        "MIPS = IPC * clock frequency in MHz; FPGA frequency is not "
+        "measured by this simulation.",
         "",
         f"Candidate: `{provenance['revision']}`",
         "",
@@ -262,6 +267,7 @@ def write_csv(path: Path, data: dict[str, Any]) -> None:
         "cycles",
         "instructions",
         "cpi",
+        "ipc",
         "score_kind",
         "score_per_mhz",
         "local_scale_original",
@@ -295,6 +301,8 @@ def csv_row(
             "local_scale_executed": row.get("scale", {}).get("executed"),
         }
     )
+    if row.get("status") == "pass":
+        value["ipc"] = row["instructions"] / row["cycles"]
     for bucket, count in row.get("operations", {}).items():
         value[bucket + "_instructions"] = count
         value[bucket + "_percent"] = 100 * count / row["instructions"]
