@@ -1,0 +1,143 @@
+{
+  "status": "pass",
+  "revisions": {
+    "candidate": "880e2526b1ef3d6f1bb47a664981e701e1f1ebd5",
+    "base": "dfdf585e87355a739916cd3140adc40e21982aa3"
+  },
+  "profiles": [
+    {
+      "profile": "rv32im_zicclsm_zicntr_zihpm_zifencei",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.024648755237866027,
+      "delta_max_percent": 0.16512549537648358,
+      "gm_speed_delta_percent": 0.009347485160771107,
+      "max_cycle_range_percent": 0.6162188809465122,
+      "minimum_slack_ns": 0.098,
+      "core_domain_fmax_mhz": 84.15
+    },
+    {
+      "profile": "rv32im_zicclsm_zicntr_zihpm_zifencei_reduced",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.16165535079211146,
+      "delta_max_percent": 0.007929066846212862,
+      "gm_speed_delta_percent": -0.01090704667489062,
+      "max_cycle_range_percent": 0.37240932642487046,
+      "minimum_slack_ns": 0.106,
+      "core_domain_fmax_mhz": 82.84
+    },
+    {
+      "profile": "rv32i",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.04611801600294951,
+      "delta_max_percent": 0.16485328058029047,
+      "gm_speed_delta_percent": 0.007385054661868118,
+      "max_cycle_range_percent": 0.19782393669634027,
+      "minimum_slack_ns": 0.129,
+      "core_domain_fmax_mhz": 89.12
+    },
+    {
+      "profile": "rv32i_zmmul",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.024530847540782386,
+      "delta_max_percent": 0.16512549537648358,
+      "gm_speed_delta_percent": 0.015143889601487714,
+      "max_cycle_range_percent": 0.16512549537648613,
+      "minimum_slack_ns": 0.115,
+      "core_domain_fmax_mhz": 85.41
+    },
+    {
+      "profile": "rv32im",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.048367036712881895,
+      "delta_max_percent": 0.16444663706627338,
+      "gm_speed_delta_percent": 0.006363941974840692,
+      "max_cycle_range_percent": 0.2137806281861536,
+      "minimum_slack_ns": 0.088,
+      "core_domain_fmax_mhz": 88.01
+    },
+    {
+      "profile": "rv32im_zicclsm_zicntr_zifencei",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.4906771344455385,
+      "delta_max_percent": 0.020281918669495802,
+      "gm_speed_delta_percent": -0.029188968880855537,
+      "max_cycle_range_percent": 0.5152109911678115,
+      "minimum_slack_ns": 0.102,
+      "core_domain_fmax_mhz": 88.5
+    },
+    {
+      "profile": "rv32im_zicond",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.042934249263981705,
+      "delta_max_percent": 0.16485328058029047,
+      "gm_speed_delta_percent": 0.014490660095289876,
+      "max_cycle_range_percent": 0.4807692307692308,
+      "minimum_slack_ns": 0.101,
+      "core_domain_fmax_mhz": 82.18
+    },
+    {
+      "profile": "rv32im_zicsr",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.030407459963510686,
+      "delta_max_percent": 0.517305086833364,
+      "gm_speed_delta_percent": 0.023370500402797312,
+      "max_cycle_range_percent": 0.6249234162480088,
+      "minimum_slack_ns": 0.118,
+      "core_domain_fmax_mhz": 91.55
+    },
+    {
+      "profile": "rv32im_zicsr_irq",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.04930966469427478,
+      "delta_max_percent": 0.02183453787201195,
+      "gm_speed_delta_percent": -0.005461827400110586,
+      "max_cycle_range_percent": 0.3782272652524256,
+      "minimum_slack_ns": 0.117,
+      "core_domain_fmax_mhz": 88.26
+    },
+    {
+      "profile": "rv32im_zicsr_zifencei",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.47794117647058654,
+      "delta_max_percent": 0.02005803458005051,
+      "gm_speed_delta_percent": -0.024486642016652294,
+      "max_cycle_range_percent": 0.625,
+      "minimum_slack_ns": 0.116,
+      "core_domain_fmax_mhz": 87.8
+    },
+    {
+      "profile": "rv32im_zimop",
+      "programs": 19,
+      "samples_per_side": 57,
+      "delta_min_percent": -0.4900759617740724,
+      "delta_max_percent": 0.14198782961460932,
+      "gm_speed_delta_percent": -0.030339314710869925,
+      "max_cycle_range_percent": 0.6156119182467372,
+      "minimum_slack_ns": 0.119,
+      "core_domain_fmax_mhz": 85.55
+    }
+  ],
+  "records": 22,
+  "median_measurements": 418,
+  "physical_program_runs": 1254,
+  "control_runs": 44,
+  "interpretation": "identical CPU/firmware on both sides; small cycle variations are repeatability noise, not CPU improvements",
+  "limits": {
+    "max_compiler_containers": 2,
+    "compiler_gib": 3,
+    "max_measurement_containers": 1,
+    "measurement_mib": 768,
+    "total_container_ceiling_gib": 6.75,
+    "swap": 0
+  }
+}
