@@ -86,10 +86,11 @@ O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools
 
 `scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
 
+## 7. Desenvolvimento de aplicações no VS Code
+
+Veja o [SDK de aplicações C/Rust](SDK.md) e o [exemplo Live](examples/live-c/README.md). A extensão oferece programação da FPGA, atualização rápida e simulação; o SDK mantém builds privados e aceita o profile da CPU no `rv32.toml`.
+
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](LICENSE).
-
-## Desenvolvimento de aplicações no VS Code
-
-Veja o [SDK de aplicações C/Rust](SDK.md) e o [exemplo Live](examples/live-c/README.md). A extensão oferece programação da FPGA, atualização rápida e simulação; o SDK mantém builds privados e aceita o profile da CPU no `rv32.toml`.
