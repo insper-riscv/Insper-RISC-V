@@ -92,4 +92,4 @@ Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](LICENSE).
 
 ## Desenvolvimento de aplicações no VS Code
 
-Veja o [SDK de aplicações C/Rust](SDK.md) e o [exemplo Live](Live/README.md). A extensão oferece programação da FPGA, atualização rápida e simulação; o SDK mantém builds privados e aceita o profile da CPU no `rv32.toml`.
+Veja o [SDK de aplicações C/Rust](SDK.md) e o [exemplo Live](examples/live-c/README.md). A extensão oferece programação da FPGA, atualização rápida e simulação; o SDK mantém builds privados e aceita o profile da CPU no `rv32.toml`.
