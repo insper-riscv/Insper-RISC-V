@@ -1,3 +1,49 @@
+# SDK 0.7.1 peripheral driver acceptance — 2026-11-12
+
+Current Peripherals commit: `0b44c0b` on `c-drivers`. This is a software-only
+addition: no VHDL, formal property, Common-Components pin or platform map changed.
+The previous SDK 0.7.0 acceptance is retained below as historical context.
+
+Validated in the pinned multilib CI image with one container capped at 8 GiB
+RAM, no swap and two CPUs:
+
+- 53 SDK unit tests passed, including changed map addresses, IRQ aliases,
+  explicit CPU-profile elaboration requirements and managed-file protection.
+- Six actual CPU RTL simulations passed with exact application stdout:
+  `examples/gpio` and `examples/peripherals`, each on RV32I, RV32IM and
+  `rv32im_zicsr_irq`. GPIO uses constructors, numeric pin indices, bounded
+  condition polling and no arbitrary settle delay. The combined example checks
+  TIMER overflow/read-clear, UART readiness/transmit/empty receive behavior and
+  display digit writes. With the interrupt fabric enabled, it additionally checks
+  coherent CLINT time, safe deadline/software IRQ accesses and GPIO-to-PLIC
+  pending/claim/complete. It does not claim full serial/JTAG host I/O coverage.
+- Both native C MMIO test binaries passed with AddressSanitizer and
+  UndefinedBehaviorSanitizer. All seven drivers compile with strict warnings
+  on the host and for both RV32I/RV32IM (fourteen cross-compilations).
+  RAM-backed tests do not emulate hardware side effects or timing.
+- The complete peripheral VHDL syntax and cocotb suite passed: 207 tests across
+  thirty test entries, zero failures/skips. Those tests independently cover
+  device-side behavior; FLASH was not executed by C on a physical board or on
+  the modular CPU, which does not map FLASH_CTRL.
+- SDK Ruff lint/format and dependency checks passed. Paths/tree checks passed
+  with all driver descriptors. The Live 0.7.1 Node tests and syntax checks passed;
+  its rebuilt VSIX was checked byte-for-byte against the bundled copy and source,
+  including the new `.clang-format` project template.
+
+CLINT and PLIC are not vendored when a CPU profile removes the SoC interrupt
+fabric. The modular SDK-only simulation view now enables its declared display;
+normal processor configuration and hardware behavior are unchanged. No driver
+installs trap handlers or enables machine interrupts automatically.
+
+Instance bases come from the platform map; internal register offsets follow
+RTL and remain private C implementation details. GPIO pins and display digits
+are zero-based size_t indices; PLIC source zero is reserved. Constructors require
+actual device widths/capacities rather than guessing them from MMIO slot sizes.
+
+No main merge, new pull request or physical board access was performed.
+
+---
+
 # SDK 0.7.0 peripheral driver acceptance, 2026-11-12
 
 Baseline processor main is dfdf585e87355a739916cd3140adc40e21982aa3. The GPIO
