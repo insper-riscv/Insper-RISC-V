@@ -1,0 +1,709 @@
+{
+  "board": "de0-cv",
+  "cable": "USB-Blaster [1-6]",
+  "memory": "emulated FLASH, real SDRAM, 4KiB I/D caches",
+  "profile": "rv32im_zicclsm_zicntr_zihpm_zifencei + platform extras",
+  "revision": "d0a1e096cb06f092b98d11af10efd744f07f6222",
+  "sof_sha256": "30bebd2b1cd7a5a1abb3aada9ed578be104240d20c03098c3de16322507431e7",
+  "configured_hz": 76923077,
+  "workload": "full",
+  "global_scale_factor": 1,
+  "warmup": 1,
+  "results": [
+    {
+      "program": "aha-mont64",
+      "status": "pass",
+      "cycles": 7303857,
+      "instructions": 4978745,
+      "ipc": 0.6816597039071274,
+      "cpi": 1.4670076495181015,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.09495014090504986,
+      "mips_nominal": 52.43536189144516
+    },
+    {
+      "program": "aha-mont64",
+      "status": "pass",
+      "cycles": 7303907,
+      "instructions": 4978745,
+      "ipc": 0.6816550375025312,
+      "cpi": 1.467017692209583,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.09495079090504921,
+      "mips_nominal": 52.435002937245095
+    },
+    {
+      "program": "aha-mont64",
+      "status": "pass",
+      "cycles": 7303864,
+      "instructions": 4978745,
+      "ipc": 0.6816590506066378,
+      "cpi": 1.467009055494909,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.09495023190504977,
+      "mips_nominal": 52.43531163756129
+    },
+    {
+      "program": "crc32",
+      "status": "pass",
+      "cycles": 14187540,
+      "instructions": 4005916,
+      "ipc": 0.2823545167097326,
+      "cpi": 3.541646904228646,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.184438019815562,
+      "mips_nominal": 21.71957823016055
+    },
+    {
+      "program": "crc32",
+      "status": "pass",
+      "cycles": 14187552,
+      "instructions": 4005916,
+      "ipc": 0.2823542778909286,
+      "cpi": 3.5416498997981987,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.18443817581556182,
+      "mips_nominal": 21.719559859483297
+    },
+    {
+      "program": "crc32",
+      "status": "pass",
+      "cycles": 14187563,
+      "instructions": 4005916,
+      "ipc": 0.2823540589740465,
+      "cpi": 3.541652645736955,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.1844383188155617,
+      "mips_nominal": 21.71954301972312
+    },
+    {
+      "program": "depthconv",
+      "status": "pass",
+      "cycles": 15815360,
+      "instructions": 3623854,
+      "ipc": 0.22913509398458207,
+      "cpi": 4.364237632090035,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.20559967979440033,
+      "mips_nominal": 17.625776477978246
+    },
+    {
+      "program": "depthconv",
+      "status": "pass",
+      "cycles": 15815369,
+      "instructions": 3623854,
+      "ipc": 0.22913496359142807,
+      "cpi": 4.364240115633797,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.2055997967944002,
+      "mips_nominal": 17.625766447735618
+    },
+    {
+      "program": "depthconv",
+      "status": "pass",
+      "cycles": 15815320,
+      "instructions": 3623854,
+      "ipc": 0.22913567351150657,
+      "cpi": 4.3642265941177545,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.20559915979440083,
+      "mips_nominal": 17.62582105697248
+    },
+    {
+      "program": "edn",
+      "status": "pass",
+      "cycles": 25824274,
+      "instructions": 3224429,
+      "ipc": 0.12486039297755283,
+      "cpi": 8.00894483953593,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.33571556166428446,
+      "mips_nominal": 9.604645623262556
+    },
+    {
+      "program": "edn",
+      "status": "pass",
+      "cycles": 25824304,
+      "instructions": 3224429,
+      "ipc": 0.12486024792768859,
+      "cpi": 8.00895414350882,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.33571595166428403,
+      "mips_nominal": 9.604634465580679
+    },
+    {
+      "program": "edn",
+      "status": "pass",
+      "cycles": 25824107,
+      "instructions": 3224429,
+      "ipc": 0.12486120042795672,
+      "cpi": 8.008893047420178,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.3357133906642866,
+      "mips_nominal": 9.604707734832147
+    },
+    {
+      "program": "huffbench",
+      "status": "pass",
+      "cycles": 7887273,
+      "instructions": 2444323,
+      "ipc": 0.30990723916872154,
+      "cpi": 3.226771993717688,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.10253454889746545,
+      "mips_nominal": 23.839018421432982
+    },
+    {
+      "program": "huffbench",
+      "status": "pass",
+      "cycles": 7887216,
+      "instructions": 2444323,
+      "ipc": 0.30990947883258174,
+      "cpi": 3.2267486743773226,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.10253380789746619,
+      "mips_nominal": 23.839190703268553
+    },
+    {
+      "program": "huffbench",
+      "status": "pass",
+      "cycles": 7887316,
+      "instructions": 2444323,
+      "ipc": 0.30990554961916067,
+      "cpi": 3.2267895855007707,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.1025351078974649,
+      "mips_nominal": 23.838888456082017
+    },
+    {
+      "program": "matmult-int",
+      "status": "pass",
+      "cycles": 21131045,
+      "instructions": 2695619,
+      "ipc": 0.12756676255244356,
+      "cpi": 7.839032519061485,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.27470358472529643,
+      "mips_nominal": 9.812827898462332
+    },
+    {
+      "program": "matmult-int",
+      "status": "pass",
+      "cycles": 21131042,
+      "instructions": 2695619,
+      "ipc": 0.1275667806632536,
+      "cpi": 7.839031406144563,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.2747035457252964,
+      "mips_nominal": 9.812829291601568
+    },
+    {
+      "program": "matmult-int",
+      "status": "pass",
+      "cycles": 21131145,
+      "instructions": 2695619,
+      "ipc": 0.1275661588617181,
+      "cpi": 7.839069616292213,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.27470488472529514,
+      "mips_nominal": 9.812781460714174
+    },
+    {
+      "program": "md5sum",
+      "status": "pass",
+      "cycles": 9835506,
+      "instructions": 3274103,
+      "ipc": 0.3328860762222096,
+      "cpi": 3.0040307223077587,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.12786157787213842,
+      "mips_nominal": 25.6066212734689
+    },
+    {
+      "program": "md5sum",
+      "status": "pass",
+      "cycles": 9835209,
+      "instructions": 3274103,
+      "ipc": 0.33289612859269185,
+      "cpi": 3.0039400104395004,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.12785771687214229,
+      "mips_nominal": 25.607394532737537
+    },
+    {
+      "program": "md5sum",
+      "status": "pass",
+      "cycles": 9835266,
+      "instructions": 3274103,
+      "ipc": 0.3328941993027947,
+      "cpi": 3.003957419787954,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.12785845787214153,
+      "mips_nominal": 25.60724612582222
+    },
+    {
+      "program": "nettle-aes",
+      "status": "pass",
+      "cycles": 12244989,
+      "instructions": 4084146,
+      "ipc": 0.33353611015902096,
+      "cpi": 2.9981761180917625,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.15918485684081515,
+      "mips_nominal": 25.65662388404285
+    },
+    {
+      "program": "nettle-aes",
+      "status": "pass",
+      "cycles": 12244905,
+      "instructions": 4084146,
+      "ipc": 0.33353839821542103,
+      "cpi": 2.9981555507565107,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.15918376484081623,
+      "mips_nominal": 25.656799888381496
+    },
+    {
+      "program": "nettle-aes",
+      "status": "pass",
+      "cycles": 12244935,
+      "instructions": 4084146,
+      "ipc": 0.3335375810488173,
+      "cpi": 2.9981628962333864,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.15918415484081586,
+      "mips_nominal": 25.656737029411914
+    },
+    {
+      "program": "nettle-sha256",
+      "status": "pass",
+      "cycles": 24836498,
+      "instructions": 4813591,
+      "ipc": 0.19381118062618974,
+      "cpi": 5.159661051385545,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.3228744736771255,
+      "mips_nominal": 14.908552370769302
+    },
+    {
+      "program": "nettle-sha256",
+      "status": "pass",
+      "cycles": 24836548,
+      "instructions": 4813591,
+      "ipc": 0.19381079045284394,
+      "cpi": 5.159671438641131,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.3228751236771249,
+      "mips_nominal": 14.908522357434979
+    },
+    {
+      "program": "nettle-sha256",
+      "status": "pass",
+      "cycles": 24836448,
+      "instructions": 4813591,
+      "ipc": 0.1938115708011065,
+      "cpi": 5.15965066412996,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.3228738236771262,
+      "mips_nominal": 14.908582384224466
+    },
+    {
+      "program": "nsichneu",
+      "status": "pass",
+      "cycles": 43372517,
+      "instructions": 2242277,
+      "ipc": 0.051698106429931195,
+      "cpi": 19.343068229304407,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.5638427204361572,
+      "mips_nominal": 3.9767774216637926
+    },
+    {
+      "program": "nsichneu",
+      "status": "pass",
+      "cycles": 43372512,
+      "instructions": 2242277,
+      "ipc": 0.05169811238970895,
+      "cpi": 19.34306599942826,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.5638426554361573,
+      "mips_nominal": 3.9767778801082354
+    },
+    {
+      "program": "nsichneu",
+      "status": "pass",
+      "cycles": 43372518,
+      "instructions": 2242277,
+      "ipc": 0.05169810523797581,
+      "cpi": 19.34306867527964,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.5638427334361573,
+      "mips_nominal": 3.9767773299749165
+    },
+    {
+      "program": "picojpeg",
+      "status": "pass",
+      "cycles": 14116985,
+      "instructions": 2827448,
+      "ipc": 0.2002869592905284,
+      "cpi": 4.992836296193599,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.1835208048164792,
+      "mips_nominal": 15.406689191601181
+    },
+    {
+      "program": "picojpeg",
+      "status": "pass",
+      "cycles": 14116475,
+      "instructions": 2827448,
+      "ipc": 0.20029419525766878,
+      "cpi": 4.992655921523579,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.18351417481648583,
+      "mips_nominal": 15.407245804458691
+    },
+    {
+      "program": "picojpeg",
+      "status": "pass",
+      "cycles": 14116475,
+      "instructions": 2827448,
+      "ipc": 0.20029419525766878,
+      "cpi": 4.992655921523579,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.18351417481648583,
+      "mips_nominal": 15.407245804458691
+    },
+    {
+      "program": "qrduino",
+      "status": "pass",
+      "cycles": 8451821,
+      "instructions": 2802108,
+      "ipc": 0.3315389665730024,
+      "cpi": 3.0162367046523544,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.10987367289012633,
+      "mips_nominal": 25.50299745419549
+    },
+    {
+      "program": "qrduino",
+      "status": "pass",
+      "cycles": 8451961,
+      "instructions": 2802108,
+      "ipc": 0.3315334748941695,
+      "cpi": 3.0162866670378157,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.10987549289012451,
+      "mips_nominal": 25.502575017361767
+    },
+    {
+      "program": "qrduino",
+      "status": "pass",
+      "cycles": 8451521,
+      "instructions": 2802108,
+      "ipc": 0.33155073506887106,
+      "cpi": 3.016129642397795,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.10986977289013022,
+      "mips_nominal": 25.50390272310937
+    },
+    {
+      "program": "sglib-combined",
+      "status": "pass",
+      "cycles": 13560029,
+      "instructions": 2589455,
+      "ipc": 0.19096234971178896,
+      "cpi": 5.236634349699068,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.17628037682371964,
+      "mips_nominal": 14.68941153098087
+    },
+    {
+      "program": "sglib-combined",
+      "status": "pass",
+      "cycles": 13559799,
+      "instructions": 2589455,
+      "ipc": 0.19096558879670708,
+      "cpi": 5.236545527919968,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.17627738682372263,
+      "mips_nominal": 14.689660691359435
+    },
+    {
+      "program": "sglib-combined",
+      "status": "pass",
+      "cycles": 13558849,
+      "instructions": 2589455,
+      "ipc": 0.19097896879004994,
+      "cpi": 5.236178655354119,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.17626503682373496,
+      "mips_nominal": 14.690689921617608
+    },
+    {
+      "program": "slre",
+      "status": "pass",
+      "cycles": 14564501,
+      "instructions": 2790653,
+      "ipc": 0.191606495821587,
+      "cpi": 5.219029739634415,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.1893385128106615,
+      "mips_nominal": 14.738961231784117
+    },
+    {
+      "program": "slre",
+      "status": "pass",
+      "cycles": 14564271,
+      "instructions": 2790653,
+      "ipc": 0.1916095216849508,
+      "cpi": 5.218947321648374,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.18933552281066449,
+      "mips_nominal": 14.739193990504639
+    },
+    {
+      "program": "slre",
+      "status": "pass",
+      "cycles": 14564211,
+      "instructions": 2790653,
+      "ipc": 0.19161031105632842,
+      "cpi": 5.21892582130419,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.18933474281066526,
+      "mips_nominal": 14.739254711379903
+    },
+    {
+      "program": "statemate",
+      "status": "pass",
+      "cycles": 19137802,
+      "instructions": 2600765,
+      "ipc": 0.13589674509120744,
+      "cpi": 7.358527971577593,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.24879142575120858,
+      "mips_nominal": 10.45359578670032
+    },
+    {
+      "program": "statemate",
+      "status": "pass",
+      "cycles": 19137780,
+      "instructions": 2600765,
+      "ipc": 0.13589690131248244,
+      "cpi": 7.358519512528044,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.24879113975120887,
+      "mips_nominal": 10.453607803721487
+    },
+    {
+      "program": "statemate",
+      "status": "pass",
+      "cycles": 19137870,
+      "instructions": 2600765,
+      "ipc": 0.13589626222771917,
+      "cpi": 7.358554117730745,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.2487923097512077,
+      "mips_nominal": 10.453558643355032
+    },
+    {
+      "program": "tarfind",
+      "status": "pass",
+      "cycles": 14342770,
+      "instructions": 2583497,
+      "ipc": 0.18012538721599802,
+      "cpi": 5.551688273684854,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.186456009813544,
+      "mips_nominal": 13.855799030471031
+    },
+    {
+      "program": "tarfind",
+      "status": "pass",
+      "cycles": 14342080,
+      "instructions": 2583497,
+      "ipc": 0.1801340530801669,
+      "cpi": 5.5514211938314615,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.18644703981355296,
+      "mips_nominal": 13.856465635407764
+    },
+    {
+      "program": "tarfind",
+      "status": "pass",
+      "cycles": 14342223,
+      "instructions": 2583497,
+      "ipc": 0.18013225704271926,
+      "cpi": 5.551476545163397,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.1864488988135511,
+      "mips_nominal": 13.856327478680887
+    },
+    {
+      "program": "ud",
+      "status": "pass",
+      "cycles": 13945978,
+      "instructions": 2593646,
+      "ipc": 0.18597806478685108,
+      "cpi": 5.37697819980059,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.1812977138187023,
+      "mips_nominal": 14.306004997909936
+    },
+    {
+      "program": "ud",
+      "status": "pass",
+      "cycles": 13946058,
+      "instructions": 2593646,
+      "ipc": 0.18597699794450875,
+      "cpi": 5.377009044410841,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.18129875381870125,
+      "mips_nominal": 14.305922933114289
+    },
+    {
+      "program": "ud",
+      "status": "pass",
+      "cycles": 13945948,
+      "instructions": 2593646,
+      "ipc": 0.185978464855885,
+      "cpi": 5.376966633071746,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.18129732381870267,
+      "mips_nominal": 14.306035772451038
+    },
+    {
+      "program": "wikisort",
+      "status": "pass",
+      "cycles": 7081995,
+      "instructions": 1757462,
+      "ipc": 0.2481591698384424,
+      "cpi": 4.029671765307016,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.09206593490793406,
+      "mips_nominal": 19.089166929738585
+    },
+    {
+      "program": "wikisort",
+      "status": "pass",
+      "cycles": 7081801,
+      "instructions": 1757462,
+      "ipc": 0.248165967950808,
+      "cpi": 4.029561378852003,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.09206341290793658,
+      "mips_nominal": 19.089689861459533
+    },
+    {
+      "program": "wikisort",
+      "status": "pass",
+      "cycles": 7081549,
+      "instructions": 1757462,
+      "ipc": 0.2481747990446723,
+      "cpi": 4.0294179902609555,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.09206013690793986,
+      "mips_nominal": 19.090369176372853
+    },
+    {
+      "program": "xgboost",
+      "status": "pass",
+      "cycles": 18050510,
+      "instructions": 3506537,
+      "ipc": 0.19426248898230578,
+      "cpi": 5.147674186811661,
+      "repeat": 1,
+      "elapsed_seconds_nominal": 0.23465662976534338,
+      "mips_nominal": 14.94326839819756
+    },
+    {
+      "program": "xgboost",
+      "status": "pass",
+      "cycles": 18050510,
+      "instructions": 3506537,
+      "ipc": 0.19426248898230578,
+      "cpi": 5.147674186811661,
+      "repeat": 2,
+      "elapsed_seconds_nominal": 0.23465662976534338,
+      "mips_nominal": 14.94326839819756
+    },
+    {
+      "program": "xgboost",
+      "status": "pass",
+      "cycles": 18050510,
+      "instructions": 3506537,
+      "ipc": 0.19426248898230578,
+      "cpi": 5.147674186811661,
+      "repeat": 3,
+      "elapsed_seconds_nominal": 0.23465662976534338,
+      "mips_nominal": 14.94326839819756
+    }
+  ],
+  "counter_check": {
+    "status": "pass",
+    "expected_delta": 8192,
+    "records": [
+      {
+        "program": "counter-4096",
+        "status": "pass",
+        "cycles": 16391,
+        "instructions": 8196,
+        "ipc": 0.5000305045451773,
+        "cpi": 1.9998779892630552
+      },
+      {
+        "program": "counter-8192",
+        "status": "pass",
+        "cycles": 32775,
+        "instructions": 16388,
+        "ipc": 0.5000152555301297,
+        "cpi": 1.999938979741274
+      }
+    ]
+  },
+  "frequency_probe": {
+    "status": "pass",
+    "reference": "host monotonic clock, independent of FPGA",
+    "observed_hz": 76909828.181376,
+    "lower_hz": 73193348.74449468,
+    "upper_hz": 81023913.88757859,
+    "snapshots": [
+      {
+        "before": 604745.79806115,
+        "after": 604746.92537503,
+        "cycles": 121337939
+      },
+      {
+        "before": 604756.925552817,
+        "after": 604758.117109137,
+        "cycles": 980341492
+      },
+      {
+        "before": 604768.117322538,
+        "after": 604769.257221845,
+        "cycles": 1838392469
+      }
+    ],
+    "note": "Bounds include JTAG request/response latency; not a precision instrument measurement."
+  },
+  "status": "pass",
+  "frequency_refined": {
+    "status": "pass",
+    "observed_hz": 76930117.90532549,
+    "lower_hz": 76208546.93626438,
+    "upper_hz": 77665483.69545925,
+    "snapshots": [
+      {
+        "before": 605067.914114724,
+        "after": 605069.064441825,
+        "cycles": 120902750
+      },
+      {
+        "before": 605189.066872912,
+        "after": 605190.210723565,
+        "cycles": 9440949605
+      }
+    ],
+    "reference": "host monotonic clock independent of FPGA",
+    "note": "Conservative interval includes request/response latency; no oscilloscope measurement."
+  }
+}

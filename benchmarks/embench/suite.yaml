@@ -1,0 +1,37 @@
+# Embench IoT 2.0 development snapshot, including all 19 IoT 2.0 programs.
+# Pinned because the upstream repository has not tagged a final 2.0 release.
+schema: 1
+upstream: https://github.com/embench/embench-iot.git
+commit: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
+platform: src/simulation/modular
+profiles: Core/profiles/rv32*.yaml
+programs:
+  - aha-mont64
+  - crc32
+  - depthconv
+  - edn
+  - huffbench
+  - matmult-int
+  - md5sum
+  - nettle-aes
+  - nettle-sha256
+  - nsichneu
+  - picojpeg
+  - qrduino
+  - sglib-combined
+  - slre
+  - statemate
+  - tarfind
+  - ud
+  - wikisort
+  - xgboost
+cflags: [-O2, -fno-common, -fno-lto, -ffunction-sections, -fdata-sections]
+workload: ci
+c_standard: gnu17
+# Independently reproduced with the pinned xgboost inputs and host compiler.
+exact_results: {xgboost: 126}
+cpu_mhz: 1
+global_scale_factor: 1
+warmup: 1
+max_cycles: 500000000
+wall_timeout_seconds: 7200
