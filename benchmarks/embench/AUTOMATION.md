@@ -71,7 +71,8 @@ programming, and full provenance, samples, ELF files and reports are kept.
 
 The existing organization runner `D-20003267-LINUX` belongs to group `FPGA`.
 It needs Docker, Python 3.12+, Quartus Lite at `/opt/altera_lite/25.1std`,
-and access to the existing JTAG daemon. The selected cable is currently
+the custom runner label `rv32-de0-cv`, and access to the existing JTAG
+daemon. A runtime guard also requires that exact runner name. The cable is
 `USB-Blaster [1-6]`; the driver verifies its **02B050DD DE0-CV** identity
 before programming. It refuses the DE2-115's 020F70DD identity. USB topology
 changes require a reviewed trusted-driver update.
