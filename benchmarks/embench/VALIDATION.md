@@ -1,5 +1,11 @@
 # Integration validation — 2026-11-11
 
+This file records the earlier simulation-only validation. The current
+dual-backend implementation and required lab setup are documented in
+[AUTOMATION.md](AUTOMATION.md) and [FPGA-SETUP.md](FPGA-SETUP.md). Historical
+successful runs below do not establish that the physical PR runner has
+been provisioned or that the later combined workflow has passed.
+
 The first complete Actions run passed on commit
 `ed7db18b57fd1fc52e0357674c8dc77445fa30c6`:
 [run 43103981319](https://github.com/insper-riscv/Insper-RISC-V/actions/runs/43103981319).
@@ -103,7 +109,7 @@ used a hard 8 GiB memory limit with swap disabled; no waveforms were saved.
 No PR was created to test an actual `pull_request` event, and nothing was
 merged into main. The two-checkout comparison engine was exercised locally;
 the deployed Actions execution above used the push event. The automatic
-workflow remains simulation-only; later [manual FPGA validation](HARDWARE.md)
+workflow was simulation-only at that time; later [manual FPGA validation](HARDWARE.md)
 records physical counters, clock verification and Quartus timing/resources.
 Power was not measured. CI indices are not
 certified full-duration Embench scores or comparisons with an old Insper CPU.

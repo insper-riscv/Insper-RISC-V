@@ -16,7 +16,7 @@ In organization Settings → Actions → Runner groups → FPGA:
    existing approved workflows and append this exact immutable reference:
 
    ```text
-   insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@4bdc2d7d5b96b365ac27a5371065b3148088e225
+   insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@d2e3204edc25352d9b58910b65143c2ec8a5e3cb
    ```
 
 3. Do not allow the caller `embench.yml`, arbitrary PR workflow files or a
@@ -26,11 +26,11 @@ In organization Settings → Actions → Runner groups → FPGA:
    immediately, rather than leaving physical jobs queued for hours.
 
 The allowlisted workflow pins its host/measurement driver to:
-`880e2526b1ef3d6f1bb47a664981e701e1f1ebd5`.
+`d725e986893bd69daaf7144f951b7d6f7fb31f8a`.
 
 Source for review:
-[trusted workflow](https://github.com/insper-riscv/Insper-RISC-V/blob/4bdc2d7d5b96b365ac27a5371065b3148088e225/.github/workflows/embench-hardware.yml),
-[measurement driver](https://github.com/insper-riscv/Insper-RISC-V/tree/880e2526b1ef3d6f1bb47a664981e701e1f1ebd5/benchmarks/embench).
+[trusted workflow](https://github.com/insper-riscv/Insper-RISC-V/blob/d2e3204edc25352d9b58910b65143c2ec8a5e3cb/.github/workflows/embench-hardware.yml),
+[measurement driver](https://github.com/insper-riscv/Insper-RISC-V/tree/d725e986893bd69daaf7144f951b7d6f7fb31f8a/benchmarks/embench).
 
 The shared runner must remain running and registered in its current group.
 No personal access token, SSH private key or broad administrator credential
