@@ -5,6 +5,10 @@ on:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
     inputs:
+      compare_ref:
+        description: Target branch or SHA for manual comparison (empty disables it)
+        type: string
+        default: main
       scope:
         description: Explicit Core profiles, or the complete generated matrix
         type: choice
@@ -26,6 +30,7 @@ concurrency:
 env:
   EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
+  BASE_REF: ${{ github.event.pull_request.base.sha || inputs.compare_ref || '' }}
   SCOPE: ${{ inputs.scope || 'named' }}
   WORKLOAD: ${{ inputs.workload || 'ci' }}
 
@@ -38,6 +43,8 @@ jobs:
       options: --memory=8g --memory-swap=8g --cpus=2
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
+      base: ${{ steps.plan.outputs.base }}
+      hardware: ${{ steps.plan.outputs.hardware }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -49,9 +56,9 @@ jobs:
           submodules: recursive
           persist-credentials: false
       - uses: actions/checkout@v7
-        if: github.event_name == 'pull_request'
+        if: env.BASE_REF != ''
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ env.BASE_REF }}
           path: base
           submodules: recursive
           persist-credentials: false
@@ -62,8 +69,9 @@ jobs:
         run: |
           git config --global --add safe.directory '*'
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --scope "$SCOPE" --workload "$WORKLOAD" --output "$GITHUB_WORKSPACE/plan.json")
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+          if [ -n "$BASE_REF" ]; then
             args+=(--base "$GITHUB_WORKSPACE/base")
+            printf 'base=%s\n' "$(git -C "$GITHUB_WORKSPACE/base" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci plan "${args[@]}"
       - uses: actions/upload-artifact@v7
@@ -84,6 +92,7 @@ jobs:
       max-parallel: 11
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     env:
+      BASE_SHA: ${{ needs.plan.outputs.base }}
       PROFILES: ${{ toJSON(matrix.profiles) }}
       PROGRAMS: ${{ toJSON(matrix.programs) }}
     steps:
@@ -97,9 +106,9 @@ jobs:
           submodules: recursive
           persist-credentials: false
       - uses: actions/checkout@v7
-        if: github.event_name == 'pull_request'
+        if: env.BASE_SHA != ''
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: ${{ needs.plan.outputs.base }}
           path: base
           submodules: recursive
           persist-credentials: false
@@ -114,9 +123,9 @@ jobs:
         shell: bash
         run: |
           git config --global --add safe.directory '*'
-          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting -v
+          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_reporting benchmarks.embench.test_hardware -v
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/candidate" --output "$GITHUB_WORKSPACE/results/storage"
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+          if [ -n "$BASE_SHA" ]; then
             /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_storage --root "$GITHUB_WORKSPACE/base" --output "$GITHUB_WORKSPACE/results/storage-base"
           fi
       - name: Check retirement counts on a known assembly kernel
@@ -126,7 +135,13 @@ jobs:
         run: |
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_oracle --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/oracle"
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/candidate" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter"
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+          mkdir -p "$GITHUB_WORKSPACE/results/hardware-counter"
+          pushd "$GITHUB_WORKSPACE/results/hardware-counter"
+          ghdl -a --std=08 "$GITHUB_WORKSPACE/driver/benchmarks/embench/retirement_counter.vhd.in" "$GITHUB_WORKSPACE/driver/benchmarks/embench/retirement_counter_tb.vhd.in"
+          ghdl -e --std=08 retirement_counter_tb
+          ghdl -r --std=08 retirement_counter_tb > counter.log 2>&1
+          popd
+          if [ -n "$BASE_SHA" ]; then
             /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.check_counter --root "$GITHUB_WORKSPACE/base" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results/counter-base"
           fi
       - name: Fingerprint actual inputs on each side
@@ -135,14 +150,14 @@ jobs:
         shell: bash
         run: |
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --workload "$WORKLOAD")
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
+          if [ -n "$BASE_SHA" ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci keys "${args[@]}"
       - uses: actions/cache/restore@v5
         with:
           path: cache/candidate
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/restore@v5
-        if: github.event_name == 'pull_request'
+        if: env.BASE_SHA != ''
         with:
           path: cache/base
           key: ${{ steps.keys.outputs.base }}
@@ -155,7 +170,7 @@ jobs:
             cp -a "$GITHUB_WORKSPACE/cache/." "$GITHUB_WORKSPACE/results/"
           fi
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --scope "$SCOPE" --workload "$WORKLOAD" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results")
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
+          if [ -n "$BASE_SHA" ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci execute "${args[@]}"
       - name: Keep small successful result records for reuse
         if: success()
@@ -172,7 +187,7 @@ jobs:
           path: cache/candidate
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/save@v5
-        if: success() && github.event_name == 'pull_request'
+        if: success() && env.BASE_SHA != ''
         with:
           path: cache/base
           key: ${{ steps.keys.outputs.base }}
@@ -190,12 +205,27 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+  hardware:
+    needs: plan
+    if: inputs.scope != 'all'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix: ${{ fromJSON(needs.plan.outputs.hardware) }}
+    uses: insper-riscv/Insper-RISC-V/.github/workflows/embench-hardware.yml@993cd7610ce8420ddfa2a1aed70599de1e7c2ee1
+    with:
+      profile: ${{ matrix.profile }}
+      workload: ${{ inputs.workload || 'ci' }}
+      base_sha: ${{ needs.plan.outputs.base }}
+
   embench:
     name: embench
-    needs: [plan, measure]
+    needs: [plan, measure, hardware]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-26.04
     timeout-minutes: 10
+    env:
+      BASE_SHA: ${{ needs.plan.outputs.base }}
     container:
       image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
       options: --memory=2g --memory-swap=2g --cpus=1
@@ -212,12 +242,22 @@ jobs:
           pattern: embench-batch-*
           path: results
           merge-multiple: true
+      - uses: actions/download-artifact@v8
+        if: inputs.scope != 'all'
+        with:
+          pattern: embench-fpga-results-*
+          path: hardware
+          merge-multiple: true
       - name: Publish profile/program tables and PR deltas
         shell: bash
         run: |
-          args=(--input results --plan plan/plan.json --output embench-summary.md)
-          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then args+=(--compare); fi
-          /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci aggregate "${args[@]}"
+          args=(--plan plan/plan.json --output embench-summary.md)
+          if [ -n "$BASE_SHA" ]; then args+=(--compare); fi
+          if [ "$SCOPE" = all ]; then
+            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci aggregate --input results "${args[@]}"
+          else
+            /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.combined --simulation results --hardware hardware "${args[@]}"
+          fi
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -226,9 +266,14 @@ jobs:
             embench-summary.md
             results/**/*.json
             results/**/*.csv
+            hardware/**/*.json
+            hardware/**/*.csv
           retention-days: 14
       - name: Require every measuring job to pass
         if: always()
         env:
           MEASURE_RESULT: ${{ needs.measure.result }}
-        run: test "$MEASURE_RESULT" = success
+          HARDWARE_RESULT: ${{ needs.hardware.result }}
+        run: |
+          test "$MEASURE_RESULT" = success
+          if [ "$SCOPE" != all ]; then test "$HARDWARE_RESULT" = success; fi
