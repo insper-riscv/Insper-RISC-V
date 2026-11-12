@@ -1,8 +1,8 @@
-# Live SDK 0.5.0 (review candidate)
+# Live SDK 0.7.0 (review candidate)
 
 This SDK adds external C/Rust application projects and the Live VS Code
 extension to the current processor tree. It does not replace upstream RTL or
-normal platform runtime files. See the [Live installation guide](https://github.com/insper-riscv/Live)
+normal platform runtime files. See the [Live installation guide](https://github.com/insper-riscv/Live/tree/sdk-profiles-drivers)
 for VS Code, Dev Containers and Remote - SSH setup.
 
 ## Source baseline
@@ -97,7 +97,7 @@ Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an availabl
 board; simulation is not a substitute for those tests.
 
 The processor package release is 0.5.1; the isolated SDK and bundled extension
-remain 0.5.0. SDK CI runs on pushes to main and both review branches, as well
+are 0.7.0. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.
 
@@ -113,8 +113,34 @@ source = "src/main.c"
 include_dirs = ["include"]
 ```
 
-`cpu_profile` accepts the eleven named `Core/profiles/rv32*.yaml` profiles. Omission or `"auto"` preserves the existing platform CPU/compiler behavior. Explicit overrides currently target `internal-mem`; CPU profiles do not change a platform's peripheral or memory map. ISA constants and HPM parameters are applied in private `.rv32/cpu` files; tracked processor sources remain untouched. C receives the selected ISA; a source's `RV32_EXT` request outside that profile is rejected. Rust selects the compatible built-in RV32I or RV32IM target and links the platform C runtime with the selected GCC ISA (no unsupported extension is required by the Rust target). Run Prepare Project to install a newly selected Rust target.
+`cpu_profile` accepts the eleven named `Core/profiles/rv32*.yaml` profiles. Omission or `"auto"` preserves the existing platform CPU/compiler behavior. Explicit overrides target `internal-mem` and simulation-only `modular`; CPU profiles do not change a platform's peripheral or memory map. ISA constants and HPM parameters are applied in private `.rv32/cpu` files; tracked processor sources remain untouched. C receives the selected ISA; a source's `RV32_EXT` request outside that profile is rejected. Rust selects the compatible built-in RV32I or RV32IM target and links the platform C runtime with the selected GCC ISA (no unsupported extension is required by the Rust target). Run Prepare Project to install a newly selected Rust target.
 
 Changing a profile invalidates the SOF cache. C-only changes do not. For an explicit profile, Fast Update requires a matching previous successful Program FPGA on that cable. After another tool programs the board, run Program FPGA again; this software record cannot detect arbitrary external reprogramming. Cache schema changed once in this release, so existing projects may need their first bitstream regenerated.
 
 The development toolchain needs library variants for the selected ISA. A toolchain with only RV32IM libraries cannot safely run RV32I-only applications. See the profile integration checks before installing on another machine.
+
+## Automatic C peripheral drivers
+
+```toml
+[project]
+language = "c"
+platform = "modular"
+cpu_profile = "rv32im"
+generate_drivers = true
+source = "src/main.c"
+include_dirs = ["include"]
+```
+
+Prepare Project, Simulate and Program FPGA regenerate drivers before compiling when `generate_drivers` is enabled. New C templates enable it. Existing projects without that field retain their prior behavior. Use **RV32: Refresh Peripheral Drivers** or `scripts/rv32-drivers --project /path/to/app` to inspect/regenerate files separately. Keep `generate_drivers = true` to include generated C sources automatically in the application build.
+
+The generator reads the selected platform's canonical YAML, resolves and validates its addresses with Tools, reads the named CPU profile, and discovers descriptors under `Peripherals/src/<peripheral>/<implementation>/driver/c/driver.yaml`. A descriptor lists its C sources, headers, mapped instance names and required register-window size. It does not duplicate memory addresses. Future UART and other drivers can use the same mechanism.
+
+`vendor/rv32_platform.h` describes the declared MMIO map and CPU feature flags. `vendor/GPIO` contains the reusable driver and generated per-instance configuration. The SDK adds its include paths and C sources; applications include `rv32_drivers.h`. One GPIO implementation serves both SWITCHES and KEYS. The platform declares addresses; CPU interrupt capability and the platform's actual I/O instantiation still determine which operations hardware implements.
+
+A managed-file manifest protects hand edits and unrelated vendor files. Regeneration refuses to overwrite edited/unmanaged files, removes only unchanged files it previously generated, and rejects symlink/traversal paths. Customize driver sources in Peripherals, or preserve local changes elsewhere before regeneration. The copied Apache license accompanies vendored sources. Generated driver changes do not invalidate hardware bitstreams; platform/RTL changes still do.
+
+The first driver supports direction, output load/set/clear/toggle, synchronized pin reads and IRQ masks. IRQ status is read-and-clear for the whole instance, not W1C. The driver does not configure the CPU interrupt handler or PLIC. See `examples/gpio` for a C program that exercises GPIO on the actual modular CPU/peripheral RTL.
+
+`platform = "modular"` is a simulation-only SDK view of the stock modular platform with internal memories. It uses compact storage models and the public RAM observation ports to stay within the container's 8 GiB limit. Its runtime/testbench/stdout adjustments are private; main's source files are unchanged. FPGA actions reject this selection before accessing a board. Explicit CPU profiles now also work on this simulation platform.
+
+The default internal-mem and de0-cv maps, and the fpga-uart-jtag example map, do not declare GPIO. They must not acquire invented GPIO addresses or a GPIO driver. Only GPIO is implemented as a reusable C driver in this initial version; other declared peripherals receive address definitions and acquire drivers when descriptors/sources are added.
