@@ -35,6 +35,20 @@ class DriversTest(unittest.TestCase):
         )
         self.assertIn(b"RV32_GPIO_KEYS_IRQ", files["GPIO/rv32_gpio_config.h"])
 
+    def test_gpio_platform_factory_hides_addresses_and_resolves_widths(self):
+        files, _ = drivers.plan(
+            ROOT, {"platform": "modular", "cpu_profile": "rv32im"},
+            ROOT / "src/simulation/modular/platform.yaml",
+        )
+        config = files["GPIO/rv32_gpio_platform.h"].decode()
+        self.assertIn("RV32_GPIO_SWITCHES_PIN_COUNT 10", config)
+        self.assertIn("RV32_GPIO_KEYS_PIN_COUNT 4", config)
+        self.assertIn("RV32_PERIPH_SWITCHES_BASE", config)
+        self.assertIn("RV32_PERIPH_KEYS_BASE", config)
+        example = files["GPIO/example/src/main.c"].decode()
+        self.assertIn("rv32_gpio_platform_new", example)
+        self.assertNotIn("_BASE", example)
+
     def test_each_enabled_driver_has_an_independent_example(self):
         project = {"platform": "modular", "cpu_profile": "rv32im_zicsr_irq"}
         platform = ROOT / "src/simulation/modular/platform.yaml"

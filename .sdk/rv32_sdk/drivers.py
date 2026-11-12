@@ -219,6 +219,26 @@ def plan(
                     umbrella.append(target)
                 else:
                     sources.append("vendor/" + target)
+        if name == "GPIO":
+            gpio_definitions = []
+            for alias in ("DEFAULT", "SWITCHES", "KEYS"):
+                selected = instances[0] if alias == "DEFAULT" else next(
+                    (item for item in instances if item["name"] == alias), None
+                )
+                base, width = "0", "0"
+                if selected is not None:
+                    base = f"((uintptr_t)RV32_PERIPH_{selected['name']}_BASE)"
+                    width = driver_examples.context(
+                        sdk, platform_file, platform, name, selected
+                    )["PIN_COUNT"]
+                gpio_definitions.extend([
+                    f"#define RV32_GPIO_{alias}_BASE {base}",
+                    f"#define RV32_GPIO_{alias}_PIN_COUNT {width}",
+                ])
+            files["GPIO/rv32_gpio_platform.h"] = header(
+                ['#include "../rv32_platform.h"', *gpio_definitions],
+                "RV32_GPIO_PLATFORM_H",
+            )
         if examples_enabled and "example" in spec:
             rendered = driver_examples.project_files(
                 sdk,

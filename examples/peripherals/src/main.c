@@ -54,7 +54,7 @@ static bool test_plic_gpio(void)
 {
     /* Six source lines and three priority bits in modular_sim_top. */
     rv32_plic_t plic = rv32_plic_new(RV32_PLIC_PLIC_BASE, 6, 3);
-    rv32_gpio_t gpio = rv32_gpio_new(RV32_GPIO_SWITCHES_BASE, 10);
+    rv32_gpio_t gpio = rv32_gpio_platform_new(RV32_GPIO_SWITCHES_INSTANCE);
     size_t source = RV32_GPIO_SWITCHES_IRQ;
 
     if (!rv32_plic_set_priority(plic, source, 7) || !rv32_plic_set_threshold(plic, 0) ||

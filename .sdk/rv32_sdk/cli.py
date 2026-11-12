@@ -207,15 +207,12 @@ def write_config(
         raise SystemExit("project.generate_drivers must be true or false")
     generated_sources = []
     if enabled:
-        if project["language"] != "c":
-            raise SystemExit(
-                "Automatic peripheral driver linking currently supports C projects"
-            )
         generated = drivers.generate(
             SDK, root, project, platform_dir(project) / "platform.yaml"
         )
         include_paths.extend(root / p for p in generated["include_dirs"])
-        generated_sources = [root / p for p in generated["sources"]]
+        if project["language"] == "c":
+            generated_sources = [root / p for p in generated["sources"]]
     uart_stdio = project.get("simulation_uart_stdio", False)
     if not isinstance(uart_stdio, bool):
         raise SystemExit("project.simulation_uart_stdio must be true or false")
@@ -448,6 +445,11 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
         raise SystemExit(f"Rust manifest does not exist: {manifest}")
     env = dict(os.environ)
     env.update(compile_runtime(root, config))
+    if project.get("generate_drivers", False):
+        env.pop("RV32_GPIO_CONFIG_DIR", None)
+        gpio_config = root / "vendor/GPIO"
+        if (gpio_config / "rv32_gpio_platform.h").is_file():
+            env["RV32_GPIO_CONFIG_DIR"] = str(gpio_config.resolve())
     env["RV32_GCC"] = (
         shutil.which("riscv32-unknown-elf-gcc") or "riscv32-unknown-elf-gcc"
     )
