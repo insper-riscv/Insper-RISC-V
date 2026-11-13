@@ -92,8 +92,8 @@ The SDRAM controller reads width and row, column and bank bits from the chip, an
 The platform says what the SoC asks for, and the board what exists. Copy the closest platform and edit its `platform.yaml`: `de0-nano` for a small board, `de0-cv` for one that holds the full profile.
 
 1. Create `src/<family>/<board>/` by copying the folder of the starting platform, and rename the memory-map package.
-2. In `platform.yaml`, adjust the field `platform`, `board: auto`, `boards: [<board>]`, `profile` and `regions`. The new fields, with their rules, are in [../boards/plataforma-e-placa.md](../boards/plataforma-e-placa.md).
-3. Choose the backend of each external region. An `emulado` region consumes RAM blocks of the board, and a `dispositivo` one consumes the chip. On the `de0-nano` the FLASH has 28 KiB, because the next power of two would pass 85 % of the blocks.
+2. In `platform.yaml`, adjust the field `platform`, `board: auto`, `boards: [<board>]`, `core` and `memory`. The new fields, with their rules, are in [../boards/plataforma-e-placa.md](../boards/plataforma-e-placa.md).
+3. Choose the `type` of each external segment of `memory`. An `emulated` segment consumes RAM blocks of the board, and a `flash`, `sdram` or `sram` one consumes the chip. On the `de0-nano` the FLASH has 28 KiB, because the next power of two would pass 85 % of the blocks.
 4. Choose the core clock and the controller clock in `clocks`, and the I/O roles in `io` with `need: required` or `optional`.
 5. In `paths.yaml`, declare the map package (`<board>_map`) and the component `<board>_board`, whose closure of `requires` is the source list of the project; the `top` field of the platform points to it. A board with 16-bit SDRAM uses `requires: [sdram_board, <board>_map]`.
 6. Adapt the `config.yaml` of the platform (`extends` the starting platform, `memory_map: platform.yaml`, the `quartus` block with `generate`, `project_dir`, `project_name` and `sof_file`) and the `runtime/` folder.
@@ -119,7 +119,7 @@ Each difference is an error (`E`) or a warning (`W`) with a code from V1 to V19,
 
 | Rule | Typical cause | Fix |
 | :--- | :--- | :--- |
-| V2, V3 | The platform asks for a device the board lacks | Switch the backend to `emulado`, as the `de0-nano` does with the FLASH |
+| V2, V3 | The platform asks for a device the board lacks | Switch the `type` to `emulated`, as the `de0-nano` does with the FLASH |
 | V5 | `required` role missing | Mark it `optional` or drop the role from the platform |
 | V9 | FLASH bank not a multiple of the sector | Move the bank; on the `de2-115` bank B sits at `0x81000` because of the 64 KiB sector |
 | V11, V12 | The profile does not fit the blocks or the logic | Reduce the profile, the caches or the emulated memory; the `de0-nano` uses RV32I with Zicsr |

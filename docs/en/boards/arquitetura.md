@@ -35,7 +35,7 @@ The `platform.yaml` describes resources in four groups, and each resource has a 
 | Data | `RAM` | FPGA memory block | SDRAM with width by generic, asynchronous SRAM |
 | I/O | Console, switches, keys, LEDs, displays | Simulation model, or absent | Board pins, JTAG UART |
 
-The field `memory.<region>.external` says whether the region sits behind the external port of the core, and `backend` says how it is realized. The `emulado` backend has two targets: in simulation it is the VHDL chip model, of any size, and in the FPGA it is an internal memory block, limited by the RAM inside the board (section 6).
+The `on_bus` field of a `memory` segment says whether it sits behind the external port of the core, and `type` says how it is realized (`emulated` is the `emulado` backend, and `flash`, `sdram` and `sram` are the `dispositivo` backend). The `emulado` backend has two targets: in simulation it is the VHDL chip model, of any size, and in the FPGA it is an internal memory block, limited by the RAM inside the board (section 6).
 
 | Backend | Region | Contract | Board resource (`needs`) |
 | :--- | :--- | :--- | :--- |
@@ -50,7 +50,7 @@ The latency of a device backend, in cycles of a clock of period $T$, is
 
 $$ n_{cycles} = \left\lceil \frac{t_{chip}}{T} \right\rceil $$
 
-for each chip timing $t_{chip}$ in the catalog. The `emulado` backend imitates a device by copying the same $n_{cycles}$ into `memory.<region>.latency`, which keeps program time comparable across boards.
+for each chip timing $t_{chip}$ in the catalog. The `emulado` backend imitates a device by copying the same $n_{cycles}$ into the `latency` of the segment in `memory`, which keeps program time comparable across boards.
 
 ### 2.1. Data width other than 32 bits
 

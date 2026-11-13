@@ -76,7 +76,7 @@ O `hpm-cpi` confere que a soma dos ciclos atribuídos pelos contadores de evento
 
 | Projeto | Situação do gerador | O que falta para sair do topo escrito à mão |
 | :--- | :--- | :--- |
-| `external-data` | O `board generate` escreve topo, PLL, `.sdc`, `.qsf` e `.qpf` para a `platform.yaml` dele quando ela ganha `board: auto`, `boards: [de0-cv]`, `top` e `memory.ram.backend: dispositivo`; o gerador não precisa mudar | Um componente de `paths.yaml` cujo fecho de `requires` não traga a cache de instruções nem o chip de FLASH, e a medição do projeto gerado (síntese, tempo nas cinco sementes e os programas na placa), que a troca exige antes de apagar o topo, o `.sdc` e os scripts escritos à mão |
+| `external-data` | O `board generate` escreve topo, PLL, `.sdc`, `.qsf` e `.qpf` para a `platform.yaml` dele quando ela ganha `board: auto`, `boards: [de0-cv]`, `top` e `memory.data[].type: sdram`; o gerador não precisa mudar | Um componente de `paths.yaml` cujo fecho de `requires` não traga a cache de instruções nem o chip de FLASH, e a medição do projeto gerado (síntese, tempo nas cinco sementes e os programas na placa), que a troca exige antes de apagar o topo, o `.sdc` e os scripts escritos à mão |
 | `core_fpga_test` (`internal-mem`) | O gerador só conhece os relógios `core`, `fetch` e `mem`; o topo usa o PLL de três saídas defasadas de 120 graus do núcleo de três estágios, e a `platform.yaml` não tem `clocks.core` nem `boards` | Um tipo de relógio de três fases no gerador de PLL, ou a aposentadoria desse topo de medida junto com o núcleo de três estágios |
 
 ---

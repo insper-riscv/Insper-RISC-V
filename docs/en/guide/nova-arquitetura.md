@@ -114,12 +114,12 @@ The `platform.yaml` is the only source of the map. Nothing of the map is written
 | Field | What it defines |
 | :--- | :--- |
 | `platform` | Platform name |
-| `profile` | Core profile, in the format `rv32i` or `rv32e` followed by the extensions (`rv32im`, `rv32im_zicsr`) |
+| `core` | Bloco do núcleo: `type`, `base` (I ou E) e `extensions` |
 | `profiles` | Path of `Core/profiles/matrix.yaml`, the profile specification |
-| `regions` | Each region with `name`, `base`, `size` (integer with suffix `K`, `M` or a sum, such as `1M-4K`), `kind` (`rom` or `ram`) and `exec` |
+| `memory` | The `boot` block (`base` and `size`) and the segments of `instructions` (the FLASH) and `data` (the RAM), each with `type`, `base`, `size` (integer with suffix `K`, `M` or a sum, such as `1M-4K`) and `on_bus`, and `cache` with `size_bits` when there is a cache |
 | `reserved` | The three words at the top of the RAM, `stdout`, `tohost` and `fromhost`, which must fit inside the RAM region |
 | `boot` | `entry`, the address of the ROM `_start`, and `wait_restart`, the fixed address of the wait routine |
-| `peripherals` | Each peripheral with `name`, `base` (address of the window, aligned to its size) and `size` (bytes of registers); the window is the smallest power of two of at least 16 bytes that holds them, and the index of the peripheral in the table is its position in the list |
+| `peripherals` | Map NAME to `base` (address of the window, aligned to its size) and `size` (bytes of registers); the window is the smallest power of two of at least 16 bytes that holds them, and the index of the peripheral in the table is its position in the list |
 | `generate` | The files to write and the parameters of the VHDL package |
 | `config` | What the `config.yaml` reads from the map |
 | `checks` | Where the hand-written copies that `check-memory-map` checks live |
@@ -137,10 +137,21 @@ core:
   base: I
   extensions:
     - M
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 64K
+      on_bus: false
+
 reserved:
   stdout:   {base: 0x00017BE0, size: 1K+8}
   tohost:   {base: 0x00017FE8, size: 8}
@@ -549,7 +560,7 @@ This chapter applies only if the platform has an FPGA. The Quartus project of a 
 
 ### 10.1. Declare the board in `platform.yaml`
 
-The new platform starts from a copy of the nearest board platform (`src/cyclone-v/de0-cv` for the full profile, `src/cyclone-iv-e/de0-nano` for a reduced profile). In `platform.yaml`, the `board` field (or the `boards` list) chooses the board, the `clocks` and `io` fields say what the SoC asks for, and each external region chooses its backend. Step 6 of [adicionar-placa.md](adicionar-placa.md) describes the fields, and step 7 the validator that compares the request with what the board offers.
+The new platform starts from a copy of the nearest board platform (`src/cyclone-v/de0-cv` for the full profile, `src/cyclone-iv-e/de0-nano` for a reduced profile). In `platform.yaml`, the `board` field (or the `boards` list) chooses the board, the `clocks` and `io` fields say what the SoC asks for, and each segment of `memory` chooses its `type`. Step 6 of [adicionar-placa.md](adicionar-placa.md) describes the fields, and step 7 the validator that compares the request with what the board offers.
 
 ### 10.2. Generate and check the project
 
@@ -893,7 +904,7 @@ riscv-tools --root . check-vhdl-style
 
 ### 12.4. Use in a platform
 
-The top instantiates the new memory in place of one of the existing ones, as long as the interface is that of the block it replaces (rule 3 of section 5 of the CONTRIBUTING). When the region stops being internal, the `memory` field of the `platform.yaml` changes (`rom: {external: true}`, `icache: {enabled: true, size_bits: 32768}`), and the generated package carries `ROM_EXTERNAL`, `RAM_EXTERNAL` and the cache sizes.
+The top instantiates the new memory in place of one of the existing ones, as long as the interface is that of the block it replaces (rule 3 of section 5 of the CONTRIBUTING). When the region stops being internal, the segment of `memory` in the `platform.yaml` gains `on_bus: true` and `cache: {size_bits: 32768}`, and the generated package carries `FLASH_ON_BUS`, `RAM_ON_BUS` and the cache sizes.
 
 ## 13. CI and pull request
 
@@ -960,12 +971,11 @@ In a pull request from someone outside the project, the CI only starts after a m
 | :--- | :--- | :--- |
 | `platform` | Yes | Platform name |
 | `core`, `profiles` | Yes | The core block (`type`, `base` I or E and `extensions`, the list of all extensions) and the path of the profile matrix, relative to the `platform.yaml` |
-| `regions` | Yes | `name`, `base`, `size`, `kind` (`rom` or `ram`) and `exec` of each region; every region ends at `0x80000000` or before |
+| `memory` | Yes | `boot` (`base`, `size`), `instructions` and `data` (lists of segments with `type` `flash`, `sdram`, `sram`, `onchip` or `emulated`, `base`, `size`, `on_bus`, `latency` and `sector_bytes` only on `emulated`, and `cache` with `size_bits`); every segment ends at `0x80000000` or before |
 | `reserved` | Yes | `stdout`, `tohost` and `fromhost`, inside the RAM region |
 | `boot` | Yes | `entry` in an executable region and `wait_restart` in the first region |
-| `peripherals` | Yes | `name`, `base` and `size` |
+| `peripherals` | Yes | Map NAME to `base` and `size` |
 | `flash` | No | FLASH region and the banks (`name`, `base`, `size`) that the board writes and executes |
-| `memory` | No | `rom` and `ram` with `external`, `icache` and `dcache` with `enabled` and `size_bits` |
 | `generate` | Yes | `specs`, `bank_specs`, `boot_ld`, `runtime`, `banks_h` and `vhdl`, each with the `path` to write |
 | `config` | Yes | `rom`, `ram` and `addr_widths`, what the `config.yaml` reads from the map |
 | `checks` | No | Hand-written copies to check, each with `name`, `file`, `pattern` or `yaml`, and `expect` |

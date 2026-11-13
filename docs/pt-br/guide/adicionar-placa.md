@@ -92,8 +92,8 @@ O controlador de SDRAM lê largura, bits de linha, de coluna e de banco do chip,
 A plataforma diz o que o SoC pede, e a placa o que existe. Copiar a plataforma mais próxima e editar o `platform.yaml`: a `de0-nano` para uma placa pequena, a `de0-cv` para uma que comporta o perfil completo.
 
 1. Criar `src/<família>/<placa>/` copiando a pasta da plataforma de partida, e renomear o pacote do mapa de memória.
-2. Em `platform.yaml`, ajustar o campo `platform`, `board: auto`, `boards: [<placa>]`, `profile` e `regions`. Os campos novos, com as regras, estão em [../boards/plataforma-e-placa.md](../boards/plataforma-e-placa.md).
-3. Escolher o backend de cada região externa. Uma região `emulado` consome blocos de RAM da placa, e uma `dispositivo` consome o chip. Na `de0-nano` a FLASH tem 28 KiB, porque a potência de dois seguinte passaria de 85 % dos blocos.
+2. Em `platform.yaml`, ajustar o campo `platform`, `board: auto`, `boards: [<placa>]`, `core` e `memory`. Os campos novos, com as regras, estão em [../boards/plataforma-e-placa.md](../boards/plataforma-e-placa.md).
+3. Escolher o `type` de cada segmento externo de `memory`. Um segmento `emulated` consome blocos de RAM da placa, e um `flash`, `sdram` ou `sram` consome o chip. Na `de0-nano` a FLASH tem 28 KiB, porque a potência de dois seguinte passaria de 85 % dos blocos.
 4. Escolher o relógio do núcleo e o do controlador em `clocks`, e os papéis de E/S em `io` com `need: required` ou `optional`.
 5. No `paths.yaml`, declarar o pacote do mapa (`<placa>_map`) e o componente `<placa>_board`, cujo fecho de `requires` é a lista de fontes do projeto; o campo `top` da plataforma aponta para ele. Uma placa com SDRAM de 16 bits usa `requires: [sdram_board, <placa>_map]`.
 6. Adaptar o `config.yaml` da plataforma (`extends` da plataforma de partida, `memory_map: platform.yaml`, o bloco `quartus` com `generate`, `project_dir`, `project_name` e `sof_file`) e a pasta `runtime/`.
@@ -119,7 +119,7 @@ Cada diferença é um erro (`E`) ou um aviso (`W`) com um código de V1 a V19, l
 
 | Regra | Causa típica | Correção |
 | :--- | :--- | :--- |
-| V2, V3 | A plataforma pede um dispositivo que a placa não tem | Trocar o backend para `emulado`, como a `de0-nano` faz com a FLASH |
+| V2, V3 | A plataforma pede um dispositivo que a placa não tem | Trocar o `type` para `emulated`, como a `de0-nano` faz com a FLASH |
 | V5 | Papel `required` ausente | Marcar `optional` ou tirar o papel da plataforma |
 | V9 | Banca da FLASH fora do múltiplo do setor | Mover a banca; na `de2-115` a banca B fica em `0x81000` por causa do setor de 64 KiB |
 | V11, V12 | O perfil não cabe nos blocos ou na lógica | Reduzir o perfil, as caches ou a memória emulada; a `de0-nano` usa o RV32I com Zicsr |
