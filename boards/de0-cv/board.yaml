@@ -40,7 +40,8 @@ pins: pins.yaml
 notes:
   - "Sem UART nem ponte USB-UART; o console e a JTAG UART (Virtual JTAG), sem pino."
   - "Sem FLASH de usuario: o EPCS64 e so de configuracao (AS). A FLASH do SoC e emulada em M10K e carregada pela JTAG."
-  - "Os pinos CLOCK2_50 a CLOCK4_50 sao inferidos (amaranth-boards); o Tools recusa construir com eles sem --accept-inferred-pins."
+  - "Os pinos CLOCK2_50 a CLOCK4_50 foram conferidos no manual (tabela 3-6)."
   - "Polaridade de LEDR e dos displays HEX vem do amaranth-boards (inferido); a de KEY e FPGA_RESET_N tambem. Nenhuma foi lida no manual."
   - "Todos os bancos usados sao 3.3-V LVTTL; os pinos 11, 12, 29 e 30 do GPIO_0 sao alimentacao (5 V, GND, 3.3 V, GND)."
+  - "Expansao: dois cabecalhos 2x20, GPIO_0 e GPIO_1, cada um com 36 pinos de E/S ligados direto ao FPGA (GPIO_0[35:0] e GPIO_1[35:0], tabela 3-7 do manual, conferidos um a um) e os mesmos 4 pinos de alimentacao e terra no GPIO_1. Os 72 pinos sao bidirecionais e nao tem polaridade; o esquema do board.yaml ainda nao tem papel para eles."
   - "A fase do DRAM_CLK (4000 ps) e o tempo de E/S da SDRAM (setup 1.5 ns, hold 0.8 ns, acesso 5.4 ns, hold de saida 2.5 ns) valem para 100 MHz e vem de platform.yaml e de de0-cv.sdc."
