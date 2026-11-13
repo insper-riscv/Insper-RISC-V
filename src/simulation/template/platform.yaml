@@ -4,9 +4,12 @@
 #
 #   riscv-tools --root . generate-memory-map --platform src/simulation/template/platform.yaml
 platform: template
-# O perfil da plataforma: a base RV32I, sem extensões. `--profile NOME` do riscv-tools o troca por uma
+# O núcleo da plataforma: a base RV32I e as extensões que ele implementa. `--profile NOME` do riscv-tools as troca por uma
 # execução; `profiles` é a especificação dos perfis.
-profile: rv32i
+core:
+  type: 32
+  base: I
+  extensions: []
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:

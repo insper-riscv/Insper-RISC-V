@@ -5,7 +5,14 @@
 # The source of truth of the generics of modular_sim_top and of the linker script of the programs. The
 # `memory` section is the combination of this platform; a test replaces it for one run (`--memory`).
 platform: test-integrated
-profile: rv32im_zicclsm
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zimop
+    - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -35,8 +42,6 @@ memory:
   ram:    {external: false}
   icache: {enabled: false}
   dcache: {enabled: false}
-
-extras: [Zimop, Zicond]
 
 generate:
   specs: {path: src/simulation/test-integrated/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}

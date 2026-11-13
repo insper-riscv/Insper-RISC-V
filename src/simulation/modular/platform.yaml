@@ -12,9 +12,18 @@
 # src/simulation/modular/config.yaml`, in the four architectures A (rom=int,ram=int), B (rom=int,ram=ext,
 # dcache=on), C (rom=ext,ram=int,icache=on) and D (both external, both caches) and in the other twelve.
 platform: modular
-# The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
-# `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
-profile: rv32im_zicclsm_zicsr
+# The core of the platform: the width of the ISA, its base (I: 32 registers, E: 16) and the extensions it implements.
+# `--profile NAME` of riscv-tools replaces them for one run (a matrix of tests); `profiles` is the specification.
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicsr
+    - Zimop
+    - Zicond
+    - Interrupts
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -76,8 +85,6 @@ memory:
 
 # Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the
 # package), as in the other platforms, so the programs of the Tests repository that use them run here too.
-extras: [Zimop, Zicond, Interrupts]
-
 generate:
   specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/modular/runtime/boot_memory.ld}
