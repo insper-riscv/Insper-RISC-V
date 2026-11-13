@@ -301,25 +301,42 @@ def profile_summary(name: str, args: argparse.Namespace) -> tuple[str, bool]:
     return text, failed
 
 
+def measurement_pairs(
+    args: argparse.Namespace, expected: dict[str, Any], compare: bool
+) -> dict[str, tuple[dict[str, Any], dict[str, Any]]]:
+    """Load validated pairs, or main paired with itself."""
+    paired: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    for name in expected["profiles"]:
+        pair = measurement_pair(args.input, name, expected, compare)
+        if pair is not None:
+            paired[name] = pair
+    return paired
+
+
+def measurement_pair(
+    root: Path, name: str, expected: dict[str, Any], compare: bool
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Require both sides before combining and validating a profile."""
+    head_paths = list((root / "candidate" / name).rglob("results.json"))
+    base_paths = list((root / "base" / name).rglob("results.json"))
+    if not head_paths or (compare and not base_paths):
+        return None
+    head = combine(head_paths)
+    validate_simulation(head, name, "candidate", expected)
+    if not compare:
+        return head, head
+    before = combine(base_paths)
+    validate_simulation(before, name, "base", expected)
+    return before, head
+
+
 def overall_score(args: argparse.Namespace, expected: dict[str, Any]) -> str:
     """Validate complete inputs and write the overall score artifact."""
+    score_expected = expected
     paired: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
     if args.compare:
-        for name in expected["profiles"]:
-            head_paths = list(
-                (args.input / "candidate" / name).rglob("results.json")
-            )
-            base_paths = list(
-                (args.input / "base" / name).rglob("results.json")
-            )
-            if not head_paths or not base_paths:
-                continue
-            head, before = combine(head_paths), combine(base_paths)
-            validate_simulation(head, name, "candidate", expected)
-            validate_simulation(before, name, "base", expected)
-            paired[name] = (before, head)
-    score_expected = expected
-    if not args.compare and os.environ.get("GITHUB_REF") == "refs/heads/main":
+        paired = measurement_pairs(args, expected, compare=True)
+    elif os.environ.get("GITHUB_REF") == "refs/heads/main":
         # Cache warming compares the measured main snapshot to itself.
         score_expected = dict(
             expected,
@@ -327,14 +344,7 @@ def overall_score(args: argparse.Namespace, expected: dict[str, Any]) -> str:
                 expected["revisions"], base=expected["revisions"]["candidate"]
             ),
         )
-        for name in expected["profiles"]:
-            paths = list(
-                (args.input / "candidate" / name).rglob("results.json")
-            )
-            if paths:
-                head = combine(paths)
-                validate_simulation(head, name, "candidate", expected)
-                paired[name] = (head, head)
+        paired = measurement_pairs(args, expected, compare=False)
     overall = score.calculate(score_expected, paired)
     args.output.with_name("embench-score.json").write_text(
         json.dumps(overall, indent=2) + "\n"

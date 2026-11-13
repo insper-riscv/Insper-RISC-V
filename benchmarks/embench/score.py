@@ -38,6 +38,27 @@ def profile_score(
     }
 
 
+def matched_profile(
+    name: str,
+    expected: dict[str, Any],
+    paired: dict[str, tuple[dict[str, Any], dict[str, Any]]],
+) -> dict[str, Any] | None:
+    """Score only a verified pair of the expected suite."""
+    if name not in paired:
+        return None
+    before, head = paired[name]
+    if (
+        before["profile"] != name
+        or head["profile"] != name
+        or set(head["suite"]["programs"]) != set(expected["programs"])
+    ):
+        return None
+    try:
+        return profile_score(before, head)
+    except ValueError, KeyError, ZeroDivisionError:
+        return None
+
+
 def calculate(
     expected: dict[str, Any],
     paired: dict[str, tuple[dict[str, Any], dict[str, Any]]],
@@ -61,21 +82,12 @@ def calculate(
         ),
     }
     for name in expected["profiles"]:
-        if name not in paired:
-            continue
-        before, head = paired[name]
-        if (
-            before["profile"] != name
-            or head["profile"] != name
-            or set(head["suite"]["programs"]) != set(expected["programs"])
-        ):
-            continue
-        try:
-            item = profile_score(before, head)
-        except ValueError, KeyError, ZeroDivisionError:
-            continue
-        document["workload"] = head["suite"].get("workload", "ci")
-        document["profiles"].append(item)
+        item = matched_profile(name, expected, paired)
+        if item is not None:
+            document["workload"] = paired[name][1]["suite"].get(
+                "workload", "ci"
+            )
+            document["profiles"].append(item)
     if (
         document["profiles"]
         and len(document["profiles"]) == document["expected_profiles"]
