@@ -1,0 +1,69 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "RV32: Check environment",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" doctor",
+      "problemMatcher": []
+    },
+    {
+      "label": "RV32: Prepare project",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" setup",
+      "problemMatcher": []
+    },
+    {
+      "label": "RV32: Simulate",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" simulate",
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "RV32: FPGA full configuration",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" fpga --mode full",
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "RV32: FPGA fast update",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" fpga --mode fast",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "RV32: FPGA reuse existing SOF",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" fpga --mode reprogram",
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "label": "RV32: Read FPGA stdout",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" stdout",
+      "problemMatcher": []
+    },
+    {
+      "label": "RV32: Refresh Peripheral Drivers",
+      "type": "shell",
+      "command": "\"$RV32_SDK_ROOT/scripts/rv32-project\" --project \"$PWD\" drivers",
+      "problemMatcher": []
+    }
+  ]
+}

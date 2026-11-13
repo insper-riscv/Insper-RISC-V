@@ -10,3 +10,6 @@ simulation_timeout_cycles = 2000000
 
 # auto preserves the platform default; or use a name from Core/profiles/.
 cpu_profile = "auto"
+
+# Generate the Rust runtime and drivers enabled by this platform/profile.
+generate_drivers = true

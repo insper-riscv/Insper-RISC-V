@@ -55,7 +55,8 @@ expose() {
     ports+=",
    output ${w}dbg_$nm"
     # a signal the netlist no longer has (GHDL drops what nothing reads) is exposed as 0, never left without a driver
-    if awk -v nm="$nm;" '/^module / { n = 0 } $1 ~ /^(reg|wire)$/ && $NF == nm { n = 1 } END { exit !n }' "$v"; then src="$nm"; else src="${width}'b0"; fi
+    # GHDL 7 prefixes declarations with source attributes; the first field is no longer reg/wire.
+    if awk -v nm="$nm;" '/^module / { n = 0 } $0 ~ /(^|[[:space:]])(reg|wire)[[:space:]]/ && $NF == nm { n = 1 } END { exit !n }' "$v"; then src="$nm"; else src="${width}'b0"; fi
     assigns+="  assign dbg_$nm = $src;
 "
   done
