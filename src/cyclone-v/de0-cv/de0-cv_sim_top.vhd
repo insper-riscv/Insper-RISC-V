@@ -26,6 +26,11 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.de0_cv_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.config_pkg.XLEN;
+use work.config_pkg.ADDR_BITS;
+use work.interconnect_pkg.all;
 
 entity rv32im_sdram_flash_sim_test is
     generic (
@@ -52,9 +57,9 @@ entity rv32im_sdram_flash_sim_test is
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64 := 64;
         -- A ROM fica fora do core (o modelo de memória do platform.yaml).
-        rom_external           : boolean               := work.de0_cv_map_pkg.ROM_EXTERNAL;
+        rom_external           : boolean               := work.de0_cv_map_pkg.FLASH_ON_BUS;
         -- A RAM fica fora do core (o modelo de memória do platform.yaml).
-        ram_external           : boolean               := work.de0_cv_map_pkg.RAM_EXTERNAL;
+        ram_external           : boolean               := work.de0_cv_map_pkg.RAM_ON_BUS;
         -- Existe cache de instruções (o modelo de memória do platform.yaml).
         has_icache             : boolean               := work.de0_cv_map_pkg.HAS_ICACHE;
         -- Existe cache de dados (o modelo de memória do platform.yaml).
@@ -88,7 +93,7 @@ entity rv32im_sdram_flash_sim_test is
         -- Índice de palavra lido direto do modelo do chip de SDRAM, para o testbench.
         i_dbg_word_addr  : in    std_logic_vector(23 downto 0) := (others => '0');
         -- Palavra do modelo do chip de SDRAM no índice de i_dbg_word_addr.
-        o_dbg_word_data  : out   std_logic_vector(31 downto 0);
+        o_dbg_word_data  : out   word_t;
         -- Virtual JTAG da UART: clock TCK.
         i_uart_tck       : in    std_logic                     := '0';
         -- Virtual JTAG da UART: entrada de dados TDI.
@@ -119,32 +124,32 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Pulso de retirada de uma instrução em EX, contado pelo testbench para medir os ciclos por instrução.
     signal core_retire     : std_logic;
     -- Causa da exceção sinalizada, no formato do mcause.
-    signal core_trap_cause : std_logic_vector(31 downto 0);
+    signal core_trap_cause : word_t;
     -- PC da instrução que gerou a exceção sinalizada.
-    signal core_trap_pc    : std_logic_vector(31 downto 0);
+    signal core_trap_pc    : word_t;
 
     -- Endereço de byte da busca de instrução do núcleo.
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilita de leitura da busca de instrução.
     signal if_rden          : std_logic;
     -- Palavra lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra lida da FLASH pelo estágio IF.
-    signal flash_data       : std_logic_vector(31 downto 0);
+    signal flash_data       : word_t;
 
     -- Endereço de byte da leitura de dado do estágio MEM na FLASH.
-    signal flash_addr2 : std_logic_vector(31 downto 0);
+    signal flash_addr2 : addr_t;
     -- Habilita da leitura de dado do estágio MEM na FLASH.
     signal flash_rden2 : std_logic;
     -- Palavra lida da FLASH pelo estágio MEM.
-    signal flash_data2 : std_logic_vector(31 downto 0) := (others => '0');
+    signal flash_data2 : word_t := (others => '0');
 
     -- RAM interna do núcleo: endereço.
-    signal ram_addr    : std_logic_vector(31 downto 0);
+    signal ram_addr    : addr_t;
     -- RAM interna do núcleo: dado de escrita.
-    signal ram_wdata   : std_logic_vector(31 downto 0);
+    signal ram_wdata   : word_t;
     -- Dado lido da RAM interna do núcleo; sem RAM interna fica em zero.
-    signal ram_rdata   : std_logic_vector(31 downto 0) := (others => '0');   -- sem RAM dentro do FPGA
+    signal ram_rdata   : word_t := (others => '0');   -- sem RAM dentro do FPGA
     -- RAM interna do núcleo: habilita geral.
     signal ram_en      : std_logic;
     -- RAM interna do núcleo: habilita de escrita.
@@ -155,11 +160,11 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal ram_byteena : std_logic_vector(3 downto 0);
 
     -- Barramento externo do núcleo para a SDRAM: endereço.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Barramento externo do núcleo para a SDRAM: dado de escrita.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Barramento externo do núcleo para a SDRAM: dado lido.
-    signal sdram_rdata   : std_logic_vector(31 downto 0);
+    signal sdram_rdata   : word_t;
     -- Barramento externo do núcleo para a SDRAM: habilita de bytes.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Barramento externo do núcleo para a SDRAM: habilita de leitura.
@@ -168,15 +173,17 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal sdram_wren    : std_logic;
     -- Barramento externo do núcleo: acesso concluído.
     signal sdram_ready   : std_logic;
+    -- O acesso externo do núcleo terminou sem escravo que o atenda (falha de acesso), junto com o ready.
+    signal ext_error     : std_logic;
     -- Avanço do pipeline do núcleo quando o acesso à memória conclui.
     signal mem_advance   : std_logic;
 
     -- Atrás do interconector: endereço de byte da SDRAM e das janelas de periféricos
-    signal m_addr         : std_logic_vector(31 downto 0);
+    signal m_addr         : addr_t;
     -- Saída do interconector para a SDRAM: dado de escrita.
-    signal m_wdata        : std_logic_vector(31 downto 0);
+    signal m_wdata        : word_t;
     -- Saída do interconector para a SDRAM: dado lido.
-    signal m_rdata        : std_logic_vector(31 downto 0);
+    signal m_rdata        : word_t;
     -- Saída do interconector para a SDRAM: habilita de bytes.
     signal m_byteena      : std_logic_vector(3 downto 0);
     -- Saída do interconector para a SDRAM: habilita de leitura.
@@ -190,13 +197,13 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
     signal irq_lines      : std_logic_vector(PLIC_N_SOURCES downto 1) := (others => '0');
     -- Janela de periféricos: dado de escrita.
-    signal p_wdata        : std_logic_vector(31 downto 0);
+    signal p_wdata        : word_t;
     -- Janela de periféricos: habilita de bytes.
     signal p_byteena      : std_logic_vector(3 downto 0);
     -- Janela de periféricos: escrita, leitura.
-    signal p_we, p_re     : std_logic_vector(7 downto 0);
+    signal p_we, p_re     : std_logic_vector(PERIPH_COUNT - 1 downto 0);
     -- Janela de periféricos: dado lido.
-    signal p_rdata        : std_logic_vector(8 * 32 - 1 downto 0)     := (others => '0');
+    signal p_rdata        : std_logic_vector(PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
     -- As três linhas de interrupção de máquina do núcleo
     signal irq_timer      : std_logic                                 := '0';
     -- Interrupção de software de máquina (MSIP), saída do CLINT.
@@ -229,7 +236,7 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal sdram_init    : std_logic;
 
     -- Busca de instrucao em SDRAM: cache de instrucoes no clock do IF
-    signal ic_data        : std_logic_vector(31 downto 0);
+    signal ic_data        : word_t;
     -- Cache de instruções: acesso concluído.
     signal ic_ready       : std_logic;
     -- Cache de instruções: seleção de região.
@@ -239,7 +246,7 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Pedido de flush da cache de dados que o FENCE.I do núcleo faz antes de invalidar a cache de instruções.
     signal dc_flush       : std_logic;
     -- Porta de memória da cache de instruções: endereço.
-    signal id_addr        : std_logic_vector(31 downto 0);
+    signal id_addr        : addr_t;
     -- Porta de memória da cache de instruções: habilita de leitura.
     signal id_rden        : std_logic;
     -- Porta de memória da cache de instruções: avanço para a próxima palavra da linha.
@@ -247,11 +254,11 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Porta de memória da cache de instruções: acesso concluído.
     signal id_ready       : std_logic;
     -- Porta de memória da cache de instruções: dado lido.
-    signal id_rdata       : std_logic_vector(31 downto 0);
+    signal id_rdata       : word_t;
     -- Porta de memória da cache de instruções: pedido de linha de cache.
     signal id_line        : std_logic;
     -- Porta de memória da cache de instruções: linha larga lida de 96 bits.
-    signal id_rdx         : std_logic_vector(95 downto 0);
+    signal id_rdx         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Eventos das caches e da FLASH para os contadores do Zihpm: falha da cache de instrucoes, falha da cache de
     -- dados e ciclo de espera do chip de FLASH.
     signal ic_miss        : std_logic;
@@ -264,9 +271,9 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal hpm_ext_events : std_logic_vector(2 downto 0);
 
     -- Roteador da cache de instruções: lado da SDRAM (porta de instruções do sdram_system)
-    signal si_addr  : std_logic_vector(31 downto 0);
+    signal si_addr  : addr_t;
     -- Roteador de instruções, lado da SDRAM: dado de escrita.
-    signal si_wdata : std_logic_vector(31 downto 0);
+    signal si_wdata : word_t;
     -- Roteador de instruções, lado da SDRAM: habilita de bytes.
     signal si_be    : std_logic_vector(3 downto 0);
     -- Roteador de instruções, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
@@ -281,20 +288,20 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Roteador de instruções, lado da SDRAM: acesso concluído.
     signal si_ready : std_logic;
     -- Roteador de instruções, lado da SDRAM: linha larga de escrita de 96 bits.
-    signal si_wdx   : std_logic_vector(95 downto 0);
+    signal si_wdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador de instruções, lado da SDRAM: dado lido.
-    signal si_rdata : std_logic_vector(31 downto 0);
+    signal si_rdata : word_t;
     -- Roteador de instruções, lado da SDRAM: linha larga lida de 96 bits.
-    signal si_rdx   : std_logic_vector(95 downto 0);
+    signal si_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Cache de dados: lado da memória
     signal dc_bypass        : std_logic;
     -- Porta de memória da cache de dados: endereço, dado de escrita, dado lido.
-    signal dd_addr          : std_logic_vector(31 downto 0);
+    signal dd_addr          : addr_t;
     -- Porta de memória da cache de dados: dado de escrita.
-    signal dd_wdata         : std_logic_vector(31 downto 0);
+    signal dd_wdata         : word_t;
     -- Porta de memória da cache de dados: dado lido.
-    signal dd_rdata         : std_logic_vector(31 downto 0);
+    signal dd_rdata         : word_t;
     -- Porta de memória da cache de dados: habilita de bytes.
     signal dd_be            : std_logic_vector(3 downto 0);
     -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
@@ -310,16 +317,16 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Porta de memória da cache de dados: acesso concluído.
     signal dd_ready         : std_logic;
     -- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
-    signal dd_wdx,  dd_rdx  : std_logic_vector(95 downto 0);
+    signal dd_wdx,  dd_rdx  : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Cache de dados com a invalidação concluída; Cache de dados ocupada com uma invalidação.
     signal dc_done, dc_busy : std_logic;
 
     -- Roteador da cache de dados: lado da SDRAM (porta de dados do sdram_system)
-    signal sd_addr        : std_logic_vector(31 downto 0);
+    signal sd_addr        : addr_t;
     -- Roteador de dados, lado da SDRAM: dado de escrita.
-    signal sd_wdata       : std_logic_vector(31 downto 0);
+    signal sd_wdata       : word_t;
     -- Roteador de dados, lado da SDRAM: dado lido.
-    signal sd_rdata       : std_logic_vector(31 downto 0);
+    signal sd_rdata       : word_t;
     -- Roteador de dados, lado da SDRAM: habilita de bytes.
     signal sd_be          : std_logic_vector(3 downto 0);
     -- Roteador de dados, lado da SDRAM: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço para
@@ -335,20 +342,20 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Roteador de dados, lado da SDRAM: acesso concluído.
     signal sd_ready       : std_logic;
     -- Roteador de dados, lado da SDRAM: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
-    signal sd_wdx, sd_rdx : std_logic_vector(95 downto 0);
+    signal sd_wdx, sd_rdx : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Lado da FLASH dos dois roteadores, o árbitro e o chip
-    signal fa_addr                        : std_logic_vector(31 downto 0);
+    signal fa_addr                        : addr_t;
     -- Roteador A, lado da FLASH: dado lido.
-    signal fa_rdata                       : std_logic_vector(31 downto 0);
+    signal fa_rdata                       : word_t;
     -- Roteador B, lado da FLASH: endereço.
-    signal fb_addr                        : std_logic_vector(31 downto 0);
+    signal fb_addr                        : addr_t;
     -- Roteador B, lado da FLASH: dado lido.
-    signal fb_rdata                       : std_logic_vector(31 downto 0);
+    signal fb_rdata                       : word_t;
     -- Roteador C, lado da FLASH: endereço.
-    signal fc_addr                        : std_logic_vector(31 downto 0);
+    signal fc_addr                        : addr_t;
     -- Roteador C, lado da FLASH: dado lido.
-    signal fc_rdata                       : std_logic_vector(31 downto 0);
+    signal fc_rdata                       : word_t;
     -- Roteador de instruções, lado da FLASH: habilita de leitura; Roteador de instruções, lado da FLASH: pedido de
     -- linha
     -- de cache; Roteador de instruções, lado da FLASH: avanço para a próxima palavra da linha; Roteador de instruções,
@@ -383,13 +390,15 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal fc_ready                       : std_logic;
     -- Roteador de instruções, lado da FLASH: linha larga lida de 96 bits; Roteador de dados, lado da FLASH: linha larga
     -- lida de 96 bits; Árbitro, lado do chip de FLASH: linha larga lida de 96 bits.
-    signal fa_rdx                         : std_logic_vector(95 downto 0);
+    signal fa_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador B, lado da FLASH: linha larga lida de 96 bits.
-    signal fb_rdx                         : std_logic_vector(95 downto 0);
+    signal fb_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador C, lado da FLASH: linha larga lida de 96 bits.
-    signal fc_rdx                         : std_logic_vector(95 downto 0);
-    -- Endereço de byte do pedido do árbitro ao chip de FLASH; Palavra lida do chip de FLASH pelo árbitro.
-    signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
+    signal fc_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0);
+    -- Endereço de byte do pedido do árbitro ao chip de FLASH.
+    signal flash_mem_addr : addr_t;
+    -- Dado lido do armazenamento do chip de FLASH.
+    signal flash_mem_data : word_t;
 
     -- Controlador de FLASH e chip de comandos (so com HAS_FLASH_CONTROLLER): comando, estado, buffer de pagina,
     -- porta B do armazenamento e invalidacao por regiao das duas caches.
@@ -403,25 +412,25 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Controlador de FLASH: operação do comando.
     signal fl_cmd_op                     : std_logic_vector(2 downto 0);
     -- Controlador de FLASH: endereço do comando.
-    signal fl_cmd_addr                   : std_logic_vector(31 downto 0);
+    signal fl_cmd_addr                   : addr_t;
     -- Controlador de FLASH: índice de palavra do buffer de página.
     signal fl_buf_idx                    : std_logic_vector(5 downto 0);
     -- Controlador de FLASH: palavra do buffer de página.
-    signal fl_buf_data                   : std_logic_vector(31 downto 0);
+    signal fl_buf_data                   : word_t;
     -- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado
     -- lido
     -- da porta B do armazenamento.
-    signal fl_b_addr                     : std_logic_vector(31 downto 0) := (others => '0');
+    signal fl_b_addr                     : addr_t := (others => '0');
     -- Controlador de FLASH: dado de escrita da porta B do armazenamento.
-    signal fl_b_wdata                    : std_logic_vector(31 downto 0) := (others => '0');
+    signal fl_b_wdata                    : word_t := (others => '0');
     -- Controlador de FLASH: dado lido da porta B do armazenamento.
-    signal fl_b_data                     : std_logic_vector(31 downto 0) := (others => '0');
+    signal fl_b_data                     : word_t := (others => '0');
     -- Controlador de FLASH: escrita na porta B do armazenamento.
     signal fl_b_we                       : std_logic                     := '0';
     -- Invalidação por região das caches: pulso de validade.
     signal fl_inval_valid                : std_logic                     := '0';
     -- Invalidação por região das caches: primeiro endereço, último endereço.
-    signal fl_inval_first, fl_inval_last : std_logic_vector(31 downto 0) := (others => '0');
+    signal fl_inval_first, fl_inval_last : addr_t := (others => '0');
 
 begin
 
@@ -436,8 +445,7 @@ begin
 
     u_core : entity work.core
         generic map (
-            hpm_counters => hpm_counters, hpm_width => hpm_width, time_external => has_interrupts,
-            periph_slots => work.de0_cv_map_pkg.PERIPH_SLOTS
+            hpm_counters => hpm_counters, hpm_width => hpm_width, time_external => has_interrupts
         )
         port map (
             o_trap       => core_trap,
@@ -472,6 +480,7 @@ begin
             o_ext_wren    => sdram_wren,
             i_ext_rdata   => sdram_rdata,
             i_ext_ready   => sdram_ready,
+            i_ext_error   => ext_error,
             o_mem_advance => mem_advance,
 
             i_hpm_ext_events => hpm_ext_events,
@@ -489,8 +498,8 @@ begin
 
     u_icache : entity work.icache
         generic map (
-            size_bits    => icache_size_bits, rom_base_kib => ROM_BASE_KIB, rom_end_kib => ROM_END_KIB,
-            sel_from_kib => ROM_BASE_KIB, check_addr => false
+            size_bits    => icache_size_bits, flash_base_kib => FLASH_BASE_KIB, flash_end_kib => FLASH_END_KIB,
+            sel_from_kib => FLASH_BASE_KIB, check_addr => false
         )
         port map (
             i_clk          => pll_clk_if,
@@ -554,8 +563,8 @@ begin
 
     u_dcache : entity work.dcache
         generic map (
-            size_bits   => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB,
-            rom_end_kib => ROM_END_KIB
+            size_bits   => dcache_size_bits, write_through => true, flash_base_kib => FLASH_BASE_KIB,
+            flash_end_kib => FLASH_END_KIB
         )
         port map (
             i_clk          => pll_clk_idexmem,
@@ -657,7 +666,7 @@ begin
     u_flash_chip : entity work.flash_chip
         generic map (
             first_latency => flash_first_latency, next_latency => flash_next_latency,
-            size_bytes    => ROM_STORAGE_BYTES
+            size_bytes    => FLASH_STORAGE_BYTES
         )
         port map (
             i_clk      => pll_clk_idexmem,
@@ -742,9 +751,9 @@ begin
                 i_rst       => i_rst,
                 i_data_in   => p_wdata,
                 i_address   => p_addr(2 downto 0),
-                i_write     => p_we(FLASH_CTRL_ID),
-                i_read      => p_re(FLASH_CTRL_ID),
-                o_data_out  => p_rdata(32 * FLASH_CTRL_ID + 31 downto 32 * FLASH_CTRL_ID),
+                i_write     => p_we(FLASH_CTRL_INDEX),
+                i_read      => p_re(FLASH_CTRL_INDEX),
+                o_data_out  => p_rdata(XLEN * FLASH_CTRL_INDEX + XLEN - 1 downto XLEN * FLASH_CTRL_INDEX),
                 o_irq       => irq_lines(IRQ_FLASH),
                 o_cmd_valid => fl_cmd_valid,
                 o_cmd_op    => fl_cmd_op,
@@ -760,7 +769,18 @@ begin
 
     u_interconnect : entity work.ext_interconnect
         generic map (
-            periph_addr_width => PLIC_ADDR_WIDTH
+            periph_count      => PERIPH_COUNT,
+            periph_bases      => addr_array_t(PERIPH_BASES),
+            periph_masks      => addr_array_t(PERIPH_MASKS),
+            periph_sizes      => window_sizes(addr_array_t(PERIPH_MASKS)),
+            strict_periph     => STRICT_PERIPH,
+            periph_addr_width => PLIC_ADDR_WIDTH,
+            flash_on_bus      => FLASH_ON_BUS,
+            flash_base        => addr_from(to_unsigned(FLASH_BASE_KIB, ADDR_BITS) sll 10),
+            flash_last        => addr_from((to_unsigned(FLASH_END_KIB, ADDR_BITS) sll 10) - 1),
+            ram_on_bus        => RAM_ON_BUS,
+            ram_base          => addr_from(to_unsigned(RAM_BASE_KIB, ADDR_BITS) sll 10),
+            ram_last          => addr_from((to_unsigned(RAM_END_KIB, ADDR_BITS) sll 10) - 1)
         )
         port map (
             i_clk         => pll_clk_idexmem,
@@ -772,6 +792,7 @@ begin
             i_wren        => sdram_wren,
             i_mem_advance => mem_advance,
             o_ready       => sdram_ready,
+            o_error       => ext_error,
             o_rdata       => sdram_rdata,
             o_m_addr      => m_addr,
             o_m_wdata     => m_wdata,
@@ -794,9 +815,9 @@ begin
             i_rst       => i_rst,
             i_addr      => p_addr(7 downto 0),
             i_wdata     => p_wdata,
-            i_we        => p_we(4),
-            i_re        => p_re(4),
-            o_rdata     => p_rdata(32 * 4 + 31 downto 32 * 4),
+            i_we        => p_we(UART_INDEX),
+            i_re        => p_re(UART_INDEX),
+            o_rdata     => p_rdata(XLEN * UART_INDEX + XLEN - 1 downto XLEN * UART_INDEX),
             o_irq       => irq_lines(IRQ_UART_JTAG),
             i_tck       => i_uart_tck,
             i_tdi       => i_uart_tdi,
@@ -834,8 +855,8 @@ begin
                 i_rst          => i_rst,
                 i_data_in      => p_wdata,
                 i_address      => p_addr(13 downto 0),
-                i_write        => p_we(CLINT_ID),
-                o_data_out     => p_rdata(32 * CLINT_ID + 31 downto 32 * CLINT_ID),
+                i_write        => p_we(CLINT_INDEX),
+                o_data_out     => p_rdata(XLEN * CLINT_INDEX + XLEN - 1 downto XLEN * CLINT_INDEX),
                 o_irq_timer    => irq_timer,
                 o_irq_software => irq_software,
                 o_mtime        => clint_mtime
@@ -851,9 +872,9 @@ begin
                 i_sources  => irq_lines,
                 i_data_in  => p_wdata,
                 i_address  => p_addr,
-                i_write    => p_we(PLIC_ID),
-                i_read     => p_re(PLIC_ID),
-                o_data_out => p_rdata(32 * PLIC_ID + 31 downto 32 * PLIC_ID),
+                i_write    => p_we(PLIC_INDEX),
+                i_read     => p_re(PLIC_INDEX),
+                o_data_out => p_rdata(XLEN * PLIC_INDEX + XLEN - 1 downto XLEN * PLIC_INDEX),
                 o_meip     => irq_external
             );
 
@@ -865,8 +886,8 @@ begin
             i_rst       => i_rst,
             i_address   => p_addr(7 downto 0),
             i_data_in   => p_wdata,
-            i_write     => p_we(5),
-            o_rdata     => p_rdata(32 * 5 + 31 downto 32 * 5),
+            i_write     => p_we(DISPLAY_INDEX),
+            o_rdata     => p_rdata(XLEN * DISPLAY_INDEX + XLEN - 1 downto XLEN * DISPLAY_INDEX),
             i_tck       => '0',
             i_tdi       => '0',
             i_ir_in     => "00",

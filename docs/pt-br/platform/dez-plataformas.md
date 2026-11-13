@@ -12,7 +12,7 @@ Cada combinação de memória e de periféricos é uma plataforma com o seu `pla
 
 ## 2. As combinações de memória
 
-As quatro combinações vêm de `rom_external` e `ram_external` da seção `memory` do `platform.yaml`, e as caches existem do lado externo.
+As quatro combinações vêm de `rom_external` e `ram_external` derivados da seção `memory` do `platform.yaml`, e as caches existem só do lado do barramento.
 
 | Combinação | ROM | RAM | Caches | Arquitetura da `modular` |
 | :--- | :--- | :--- | :--- | :--- |
@@ -36,7 +36,7 @@ As quatro combinações vêm de `rom_external` e `ram_external` da seção `memo
 | 9 | `fpga-uart-jtag` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART via JTAG |
 | 10 | `fpga-uart-pins` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART via pinos |
 
-Todas ligam as extensões `Zimop` e `Zicond` pelo campo `extras`. As plataformas com cache de instruções usam o perfil com `Zifencei`.
+Todas ligam as extensões `Zimop` e `Zicond` em `core.extensions`. As plataformas com cache de instruções listam também `Zifencei`.
 
 ## 4. Mapas de memória
 
@@ -53,7 +53,7 @@ As palavras que o hospedeiro e o programa compartilham (`stdout`, `tohost` e `fr
 
 ## 5. Periféricos e janelas
 
-Cada periférico ocupa uma janela de 256 MiB da região a partir de `0x80000000`, cujo índice está nos bits 30:28 do endereço.
+Cada periférico ocupa uma janela da região a partir de `0x80000000`, de base e tamanho dados pelo `platform.yaml`. O interconector a acerta pela tabela do pacote de mapa, e o índice de cada periférico é a posição dele na lista `peripherals`.
 
 | Periférico | Bloco | Pino da placa | Índice | Base | Plataformas |
 | :--- | :--- | :--- | ---: | :--- | :--- |
@@ -69,7 +69,7 @@ Nas plataformas de teste a janela de periféricos não tem dispositivo: uma leit
 
 1. O `riscv-tools generate-memory-map` escreve, de cada `platform.yaml`, o pacote `modular_map_pkg.vhd` da pasta da plataforma, o cabeçalho `runtime/memory_map.h`, o arquivo de specs do ligador e o script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere).
 2. O pacote de cada plataforma se chama `modular_map_pkg`, o nome que o topo usa, e a lista de fontes da plataforma traz o pacote da própria pasta. O componente `<nome>_sim_top` do `provides` (com o nome da plataforma em snake_case) lista as fontes na ordem certa.
-3. A combinação de memórias e os `HAS_*` do perfil chegam ao topo pelo pacote. Os periféricos entram pelos genéricos `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` e `has_uart_pins` do topo, que o `sim.parameters` do `config.yaml` de cada plataforma liga, e os índices das janelas são os genéricos `switches_id`, `keys_id`, `display_id`, `uart_jtag_id` e `uart_pins_id`. As duas UART entram pela mesma entidade `console` do Peripherals (ver `Peripherals/docs/pt-br/UART/console.md`): `has_uart_jtag` instancia o backend `jtag` e `has_uart_pins` o backend `pinos`, e cada uma continua ligada à sua fonte do PLIC (`UART` no id 1 e `UART_JTAG` no id 2).
+3. A combinação de memórias e os `HAS_*` do perfil chegam ao topo pelo pacote. Os periféricos entram pelos genéricos `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` e `has_uart_pins` do topo, que o `sim.parameters` do `config.yaml` de cada plataforma liga, e os índices dos periféricos na tabela são os genéricos `switches_index`, `keys_index`, `display_index`, `uart_jtag_index` e `uart_pins_index`. As duas UART entram pela mesma entidade `console` do Peripherals (ver `Peripherals/docs/pt-br/UART/console.md`): `has_uart_jtag` instancia o backend `jtag` e `has_uart_pins` o backend `pinos`, e cada uma continua ligada à sua fonte do PLIC (`UART` no id 1 e `UART_JTAG` no id 2).
 4. As portas dos periféricos no topo são `io_sw` e `io_key` (os GPIO), `o_display_hex` e `o_display_value`, as portas `i_uart_*` e `o_uart_tdo` do Virtual JTAG e os pinos `i_uart_rx` e `o_uart_tx`. Os papéis de E/S têm a largura e a polaridade por generic (`switches_width`, `keys_width`, `display_digits`, `*_active_low`), com os valores da DE0-CV por padrão; largura zero omite o papel (documento do [SoC](../soc/soc.md)).
 
 ## 7. Como usar

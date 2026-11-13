@@ -1,9 +1,11 @@
 """The AXI4 slave in front of the peripheral window.
 
-The testbench plays the AXI4 master and the eight peripheral slots. A
-single 4-byte aligned INCR beat becomes a one-clock pulse for the
-peripheral of the id in bits 30:28; anything else is answered SLVERR
-and touches no peripheral.
+The testbench plays the AXI4 master and the eight peripheral windows of the
+default table (0x80000000 | i << 28, 64 KiB of registers each). A single
+4-byte aligned INCR beat inside the registers of a window becomes a
+one-clock pulse for the peripheral of that window; anything else is
+answered SLVERR (a malformed beat, or the padding of a window) or DECERR
+(no window) and touches no peripheral.
 
 """
 
@@ -23,7 +25,7 @@ from tests.python.unittests.integration.dut import Dut
 CLK_NS = 10
 SLOTS = 8
 PERIPHERALS = 0x80000000
-OKAY, SLVERR = 0, 2
+OKAY, SLVERR, DECERR = 0, 2, 3
 LAST_BEAT = 3
 SIZE_WORD, SIZE_BYTE = 2, 0
 BURST_INCR, BURST_FIXED = 1, 0
@@ -169,3 +171,22 @@ async def test_an_unaligned_address_is_refused(dut: Dut):
     check_equal(await write(dut, periph_addr(0, 1) + 2, 0x9), SLVERR)
     check_equal(await read(dut, periph_addr(0, 1) + 1), (0, SLVERR))
     check_true(not periph.log, "no peripheral touched")
+
+
+@cocotb.test()
+async def test_an_address_with_no_window_is_a_decode_error(dut: Dut):
+    """No window hit: DECERR, zero data, no peripheral touched."""
+    periph = await setup(dut)
+    check_equal(await read(dut, 0x20000000), (0, DECERR))
+    check_equal(await write(dut, 0x50000000, 0x1), DECERR)
+    check_true(not periph.log, "no peripheral touched")
+
+
+@cocotb.test()
+async def test_the_padding_of_a_window_is_a_slave_error(dut: Dut):
+    """After the 64 KiB of registers of a window: SLVERR, no peripheral touched."""
+    periph = await setup(dut)
+    check_equal(await read(dut, periph_addr(3, 0) + 0x10000), (0, SLVERR))
+    check_equal(await write(dut, periph_addr(3, 0) + 0x20000, 0x1), SLVERR)
+    check_equal(await read(dut, periph_addr(3, 0x3FFF)), (slot_word(3), OKAY))
+    check_equal([entry[:2] for entry in periph.log], [("r", 1 << 3)])

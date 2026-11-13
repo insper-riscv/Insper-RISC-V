@@ -4,7 +4,7 @@
 
 ## 1. Overview
 
-The core receives three machine interrupt lines, as levels, in the core clock domain and with no synchronizer. With the Sscofpmf extension (`extras: [Sscofpmf]`, on in the `de0-cv`) the core also raises, inside, interrupt 13 for counter overflow (`LCOFIP` in bit 13 of `mip`), which has no external line.
+The core receives three machine interrupt lines, as levels, in the core clock domain and with no synchronizer. With the Sscofpmf extension (`Sscofpmf` in `core.extensions`, on in the `de0-cv`) the core also raises, inside, interrupt 13 for counter overflow (`LCOFIP` in bit 13 of `mip`), which has no external line.
 
 | Line | Origin | `mip` bit |
 | :--- | :--- | :--- |

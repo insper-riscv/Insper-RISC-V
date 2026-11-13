@@ -147,7 +147,7 @@ Seção 3.1.15, Tabelas 16 e 17, e 3.6. As exceções que dependem de modos, de 
 | ID | Requisito | Situação | Evidência |
 | :--- | :--- | :--- | :--- |
 | X1 | A causa 0 (endereço de instrução desalinhado) vem de salto ou desvio tomado com alvo não alinhado, com `mepc` no salto e `mtval` no alvo; um desvio não tomado não gera | Conforme | Programa `trap-misaligned-jump`, cocotb `CoreMisalignedJump` e `TrapUnit`, formal `trap_unit_props` |
-| X2 | A causa 1 (falha de acesso de instrução) para um acesso que viola um PMA; o manual recomenda com ênfase que seja precisa | Conforme | Com `has_access_faults` (ligado na `de0-cv` por `extras: [AccessFaults]`) a busca fora de ROM, RAM e janela externa trapa com `mtval` igual ao PC. cocotb `TrapUnitAccessFaults`, formal `trap_af_safety` (mutantes `af_fetch_below_illegal`, `af_fetch_tval_ea`), programa `access-fetch-fault` |
+| X2 | A causa 1 (falha de acesso de instrução) para um acesso que viola um PMA; o manual recomenda com ênfase que seja precisa | Conforme | Com `has_access_faults` (ligado na `de0-cv` por `AccessFaults` em `core.extensions`) a busca fora de ROM, RAM e janela externa trapa com `mtval` igual ao PC. cocotb `TrapUnitAccessFaults`, formal `trap_af_safety` (mutantes `af_fetch_below_illegal`, `af_fetch_tval_ea`), programa `access-fetch-fault` |
 | X3 | A causa 2 (instrução ilegal) cobre codificação reservada ou inexistente, `SYSTEM` não suportada, CSR inexistente e escrita em CSR somente leitura | Conforme | cocotb `CoreIllegalInstruction`, `CoreTrapPriority`, `ControlUnit`, `CsrDecode`, programas `trap-illegal`, `conformance-decode` e `priv-csr-priority`, formal `trap_unit_props` |
 | X4 | Os CSRs do bloco de depuração (`0x7B0` a `0x7BF`) e de gatilhos (`0x7A0` a `0x7A3`) não existem fora do modo de depuração e geram instrução ilegal | Conforme | cocotb `CoreTrapPriority` (`dcsr`, `dpc`, `dscratch0`, `dscratch1`, `0x7B4`, `0x7BF`, `tselect`, `tdata1`), programa `priv-csr-priority` (bloco de depuração) |
 | X5 | Os CSRs de modos e extensões que o hart não tem (`sstatus`, `satp`, `medeleg`, `mideleg`, `mcounteren`, `menvcfg`, `mseccfg`, `mtinst`, `mtval2`, PMP, `scountovf`) geram instrução ilegal | Conforme | cocotb `CoreTrapPriority`, `CsrFile` (`test_unknown_csr_is_illegal`), `CsrFileZihpm`, formal `csr_file_props` e `csr_hpm_props`, programa `trap-illegal` |
@@ -208,7 +208,7 @@ Seções 3.1.10 a 3.1.12. A conformidade do Zihpm, linha a linha, também está 
 
 ### 11.2. Sscofpmf
 
-Capítulo 14. A extensão é opcional e o projeto a implementa para o Zihpm, atrás do generic `has_sscofpmf` (desligado por padrão; a `de0-cv` a liga com `extras: [Sscofpmf]`). A matriz completa, com 13 linhas, está em [Core/docs/pt-br/ISA/Sscofpmf/conformance.md](../../../Core/docs/pt-br/ISA/Sscofpmf/conformance.md).
+Capítulo 14. A extensão é opcional e o projeto a implementa para o Zihpm, atrás do generic `has_sscofpmf` (desligado por padrão; a `de0-cv` a liga com `Sscofpmf` em `core.extensions`). A matriz completa, com 13 linhas, está em [Core/docs/pt-br/ISA/Sscofpmf/conformance.md](../../../Core/docs/pt-br/ISA/Sscofpmf/conformance.md).
 
 | ID | Requisito | Situação | Evidência |
 | :--- | :--- | :--- | :--- |
@@ -253,7 +253,7 @@ Seções 3.6 e 3.7.
 | ID | Requisito | Situação | Evidência |
 | :--- | :--- | :--- | :--- |
 | A1 | Os atributos de memória física (PMA) de cada região são fixos em projeto e conhecidos do software | Conforme | O mapa de memória do `platform.yaml` é a fonte, e o `generate-memory-map` o escreve no VHDL, no ligador e no cabeçalho do runtime |
-| A2 | Uma violação de PMA (execução em região sem busca, escrita em memória só de leitura, acesso a região sem memória) gera falha de acesso precisa, sempre que possível | Conforme | Com `has_access_faults`: ver X2 e X8. O mapa válido (ROM, RAM, janela externa e slots de periférico ocupados) vem do `platform.yaml`. Nas plataformas sem o extra `AccessFaults` o Core não gera as causas 1, 5 e 7 (escolha da plataforma) |
+| A2 | Uma violação de PMA (execução em região sem busca, escrita em memória só de leitura, acesso a região sem memória) gera falha de acesso precisa, sempre que possível | Conforme | Com `has_access_faults`: ver X2 e X8. O mapa válido (BOOT_MEMORY, FLASH e RAM no núcleo, e o que o interconector atende) vem do `platform.yaml`. Nas plataformas sem o extra `AccessFaults` o Core não gera as causas 1, 5 e 7 (escolha da plataforma) |
 | A3 | O acesso desalinhado a memória principal é executado ou trapa, e a execução não precisa ser atômica | Conforme | Zicclsm. Programa `misaligned-crossing`, ACT4 `rv32i/Zicclsm` (13) |
 | A4 | Os PMAs de atomicidade (AMO, reservabilidade), coerência e cache por região | Não aplicável | O Core não tem a extensão A nem coerência entre harts |
 | A5 | PMP (`pmpcfg`, `pmpaddr`) e Smepmp (`mseccfg`) | Não aplicável | O Core não implementa PMP; os endereços `0x3A0` a `0x3EF` e `0x747` são ilegais. cocotb `CoreTrapPriority` |
@@ -261,7 +261,7 @@ Seções 3.6 e 3.7.
 
 ### 14.1. Falhas de acesso
 
-O manual recomenda com ênfase que as violações de PMA sejam exceções precisas, "sempre que possível". O Core as gera com o generic `has_access_faults` (desligado por padrão; a `de0-cv` o liga com `extras: [AccessFaults]`). O mapa válido vem do `platform.yaml`: os genéricos de KiB que o Core já recebia (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) e o genérico `periph_slots`, que o `riscv-tools` escreve como `PERIPH_SLOTS` (um bit por janela de 256 MiB do barramento de periféricos que tem periférico).
+O manual recomenda com ênfase que as violações de PMA sejam exceções precisas, "sempre que possível". O Core as gera com o generic `has_access_faults` (desligado por padrão; a `de0-cv` o liga com `AccessFaults` em `core.extensions`). O mapa válido vem do `platform.yaml`: o Core conhece a BOOT_MEMORY, a FLASH e a RAM pelo `config_pkg`, e todo endereço fora delas sai pela porta externa. O interconector responde com `error` quando nenhuma memória do barramento nem janela de periférico atende o endereço (a tabela `PERIPH_BASES`, `PERIPH_MASKS` e `PERIPH_SIZES` do pacote de mapa), e o Core gera a falha de acesso de load ou de store pela porta `i_ext_error`.
 
 | Violação | Causa | `mtval` | Onde é decidida |
 | :--- | :---: | :--- | :--- |
@@ -290,7 +290,7 @@ A validade do endereço de dados sai de EX junto da classificação que o `reg_e
 
 ## 16. Lacunas e escolhas
 
-Não há lacuna aberta. Duas linhas dependem de a plataforma ligar a extensão: as falhas de acesso 1, 5 e 7 (X2, X8 e A2) só existem onde o `platform.yaml` tem `extras: [AccessFaults]`, hoje a `de0-cv`, e o `time` espelha o `mtime` (L8) onde há CLINT, hoje a `de0-cv` e a `modular`.
+Não há lacuna aberta. Duas linhas dependem de a plataforma ligar a extensão: as falhas de acesso 1, 5 e 7 (X2, X8 e A2) só existem onde o `platform.yaml` tem `AccessFaults` em `core.extensions`, hoje a `de0-cv`, e o `time` espelha o `mtime` (L8) onde há CLINT, hoje a `de0-cv` e a `modular`.
 
 As escolhas do EEI que mudam o que o programa vê são: `mvendorid`, `marchid`, `mimpid` e `mconfigptr` valem zero (D8 a D12); `mtval` é zero na instrução ilegal e no `EBREAK` (T8 e T9); o modo vetorado de `mtvec` pede `BASE` alinhada a 64 bytes (V5); a `WFI` é um `nop` (I2); a interrupção vence a exceção da mesma instrução (Q11); a `FENCE.I` espera um ciclo uma interrupção (Q12); o acesso desalinhado à memória principal é executado em duas etapas (X7).
 

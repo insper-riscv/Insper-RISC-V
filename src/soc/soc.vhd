@@ -8,35 +8,38 @@
 --
 --   | Região        | Face do SoC                                   | Backend que o topo liga                  |
 --   | BOOT_MEMORY   | o_if_addr, o_if_rden e i_boot_data            | bloco de memória do FPGA                  |
---   | ROM interna   | o_if_addr e o_rom_addr2 com i_rom_data(2)     | bloco de memória de duas portas           |
---   | ROM externa   | o_flash_* e i_flash_*                         | chip de FLASH (modelo ou dispositivo)     |
---   | RAM interna   | o_ram_* e i_ram_rdata                         | bloco de memória do FPGA                  |
---   | RAM externa   | o_ramd_* e o_rami_* com i_ramd_* e i_rami_*   | chip de RAM (modelo ou dispositivo)       |
+--   | FLASH direta  | o_if_addr e o_rom_addr2 com i_rom_data(2)     | bloco de memória de duas portas           |
+--   | FLASH no bus  | o_flash_* e i_flash_*                         | chip de FLASH (modelo ou dispositivo)     |
+--   | RAM direta    | o_ram_* e i_ram_rdata                         | bloco de memória do FPGA                  |
+--   | RAM no bus    | o_ramd_* e o_rami_* com i_ramd_* e i_rami_*   | chip de RAM (modelo ou dispositivo)       |
 --
---   rom_via_port = rom_external ou has_icache
---   ram_via_port = ram_external ou HAS_DCACHE (do config_pkg)
+--   rom_via_port = rom_external (FLASH_ON_BUS do config_pkg)
+--   ram_via_port = ram_external (RAM_ON_BUS do config_pkg)
 --
--- O núcleo recebe rom_via_port e ram_via_port nos seus genéricos rom_external e ram_external,
--- porque uma cache só existe do lado do protocolo da porta. A face de uma região que não é
--- alcançada pela porta fica parada (saídas em zero, entradas ignoradas).
+-- Uma cache só existe do lado do protocolo do barramento: a de instruções exige rom_external e a de dados,
+-- ram_external (a regra do check_isa do config_pkg). O núcleo conhece só a BOOT_MEMORY, a FLASH e a RAM, e
+-- todo endereço fora delas, ou numa região que está no barramento, sai pela porta externa e chega ao
+-- interconector. A face de uma região que não está no barramento fica parada (saídas em zero, entradas
+-- ignoradas).
 --
---   | Lado da ROM                  | Busca de instrução                | Dado da ROM                   |
---   | interna, sem cache           | FLASH interna do núcleo           | segunda porta da FLASH interna |
---   | via porta, sem cache         | ponte de busca (ifetch_bridge)    | roteador, árbitro e chip      |
---   | via porta, com cache         | cache de instruções               | roteador, árbitro e chip      |
+--   | Lado da FLASH                | Busca de instrução                | Dado da FLASH                  |
+--   | direta                       | FLASH interna do núcleo           | segunda porta da FLASH interna |
+--   | no barramento, sem cache     | ponte de busca (ifetch_bridge)    | roteador, árbitro e chip       |
+--   | no barramento, com cache     | cache de instruções               | roteador, árbitro e chip       |
 --
 --   | Lado da RAM                  | Acesso a dados                    |
---   | interna, sem cache           | RAM interna do núcleo             |
---   | via porta, sem cache         | interconexão direto ao chip       |
---   | via porta, com cache         | interconexão, cache de dados e chip |
+--   | direta                       | RAM interna do núcleo             |
+--   | no barramento, sem cache     | interconexão direto ao chip       |
+--   | no barramento, com cache     | interconexão, cache de dados e chip |
 --
--- Com a ROM e a RAM via porta, um roteador por mestre separa a ROM da RAM, e a ROM tem um árbitro entre
--- a busca e os dados. Com só a ROM via porta, o roteador dos dados leva o pedido à FLASH e responde zero
--- fora dela. Com só a RAM via porta, a cache de dados (ou a interconexão, sem ela) fala direto com o chip.
+-- Com a FLASH e a RAM no barramento, um roteador por mestre separa a ROM da RAM, e a ROM tem um árbitro entre
+-- a busca e os dados. Com só a FLASH no barramento, o roteador dos dados leva o pedido à FLASH e responde zero
+-- fora dela. Com só a RAM no barramento, a cache de dados (ou a interconexão, sem ela) fala direto com o chip.
 --
--- Os periféricos (chaves, botões, display, UART, temporizador, CLINT e PLIC) ficam na janela de
--- periféricos do núcleo. Os papéis de E/S têm a largura por generic (switches_width, keys_width e
--- display_digits), e um papel de largura zero é omitido. A polaridade dos pinos é um generic por papel,
+-- Os periféricos (chaves, botões, display, UART, temporizador, CLINT e PLIC) ficam atrás do interconector,
+-- nas janelas da tabela de periféricos da plataforma (periph_bases e periph_masks, do pacote
+-- de mapa), e o SoC liga cada um pelo índice dele na tabela (os generics *_index). Os papéis de
+-- E/S têm a largura por generic (switches_width, keys_width e display_digits), e um papel de largura zero é omitido. A polaridade dos pinos é um generic por papel,
 -- resolvido por quem instancia o SoC; o periférico vê sempre o programa ativo em '1'.
 --
 -- O núcleo e o SoC leem a ISA (base, extensões, interrupções e a cache de dados) do config_pkg gerado do
@@ -50,25 +53,31 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.config_pkg.all;
+use work.interconnect_pkg.all;
 
 entity soc is
     generic (
         -- Tamanho da BOOT_MEMORY em bytes, uma potência de dois de pelo menos 1 KiB.
         boot_memory_size_bytes : positive;
-        -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_MEMORY.
-        rom_end_kib            : natural;
+        -- Fim exclusivo, em KiB, da FLASH, que começa logo depois da BOOT_MEMORY.
+        rom_end_kib          : natural;
         -- Base, em KiB, da RAM.
         ram_base_kib           : natural;
         -- Fim exclusivo, em KiB, da RAM.
         ram_end_kib            : natural;
-        -- Base, em KiB, da janela externa de periféricos e outros dispositivos.
-        ext_base_kib           : natural;
-        -- Base, em KiB, da janela de periféricos.
-        periph_base_kib        : natural;
-        -- A ROM é externa (um chip fora do núcleo, alcançado pela porta).
+        -- A FLASH é alcançada pelo barramento, um chip fora do núcleo (FLASH_ON_BUS do pacote de mapa).
         rom_external           : boolean                       := false;
-        -- A RAM é externa (um chip fora do núcleo, alcançado pela porta).
+        -- A RAM é alcançada pelo barramento, um chip fora do núcleo (RAM_ON_BUS do pacote de mapa).
         ram_external           : boolean                       := false;
+        -- Número de janelas da tabela de periféricos (PERIPH_COUNT do pacote de mapa).
+        periph_count           : natural                       := DEFAULT_PERIPH_COUNT;
+        -- Base de cada janela de periférico (PERIPH_BASES do pacote de mapa).
+        periph_bases           : addr_array_t                  := default_bases;
+        -- Máscara de cada janela de periférico (PERIPH_MASKS do pacote de mapa).
+        periph_masks           : addr_array_t                  := default_masks;
+        -- O padding de uma janela de periférico termina em erro (STRICT_PERIPH do pacote de mapa).
+        strict_periph          : boolean                       := true;
         -- Existe cache de instruções; sem ela, a ROM via porta é lida pela ponte de busca.
         has_icache             : boolean                       := false;
         -- Tamanho da cache de instruções em bits, uma potência de dois (4096 é 4 kbit).
@@ -76,20 +85,18 @@ entity soc is
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
         dcache_size_bits       : positive                      := 4096;
         -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
-        -- MiB).
+        -- MiB); I_CACHE_WINDOW_BITS e D_CACHE_WINDOW_BITS do pacote de mapa têm o mesmo valor.
         cache_window_bits      : natural range 26 to 29        := 26;
         -- Quantidade de contadores de eventos do Zihpm (de 0 a 29), com os índices a partir de 3.
         hpm_counters           : natural range 0 to 29         := 29;
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64         := 64;
-        -- Quantidade de janelas de periférico do mapa, passada ao núcleo.
-        periph_slots           : std_logic_vector(7 downto 0)  := (others => '1');
         -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
         clint_tick_cycles      : positive                      := 1;
-        -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
-        clint_id               : natural range 0 to 7          := 6;
-        -- Índice da janela de 256 MiB do PLIC, o controlador das interrupções externas.
-        plic_id                : natural range 0 to 7          := 7;
+        -- Índice do CLINT na tabela de periféricos (CLINT_INDEX do pacote de mapa); o padrão é o da tabela padrão de oito janelas.
+        clint_index            : natural                       := 6;
+        -- Índice do PLIC, o controlador das interrupções externas, na tabela de periféricos.
+        plic_index             : natural                       := 7;
         -- Número de fontes do PLIC; as linhas são as LINE_* abaixo, a partir da 1.
         plic_n_sources         : positive range 6 to 1023      := 6;
         -- Largura da prioridade e do limiar do PLIC, em bits.
@@ -102,52 +109,54 @@ entity soc is
         -- A cache de instruções escolhe a região pelo endereço registrado, sem a porta de seleção e sem conferir o
         -- endereço a cada consulta: tira a decodificação do PC do caminho até a cache (exige os dois clocks defasados).
         fast_icache_select     : boolean                       := false;
-        -- A última página de 4 KiB da RAM (bits 31:12 em bypass_page) nunca é guardada na cache de dados: ali ficam as
+        -- A última página de 4 KiB da RAM (bits ADDR_BITS-1:12 em bypass_page) nunca é guardada na cache de dados: ali ficam as
         -- palavras que o hospedeiro compartilha com o programa.
         has_dcache_bypass      : boolean                       := false;
         -- Página de 4 KiB, bits 31:12 do endereço, que a cache de dados não guarda com has_dcache_bypass.
-        bypass_page            : std_logic_vector(19 downto 0) := (others => '0');
+        bypass_page            : std_logic_vector(ADDR_BITS - 13 downto 0) := (others => '0');
         -- Controlador de FLASH da atualização de programa: comandos do chip (apagar, gravar, proteger) pela janela
-        -- flash_ctrl_id, com a interrupção na linha LINE_FLASH e a invalidação das caches pela região gravada.
+        -- flash_ctrl_index, com a interrupção na linha LINE_FLASH e a invalidação das caches pela região gravada.
         has_flash_ctrl         : boolean                       := false;
-        -- Índice da janela do controlador de FLASH.
-        flash_ctrl_id          : natural range 0 to 7          := 3;
-        -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
-        has_timer              : boolean                       := false;
-        -- Índice da janela do temporizador.
-        timer_id               : natural range 0 to 7          := 0;
+        -- Índice do controlador de FLASH na tabela de periféricos.
+        flash_ctrl_index       : natural                       := 3;
+        -- Índice de cada temporizador de uso geral na tabela de periféricos (TIMER_INDICES do pacote de mapa): uma
+        -- instância por elemento, sem teto; vazio não instancia nenhum.
+        timer_indices          : integer_vector                := NO_INTEGERS;
+        -- Fonte do PLIC de cada temporizador, na mesma ordem (TIMER_IRQ_IDS do pacote de mapa); zero deixa a
+        -- interrupção do temporizador sem linha.
+        timer_irq_ids          : integer_vector                := NO_INTEGERS;
         -- Papel das chaves, num bloco GPIO; omitido quando switches_width é zero.
         has_switches           : boolean                       := false;
-        -- Índice da janela das chaves.
-        switches_id            : natural range 0 to 7          := 1;
+        -- Índice das chaves na tabela de periféricos.
+        switches_index         : natural                       := 1;
         -- Número de chaves (largura do papel); zero omite o papel.
         switches_width         : natural range 0 to 32         := 10;
         -- Chaves ativas em nível baixo no pino (o programa as vê ativas em '1').
         switches_active_low    : boolean                       := false;
         -- Papel dos botões, num bloco GPIO; omitido quando keys_width é zero.
         has_keys               : boolean                       := false;
-        -- Índice da janela dos botões.
-        keys_id                : natural range 0 to 7          := 2;
+        -- Índice dos botões na tabela de periféricos.
+        keys_index             : natural                       := 2;
         -- Número de botões (largura do papel); zero omite o papel.
         keys_width             : natural range 0 to 32         := 4;
         -- Botões ativos em nível baixo no pino (o programa os vê ativos em '1').
         keys_active_low        : boolean                       := false;
         -- Papel do display de sete segmentos; omitido quando display_digits é zero.
         has_display            : boolean                       := false;
-        -- Índice da janela do display.
-        display_id             : natural range 0 to 7          := 5;
+        -- Índice do display na tabela de periféricos.
+        display_index          : natural                       := 5;
         -- Número de dígitos do display (largura do papel); zero omite o papel.
         display_digits         : natural range 0 to 8          := 6;
         -- Segmentos acesos em nível baixo no pino.
         display_active_low     : boolean                       := true;
         -- UART cuja outra ponta é o hospedeiro no JTAG.
         has_uart_jtag          : boolean                       := false;
-        -- Índice da janela da UART via JTAG.
-        uart_jtag_id           : natural range 0 to 7          := 4;
+        -- Índice da UART via JTAG na tabela de periféricos.
+        uart_jtag_index        : natural                       := 4;
         -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
         has_uart_pins          : boolean                       := false;
-        -- Índice da janela da UART via pinos.
-        uart_pins_id           : natural range 0 to 7          := 3;
+        -- Índice da UART via pinos na tabela de periféricos.
+        uart_pins_index        : natural                       := 3;
         -- Polaridade do pino de transmissão do console em pinos: verdadeiro inverte o nível de o_uart_tx.
         uart_tx_invert         : boolean                       := false;
         -- Polaridade do pino de recepção do console em pinos: verdadeiro inverte o nível de i_uart_rx.
@@ -163,19 +172,19 @@ entity soc is
         -- Pulso de retirada de instrução do núcleo, que o testbench conta para o CPI.
         o_retire            : out   std_logic;
         -- Endereço de palavra da busca de instrução, para a BOOT_MEMORY e a ROM interna.
-        o_if_addr           : out   std_logic_vector(29 downto 0);
+        o_if_addr           : out   std_logic_vector(ADDR_BITS - 3 downto 0);
         -- Habilitação de leitura da busca de instrução ('1' = lê).
         o_if_rden           : out   std_logic;
         -- Palavra de instrução lida da BOOT_MEMORY.
-        i_boot_data         : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_boot_data         : in    word_t := (others => '0');
         -- Palavra de instrução lida da ROM interna.
-        i_rom_data          : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_rom_data          : in    word_t := (others => '0');
         -- Endereço de palavra da segunda porta da ROM interna (estágio MEM).
-        o_rom_addr2         : out   std_logic_vector(29 downto 0);
+        o_rom_addr2         : out   std_logic_vector(ADDR_BITS - 3 downto 0);
         -- Habilitação de leitura da segunda porta da ROM interna ('1' = lê).
         o_rom_rden2         : out   std_logic;
         -- Palavra de dado lida da segunda porta da ROM interna.
-        i_rom_data2         : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_rom_data2         : in    word_t := (others => '0');
         -- Habilita geral da RAM interna do núcleo (estágio MEM).
         o_ram_en            : out   std_logic;
         -- Habilita de escrita da RAM interna do núcleo.
@@ -183,15 +192,15 @@ entity soc is
         -- Habilita de leitura da RAM interna do núcleo.
         o_ram_rden          : out   std_logic;
         -- Endereço de byte do acesso à RAM interna do núcleo.
-        o_ram_addr          : out   std_logic_vector(31 downto 0);
+        o_ram_addr          : out   addr_t;
         -- Dado de escrita da RAM interna do núcleo.
-        o_ram_wdata         : out   std_logic_vector(31 downto 0);
+        o_ram_wdata         : out   word_t;
         -- Habilita de bytes da escrita na RAM interna do núcleo.
         o_ram_byteena       : out   std_logic_vector(3 downto 0);
         -- Dado lido da RAM interna do núcleo.
-        i_ram_rdata         : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_ram_rdata         : in    word_t := (others => '0');
         -- Chip de FLASH: endereço de byte do acesso.
-        o_flash_addr        : out   std_logic_vector(31 downto 0);
+        o_flash_addr        : out   addr_t;
         -- Chip de FLASH: habilitação de leitura ('1' = lê).
         o_flash_rden        : out   std_logic;
         -- Chip de FLASH: pedido de linha inteira de cache ('1' = acesso em linha).
@@ -203,16 +212,16 @@ entity soc is
         -- Chip de FLASH: ocupado com um acesso, evento do Zihpm ('1' = ocupado).
         i_flash_busy        : in    std_logic                     := '0';
         -- Chip de FLASH: palavra lida.
-        i_flash_rdata       : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_flash_rdata       : in    word_t := (others => '0');
         -- Chip de FLASH: linha lida, barramento largo de 96 bits.
-        i_flash_rdata_x     : in    std_logic_vector(95 downto 0) := (others => '0');
+        i_flash_rdata_x     : in    std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
         -- Controlador de FLASH: pulso que entrega um comando ao chip.
         o_flash_cmd_valid   : out   std_logic;
         -- Controlador de FLASH: código do comando (001 habilitar escrita, 010 apagar, 011 gravar, 100 proteger, 101
         -- desproteger).
         o_flash_cmd_op      : out   std_logic_vector(2 downto 0);
         -- Controlador de FLASH: endereço de byte do comando.
-        o_flash_cmd_addr    : out   std_logic_vector(31 downto 0);
+        o_flash_cmd_addr    : out   addr_t;
         -- Controlador de FLASH: o chip executa um apagar ou uma gravação ('1' = ocupado).
         i_flash_cmd_busy    : in    std_logic                     := '0';
         -- Controlador de FLASH: o latch de escrita do chip está armado ('1').
@@ -222,17 +231,17 @@ entity soc is
         -- Controlador de FLASH: índice da palavra do buffer de página lida pela gravação do chip.
         i_flash_buf_idx     : in    std_logic_vector(5 downto 0)  := (others => '0');
         -- Controlador de FLASH: palavra do buffer de página, com leitura registrada.
-        o_flash_buf_data    : out   std_logic_vector(31 downto 0);
+        o_flash_buf_data    : out   word_t;
         -- Região da FLASH regravada: pulso que derruba as linhas das caches de i_inval_first a i_inval_last (bytes).
         i_inval_valid       : in    std_logic                     := '0';
         -- Região da FLASH regravada: primeiro endereço de byte.
-        i_inval_first       : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_inval_first       : in    addr_t := (others => '0');
         -- Região da FLASH regravada: último endereço de byte.
-        i_inval_last        : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_inval_last        : in    addr_t := (others => '0');
         -- Chip de RAM, porta de dados: endereço de byte do acesso.
-        o_ramd_addr         : out   std_logic_vector(31 downto 0);
+        o_ramd_addr         : out   addr_t;
         -- Chip de RAM, porta de dados: dado de escrita.
-        o_ramd_wdata        : out   std_logic_vector(31 downto 0);
+        o_ramd_wdata        : out   word_t;
         -- Chip de RAM, porta de dados: habilitação de bytes da escrita.
         o_ramd_byteena      : out   std_logic_vector(3 downto 0);
         -- Chip de RAM, porta de dados: habilitação de leitura ('1' = lê).
@@ -244,15 +253,15 @@ entity soc is
         -- Chip de RAM, porta de dados: avanço para a próxima palavra da linha ('1' = avança).
         o_ramd_advance      : out   std_logic;
         -- Chip de RAM, porta de dados: linha a escrever, barramento largo de 96 bits.
-        o_ramd_wdata_x      : out   std_logic_vector(95 downto 0);
+        o_ramd_wdata_x      : out   std_logic_vector(3 * XLEN - 1 downto 0);
         -- Chip de RAM, porta de dados: acesso concluído ('1' = pronto).
         i_ramd_ready        : in    std_logic                     := '0';
         -- Chip de RAM, porta de dados: palavra lida.
-        i_ramd_rdata        : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_ramd_rdata        : in    word_t := (others => '0');
         -- Chip de RAM, porta de dados: linha lida, barramento largo de 96 bits.
-        i_ramd_rdata_x      : in    std_logic_vector(95 downto 0) := (others => '0');
+        i_ramd_rdata_x      : in    std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
         -- Chip de RAM, porta de instruções: endereço de byte do acesso.
-        o_rami_addr         : out   std_logic_vector(31 downto 0);
+        o_rami_addr         : out   addr_t;
         -- Chip de RAM, porta de instruções: habilitação de leitura ('1' = lê).
         o_rami_rden         : out   std_logic;
         -- Chip de RAM, porta de instruções: pedido de linha inteira de cache ('1' = acesso em linha).
@@ -262,9 +271,9 @@ entity soc is
         -- Chip de RAM, porta de instruções: acesso concluído ('1' = pronto).
         i_rami_ready        : in    std_logic                     := '0';
         -- Chip de RAM, porta de instruções: palavra lida.
-        i_rami_rdata        : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_rami_rdata        : in    word_t := (others => '0');
         -- Chip de RAM, porta de instruções: linha lida, barramento largo de 96 bits.
-        i_rami_rdata_x      : in    std_logic_vector(95 downto 0) := (others => '0');
+        i_rami_rdata_x      : in    std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
         -- Chaves (pinos do GPIO), uma por bit do papel.
         io_switches         : inout std_logic_vector(switches_width - 1 downto 0);
         -- Botões (pinos do GPIO), um por bit do papel.
@@ -325,10 +334,10 @@ architecture behaviour of soc is
     -- três linhas chegam ao núcleo, que só as habilita com Zicsr.
     constant HAS_INTERRUPTS : boolean := work.config_pkg.HAS_INTERRUPTS;
 
-    -- A ROM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de instruções.
-    constant ROM_PORT : boolean := rom_external or has_icache;
-    -- A RAM é alcançada pela porta do núcleo: está fora do chip ou atrás da cache de dados.
-    constant RAM_PORT : boolean := ram_external or HAS_DCACHE;
+    -- A ROM é alcançada pela porta do núcleo, pelo barramento: está fora do chip, com ou sem cache de instruções.
+    constant ROM_PORT : boolean := rom_external;
+    -- A RAM é alcançada pela porta do núcleo, pelo barramento: está fora do chip, com ou sem cache de dados.
+    constant RAM_PORT : boolean := ram_external;
 
     -- O papel de E/S existe: pedido pelo generic e com largura maior que zero.
     constant HAS_SWITCHES_ROLE : boolean := has_switches and switches_width > 0;
@@ -340,7 +349,7 @@ architecture behaviour of soc is
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
         HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
-        or has_timer;
+        or timer_indices'length > 0;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -352,8 +361,7 @@ architecture behaviour of soc is
     constant LINE_SWITCHES  : positive := 3;
     -- Botões KEY (GPIO).
     constant LINE_KEYS      : positive := 4;
-    -- Temporizador de uso geral.
-    constant LINE_TIMER     : positive := 5;
+    -- Os temporizadores de uso geral não têm linha fixa: cada um usa a sua de timer_irq_ids (a 5 é a primeira livre).
     -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
     constant LINE_FLASH     : positive := 6;
 
@@ -381,67 +389,129 @@ architecture behaviour of soc is
     -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
     constant D_ROM_END_KIB  : natural := pick(HAS_DCACHE, FLASH_ALIAS_END_KIB, rom_end_kib);
 
-    -- Bit da janela de um periférico: o do índice quando ele existe e zero quando não existe.
+    -- Periféricos de instância única que o SoC liga, na ordem em que as asserções os conferem: CLINT, PLIC, chaves,
+    -- botões, display, UART via JTAG, UART via pinos e controlador de FLASH.
+    constant PRESENT : boolean_vector(0 to 7) :=
+        (HAS_INTERRUPTS, HAS_INTERRUPTS, HAS_SWITCHES_ROLE, HAS_KEYS_ROLE, HAS_DISPLAY_ROLE,
+         has_uart_jtag, has_uart_pins, has_flash_ctrl);
+    -- Índice de cada um desses periféricos na tabela de janelas.
+    constant INDICES : integer_vector(0 to 7) :=
+        (clint_index, plic_index, switches_index, keys_index, display_index, uart_jtag_index,
+         uart_pins_index, flash_ctrl_index);
 
-    function slot_vec (present : boolean; id : natural) return std_logic_vector is
+    -- Os periféricos presentes têm índice dentro da tabela e dois deles não dividem o mesmo índice.
+    function indices_valid return boolean is
     begin
 
-        if present then
-            return std_logic_vector(to_unsigned(2 ** id, 8));
-        end if;
+        for i in PRESENT'range loop
 
-        return x"00";
+            if PRESENT(i) and INDICES(i) >= periph_count then
+                return false;
+            end if;
 
-    end function slot_vec;
+            for j in 0 to i - 1 loop
 
-    -- Janela do CLINT (existe com HAS_INTERRUPTS).
-    constant SLOT_CLINT      : std_logic_vector(7 downto 0) := slot_vec(HAS_INTERRUPTS, clint_id);
-    -- Janela do PLIC (existe com HAS_INTERRUPTS).
-    constant SLOT_PLIC       : std_logic_vector(7 downto 0) := slot_vec(HAS_INTERRUPTS, plic_id);
-    -- Janela do temporizador.
-    constant SLOT_TIMER      : std_logic_vector(7 downto 0) := slot_vec(has_timer, timer_id);
-    -- Janela das chaves.
-    constant SLOT_SWITCHES   : std_logic_vector(7 downto 0) := slot_vec(HAS_SWITCHES_ROLE, switches_id);
-    -- Janela dos botões.
-    constant SLOT_KEYS       : std_logic_vector(7 downto 0) := slot_vec(HAS_KEYS_ROLE, keys_id);
-    -- Janela do display.
-    constant SLOT_DISPLAY    : std_logic_vector(7 downto 0) := slot_vec(HAS_DISPLAY_ROLE, display_id);
-    -- Janela da UART via JTAG.
-    constant SLOT_UART_JTAG  : std_logic_vector(7 downto 0) := slot_vec(has_uart_jtag, uart_jtag_id);
-    -- Janela da UART via pinos.
-    constant SLOT_UART_PINS  : std_logic_vector(7 downto 0) := slot_vec(has_uart_pins, uart_pins_id);
-    -- Janela do controlador de FLASH.
-    constant SLOT_FLASH_CTRL : std_logic_vector(7 downto 0) :=
-        slot_vec(has_flash_ctrl, flash_ctrl_id);
+                if PRESENT(i) and PRESENT(j) and INDICES(i) = INDICES(j) then
+                    return false;
+                end if;
 
-    -- Janelas ocupadas pelos periféricos presentes, uma por bit.
-    constant SLOTS_USED : std_logic_vector(7 downto 0) :=
-        SLOT_CLINT or SLOT_PLIC or SLOT_TIMER or SLOT_SWITCHES or SLOT_KEYS or SLOT_DISPLAY or
-        SLOT_UART_JTAG or SLOT_UART_PINS or SLOT_FLASH_CTRL;
-    -- Soma das janelas dos presentes: é igual a SLOTS_USED só quando nenhum índice se repete.
-    constant SLOTS_SUM  : natural                      :=
-        to_integer(unsigned(SLOT_CLINT)) + to_integer(unsigned(SLOT_PLIC)) +
-        to_integer(unsigned(SLOT_TIMER)) + to_integer(unsigned(SLOT_SWITCHES)) +
-        to_integer(unsigned(SLOT_KEYS)) + to_integer(unsigned(SLOT_DISPLAY)) +
-        to_integer(unsigned(SLOT_UART_JTAG)) + to_integer(unsigned(SLOT_UART_PINS)) +
-        to_integer(unsigned(SLOT_FLASH_CTRL));
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function indices_valid;
+
+    -- Cada temporizador tem índice dentro da tabela, que não é o de outro periférico nem o de outro temporizador.
+    function timer_indices_valid return boolean is
+    begin
+
+        for t in timer_indices'range loop
+
+            if timer_indices(t) < 0 or timer_indices(t) >= periph_count then
+                return false;
+            end if;
+
+            for i in PRESENT'range loop
+
+                if PRESENT(i) and INDICES(i) = timer_indices(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+            for u in timer_indices'low to t - 1 loop
+
+                if timer_indices(u) = timer_indices(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function timer_indices_valid;
+
+    -- As linhas do PLIC dos temporizadores: cada uma cabe no PLIC, não é linha fixa de outro periférico e não repete
+    -- (zero deixa o temporizador sem linha).
+    function timer_lines_valid return boolean is
+    begin
+
+        for t in timer_irq_ids'range loop
+
+            if timer_irq_ids(t) < 0 or timer_irq_ids(t) > plic_n_sources then
+                return false;
+            end if;
+
+            if timer_irq_ids(t) /= 0
+               and (timer_irq_ids(t) = LINE_UART or timer_irq_ids(t) = LINE_UART_JTAG
+                    or timer_irq_ids(t) = LINE_SWITCHES or timer_irq_ids(t) = LINE_KEYS
+                    or timer_irq_ids(t) = LINE_FLASH) then
+                return false;
+            end if;
+
+            for u in timer_irq_ids'low to t - 1 loop
+
+                if timer_irq_ids(t) /= 0 and timer_irq_ids(u) = timer_irq_ids(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function timer_lines_valid;
+
+    -- Primeiro endereço da FLASH, do config_pkg.
+    constant FLASH_FIRST : addr_t := std_logic_vector(work.config_pkg.FLASH_BASE(ADDR_BITS - 1 downto 0));
+    -- Último endereço da FLASH, do config_pkg.
+    constant FLASH_LAST  : addr_t := std_logic_vector(resize(work.config_pkg.FLASH_END - 1, ADDR_BITS));
+    -- Primeiro endereço da RAM, do config_pkg.
+    constant RAM_FIRST   : addr_t := std_logic_vector(work.config_pkg.RAM_BASE(ADDR_BITS - 1 downto 0));
+    -- Último endereço da RAM, do config_pkg.
+    constant RAM_LAST    : addr_t := std_logic_vector(resize(work.config_pkg.RAM_END - 1, ADDR_BITS));
 
     -- Tamanho máximo, em KiB, de uma região que a janela das caches cobre.
     constant CACHE_WINDOW_KIB : natural := 2 ** (cache_window_bits - 10);
 
     -- Sinais do núcleo: busca de instrução e FLASH interna.
-    signal if_addr     : std_logic_vector(31 downto 0);
+    signal if_addr     : addr_t;
     -- Habilitação de leitura da busca de instrução ('1' = lê).
     signal if_rden     : std_logic;
     -- Endereço da segunda porta da FLASH (estágio MEM).
-    signal flash_addr2 : std_logic_vector(31 downto 0);
+    signal flash_addr2 : addr_t;
     -- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
     signal flash_rden2 : std_logic;
 
     -- Sinais do núcleo: RAM interna.
-    signal ram_addr    : std_logic_vector(31 downto 0);
+    signal ram_addr    : addr_t;
     -- Dado de escrita na RAM do núcleo.
-    signal ram_wdata   : std_logic_vector(31 downto 0);
+    signal ram_wdata   : word_t;
     -- Habilitação geral da RAM do núcleo (estágio MEM).
     signal ram_en      : std_logic;
     -- Habilitação de escrita da RAM do núcleo ('1' = escreve).
@@ -469,24 +539,26 @@ architecture behaviour of soc is
     signal irq_external   : std_logic                                 := '0';
     -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
     signal irq_lines      : std_logic_vector(plic_n_sources downto 1) := (others => '0');
+    -- Interrupção de overflow de cada temporizador, na ordem de timer_indices.
+    signal timer_irq      : std_logic_vector(timer_indices'range)     := (others => '0');
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico (a janela do PLIC é a maior).
     signal p_addr    : std_logic_vector(plic_addr_width - 1 downto 0);
     -- Janela de periféricos: dado de escrita.
-    signal p_wdata   : std_logic_vector(31 downto 0);
+    signal p_wdata   : word_t;
     -- Janela de periféricos: habilita de bytes da escrita.
     signal p_byteena : std_logic_vector(3 downto 0);
     -- Janela de periféricos: pulso de escrita, um bit por periférico.
-    signal p_we      : std_logic_vector(7 downto 0);
+    signal p_we      : std_logic_vector(periph_count - 1 downto 0);
     -- Janela de periféricos: pulso de leitura, um bit por periférico.
-    signal p_re      : std_logic_vector(7 downto 0);
+    signal p_re      : std_logic_vector(periph_count - 1 downto 0);
     -- Janela de periféricos: dados lidos, 32 bits por periférico.
-    signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+    signal p_rdata   : std_logic_vector(periph_count * XLEN - 1 downto 0) := (others => '0');
 
     -- Sinais do núcleo: barramento externo de dados.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Dado de escrita do barramento externo do núcleo.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Habilitação de bytes da escrita no barramento externo.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Habilitação de leitura do barramento externo ('1' = lê).
@@ -494,14 +566,14 @@ architecture behaviour of soc is
     -- Habilitação de escrita do barramento externo ('1' = escreve).
     signal sdram_wren    : std_logic;
     -- Dado lido do barramento externo devolvido ao núcleo.
-    signal sdram_rdata   : std_logic_vector(31 downto 0) := (others => '0');
+    signal sdram_rdata   : word_t := (others => '0');
     -- Resposta do barramento externo pronta ('1' = pronta).
     signal sdram_ready   : std_logic                     := '1';
     -- Avanço do pipeline do núcleo liberado pela memória ('1' = avança).
     signal mem_advance   : std_logic;
 
     -- Sinais do núcleo: cache de instruções.
-    signal ic_data  : std_logic_vector(31 downto 0) := (others => '0');
+    signal ic_data  : word_t := (others => '0');
     -- Cache de instruções pronta com a palavra pedida ('1' = pronta).
     signal ic_ready : std_logic                     := '1';
     -- Seleciona a cache de instruções para a região da ROM ('1' = selecionada).
@@ -513,6 +585,8 @@ architecture behaviour of soc is
 
     -- Pulso de retirada de instrução do núcleo, que o testbench conta para o CPI.
     signal core_retire : std_logic;
+    -- O acesso externo do núcleo terminou sem escravo que o atenda: falha de acesso, junto com o ready.
+    signal ext_error   : std_logic;
 
     -- Eventos das caches e da FLASH para o Zihpm.
     signal ic_miss        : std_logic := '0';
@@ -524,9 +598,9 @@ architecture behaviour of soc is
     signal hpm_ext_events : std_logic_vector(2 downto 0);
 
     -- Interconexão e cache de dados: lado do núcleo e lado da memória.
-    signal m_addr    : std_logic_vector(31 downto 0);
+    signal m_addr    : addr_t;
     -- Interconexão do núcleo para a cache de dados: dado de escrita.
-    signal m_wdata   : std_logic_vector(31 downto 0);
+    signal m_wdata   : word_t;
     -- Interconexão do núcleo para a cache de dados: habilitação de bytes da escrita.
     signal m_byteena : std_logic_vector(3 downto 0);
     -- Interconexão do núcleo para a cache de dados: habilitação de leitura ('1' = lê).
@@ -536,11 +610,11 @@ architecture behaviour of soc is
     -- Interconexão do núcleo para a cache de dados: acesso concluído ('1' = pronto).
     signal m_ready   : std_logic;
     -- Interconexão do núcleo para a cache de dados: dado lido.
-    signal m_rdata   : std_logic_vector(31 downto 0);
+    signal m_rdata   : word_t;
     -- Cache de dados, lado da memória: endereço de byte do acesso.
-    signal dd_addr   : std_logic_vector(31 downto 0);
+    signal dd_addr   : addr_t;
     -- Cache de dados, lado da memória: dado de escrita.
-    signal dd_wdata  : std_logic_vector(31 downto 0);
+    signal dd_wdata  : word_t;
     -- Cache de dados, lado da memória: habilitação de bytes da escrita.
     signal dd_be     : std_logic_vector(3 downto 0);
     -- Cache de dados, lado da memória: habilitação de leitura ('1' = lê).
@@ -554,18 +628,18 @@ architecture behaviour of soc is
     -- Cache de dados, lado da memória: acesso concluído ('1' = pronto).
     signal dd_ready  : std_logic;
     -- Cache de dados, lado da memória: dado lido.
-    signal dd_rdata  : std_logic_vector(31 downto 0);
+    signal dd_rdata  : word_t;
     -- Cache de dados, lado da memória: linha a escrever, barramento largo de 96 bits.
-    signal dd_wdx    : std_logic_vector(95 downto 0);
+    signal dd_wdx    : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Cache de dados, lado da memória: linha lida, barramento largo de 96 bits.
-    signal dd_rdx    : std_logic_vector(95 downto 0);
+    signal dd_rdx    : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Cache de dados concluiu o acesso pendente ('1' = concluído).
     signal dc_done   : std_logic;
     -- Cache de dados ocupada com um acesso ao chip ('1' = ocupada).
     signal dc_busy   : std_logic;
 
     -- Cache de instruções: lado da memória.
-    signal id_addr  : std_logic_vector(31 downto 0);
+    signal id_addr  : addr_t;
     -- Cache de instruções, lado da memória: habilitação de leitura ('1' = lê).
     signal id_rden  : std_logic;
     -- Cache de instruções, lado da memória: avanço para a próxima palavra da linha ('1' = avança).
@@ -573,16 +647,16 @@ architecture behaviour of soc is
     -- Cache de instruções, lado da memória: acesso concluído ('1' = pronto).
     signal id_ready : std_logic;
     -- Cache de instruções, lado da memória: dado lido.
-    signal id_rdata : std_logic_vector(31 downto 0);
+    signal id_rdata : word_t;
     -- Cache de instruções, lado da memória: pedido de linha inteira de cache ('1' = acesso em linha).
     signal id_line  : std_logic;
     -- Cache de instruções, lado da memória: linha lida, barramento largo de 96 bits.
-    signal id_rdx   : std_logic_vector(95 downto 0);
+    signal id_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Roteadores por região (as duas memórias externas): lado do chip de RAM de cada um.
-    signal si_addr  : std_logic_vector(31 downto 0);
+    signal si_addr  : addr_t;
     -- Roteador da ROM para o chip de RAM: dado de escrita.
-    signal si_wdata : std_logic_vector(31 downto 0);
+    signal si_wdata : word_t;
     -- Roteador da ROM para o chip de RAM: habilitação de bytes da escrita.
     signal si_be    : std_logic_vector(3 downto 0);
     -- Roteador da ROM para o chip de RAM: habilitação de leitura ('1' = lê).
@@ -596,15 +670,15 @@ architecture behaviour of soc is
     -- Roteador da ROM para o chip de RAM: acesso concluído ('1' = pronto).
     signal si_ready : std_logic;
     -- Roteador da ROM para o chip de RAM: dado lido.
-    signal si_rdata : std_logic_vector(31 downto 0);
+    signal si_rdata : word_t;
     -- Roteador da ROM para o chip de RAM: linha a escrever, barramento largo de 96 bits.
-    signal si_wdx   : std_logic_vector(95 downto 0);
+    signal si_wdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador da ROM para o chip de RAM: linha lida, barramento largo de 96 bits.
-    signal si_rdx   : std_logic_vector(95 downto 0);
+    signal si_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador de dados para o chip de RAM: endereço de byte do acesso.
-    signal sd_addr  : std_logic_vector(31 downto 0);
+    signal sd_addr  : addr_t;
     -- Roteador de dados para o chip de RAM: dado de escrita.
-    signal sd_wdata : std_logic_vector(31 downto 0);
+    signal sd_wdata : word_t;
     -- Roteador de dados para o chip de RAM: habilitação de bytes da escrita.
     signal sd_be    : std_logic_vector(3 downto 0);
     -- Roteador de dados para o chip de RAM: habilitação de leitura ('1' = lê).
@@ -618,25 +692,25 @@ architecture behaviour of soc is
     -- Roteador de dados para o chip de RAM: acesso concluído ('1' = pronto).
     signal sd_ready : std_logic;
     -- Roteador de dados para o chip de RAM: dado lido.
-    signal sd_rdata : std_logic_vector(31 downto 0);
+    signal sd_rdata : word_t;
     -- Roteador de dados para o chip de RAM: linha a escrever, barramento largo de 96 bits.
-    signal sd_wdx   : std_logic_vector(95 downto 0);
+    signal sd_wdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador de dados para o chip de RAM: linha lida, barramento largo de 96 bits.
-    signal sd_rdx   : std_logic_vector(95 downto 0);
+    signal sd_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Roteadores por região (as duas memórias externas): lado do chip de FLASH.
     -- Endereço e dado lido dos roteadores A, B e C do chip de FLASH.
-    signal fa_addr  : std_logic_vector(31 downto 0);
+    signal fa_addr  : addr_t;
     -- Roteador A, lado da FLASH: dado lido.
-    signal fa_rdata : std_logic_vector(31 downto 0);
+    signal fa_rdata : word_t;
     -- Roteador B, lado da FLASH: endereço.
-    signal fb_addr  : std_logic_vector(31 downto 0);
+    signal fb_addr  : addr_t;
     -- Roteador B, lado da FLASH: dado lido.
-    signal fb_rdata : std_logic_vector(31 downto 0);
+    signal fb_rdata : word_t;
     -- Roteador C, lado da FLASH: endereço.
-    signal fc_addr  : std_logic_vector(31 downto 0);
+    signal fc_addr  : addr_t;
     -- Roteador C, lado da FLASH: dado lido.
-    signal fc_rdata : std_logic_vector(31 downto 0);
+    signal fc_rdata : word_t;
     -- Roteador A para o chip de FLASH: leitura, pedido de linha, avanço e resposta pronta.
     signal fa_rden  : std_logic;
     -- Roteador A, lado da FLASH: pedido de linha de cache.
@@ -662,16 +736,16 @@ architecture behaviour of soc is
     -- Roteador C, lado da FLASH: acesso concluído.
     signal fc_ready : std_logic;
     -- Linhas lidas dos roteadores A, B e C, barramentos largos de 96 bits.
-    signal fa_rdx   : std_logic_vector(95 downto 0);
+    signal fa_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador B, lado da FLASH: linha larga lida de 96 bits.
-    signal fb_rdx   : std_logic_vector(95 downto 0);
+    signal fb_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador C, lado da FLASH: linha larga lida de 96 bits.
-    signal fc_rdx   : std_logic_vector(95 downto 0);
+    signal fc_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Portas do chip de RAM externo: dados e instruções.
-    signal rc_d_addr  : std_logic_vector(31 downto 0) := (others => '0');
+    signal rc_d_addr  : addr_t := (others => '0');
     -- Porta de dados do chip de RAM externo: dado de escrita.
-    signal rc_d_wdata : std_logic_vector(31 downto 0) := (others => '0');
+    signal rc_d_wdata : word_t := (others => '0');
     -- Porta de dados do chip de RAM externo: habilitação de bytes da escrita.
     signal rc_d_be    : std_logic_vector(3 downto 0)  := (others => '0');
     -- Porta de dados do chip de RAM externo: habilitação de leitura ('1' = lê).
@@ -683,15 +757,15 @@ architecture behaviour of soc is
     -- Porta de dados do chip de RAM externo: avanço para a próxima palavra da linha ('1' = avança).
     signal rc_d_adv   : std_logic                     := '0';
     -- Porta de dados do chip de RAM externo: linha a escrever, barramento largo de 96 bits.
-    signal rc_d_wdx   : std_logic_vector(95 downto 0) := (others => '0');
+    signal rc_d_wdx   : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
     -- Porta de dados do chip de RAM externo: acesso concluído ('1' = pronto).
     signal rc_d_ready : std_logic;
     -- Porta de dados do chip de RAM externo: dado lido.
-    signal rc_d_rdata : std_logic_vector(31 downto 0);
+    signal rc_d_rdata : word_t;
     -- Porta de dados do chip de RAM externo: linha lida, barramento largo de 96 bits.
-    signal rc_d_rdx   : std_logic_vector(95 downto 0);
+    signal rc_d_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Porta de instruções do chip de RAM externo: endereço de byte do acesso.
-    signal rc_i_addr  : std_logic_vector(31 downto 0) := (others => '0');
+    signal rc_i_addr  : addr_t := (others => '0');
     -- Porta de instruções do chip de RAM externo: habilitação de leitura ('1' = lê).
     signal rc_i_rden  : std_logic                     := '0';
     -- Porta de instruções do chip de RAM externo: pedido de linha inteira de cache ('1' = acesso em linha).
@@ -701,9 +775,9 @@ architecture behaviour of soc is
     -- Porta de instruções do chip de RAM externo: acesso concluído ('1' = pronto).
     signal rc_i_ready : std_logic;
     -- Porta de instruções do chip de RAM externo: dado lido.
-    signal rc_i_rdata : std_logic_vector(31 downto 0);
+    signal rc_i_rdata : word_t;
     -- Porta de instruções do chip de RAM externo: linha lida, barramento largo de 96 bits.
-    signal rc_i_rdx   : std_logic_vector(95 downto 0);
+    signal rc_i_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
 begin
 
@@ -722,8 +796,7 @@ begin
                & "o endereço da BOOT_MEMORY é um corte de bits"
         severity failure;
 
-    -- O mapa é ordenado, sem sobreposição: BOOT_MEMORY, ROM, RAM, janela externa e janela de
-    -- periféricos.
+    -- O mapa é ordenado, sem sobreposição: BOOT_MEMORY, FLASH e RAM.
     assert rom_end_kib >= BOOT_KIB
         report "rom_end_kib deve ser no mínimo o tamanho da BOOT_MEMORY em KiB, "
                & "a ROM começa logo depois dela"
@@ -734,18 +807,11 @@ begin
     assert ram_end_kib > ram_base_kib
         report "ram_end_kib deve ser maior que ram_base_kib, a RAM precisa de ao menos 1 KiB"
         severity failure;
-    assert ext_base_kib >= ram_end_kib
-        report "ext_base_kib deve ser no mínimo ram_end_kib, a janela externa não pode sobrepor a RAM"
-        severity failure;
-    assert periph_base_kib >= ext_base_kib
-        report "periph_base_kib deve ser no mínimo ext_base_kib, "
-               & "a janela de periféricos vem depois da externa"
-        severity failure;
 
     -- O núcleo lê o mapa do config_pkg da plataforma, e os genéricos do SoC (que o topo lê do pacote do mapa)
     -- têm de concordar com ele, senão o roteamento do SoC e a decodificação do núcleo divergem.
-    assert shift_left(resize(to_unsigned(rom_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.ROM_END
-        report "rom_end_kib difere de ROM_END do config_pkg"
+    assert shift_left(resize(to_unsigned(rom_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.FLASH_END
+        report "rom_end_kib difere de FLASH_END do config_pkg"
         severity failure;
     assert shift_left(resize(to_unsigned(ram_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
          work.config_pkg.RAM_BASE
@@ -754,29 +820,42 @@ begin
     assert shift_left(resize(to_unsigned(ram_end_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) = work.config_pkg.RAM_END
         report "ram_end_kib difere de RAM_END do config_pkg"
         severity failure;
-    assert shift_left(resize(to_unsigned(ext_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
-         work.config_pkg.EXT_BASE
-        report "ext_base_kib difere de EXT_BASE do config_pkg"
-        severity failure;
-    assert shift_left(resize(to_unsigned(periph_base_kib, 32), work.config_pkg.ADDR_BITS + 1), 10) =
-         work.config_pkg.PERIPH_BASE
-        report "periph_base_kib difere de PERIPH_BASE do config_pkg"
-        severity failure;
     assert log2_exact(boot_memory_size_bytes) = work.config_pkg.BOOT_MEMORY_BITS
         report "boot_memory_size_bytes difere de BOOT_MEMORY_BITS do config_pkg"
         severity failure;
-    assert ROM_PORT = work.config_pkg.ROM_EXTERNAL and RAM_PORT = work.config_pkg.RAM_EXTERNAL
-        report "rom_external, ram_external e as caches diferem de ROM_EXTERNAL e RAM_EXTERNAL do config_pkg"
+    assert ROM_PORT = work.config_pkg.FLASH_ON_BUS and RAM_PORT = work.config_pkg.RAM_ON_BUS
+        report "rom_external e ram_external diferem de FLASH_ON_BUS e RAM_ON_BUS do config_pkg"
+        severity failure;
+    -- A cache de instruções exige a FLASH no barramento e a de dados, a RAM (a regra estrita do config_pkg).
+    assert (not has_icache) or rom_external
+        report "has_icache exige rom_external, a cache de instruções só existe do lado do barramento"
+        severity failure;
+    assert (not work.config_pkg.HAS_ICACHE) or has_icache
+        report "o config_pkg tem HAS_ICACHE, e o SoC não instancia a cache de instruções"
+        severity failure;
+    assert (not HAS_DCACHE) or ram_external
+        report "HAS_DCACHE exige ram_external, a cache de dados só existe do lado do barramento"
         severity failure;
     -- As regiões alcançadas pelas caches ou pela ponte de busca cabem na janela de
     -- 2**cache_window_bits bytes.
     assert (not ROM_PORT) or rom_end_kib <= BOOT_KIB + CACHE_WINDOW_KIB
         report "cache_window_bits pequeno demais, "
-               & "a ROM (rom_end_kib menos a BOOT_MEMORY) não cabe na janela das caches"
+               & "a FLASH (rom_end_kib menos a BOOT_MEMORY) não cabe na janela da busca de instruções"
+        severity failure;
+    assert (not (ROM_PORT and HAS_DCACHE)) or rom_end_kib <= BOOT_KIB + CACHE_WINDOW_KIB
+        report "cache_window_bits pequeno demais, "
+               & "a FLASH (rom_end_kib menos a BOOT_MEMORY) não cabe na janela da cache de dados"
         severity failure;
     assert (not (RAM_PORT and HAS_DCACHE)) or ram_end_kib <= ram_base_kib + CACHE_WINDOW_KIB
         report "cache_window_bits pequeno demais, "
                & "a RAM (ram_base_kib até ram_end_kib) não cabe na janela da cache de dados"
+        severity failure;
+
+    -- A tabela de janelas é a do interconector: alinhada, de máscara contígua e sem sobreposição, e o índice de
+    -- cada periférico presente cai nela e é só dele.
+    assert windows_valid(periph_bases, periph_masks) and periph_bases'length = periph_count
+        report "periph_bases e periph_masks: tabela de janelas inválida (janela desalinhada, máscara não contígua, "
+               & "sobreposição ou tamanho diferente de periph_count)"
         severity failure;
 
     -- Cada cache tem ao menos duas linhas de 128 bits e tamanho em potência de dois.
@@ -802,21 +881,31 @@ begin
                & "a polaridade só vale para os pinos TX e RX"
         severity failure;
 
-    -- Dois periféricos presentes não dividem a mesma janela de 256 MiB da janela de periféricos.
-    assert to_integer(unsigned(SLOTS_USED)) = SLOTS_SUM
-        report "clint_id, plic_id, timer_id, switches_id, keys_id, display_id, uart_jtag_id, "
-               & "uart_pins_id e flash_ctrl_id: dois periféricos presentes usam o mesmo índice"
+    assert indices_valid
+        report "clint_index, plic_index, switches_index, keys_index, display_index, uart_jtag_index, "
+               & "uart_pins_index e flash_ctrl_index: um periférico presente fica fora da tabela ou dois usam o mesmo índice"
+        severity failure;
+
+    -- Um temporizador por elemento de timer_indices, cada um com a sua linha do PLIC.
+    assert timer_irq_ids'length = timer_indices'length
+        report "timer_indices e timer_irq_ids têm tamanhos diferentes: cada temporizador tem uma fonte do PLIC"
+        severity failure;
+    assert timer_indices_valid
+        report "timer_indices: um temporizador fica fora da tabela de periféricos ou usa o índice de outro periférico"
+        severity failure;
+    assert timer_lines_valid
+        report "timer_irq_ids: uma fonte passa de plic_n_sources, é linha fixa de outro periférico ou se repete"
         severity failure;
 
     o_retire      <= core_retire;
-    o_if_addr     <= if_addr(31 downto 2);
+    o_if_addr     <= if_addr(ADDR_BITS - 1 downto 2);
     o_if_rden     <= if_rden;
-    o_rom_addr2   <= flash_addr2(31 downto 2);
+    o_rom_addr2   <= flash_addr2(ADDR_BITS - 1 downto 2);
     o_rom_rden2   <= flash_rden2;
     o_ram_en      <= ram_en;
     o_ram_wren    <= ram_wren;
     o_ram_rden    <= ram_rden;
-    o_ram_addr    <= ram_addr;
+    o_ram_addr    <= ram_addr(ADDR_BITS - 1 downto 0);
     o_ram_wdata   <= ram_wdata;
     o_ram_byteena <= ram_byteena;
 
@@ -879,8 +968,7 @@ begin
         generic map (
             hpm_counters  => hpm_counters,
             hpm_width     => hpm_width,
-            time_external => HAS_INTERRUPTS,
-            periph_slots  => periph_slots
+            time_external => HAS_INTERRUPTS
         )
         port map (
             o_trap             => open,
@@ -910,6 +998,7 @@ begin
             o_ext_wren         => sdram_wren,
             i_ext_rdata        => sdram_rdata,
             i_ext_ready        => sdram_ready,
+            i_ext_error        => ext_error,
             o_mem_advance      => mem_advance,
             i_hpm_ext_events   => hpm_ext_events,
             i_irq_software     => irq_software_q,
@@ -933,18 +1022,30 @@ begin
 
         u_interconnect : entity work.ext_interconnect
             generic map (
-                periph_addr_width => plic_addr_width
+                periph_count      => periph_count,
+                periph_bases      => periph_bases,
+                periph_masks      => periph_masks,
+                periph_sizes      => window_sizes(periph_masks),
+                strict_periph     => strict_periph,
+                periph_addr_width => plic_addr_width,
+                flash_on_bus      => ROM_PORT,
+                flash_base        => FLASH_FIRST,
+                flash_last        => FLASH_LAST,
+                ram_on_bus        => RAM_PORT,
+                ram_base          => RAM_FIRST,
+                ram_last          => RAM_LAST
             )
             port map (
                 i_clk         => i_clk_core,
                 i_rst         => i_rst,
-                i_addr        => sdram_addr,
+                i_addr        => sdram_addr(ADDR_BITS - 1 downto 0),
                 i_wdata       => sdram_wdata,
                 i_byteena     => sdram_byteena,
                 i_rden        => sdram_rden,
                 i_wren        => sdram_wren,
                 i_mem_advance => mem_advance,
                 o_ready       => sdram_ready,
+                o_error       => ext_error,
                 o_rdata       => sdram_rdata,
                 o_m_addr      => m_addr,
                 o_m_wdata     => m_wdata,
@@ -969,6 +1070,13 @@ begin
         m_rdata <= (others => '0');
     end generate gen_no_data_port;
 
+    -- Sem interconexão, nenhum endereço fora das memórias diretas do núcleo tem escravo: o acesso termina em erro.
+
+    gen_no_interconnect : if not (ROM_PORT or RAM_PORT or HAS_PERIPHERALS) generate
+    begin
+        ext_error <= sdram_rden or sdram_wren;
+    end generate gen_no_interconnect;
+
     -- CLINT e controlador de interrupção externa, no domínio de clock do núcleo (sem sincronizador).
 
     gen_interrupts : if HAS_INTERRUPTS generate
@@ -983,8 +1091,8 @@ begin
                 i_rst          => i_rst,
                 i_data_in      => p_wdata,
                 i_address      => p_addr(13 downto 0),
-                i_write        => p_we(clint_id),
-                o_data_out     => p_rdata(32 * clint_id + 31 downto 32 * clint_id),
+                i_write        => p_we(clint_index),
+                o_data_out     => p_rdata(XLEN * clint_index + XLEN - 1 downto XLEN * clint_index),
                 o_irq_timer    => irq_timer,
                 o_irq_software => irq_software,
                 o_mtime        => clint_mtime
@@ -1002,9 +1110,9 @@ begin
                 i_sources  => irq_lines,
                 i_data_in  => p_wdata,
                 i_address  => p_addr,
-                i_write    => p_we(plic_id),
-                i_read     => p_re(plic_id),
-                o_data_out => p_rdata(32 * plic_id + 31 downto 32 * plic_id),
+                i_write    => p_we(plic_index),
+                i_read     => p_re(plic_index),
+                o_data_out => p_rdata(XLEN * plic_index + XLEN - 1 downto XLEN * plic_index),
                 o_meip     => irq_external
             );
 
@@ -1025,9 +1133,9 @@ begin
                 i_rst        => i_rst,
                 i_data_in    => p_wdata(switches_width - 1 downto 0),
                 i_address    => p_addr(3 downto 0),
-                i_write      => p_we(switches_id),
-                i_read       => p_re(switches_id),
-                o_data_out   => p_rdata(32 * switches_id + switches_width - 1 downto 32 * switches_id),
+                i_write      => p_we(switches_index),
+                i_read       => p_re(switches_index),
+                o_data_out   => p_rdata(XLEN * switches_index + switches_width - 1 downto XLEN * switches_index),
                 o_irq        => irq_lines(LINE_SWITCHES),
                 io_gpio_pins => io_switches
             );
@@ -1046,9 +1154,9 @@ begin
                 i_rst        => i_rst,
                 i_data_in    => p_wdata(keys_width - 1 downto 0),
                 i_address    => p_addr(3 downto 0),
-                i_write      => p_we(keys_id),
-                i_read       => p_re(keys_id),
-                o_data_out   => p_rdata(32 * keys_id + keys_width - 1 downto 32 * keys_id),
+                i_write      => p_we(keys_index),
+                i_read       => p_re(keys_index),
+                o_data_out   => p_rdata(XLEN * keys_index + keys_width - 1 downto XLEN * keys_index),
                 o_irq        => irq_lines(LINE_KEYS),
                 io_gpio_pins => io_keys
             );
@@ -1067,8 +1175,8 @@ begin
                 i_rst       => i_rst,
                 i_address   => p_addr(7 downto 0),
                 i_data_in   => p_wdata,
-                i_write     => p_we(display_id),
-                o_rdata     => p_rdata(32 * display_id + 31 downto 32 * display_id),
+                i_write     => p_we(display_index),
+                o_rdata     => p_rdata(XLEN * display_index + XLEN - 1 downto XLEN * display_index),
                 i_tck       => i_display_tck,
                 i_tdi       => i_display_tdi,
                 o_tdo       => o_display_tdo,
@@ -1098,9 +1206,9 @@ begin
                 i_rst       => i_rst,
                 i_addr      => p_addr(7 downto 0),
                 i_wdata     => p_wdata,
-                i_we        => p_we(uart_jtag_id),
-                i_re        => p_re(uart_jtag_id),
-                o_rdata     => p_rdata(32 * uart_jtag_id + 31 downto 32 * uart_jtag_id),
+                i_we        => p_we(uart_jtag_index),
+                i_re        => p_re(uart_jtag_index),
+                o_rdata     => p_rdata(XLEN * uart_jtag_index + XLEN - 1 downto XLEN * uart_jtag_index),
                 o_irq       => irq_lines(LINE_UART_JTAG),
                 o_tx        => open,
                 i_tck       => i_uart_tck,
@@ -1124,9 +1232,9 @@ begin
                 i_rst       => i_rst,
                 i_data_in   => p_wdata,
                 i_address   => p_addr(2 downto 0),
-                i_write     => p_we(flash_ctrl_id),
-                i_read      => p_re(flash_ctrl_id),
-                o_data_out  => p_rdata(32 * flash_ctrl_id + 31 downto 32 * flash_ctrl_id),
+                i_write     => p_we(flash_ctrl_index),
+                i_read      => p_re(flash_ctrl_index),
+                o_data_out  => p_rdata(XLEN * flash_ctrl_index + XLEN - 1 downto XLEN * flash_ctrl_index),
                 o_irq       => irq_lines(LINE_FLASH),
                 o_cmd_valid => o_flash_cmd_valid,
                 o_cmd_op    => o_flash_cmd_op,
@@ -1154,7 +1262,13 @@ begin
         o_flash_buf_data  <= (others => '0');
     end generate gen_no_flash_ctrl;
 
-    gen_timer : if has_timer generate
+    -- Um temporizador por linha da tabela: cada um na sua janela (p_we, p_re e a fatia de p_rdata do índice dele) e,
+    -- com fonte diferente de zero, na sua linha do PLIC.
+    gen_timer : for t in timer_indices'range generate
+        -- Posição da fonte do PLIC deste temporizador em timer_irq_ids.
+        constant IRQ_POS : natural := timer_irq_ids'low + (t - timer_indices'low);
+        -- Índice da janela deste temporizador na tabela de periféricos.
+        constant WINDOW  : natural := timer_indices(t);
     begin
 
         u_timer : entity work.timer
@@ -1163,12 +1277,19 @@ begin
                 i_rst      => i_rst,
                 i_data_in  => p_wdata,
                 i_address  => p_addr(2 downto 0),
-                i_write    => p_we(timer_id),
-                i_read     => p_re(timer_id),
-                o_data_out => p_rdata(32 * timer_id + 31 downto 32 * timer_id),
-                o_irq      => irq_lines(LINE_TIMER),
+                i_write    => p_we(WINDOW),
+                i_read     => p_re(WINDOW),
+                o_data_out => p_rdata(XLEN * WINDOW + XLEN - 1 downto XLEN * WINDOW),
+                o_irq      => timer_irq(t),
                 o_pwm      => open
             );
+
+        gen_wired : if timer_irq_ids(IRQ_POS) > 0 generate
+        begin
+
+            irq_lines(timer_irq_ids(IRQ_POS)) <= timer_irq(t);
+
+        end generate gen_wired;
 
     end generate gen_timer;
 
@@ -1186,9 +1307,9 @@ begin
                 i_rst   => i_rst,
                 i_addr  => p_addr(7 downto 0),
                 i_wdata => p_wdata,
-                i_we    => p_we(uart_pins_id),
-                i_re    => p_re(uart_pins_id),
-                o_rdata => p_rdata(32 * uart_pins_id + 31 downto 32 * uart_pins_id),
+                i_we    => p_we(uart_pins_index),
+                i_re    => p_re(uart_pins_index),
+                o_rdata => p_rdata(XLEN * uart_pins_index + XLEN - 1 downto XLEN * uart_pins_index),
                 o_irq   => irq_lines(LINE_UART),
                 i_rx    => i_uart_rx,
                 o_tx    => o_uart_tx,
@@ -1197,7 +1318,7 @@ begin
 
     end generate gen_uart_pins;
 
-    dc_bypass <= '1' when has_dcache_bypass and m_addr(31 downto 12) = bypass_page else '0';
+    dc_bypass <= '1' when has_dcache_bypass and m_addr(ADDR_BITS - 1 downto 12) = bypass_page else '0';
 
     -- Com cache de dados, ela fica entre a interconexão e a memória.
 
@@ -1209,8 +1330,8 @@ begin
                 size_bits     => dcache_size_bits,
                 window_bits   => cache_window_bits,
                 write_through => true,
-                rom_base_kib  => BOOT_KIB,
-                rom_end_kib   => rom_end_kib
+                flash_base_kib  => BOOT_KIB,
+                flash_end_kib   => rom_end_kib
             )
             port map (
                 i_clk          => i_clk_core,
@@ -1272,8 +1393,8 @@ begin
             generic map (
                 size_bits    => icache_size_bits,
                 window_bits  => cache_window_bits,
-                rom_base_kib => BOOT_KIB,
-                rom_end_kib  => rom_end_kib,
+                flash_base_kib => BOOT_KIB,
+                flash_end_kib  => rom_end_kib,
                 sel_from_kib => ic_select_from(fast_icache_select, BOOT_KIB),
                 check_addr   => not fast_icache_select
             )
@@ -1310,8 +1431,8 @@ begin
             generic map (
                 fetch_line   => true,
                 window_bits  => cache_window_bits,
-                rom_base_kib => BOOT_KIB,
-                rom_end_kib  => rom_end_kib
+                flash_base_kib => BOOT_KIB,
+                flash_end_kib  => rom_end_kib
             )
             port map (
                 i_clk        => i_clk_core,
@@ -1383,8 +1504,8 @@ begin
 
         u_router_d : entity work.mem_region_router
             generic map (
-                rom_base_kib => D_ROM_BASE_KIB,
-                rom_end_kib  => D_ROM_END_KIB,
+                flash_base_kib => D_ROM_BASE_KIB,
+                flash_end_kib  => D_ROM_END_KIB,
                 hold_rdata   => not HAS_DCACHE
             )
             port map (

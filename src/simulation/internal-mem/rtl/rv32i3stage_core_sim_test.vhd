@@ -10,6 +10,9 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.internal_mem_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.interconnect_pkg.all;
 
 entity rv32i3stage_core_sim_test is
     generic (
@@ -40,9 +43,9 @@ entity rv32i3stage_core_sim_test is
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64 := 64;
         -- A ROM fica fora do core (o modelo de memória do platform.yaml).
-        rom_external           : boolean               := work.internal_mem_map_pkg.ROM_EXTERNAL;
+        rom_external           : boolean               := work.internal_mem_map_pkg.FLASH_ON_BUS;
         -- A RAM fica fora do core (o modelo de memória do platform.yaml).
-        ram_external           : boolean               := work.internal_mem_map_pkg.RAM_EXTERNAL;
+        ram_external           : boolean               := work.internal_mem_map_pkg.RAM_ON_BUS;
         -- Existe cache de instruções (o modelo de memória do platform.yaml).
         has_icache             : boolean               := work.internal_mem_map_pkg.HAS_ICACHE;
         -- Existe cache de dados (o modelo de memória do platform.yaml).
@@ -71,38 +74,38 @@ architecture behaviour of rv32i3stage_core_sim_test is
     -- Pulso de retirada de uma instrução em EX, contado pelo testbench para medir os ciclos por instrução.
     signal core_retire     : std_logic;
     -- Causa da exceção sinalizada, no formato do mcause.
-    signal core_trap_cause : std_logic_vector(31 downto 0);
+    signal core_trap_cause : word_t;
     -- PC da instrução que gerou a exceção sinalizada.
-    signal core_trap_pc    : std_logic_vector(31 downto 0);
+    signal core_trap_pc    : word_t;
 
     -- IF stage: barramento UNICO compartilhado por BOOT_MEMORY e FLASH
     -- (ver rv32im_pipeline_core.vhd is_boot_memory_if/is_boot_memory_d) --
     -- ambas as ROM_simulation instancias abaixo recebem o MESMO
     -- if_addr/if_rden, cada uma devolvendo seu proprio dado.
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilitação de leitura da busca de instrução ('1' = lê).
     signal if_rden          : std_logic;
     -- Palavra de instrução lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra de instrução lida da FLASH.
-    signal flash_data       : std_logic_vector(31 downto 0);
+    signal flash_data       : word_t;
 
     -- Estagio MEM: segunda porta da FLASH, so' para o copy-loop de
     -- .data em boot_memory.S (ver rv32im_pipeline_core.vhd flash_addr2).
-    signal flash_addr2 : std_logic_vector(31 downto 0);
+    signal flash_addr2 : addr_t;
     -- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
     signal flash_rden2 : std_logic;
     -- Palavra de dado lida da segunda porta da FLASH (estágio MEM).
-    signal flash_data2 : std_logic_vector(31 downto 0);
+    signal flash_data2 : word_t;
 
     -- Endereço de byte do acesso à RAM do núcleo.
-    signal ram_addr         : std_logic_vector(31 downto 0);
+    signal ram_addr         : addr_t;
     -- Dado de escrita na RAM do núcleo.
-    signal ram_wdata        : std_logic_vector(31 downto 0);
+    signal ram_wdata        : word_t;
     -- Dado lido da RAM entregue ao núcleo.
-    signal ram_rdata        : std_logic_vector(31 downto 0);
+    signal ram_rdata        : word_t;
     -- Dado lido diretamente da memória RAM, antes de chegar ao núcleo.
-    signal ram_memory_rdata : std_logic_vector(31 downto 0);
+    signal ram_memory_rdata : word_t;
     -- Habilitação geral da RAM do núcleo (estágio MEM).
     signal ram_en           : std_logic;
     -- Leitura da RAM habilitada pelo núcleo e pelo enable geral ('1' = lê).
@@ -132,16 +135,16 @@ architecture behaviour of rv32i3stage_core_sim_test is
     -- Leitura da UART ('1' = lê; janela selecionada e leitura do núcleo).
     signal uart_read     : std_logic;
     -- Dado lido da UART.
-    signal uart_rdata    : std_logic_vector(31 downto 0);
+    signal uart_rdata    : word_t;
     -- Leitura da UART atrasada um ciclo, que acompanha a resposta registrada.
     signal uart_read_d   : std_logic;
     -- Dado lido da UART registrado, devolvido ao núcleo no ciclo seguinte.
-    signal uart_rdata_d  : std_logic_vector(31 downto 0);
+    signal uart_rdata_d  : word_t;
 
     -- Porta externa do core (enderecos com o bit 31 ou 30 em 1): aqui so' a UART responde.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Dado de escrita do barramento externo do núcleo.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Habilitação de bytes da escrita no barramento externo.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Habilitação de leitura do barramento externo ('1' = lê).
@@ -149,14 +152,17 @@ architecture behaviour of rv32i3stage_core_sim_test is
     -- Habilitação de escrita do barramento externo ('1' = escreve).
     signal sdram_wren    : std_logic;
     -- Dado lido do barramento externo devolvido ao núcleo.
-    signal sdram_rdata   : std_logic_vector(31 downto 0);
+    signal sdram_rdata   : word_t;
+    -- O acesso externo do núcleo não cai na janela da UART (nenhum escravo o atende): falha de acesso.
+    signal ext_error     : std_logic;
 
 begin
 
     -- A UART fica na janela de perifericos (UART_BASE), que o core atende pela porta externa.
     uart_selected <= '1'
-                     when sdram_addr(31 downto 28) = UART_BASE(31 downto 28) else
+                     when window_hit(sdram_addr, UART_BASE, PERIPH_MASKS(UART_INDEX)) else
                      '0';
+    ext_error     <= (sdram_rden or sdram_wren) and not uart_selected;
     uart_write    <= sdram_wren and uart_selected;
     uart_read     <= sdram_rden and uart_selected;
 
@@ -217,7 +223,8 @@ begin
             o_ext_byteena => sdram_byteena,
             o_ext_rden    => sdram_rden,
             o_ext_wren    => sdram_wren,
-            i_ext_rdata   => sdram_rdata
+            i_ext_rdata   => sdram_rdata,
+            i_ext_error   => ext_error
         );
 
     u_uart_peripheral : entity work.uart

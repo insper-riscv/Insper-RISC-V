@@ -139,7 +139,7 @@ generate-check:
 # The config_pkg of the modular platform with another memory combination, for the matrix tests of tests.json (each
 # combination needs its own package, because the core reads the map from it): `make variants` writes them and
 # `make variants-check` fails when one is out of date.
-VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off internal_caches:rom=internal,ram=internal,icache=on,dcache=on
+VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off bridge_caches:rom=external,ram=external,icache=on,dcache=on
 VARIANT_DIR := src/simulation/modular/variants
 
 variants:
