@@ -7,6 +7,7 @@ import math
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 from typing import Any, override
@@ -321,8 +322,21 @@ class ReportingTests(unittest.TestCase):
                 )
             pid = int((root / "child.pid").read_text())
             status = Path(f"/proc/{pid}/status")
-            if status.exists():
-                self.assertIn("State:\tZ", status.read_text(encoding="utf-8"))
+            # SIGKILL delivery is asynchronous. The direct parent can
+            # exit before its child has been scheduled.
+            deadline = time.monotonic() + 5
+            while True:
+                try:
+                    state = status.read_text(encoding="utf-8")
+                except FileNotFoundError:
+                    break  # Reaped by the host's init process.
+                if "State:\tZ" in state:
+                    break  # Terminated, awaiting reaping by container PID 1.
+                if time.monotonic() >= deadline:
+                    self.fail(
+                        f"Child {pid} survived process-group kill: {state}"
+                    )
+                time.sleep(0.01)
 
 
 if __name__ == "__main__":
