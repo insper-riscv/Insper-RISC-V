@@ -13,3 +13,14 @@ FLASH is absent on modular; its generated physical-platform example reads status
 only. See that driver's documentation for explicit storage-changing operations.
 The default panic handler prints once and loops, so a failed assertion leads to a
 simulation timeout with diagnostics in the debug log. It does not silently succeed.
+
+The safe driver crates now use the 0.2 interfaces. GPIO direction changes and
+reads are infallible after constructing a valid pin. Timer dividers use
+`NonZeroU32`. Display operations use a validated `Digit` and `HexDigit`, and PLIC
+operations use a validated source handle. A claimed interrupt is completed by
+consuming its claim token. Constructors and newly supplied numeric inputs still
+report validation errors; UART readiness and flash busy remain runtime outcomes.
+
+See `Peripherals/RUST-DRIVER-INVARIANTS.md` in the SDK repository for migration
+examples and the GPIO aliasing constraints. Regenerate vendor files through the
+SDK before compiling an existing project against the revised APIs.
