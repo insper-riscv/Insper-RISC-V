@@ -9,7 +9,7 @@ references:
   - {name: de10-lite platform, paths: [src/max-10/de10-lite/platform.yaml, src/max-10/de10-lite/config.yaml, src/max-10/de10-lite/de10_lite_map_pkg.vhd, src/max-10/de10-lite/config_pkg.vhd, src/max-10/de10-lite/runtime/boot_memory.S, src/max-10/de10-lite/runtime/boot_memory.ld, src/max-10/de10-lite/runtime/_exit.c, src/max-10/de10-lite/runtime/stdio.c, src/max-10/de10-lite/runtime/spike_exit.S, src/max-10/de10-lite/runtime/memory_map.h, src/max-10/de10-lite/runtime/flash_banks.h, src/max-10/de10-lite/runtime/rv32im-fpga.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-a.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/boards/de10-lite.md, docs/en/boards/de10-lite.md]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
-  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
+  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/doom/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
   # The platform configs are written relative to the root of this repository, `base: .`.
   - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: hardware-top sim sources, file: src/simulation/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: .}
@@ -31,6 +31,15 @@ references:
   - {name: de0-cv toolchain specs, file: src/cyclone-v/de0-cv/config.yaml, yaml: toolchain.specs, base: .}
   - {name: de0-cv Spike stand-in, file: src/cyclone-v/de0-cv/config.yaml, yaml: emulator.sources, base: .}
   - {name: de0-cv sim top test and its images, paths: [tests/python/gen_de0_cv_images.py, tests/python/unittests/rtl/data/de0_cv/boot_memory.hex, tests/python/unittests/rtl/data/de0_cv/flash.hex, tests/python/unittests/rtl/data/de0_cv/sdram.hex, tests/python/unittests/rtl/de0_cv_sim_top.py, tests/python/gen_de0_cv_boot_images.py, tests/python/unittests/rtl/data/de0_cv_boot/images.json, tests/python/unittests/rtl/de0_cv_boot_banks.py, tests/python/unittests/integration/ext_interconnect.py, tests/python/unittests/integration/axi_slave_periph_bank.py]}
+  - {name: doom sim sources, file: src/cyclone-v/doom/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: doom sim python_path, file: src/cyclone-v/doom/config.yaml, yaml: sim.python_path, base: .}
+  - {name: doom runtime sources, file: src/cyclone-v/doom/config.yaml, yaml: paths.sources, base: .}
+  - {name: doom boot memory, file: src/cyclone-v/doom/config.yaml, yaml: paths.boot_memory, base: .}
+  - {name: doom boot memory linker script, file: src/cyclone-v/doom/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
+  - {name: doom toolchain specs, file: src/cyclone-v/doom/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: doom Spike stand-in, file: src/cyclone-v/doom/config.yaml, yaml: emulator.sources, base: .}
+  - {name: doom platform files, paths: [src/cyclone-v/doom/init.mif, src/cyclone-v/doom/boot_memory_init.mif, src/cyclone-v/doom/runtime/doom_loader.S, src/cyclone-v/doom/runtime/flash_banks.h, src/cyclone-v/doom/runtime/memory_map.h, src/cyclone-v/doom/runtime/rv32im-fpga.specs, src/cyclone-v/doom/runtime/rv32im-fpga-bank-a.specs, src/cyclone-v/doom/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/platform/doom.md, docs/en/platform/doom.md]}
+  - {name: doom sim top test and its images, paths: [tests/python/gen_doom_images.py, tests/python/unittests/rtl/data/doom/boot_memory.hex, tests/python/unittests/rtl/data/doom/flash.hex, tests/python/unittests/rtl/data/doom/sdram_go.hex, tests/python/unittests/rtl/data/doom/sdram_wait.hex, tests/python/unittests/rtl/doom_sim_top.py, tests/python/unittests/rtl/doom_sim_wait.py]}
   - {name: external-data sim sources, file: src/cyclone-v/external-data/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: external-data sim python_path, file: src/cyclone-v/external-data/config.yaml, yaml: sim.python_path, base: .}
   - {name: external-data runtime sources, file: src/cyclone-v/external-data/config.yaml, yaml: paths.sources, base: .}
@@ -210,6 +219,11 @@ provides:
     sources:
       - src/cyclone-v/de0-cv/config_pkg.vhd
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  doom_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/cyclone-v/doom/config_pkg.vhd
+      - src/cyclone-v/doom/doom_map_pkg.vhd
   cal_de2_115_map:
     requires: [Common-Components/utils]
     sources:
@@ -273,6 +287,10 @@ provides:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  doom_sim_top:
+    requires: [doom_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
+    sources:
+      - src/cyclone-v/doom/doom_sim_top.vhd
   # What every generated top with a SDRAM needs apart from the package of its map: `board generate` takes the sources of the
   # board project from the closure of `top` of the platform, so the .qsf never carries a hand-written source list. Each
   # board adds only the package of the map of its platform.
@@ -281,6 +299,9 @@ provides:
     sources: []
   de0_cv_board:
     requires: [sdram_board, de0_cv_map]
+    sources: []
+  doom_board:
+    requires: [sdram_board, doom_map]
     sources: []
   de0_nano_map:
     requires: [Common-Components/utils]
