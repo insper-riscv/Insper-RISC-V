@@ -140,10 +140,10 @@ EXAMPLES = {
         "use insper_riscv_gpio::{GPIO, GPIOError as Error, Direction};",
         """let gpio = GPIO::new(4)?;
     let mut pin = gpio.get(0)?;
-    pin.set_direction(Direction::Output)?;
+    pin.set_direction(Direction::Output);
     pin.set_high()?;
     pin.set_low()?;
-    pin.set_direction(Direction::Input)?;""",
+    pin.set_direction(Direction::Input);""",
     ),
     "TIMER": (
         "use insper_riscv_timer::{Timer, Error};",
@@ -151,7 +151,7 @@ EXAMPLES = {
     timer.stop();
     timer.one_shot(true);
     timer.set_top(100);
-    timer.set_divider(1)?;
+    timer.set_divider(core::num::NonZeroU32::new(1).unwrap());
     timer.load(0);
     timer.start();
     timer.stop();""",
@@ -168,10 +168,11 @@ EXAMPLES = {
     "PLIC": (
         "use insper_riscv_plic::{Plic, Error};",
         """let mut plic = Plic::new()?;
-    plic.set_priority(1, 1)?;
     plic.set_threshold(0)?;
-    plic.enable(1, false)?;
-    assert_eq!(plic.pending(0), Err(Error::Rejected));""",
+    let mut source = plic.source(1)?;
+    source.set_priority(1)?;
+    source.enable(false);
+    let _pending = source.pending();""",
     ),
     "UART": (
         "use insper_riscv_uart::{Uart, Error};",
@@ -179,11 +180,14 @@ EXAMPLES = {
     assert_eq!(uart.write(b"UART driver transmission\\n", 4096), 25);""",
     ),
     "DISPLAY": (
-        "use insper_riscv_display::{Display, Error};",
+        "use insper_riscv_display::{Display, Error, HexDigit};",
         """let mut display = Display::new()?;
     let saved = display.read();
-    display.write_digit(0, 10)?;
-    let readback = display.read_digit(0)?;
+    let readback = {
+        let mut digit = display.digit(0)?;
+        digit.write(HexDigit::new(10)?);
+        digit.read().value()
+    };
     display.write(saved);
     assert_eq!(readback, 10);""",
     ),

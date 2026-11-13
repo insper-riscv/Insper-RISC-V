@@ -28,31 +28,31 @@ fn exercise() -> Result<(), GPIOError> {
         return Err(GPIOError::InvalidPinIndex);
     }
     let mut pin = gpio.get(0)?;
-    pin.set_direction(Direction::Output)?;
+    pin.set_direction(Direction::Output);
     pin.set_high()?;
     let mut observed = false;
     for _ in 0..2048 {
-        if pin.is_high()? {
+        if pin.is_high() {
             observed = true;
             break;
         }
     }
     if !observed {
-        return Err(GPIOError::OperationFailed);
+        panic!("GPIO loopback did not settle");
     }
     pin.toggle()?;
     observed = false;
     for _ in 0..2048 {
-        if pin.is_low()? {
+        if pin.is_low() {
             observed = true;
             break;
         }
     }
     if !observed {
-        return Err(GPIOError::OperationFailed);
+        panic!("GPIO loopback did not settle");
     }
     pin.set_low()?;
-    pin.set_direction(Direction::Input)?;
+    pin.set_direction(Direction::Input);
     Ok(())
 }
 
