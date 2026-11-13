@@ -66,8 +66,9 @@ O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_byte
 | Janela das caches | `cache_window_bits`, de 26 a 29 (26 é 64 MiB, 27 é 128 MiB, a janela de endereços que a tag cobre) | 26 |
 | Contadores do Zihpm | `hpm_counters`, de 0 a 29, e `hpm_width`, de 0 a 64 bits | 29 e 64 |
 | Interrupções | `clint_tick_cycles`, `clint_index`, `plic_index`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | 1 ciclo, CLINT no índice 6 e PLIC no 7, 6 fontes, 3 bits, 20 bits |
-| Índices dos periféricos | `timer_index`, `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 0, 1, 2, 3, 4, 5 e 3 |
-| Presença dos periféricos | `has_timer`, `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
+| Temporizadores | `timer_indices` (o índice de cada um na tabela de janelas) e `timer_irq_ids` (a fonte de cada um no PLIC, 0 sem linha); um temporizador por elemento, sem teto | vazios, nenhum temporizador |
+| Índices dos periféricos | `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 1, 2, 3, 4, 5 e 3 |
+| Presença dos periféricos | `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Largura dos papéis | `switches_width`, `keys_width`, `display_digits` | 10, 4 e 6 |
 | Polaridade dos pinos | `switches_active_low`, `keys_active_low`, `display_active_low`, `uart_tx_invert`, `uart_rx_invert` | `false`, exceto o display (`true`) |
 
@@ -98,13 +99,13 @@ A elaboração do SoC para com `severity failure` quando uma combinação de gen
 | Cada cache existente tem tamanho em potência de dois de pelo menos 256 bits | `icache_size_bits`, `dcache_size_bits` |
 | As opções de uma cache só valem com ela | `has_dcache_bypass` exige `HAS_DCACHE` do `config_pkg`, `fast_icache_select` exige `has_icache` |
 | A polaridade dos pinos da UART só vale no papel de pinos | `uart_tx_invert` e `uart_rx_invert` exigem `has_uart_pins` |
-| Um periférico presente tem índice dentro da tabela, e dois não dividem o mesmo índice | `clint_index`, `plic_index`, `timer_index`, `switches_index`, `keys_index`, `display_index`, `uart_jtag_index`, `uart_pins_index`, `flash_ctrl_index` |
+| Um periférico presente tem índice dentro da tabela, e dois não dividem o mesmo índice | `clint_index`, `plic_index`, `switches_index`, `keys_index`, `display_index`, `uart_jtag_index`, `uart_pins_index`, `flash_ctrl_index` |
 
 A coerência entre as extensões (os contadores exigem Zicsr, as interrupções e o Sscofpmf exigem Zicsr) é conferida pelo `config_pkg`, que o `riscv-tools generate-config-pkg` gera do `platform.yaml`.
 
 ## 6. Linhas do PLIC
 
-Cada periférico liga a sua interrupção a uma linha fixa do PLIC, a mesma em toda plataforma.
+Cada periférico de instância única liga a sua interrupção a uma linha fixa do PLIC, a mesma em toda plataforma. Os temporizadores não têm linha fixa: cada um usa a sua, de `timer_irq_ids`, que o gerador escolhe a partir da 5 pulando as fixas.
 
 | Linha | Fonte |
 | ---: | :--- |
@@ -112,14 +113,18 @@ Cada periférico liga a sua interrupção a uma linha fixa do PLIC, a mesma em t
 | 2 | Console sobre JTAG |
 | 3 | Chaves |
 | 4 | Botões |
-| 5 | Temporizador |
+| 5, 7, 8 e seguintes | Um temporizador por linha, na ordem de `peripherals` (a 5 é a primeira livre) |
 | 6 | Controlador de FLASH |
 
-O `make check-irq-sources` confere esses números contra a lista `interrupts.sources` de cada `platform.yaml`.
+O número de fontes (`plic_n_sources`) cobre a maior linha de temporizador. O `make check-irq-sources` confere as linhas fixas contra a lista `interrupts.sources` de cada `platform.yaml` e recusa um temporizador preso numa delas.
+
+### 6.1. N temporizadores
+
+O `soc` gera, por `for generate` sobre `timer_indices`, uma instância do temporizador para cada elemento: `p_we`, `p_re` e a fatia de `p_rdata` do índice dele, e a saída de interrupção na linha `timer_irq_ids` correspondente (zero deixa o temporizador sem linha). As asserções recusam um índice fora da tabela ou de outro periférico, duas linhas iguais, uma linha acima de `plic_n_sources` ou numa linha fixa. As tabelas vêm do pacote de mapa (`TIMER_INDICES` e `TIMER_IRQ_IDS`) e o topo `modular_sim_top` as liga com `has_timer`.
 
 ## 7. Verificação
 
-A entrada `SocRoles` do `tests.json` instancia só o `soc`, sem modelo de chip. O teste faz o papel da BOOT_MEMORY e do relógio de três fases, roda um programa que lê quatro chaves ativas em nível baixo e guarda a palavra lida na RAM, e confere que o programa a vê com a polaridade invertida e que as faces dos chips ficam paradas com as memórias internas. As plataformas do `modular_sim_top` provam o SoC com todas as combinações de memória e cache, e o `make check-tops` o elabora nas dez plataformas.
+A entrada `SocRoles` do `tests.json` instancia só o `soc`, sem modelo de chip. O teste faz o papel da BOOT_MEMORY e do relógio de três fases, roda um programa que lê quatro chaves ativas em nível baixo e guarda a palavra lida na RAM, e confere que o programa a vê com a polaridade invertida e que as faces dos chips ficam paradas com as memórias internas. As entradas `SocTimers0`, `SocTimers1` e `SocTimers3` instanciam o `soc` pelo `soc_timers_top` com zero, um e três temporizadores: o programa grava um valor de topo diferente em cada uma das três janelas e o lê de volta (cada temporizador responde só na sua janela), liga os temporizadores 0 e 2 com a interrupção habilitada e lê o registrador de pendências do PLIC (só sobem as linhas 5 e 8 dos temporizadores que existem). As plataformas do `modular_sim_top` provam o SoC com todas as combinações de memória e cache, e o `make check-tops` o elabora nas dez plataformas.
 
 ---
 

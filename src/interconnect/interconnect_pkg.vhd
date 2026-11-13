@@ -26,6 +26,9 @@ package interconnect_pkg is
     -- Quantidade de janelas da tabela padrão.
     constant DEFAULT_PERIPH_COUNT : positive := 8;
 
+    -- Tabela vazia de inteiros, o valor padrão das tabelas de periféricos que podem não ter nenhum elemento.
+    constant NO_INTEGERS : integer_vector(1 to 0) := (others => 0);
+
     -- Bases da tabela padrão: 0x80000000 | i << 28, as janelas de 256 MiB do mapa antigo.
     function default_bases return addr_array_t;
 
@@ -63,6 +66,19 @@ package interconnect_pkg is
     function index_of (
         table : addr_array_t;
         b     : addr_t
+    ) return natural;
+
+    -- Os elementos de v quando sel é verdadeiro, e nenhum elemento (faixa nula) quando é falso: liga ou desliga
+    -- uma tabela de periféricos do mapa (como TIMER_INDICES) com um generic booleano.
+    function only_if (
+        sel : boolean;
+        v   : integer_vector
+    ) return integer_vector;
+
+    -- O maior entre piso e os elementos de v: o número de fontes do PLIC que cobre a tabela de linhas v.
+    function max_of (
+        floor : natural;
+        v     : integer_vector
     ) return natural;
 
     -- Tamanho de cada janela de uma tabela de máscaras, em bytes (a janela inteira, sem padding).
@@ -273,5 +289,41 @@ package body interconnect_pkg is
         return ok;
 
     end function windows_valid;
+
+    function only_if (
+        sel : boolean;
+        v   : integer_vector
+    ) return integer_vector is
+    begin
+
+        if sel then
+            return v;
+        end if;
+
+        return v(v'low to v'low - 1);
+
+    end function only_if;
+
+    function max_of (
+        floor : natural;
+        v     : integer_vector
+    ) return natural is
+
+        -- Maior valor visto até agora.
+        variable best : natural := floor;
+
+    begin
+
+        for i in v'range loop
+
+            if v(i) > best then
+                best := v(i);
+            end if;
+
+        end loop;
+
+        return best;
+
+    end function max_of;
 
 end package body interconnect_pkg;

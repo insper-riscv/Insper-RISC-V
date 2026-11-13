@@ -66,8 +66,9 @@ The memory map arrives by generics with no default: `boot_memory_size_bytes`, `r
 | Cache window | `cache_window_bits`, from 26 to 29 (26 is 64 MiB, 27 is 128 MiB, the address window the tag covers) | 26 |
 | Zihpm counters | `hpm_counters`, from 0 to 29, and `hpm_width`, from 0 to 64 bits | 29 and 64 |
 | Interrupts | `clint_tick_cycles`, `clint_index`, `plic_index`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | 1 cycle, CLINT at index 6 and PLIC at 7, 6 sources, 3 bits, 20 bits |
-| Peripheral indices | `timer_index`, `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 0, 1, 2, 3, 4, 5 and 3 |
-| Peripheral presence | `has_timer`, `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
+| Timers | `timer_indices` (the index of each one in the window table) and `timer_irq_ids` (the PLIC source of each one, 0 for no line); one timer per element, no ceiling | empty, no timer |
+| Peripheral indices | `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 1, 2, 3, 4, 5 and 3 |
+| Peripheral presence | `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Role widths | `switches_width`, `keys_width`, `display_digits` | 10, 4 and 6 |
 | Pin polarity | `switches_active_low`, `keys_active_low`, `display_active_low`, `uart_tx_invert`, `uart_rx_invert` | `false`, except the display (`true`) |
 
@@ -98,13 +99,13 @@ Elaboration of the SoC stops with `severity failure` when a combination of gener
 | Each existing cache has a power-of-two size of at least 256 bits | `icache_size_bits`, `dcache_size_bits` |
 | The options of a cache only apply with it | `has_dcache_bypass` requires `HAS_DCACHE` of the `config_pkg`, `fast_icache_select` requires `has_icache` |
 | The polarity of the UART pins only applies to the pins role | `uart_tx_invert` and `uart_rx_invert` require `has_uart_pins` |
-| A present peripheral has an index inside the table, and two do not share one | `clint_index`, `plic_index`, `timer_index`, `switches_index`, `keys_index`, `display_index`, `uart_jtag_index`, `uart_pins_index`, `flash_ctrl_index` |
+| A present peripheral has an index inside the table, and two do not share one | `clint_index`, `plic_index`, `switches_index`, `keys_index`, `display_index`, `uart_jtag_index`, `uart_pins_index`, `flash_ctrl_index` |
 
 The coherence among the extensions (the counters require Zicsr, the interrupts and Sscofpmf require Zicsr) is checked by the `config_pkg`, which `riscv-tools generate-config-pkg` generates from `platform.yaml`.
 
 ## 6. PLIC lines
 
-Each peripheral connects its interrupt to a fixed PLIC line, the same on every platform.
+Each single-instance peripheral connects its interrupt to a fixed PLIC line, the same on every platform. The timers have no fixed line: each one uses its own, from `timer_irq_ids`, which the generator picks from 5 up, skipping the fixed ones.
 
 | Line | Source |
 | ---: | :--- |
@@ -112,14 +113,18 @@ Each peripheral connects its interrupt to a fixed PLIC line, the same on every p
 | 2 | Console over JTAG |
 | 3 | Switches |
 | 4 | Keys |
-| 5 | Timer |
+| 5, 7, 8 and on | One timer per line, in the order of `peripherals` (5 is the first free one) |
 | 6 | FLASH controller |
 
-`make check-irq-sources` checks these numbers against the `interrupts.sources` list of each `platform.yaml`.
+The number of sources (`plic_n_sources`) covers the highest timer line. `make check-irq-sources` checks the fixed lines against the `interrupts.sources` list of each `platform.yaml` and refuses a timer pinned to one of them.
+
+### 6.1. N timers
+
+The `soc` generates, with a `for generate` over `timer_indices`, one timer instance per element: `p_we`, `p_re` and the `p_rdata` slice of its index, and the interrupt output on the matching `timer_irq_ids` line (zero leaves the timer without a line). The assertions refuse an index outside the table or shared with another peripheral, two equal lines, a line above `plic_n_sources` or on a fixed line. The tables come from the map package (`TIMER_INDICES` and `TIMER_IRQ_IDS`) and the `modular_sim_top` top connects them with `has_timer`.
 
 ## 7. Verification
 
-The `SocRoles` entry of `tests.json` instantiates only the `soc`, with no chip model. The test plays the BOOT_MEMORY and the three-phase clock, runs a program that reads four active-low switches and stores the word read in the RAM, and checks that the program sees it with the polarity inverted and that the chip faces stay idle with internal memories. The `modular_sim_top` platforms prove the SoC with every memory and cache combination, and `make check-tops` elaborates it on the ten platforms.
+The `SocRoles` entry of `tests.json` instantiates only the `soc`, with no chip model. The test plays the BOOT_MEMORY and the three-phase clock, runs a program that reads four active-low switches and stores the word read in the RAM, and checks that the program sees it with the polarity inverted and that the chip faces stay idle with internal memories. The `SocTimers0`, `SocTimers1` and `SocTimers3` entries instantiate the `soc` through `soc_timers_top` with zero, one and three timers: the program writes a different top value to each of the three windows and reads it back (each timer answers only on its window), starts timers 0 and 2 with the interrupt enabled and reads the pending register of the PLIC (only the lines 5 and 8 of the timers that exist are raised). The `modular_sim_top` platforms prove the SoC with every memory and cache combination, and `make check-tops` elaborates it on the ten platforms.
 
 ---
 

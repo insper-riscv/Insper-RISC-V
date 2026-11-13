@@ -181,4 +181,15 @@ package modular_map_pkg is
 	-- Identificador da fonte FLASH no PLIC.
 	constant IRQ_FLASH : positive := 6;
 
+	-- Número de temporizadores de uso geral do mapa (`kind: timer`), o tamanho das tabelas abaixo.
+	constant TIMER_COUNT : natural := 1;
+	-- Índice de cada temporizador nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
+	constant TIMER_INDICES : integer_vector(0 to TIMER_COUNT - 1) := (
+		0 => TIMER_INDEX
+	);
+	-- Fonte do PLIC de cada temporizador, na mesma ordem (zero sem PLIC).
+	constant TIMER_IRQ_IDS : integer_vector(0 to TIMER_COUNT - 1) := (
+		0 => IRQ_TIMER
+	);
+
 end package modular_map_pkg;

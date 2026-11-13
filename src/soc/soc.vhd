@@ -119,10 +119,12 @@ entity soc is
         has_flash_ctrl         : boolean                       := false;
         -- Índice do controlador de FLASH na tabela de periféricos.
         flash_ctrl_index       : natural                       := 3;
-        -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
-        has_timer              : boolean                       := false;
-        -- Índice do temporizador na tabela de periféricos.
-        timer_index            : natural                       := 0;
+        -- Índice de cada temporizador de uso geral na tabela de periféricos (TIMER_INDICES do pacote de mapa): uma
+        -- instância por elemento, sem teto; vazio não instancia nenhum.
+        timer_indices          : integer_vector                := NO_INTEGERS;
+        -- Fonte do PLIC de cada temporizador, na mesma ordem (TIMER_IRQ_IDS do pacote de mapa); zero deixa a
+        -- interrupção do temporizador sem linha.
+        timer_irq_ids          : integer_vector                := NO_INTEGERS;
         -- Papel das chaves, num bloco GPIO; omitido quando switches_width é zero.
         has_switches           : boolean                       := false;
         -- Índice das chaves na tabela de periféricos.
@@ -347,7 +349,7 @@ architecture behaviour of soc is
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
         HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
-        or has_timer;
+        or timer_indices'length > 0;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -359,8 +361,7 @@ architecture behaviour of soc is
     constant LINE_SWITCHES  : positive := 3;
     -- Botões KEY (GPIO).
     constant LINE_KEYS      : positive := 4;
-    -- Temporizador de uso geral.
-    constant LINE_TIMER     : positive := 5;
+    -- Os temporizadores de uso geral não têm linha fixa: cada um usa a sua de timer_irq_ids (a 5 é a primeira livre).
     -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
     constant LINE_FLASH     : positive := 6;
 
@@ -388,14 +389,14 @@ architecture behaviour of soc is
     -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
     constant D_ROM_END_KIB  : natural := pick(HAS_DCACHE, FLASH_ALIAS_END_KIB, rom_end_kib);
 
-    -- Periféricos que o SoC liga, na ordem em que as asserções os conferem: CLINT, PLIC, temporizador, chaves,
+    -- Periféricos de instância única que o SoC liga, na ordem em que as asserções os conferem: CLINT, PLIC, chaves,
     -- botões, display, UART via JTAG, UART via pinos e controlador de FLASH.
-    constant PRESENT : boolean_vector(0 to 8) :=
-        (HAS_INTERRUPTS, HAS_INTERRUPTS, has_timer, HAS_SWITCHES_ROLE, HAS_KEYS_ROLE, HAS_DISPLAY_ROLE,
+    constant PRESENT : boolean_vector(0 to 7) :=
+        (HAS_INTERRUPTS, HAS_INTERRUPTS, HAS_SWITCHES_ROLE, HAS_KEYS_ROLE, HAS_DISPLAY_ROLE,
          has_uart_jtag, has_uart_pins, has_flash_ctrl);
     -- Índice de cada um desses periféricos na tabela de janelas.
-    constant INDICES : integer_vector(0 to 8) :=
-        (clint_index, plic_index, timer_index, switches_index, keys_index, display_index, uart_jtag_index,
+    constant INDICES : integer_vector(0 to 7) :=
+        (clint_index, plic_index, switches_index, keys_index, display_index, uart_jtag_index,
          uart_pins_index, flash_ctrl_index);
 
     -- Os periféricos presentes têm índice dentro da tabela e dois deles não dividem o mesmo índice.
@@ -421,6 +422,70 @@ architecture behaviour of soc is
         return true;
 
     end function indices_valid;
+
+    -- Cada temporizador tem índice dentro da tabela, que não é o de outro periférico nem o de outro temporizador.
+    function timer_indices_valid return boolean is
+    begin
+
+        for t in timer_indices'range loop
+
+            if timer_indices(t) < 0 or timer_indices(t) >= periph_count then
+                return false;
+            end if;
+
+            for i in PRESENT'range loop
+
+                if PRESENT(i) and INDICES(i) = timer_indices(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+            for u in timer_indices'low to t - 1 loop
+
+                if timer_indices(u) = timer_indices(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function timer_indices_valid;
+
+    -- As linhas do PLIC dos temporizadores: cada uma cabe no PLIC, não é linha fixa de outro periférico e não repete
+    -- (zero deixa o temporizador sem linha).
+    function timer_lines_valid return boolean is
+    begin
+
+        for t in timer_irq_ids'range loop
+
+            if timer_irq_ids(t) < 0 or timer_irq_ids(t) > plic_n_sources then
+                return false;
+            end if;
+
+            if timer_irq_ids(t) /= 0
+               and (timer_irq_ids(t) = LINE_UART or timer_irq_ids(t) = LINE_UART_JTAG
+                    or timer_irq_ids(t) = LINE_SWITCHES or timer_irq_ids(t) = LINE_KEYS
+                    or timer_irq_ids(t) = LINE_FLASH) then
+                return false;
+            end if;
+
+            for u in timer_irq_ids'low to t - 1 loop
+
+                if timer_irq_ids(t) /= 0 and timer_irq_ids(u) = timer_irq_ids(t) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function timer_lines_valid;
 
     -- Primeiro endereço da FLASH, do config_pkg.
     constant FLASH_FIRST : addr_t := std_logic_vector(work.config_pkg.FLASH_BASE(ADDR_BITS - 1 downto 0));
@@ -474,6 +539,8 @@ architecture behaviour of soc is
     signal irq_external   : std_logic                                 := '0';
     -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
     signal irq_lines      : std_logic_vector(plic_n_sources downto 1) := (others => '0');
+    -- Interrupção de overflow de cada temporizador, na ordem de timer_indices.
+    signal timer_irq      : std_logic_vector(timer_indices'range)     := (others => '0');
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico (a janela do PLIC é a maior).
     signal p_addr    : std_logic_vector(plic_addr_width - 1 downto 0);
@@ -815,8 +882,19 @@ begin
         severity failure;
 
     assert indices_valid
-        report "clint_index, plic_index, timer_index, switches_index, keys_index, display_index, uart_jtag_index, "
+        report "clint_index, plic_index, switches_index, keys_index, display_index, uart_jtag_index, "
                & "uart_pins_index e flash_ctrl_index: um periférico presente fica fora da tabela ou dois usam o mesmo índice"
+        severity failure;
+
+    -- Um temporizador por elemento de timer_indices, cada um com a sua linha do PLIC.
+    assert timer_irq_ids'length = timer_indices'length
+        report "timer_indices e timer_irq_ids têm tamanhos diferentes: cada temporizador tem uma fonte do PLIC"
+        severity failure;
+    assert timer_indices_valid
+        report "timer_indices: um temporizador fica fora da tabela de periféricos ou usa o índice de outro periférico"
+        severity failure;
+    assert timer_lines_valid
+        report "timer_irq_ids: uma fonte passa de plic_n_sources, é linha fixa de outro periférico ou se repete"
         severity failure;
 
     o_retire      <= core_retire;
@@ -1184,7 +1262,13 @@ begin
         o_flash_buf_data  <= (others => '0');
     end generate gen_no_flash_ctrl;
 
-    gen_timer : if has_timer generate
+    -- Um temporizador por linha da tabela: cada um na sua janela (p_we, p_re e a fatia de p_rdata do índice dele) e,
+    -- com fonte diferente de zero, na sua linha do PLIC.
+    gen_timer : for t in timer_indices'range generate
+        -- Posição da fonte do PLIC deste temporizador em timer_irq_ids.
+        constant IRQ_POS : natural := timer_irq_ids'low + (t - timer_indices'low);
+        -- Índice da janela deste temporizador na tabela de periféricos.
+        constant WINDOW  : natural := timer_indices(t);
     begin
 
         u_timer : entity work.timer
@@ -1193,12 +1277,19 @@ begin
                 i_rst      => i_rst,
                 i_data_in  => p_wdata,
                 i_address  => p_addr(2 downto 0),
-                i_write    => p_we(timer_index),
-                i_read     => p_re(timer_index),
-                o_data_out => p_rdata(XLEN * timer_index + XLEN - 1 downto XLEN * timer_index),
-                o_irq      => irq_lines(LINE_TIMER),
+                i_write    => p_we(WINDOW),
+                i_read     => p_re(WINDOW),
+                o_data_out => p_rdata(XLEN * WINDOW + XLEN - 1 downto XLEN * WINDOW),
+                o_irq      => timer_irq(t),
                 o_pwm      => open
             );
+
+        gen_wired : if timer_irq_ids(IRQ_POS) > 0 generate
+        begin
+
+            irq_lines(timer_irq_ids(IRQ_POS)) <= timer_irq(t);
+
+        end generate gen_wired;
 
     end generate gen_timer;
 

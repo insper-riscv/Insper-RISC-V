@@ -207,6 +207,24 @@ ENTRADAS = (
     Saida(TESTS_JSON, ("modular_map", "soc"), "SocRoles"),
     Saida(
         TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers0",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers1",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers3",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
         ("modular_bridge_dcache_map", "modular_sim_top"),
         "ModularBridgeDcacheWindow128",
     ),

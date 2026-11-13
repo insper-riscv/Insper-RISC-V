@@ -103,16 +103,15 @@ entity modular_sim_top is
         clint_index            : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"E0000000"));
         -- Índice do PLIC na tabela de periféricos: o da janela de base 0xF0000000.
         plic_index             : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"F0000000"));
-        -- Número de fontes do PLIC; as linhas são as LINE_* abaixo, a partir da 1.
-        plic_n_sources         : positive range 6 to 1023 := 6;
+        -- Número de fontes do PLIC: as seis linhas fixas do SoC e as dos temporizadores do mapa (TIMER_IRQ_IDS).
+        plic_n_sources         : positive range 6 to 1023 := max_of(6, TIMER_IRQ_IDS);
         -- Largura da prioridade e do limiar do PLIC, em bits.
         plic_priority_bits     : positive range 1 to 32   := 3;
         -- Largura do endereço de palavra da janela do PLIC (a janela tem 2**(plic_addr_width + 2) bytes).
         plic_addr_width        : positive range 20 to 26  := 20;
-        -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
+        -- Temporizadores de uso geral do mapa (TIMER_INDICES e TIMER_IRQ_IDS), cada um com a interrupção de overflow
+        -- na sua fonte do PLIC; falso não instancia nenhum.
         has_timer              : boolean                  := false;
-        -- Índice do temporizador na tabela de periféricos: o da janela de base 0x80000000.
-        timer_index            : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"80000000"));
         -- Chaves SW da placa, num bloco GPIO (plataformas da FPGA).
         has_switches           : boolean                  := false;
         -- Índice das chaves na tabela de periféricos: o da janela de base 0x90000000.
@@ -349,8 +348,8 @@ begin
             plic_n_sources         => plic_n_sources,
             plic_priority_bits     => plic_priority_bits,
             plic_addr_width        => plic_addr_width,
-            has_timer              => has_timer,
-            timer_index               => timer_index,
+            timer_indices          => only_if(has_timer, TIMER_INDICES),
+            timer_irq_ids          => only_if(has_timer, TIMER_IRQ_IDS),
             has_switches           => has_switches,
             switches_index            => switches_index,
             switches_width         => switches_width,
