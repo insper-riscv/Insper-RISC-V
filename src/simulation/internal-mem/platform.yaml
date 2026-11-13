@@ -24,10 +24,21 @@ core:
     - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00001000, size: 28K,  kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 160K, kind: ram}
+# The memory model: both memories inside the chip, no cache. The package takes FLASH_ON_BUS and RAM_ON_BUS from here.
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 160K
+      on_bus: false
 
 # Words at the top of RAM: the contract between the boot memory, the program and
 # the host (platform/boot_memory.S clears them at every reset).
@@ -45,14 +56,9 @@ boot:
 strict_periph: true
 
 peripherals:
-  - {name: UART, base: 0xC0000000, size: 1K}
-
-# The memory model: both memories inside the chip, no cache. The package takes FLASH_ON_BUS and RAM_ON_BUS from here.
-memory:
-  rom:    {external: false}
-  ram:    {external: false}
-  icache: {enabled: false}
-  dcache: {enabled: false}
+  UART:
+    base: 0xC0000000
+    size: 1K
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.

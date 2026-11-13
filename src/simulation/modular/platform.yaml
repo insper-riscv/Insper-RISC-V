@@ -26,10 +26,21 @@ core:
     - Interrupts
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,       kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 1M-4K,    kind: rom, exec: true}
-  - {name: RAM,      base: 0x00100000, size: 1M,       kind: ram}
+# The default memory choice: both memories inside the chip, no cache. The sizes of the caches are in bits.
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 1M-4K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00100000
+      size: 1M
+      on_bus: false
 
 # Words at the top of RAM, as in the other platforms: where the host and the program meet (the boot memory clears
 # them at every reset, the program writes tohost at its end).
@@ -51,14 +62,30 @@ strict_periph: true
 # window) and the PLIC (4 MiB window). The outputs of the CLINT and the PLIC are the MTIP, MSIP and MEIP of the core, which
 # only takes them with Zicsr, which the default profile has.
 peripherals:
-  - {name: TIMER, base: 0x80000000, size: 32}
-  - {name: SWITCHES, base: 0x90000000, size: 64}
-  - {name: KEYS, base: 0xA0000000, size: 64}
-  - {name: UART, base: 0xB0000000, size: 1K}
-  - {name: UART_JTAG, base: 0xC0000000, size: 1K}
-  - {name: DISPLAY, base: 0xD0000000, size: 1K}
-  - {name: CLINT, base: 0xE0000000, size: 64K}
-  - {name: PLIC, base: 0xF0000000, size: 4M}
+  TIMER:
+    base: 0x80000000
+    size: 32
+  SWITCHES:
+    base: 0x90000000
+    size: 64
+  KEYS:
+    base: 0xA0000000
+    size: 64
+  UART:
+    base: 0xB0000000
+    size: 1K
+  UART_JTAG:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
 
 # The mtime of the CLINT counts at mtime_hz, one tick per clock cycle of the core in the simulation, and is
 # mirrored by the CSR time of Zicntr (o_mtime of the CLINT into i_mtime of the core).
@@ -76,23 +103,14 @@ interrupts:
     - {name: TIMER,     id: 5}
     - {name: FLASH,     id: 6}
 
-# The default memory choice: both memories inside the chip, no cache. The sizes of the caches are in bits.
-memory:
-  rom:    {external: false}
-  ram:    {external: false}
-  icache: {enabled: false}
-  dcache: {enabled: false}
-
-# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP, HAS_ZICOND and HAS_INTERRUPTS of the
-# package), as in the other platforms, so the programs of the Tests repository that use them run here too.
 generate:
-  specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/modular/runtime/boot_memory.ld}
   runtime: {path: src/simulation/modular/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/modular/modular_map_pkg.vhd
     package: modular_map_pkg
-    rom: ROM
+    rom: FLASH
     ram: RAM
   # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
   # this file takes the place of the default config_pkg of the Common-Components in the source lists.
@@ -101,7 +119,7 @@ generate:
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`). The sizes of the
 # memories are generics of the top, whose default comes from modular_map_pkg, so no address width is passed.
 config:
-  rom: ROM
+  rom: FLASH
   ram: RAM
   addr_widths: []
 
