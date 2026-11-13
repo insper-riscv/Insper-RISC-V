@@ -39,7 +39,7 @@ trusted main code only. The workflow must reach main before comments can activat
 ## Runner budget and merge checks
 
 The benchmark matrix uses at most **four measuring runners**, and one fixed
-`embench-main` concurrency group permits only one active benchmark workflow.
+`embench-refs/heads/main` concurrency group permits only one active benchmark workflow.
 Planning and summary jobs run before/after measurement; the bot uses a brief
 separate job. This avoids occupying the organization's 20-runner pool with
 concurrent per-PR matrices. SDK and reporting checks run once per PR commit,
