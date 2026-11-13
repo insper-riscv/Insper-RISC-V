@@ -1,6 +1,6 @@
 # RV32 Rust application
 
-Requires matching SDK/extension 0.9.0. Reopen in the Dev Container, prepare, then
+Requires matching SDK/extension 0.9.1. Reopen in the Dev Container, prepare, then
 simulate or run on FPGA. Edit src/main.rs and select platform/cpu_profile in
 rv32.toml. Setup generates the runtime and enabled drivers in vendor/ and adds
 Cargo path dependencies without replacing user source or custom dependencies.

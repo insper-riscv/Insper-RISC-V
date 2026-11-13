@@ -1,4 +1,4 @@
-# Live SDK 0.9.0 (review candidate)
+# Live SDK 0.9.1 (review candidate)
 
 This SDK adds external C/Rust application projects and the Live VS Code
 extension to the current processor tree. It does not replace upstream RTL or
@@ -221,3 +221,14 @@ on modular + rv32im_zicsr_irq. FLASH is demonstrated read-only in its generated
 physical-platform example. Driver public methods contain no_run API examples;
 native tests model MMIO with RAM, while the integration suite executes real CPU
 RTL to validate generated firmware. No physical programming occurs in SDK CI.
+
+
+## Container startup repair (0.9.1)
+
+The published image does not provide sudo or libclang. Shared Compose templates
+therefore start scripts/container-start.sh as root, install Rust binding build
+dependencies when requested by TOML, then run sleep. Editor/lifecycle commands
+remain ubuntu. rust-build-deps.sh verifies both the compiler and a loadable shared
+libclang, waits for root startup when necessary, and provides an actionable error
+for old containers/native hosts. It never attempts host package installation.
+Use the matching extension 0.9.1 and reload the VS Code window after installing it.

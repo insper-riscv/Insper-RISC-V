@@ -65,8 +65,7 @@ jobs:
       - name: Install Rust and host bindgen dependencies
         shell: bash
         run: |
-          apt-get update -qq
-          apt-get install -y -qq --no-install-recommends clang libclang-dev
+          bash scripts/rust-build-deps.sh --install
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.85.1
           echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
           "$CARGO_HOME/bin/rustup" target add riscv32i-unknown-none-elf riscv32im-unknown-none-elf

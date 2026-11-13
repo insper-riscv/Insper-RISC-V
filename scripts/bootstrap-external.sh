@@ -42,15 +42,7 @@ with open(sys.argv[1], "rb") as stream:
 raise SystemExit(0 if enabled else 1)
 PYTHON
     then
-        if ! command -v clang >/dev/null 2>&1 || ! /sbin/ldconfig -p 2>/dev/null | grep 'libclang\.so\|libclang-[0-9].*\.so' >/dev/null; then
-            if [[ ! -f /.dockerenv ]]; then
-                echo "Rust driver bindings need host clang and libclang; install them before setup." >&2
-                exit 1
-            fi
-            echo "Installing Clang/libclang for Rust peripheral bindings..."
-            sudo apt-get update -qq
-            sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y -qq --no-install-recommends clang libclang-dev
-        fi
+        bash "${RV32_SDK_ROOT}/scripts/rust-build-deps.sh"
     fi
 fi
 

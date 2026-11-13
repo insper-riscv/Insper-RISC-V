@@ -443,6 +443,8 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
     manifest = (root / str(project.get("manifest", "Cargo.toml"))).resolve()
     if not manifest.is_file():
         raise SystemExit(f"Rust manifest does not exist: {manifest}")
+    if project.get("generate_drivers", False):
+        run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
     env = dict(os.environ)
     env.update(compile_runtime(root, config))
     if project.get("generate_drivers", False):
@@ -698,6 +700,8 @@ def setup(root: Path, project: dict[str, Any]) -> None:
     run(["uv", "sync", "--project", str(SDK / ".sdk")], cwd=SDK)
     if project["language"] == "rust":
         require_commands(["rustup"])
+        if project.get("generate_drivers", False):
+            run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
         run(["rustup", "target", "add", rust_target(project)], cwd=root)
     config = write_config(root, project)
     if project["language"] == "c":
