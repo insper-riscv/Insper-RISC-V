@@ -12,7 +12,12 @@ boards: [de0-nano]
 top: Insper-RISC-V/de0_nano_board
 # The reduced profile: RV32I with the Zicsr and Zifencei extensions (no counters, no multiplier, no interrupts). The boot memory executes
 # fence.i at every reset, which a core without Zifencei takes as an illegal instruction and traps back to the reset, forever.
-profile: rv32i_zicsr_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - Zicsr
+    - Zifencei
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:

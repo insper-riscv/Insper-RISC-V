@@ -11,7 +11,22 @@ boards: [de10-lite]
 # The component of paths.yaml whose closure of `requires` is the source list of the generated project.
 top: Insper-RISC-V/de10_lite_board
 # The profile of the platform and its specification.
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
+    - AccessFaults
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -77,9 +92,6 @@ io:
   switches: {count: 10, need: optional}
   keys:     {count: 2,  need: optional}
   display:  {count: 6,  need: optional}
-
-# Extensions outside the matrix of the Core that the platform turns on.
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`).
 generate:
