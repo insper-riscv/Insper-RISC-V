@@ -147,7 +147,7 @@ Section 3.1.15, Tables 16 and 17, and 3.6. The exceptions that depend on modes, 
 | ID | Requirement | Status | Evidence |
 | :--- | :--- | :--- | :--- |
 | X1 | Cause 0 (instruction address misaligned) comes from a taken jump or branch with a misaligned target, with `mepc` at the jump and `mtval` at the target; a branch not taken does not raise it | Conforming | Program `trap-misaligned-jump`, cocotb `CoreMisalignedJump` and `TrapUnit`, formal `trap_unit_props` |
-| X2 | Cause 1 (instruction access fault) for an access that violates a PMA; the manual strongly recommends it be precise | Conforming | With `has_access_faults` (on in the `de0-cv` by `extras: [AccessFaults]`) a fetch outside ROM, RAM and the external window traps with `mtval` equal to the PC. cocotb `TrapUnitAccessFaults`, formal `trap_af_safety` (mutants `af_fetch_below_illegal`, `af_fetch_tval_ea`), program `access-fetch-fault` |
+| X2 | Cause 1 (instruction access fault) for an access that violates a PMA; the manual strongly recommends it be precise | Conforming | With `has_access_faults` (on in the `de0-cv` by `AccessFaults` in `core.extensions`) a fetch outside ROM, RAM and the external window traps with `mtval` equal to the PC. cocotb `TrapUnitAccessFaults`, formal `trap_af_safety` (mutants `af_fetch_below_illegal`, `af_fetch_tval_ea`), program `access-fetch-fault` |
 | X3 | Cause 2 (illegal instruction) covers a reserved or nonexistent encoding, an unsupported `SYSTEM` instruction, a nonexistent CSR and a write to a read-only CSR | Conforming | cocotb `CoreIllegalInstruction`, `CoreTrapPriority`, `ControlUnit`, `CsrDecode`, programs `trap-illegal`, `conformance-decode` and `priv-csr-priority`, formal `trap_unit_props` |
 | X4 | The debug CSRs (`0x7B0` to `0x7BF`) and trigger CSRs (`0x7A0` to `0x7A3`) do not exist outside debug mode and raise an illegal instruction | Conforming | cocotb `CoreTrapPriority` (`dcsr`, `dpc`, `dscratch0`, `dscratch1`, `0x7B4`, `0x7BF`, `tselect`, `tdata1`), program `priv-csr-priority` (debug block) |
 | X5 | The CSRs of modes and extensions the hart lacks (`sstatus`, `satp`, `medeleg`, `mideleg`, `mcounteren`, `menvcfg`, `mseccfg`, `mtinst`, `mtval2`, PMP, `scountovf`) raise an illegal instruction | Conforming | cocotb `CoreTrapPriority`, `CsrFile` (`test_unknown_csr_is_illegal`), `CsrFileZihpm`, formal `csr_file_props` and `csr_hpm_props`, program `trap-illegal` |
@@ -208,7 +208,7 @@ Sections 3.1.10 to 3.1.12. The Zihpm conformance, row by row, is also in [Core/d
 
 ### 11.2. Sscofpmf
 
-Chapter 14. The extension is optional and the project implements it for Zihpm, behind the `has_sscofpmf` generic (off by default; the `de0-cv` turns it on with `extras: [Sscofpmf]`). The complete matrix, with 13 rows, is in [Core/docs/en/ISA/Sscofpmf/conformance.md](../../../Core/docs/en/ISA/Sscofpmf/conformance.md).
+Chapter 14. The extension is optional and the project implements it for Zihpm, behind the `has_sscofpmf` generic (off by default; the `de0-cv` turns it on with `Sscofpmf` in `core.extensions`). The complete matrix, with 13 rows, is in [Core/docs/en/ISA/Sscofpmf/conformance.md](../../../Core/docs/en/ISA/Sscofpmf/conformance.md).
 
 | ID | Requirement | Status | Evidence |
 | :--- | :--- | :--- | :--- |
@@ -261,7 +261,7 @@ Sections 3.6 and 3.7.
 
 ### 14.1. Access faults
 
-The manual strongly recommends that PMA violations be precise exceptions, "wherever possible". The Core raises them with the `has_access_faults` generic (off by default; the `de0-cv` turns it on with `extras: [AccessFaults]`). The valid map comes from `platform.yaml`: the Core knows the BOOT_MEMORY, the FLASH and the RAM through the `config_pkg`, and every address outside them leaves through the external port. The interconnect answers with `error` when no bus memory and no peripheral window serves the address (the `PERIPH_BASES`, `PERIPH_MASKS` and `PERIPH_SIZES` table of the map package), and the Core raises the load or store access fault through the `i_ext_error` port.
+The manual strongly recommends that PMA violations be precise exceptions, "wherever possible". The Core raises them with the `has_access_faults` generic (off by default; the `de0-cv` turns it on with `AccessFaults` in `core.extensions`). The valid map comes from `platform.yaml`: the Core knows the BOOT_MEMORY, the FLASH and the RAM through the `config_pkg`, and every address outside them leaves through the external port. The interconnect answers with `error` when no bus memory and no peripheral window serves the address (the `PERIPH_BASES`, `PERIPH_MASKS` and `PERIPH_SIZES` table of the map package), and the Core raises the load or store access fault through the `i_ext_error` port.
 
 | Violation | Cause | `mtval` | Where it is decided |
 | :--- | :---: | :--- | :--- |
@@ -290,7 +290,7 @@ The validity of the data address leaves EX with the classification `reg_ex_mem` 
 
 ## 16. Gaps and choices
 
-There is no open gap. Two rows depend on the platform turning the extension on: access faults 1, 5 and 7 (X2, X8 and A2) only exist where `platform.yaml` has `extras: [AccessFaults]`, today the `de0-cv`, and `time` mirrors `mtime` (L8) where there is a CLINT, today the `de0-cv` and the `modular`.
+There is no open gap. Two rows depend on the platform turning the extension on: access faults 1, 5 and 7 (X2, X8 and A2) only exist where `platform.yaml` has `AccessFaults` in `core.extensions`, today the `de0-cv`, and `time` mirrors `mtime` (L8) where there is a CLINT, today the `de0-cv` and the `modular`.
 
 The EEI choices that change what a program sees are: `mvendorid`, `marchid`, `mimpid` and `mconfigptr` are zero (D8 to D12); `mtval` is zero on the illegal instruction and on `EBREAK` (T8 and T9); the vectored mode of `mtvec` asks for a 64-byte aligned `BASE` (V5); `WFI` is a `nop` (I2); the interrupt beats the exception of the same instruction (Q11); `FENCE.I` makes an interrupt wait one cycle (Q12); the misaligned access to main memory runs in two steps (X7).
 

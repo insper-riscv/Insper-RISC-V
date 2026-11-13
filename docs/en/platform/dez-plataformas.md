@@ -36,7 +36,7 @@ The four combinations come from `rom_external` and `ram_external`, derived from 
 | 9 | `fpga-uart-jtag` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART over JTAG |
 | 10 | `fpga-uart-pins` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART on the pins |
 
-All of them turn on the `Zimop` and `Zicond` extensions through the `extras` field. The platforms with an instruction cache use the profile with `Zifencei`.
+All of them turn on the `Zimop` and `Zicond` extensions in `core.extensions`. The platforms with an instruction cache also list `Zifencei`.
 
 ## 4. Memory maps
 

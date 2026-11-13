@@ -128,11 +128,15 @@ A tabela completa, com os campos das plataformas de placa, está no capítulo 14
 
 ### 4.2. Editar
 
-Para o exemplo, a RAM passa a 64 KiB e o perfil a `rv32im`. A RAM começa em `0x8000`, então termina em `0x18000`, e as palavras reservadas descem junto.
+Para o exemplo, a RAM passa a 64 KiB e a ISA a RV32IM (`core` com a extensão `M`). A RAM começa em `0x8000`, então termina em `0x18000`, e as palavras reservadas descem junto.
 
 ```yaml
 platform: exemplo
-profile: rv32im
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
@@ -266,7 +270,7 @@ riscv-tools profiles --spec Core/profiles/matrix.yaml --format names
 
 ### 5.2. Extensões fora da matriz
 
-As extensões `Zimop`, `Zicond`, `Zihintntl` e `Zihintpause` não fazem parte do nome do perfil. A plataforma as liga no campo `extras` do `platform.yaml` (`extras: [Zimop, Zicond]`), e o pacote gerado traz `HAS_ZIMOP` e `HAS_ZICOND` verdadeiros.
+As extensões `Zimop`, `Zicond`, `Zihintntl` e `Zihintpause` não fazem parte do nome do perfil. A plataforma as lista em `core.extensions` do `platform.yaml` (`- Zimop`, `- Zicond`), e o pacote gerado traz `HAS_ZIMOP` e `HAS_ZICOND` verdadeiros.
 
 ### 5.3. Como o topo passa o perfil ao `core`
 
@@ -955,14 +959,13 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | Campo | Obrigatório | Conteúdo |
 | :--- | :--- | :--- |
 | `platform` | Sim | Nome da plataforma |
-| `profile`, `profiles` | Sim | Perfil do Core e caminho da matriz de perfis, relativo ao `platform.yaml` |
+| `core`, `profiles` | Sim | Bloco do núcleo (`type`, `base` I ou E e `extensions`, a lista de todas as extensões) e caminho da matriz de perfis, relativo ao `platform.yaml` |
 | `regions` | Sim | `name`, `base`, `size`, `kind` (`rom` ou `ram`) e `exec` de cada região; toda região termina em `0x80000000` ou antes |
 | `reserved` | Sim | `stdout`, `tohost` e `fromhost`, dentro da região de RAM |
 | `boot` | Sim | `entry` numa região executável e `wait_restart` na primeira região |
-| `peripherals` | Sim | `name`, `base` e `id`, com a base igual a `0x80000000 \| id << 28` |
+| `peripherals` | Sim | `name`, `base` e `size` |
 | `flash` | Não | Região da FLASH e as bancas (`name`, `base`, `size`) que a placa grava e executa |
 | `memory` | Não | `rom` e `ram` com `external`, `icache` e `dcache` com `enabled` e `size_bits` |
-| `extras` | Não | Extensões fora da matriz que a plataforma liga (`Zimop`, `Zicond`, `Zihintntl`, `Zihintpause`) |
 | `generate` | Sim | `specs`, `bank_specs`, `boot_ld`, `runtime`, `banks_h` e `vhdl`, cada um com o `path` a escrever |
 | `config` | Sim | `rom`, `ram` e `addr_widths`, o que o `config.yaml` lê do mapa |
 | `checks` | Não | Cópias escritas à mão a conferir, cada uma com `name`, `file`, `pattern` ou `yaml`, e `expect` |

@@ -128,11 +128,15 @@ The complete table, with the fields of the board platforms, is in chapter 14.
 
 ### 4.2. Edit
 
-For the example, the RAM goes to 64 KiB and the profile to `rv32im`. The RAM starts at `0x8000`, so it ends at `0x18000`, and the reserved words move down with it.
+For the example, the RAM goes to 64 KiB and the ISA to RV32IM (`core` with the `M` extension). The RAM starts at `0x8000`, so it ends at `0x18000`, and the reserved words move down with it.
 
 ```yaml
 platform: exemplo
-profile: rv32im
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
   - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
@@ -266,7 +270,7 @@ riscv-tools profiles --spec Core/profiles/matrix.yaml --format names
 
 ### 5.2. Extensions outside the matrix
 
-The extensions `Zimop`, `Zicond`, `Zihintntl` and `Zihintpause` are not part of the profile name. The platform turns them on in the `extras` field of the `platform.yaml` (`extras: [Zimop, Zicond]`), and the generated package carries `HAS_ZIMOP` and `HAS_ZICOND` true.
+The extensions `Zimop`, `Zicond`, `Zihintntl` and `Zihintpause` are not part of the profile name. The platform lists them in `core.extensions` of the `platform.yaml` (`- Zimop`, `- Zicond`), and the generated package carries `HAS_ZIMOP` and `HAS_ZICOND` true.
 
 ### 5.3. How the top passes the profile to the `core`
 
@@ -955,14 +959,13 @@ In a pull request from someone outside the project, the CI only starts after a m
 | Field | Required | Content |
 | :--- | :--- | :--- |
 | `platform` | Yes | Platform name |
-| `profile`, `profiles` | Yes | Core profile and path of the profile matrix, relative to the `platform.yaml` |
+| `core`, `profiles` | Yes | The core block (`type`, `base` I or E and `extensions`, the list of all extensions) and the path of the profile matrix, relative to the `platform.yaml` |
 | `regions` | Yes | `name`, `base`, `size`, `kind` (`rom` or `ram`) and `exec` of each region; every region ends at `0x80000000` or before |
 | `reserved` | Yes | `stdout`, `tohost` and `fromhost`, inside the RAM region |
 | `boot` | Yes | `entry` in an executable region and `wait_restart` in the first region |
-| `peripherals` | Yes | `name`, `base` and `id`, with the base equal to `0x80000000 \| id << 28` |
+| `peripherals` | Yes | `name`, `base` and `size` |
 | `flash` | No | FLASH region and the banks (`name`, `base`, `size`) that the board writes and executes |
 | `memory` | No | `rom` and `ram` with `external`, `icache` and `dcache` with `enabled` and `size_bits` |
-| `extras` | No | Extensions outside the matrix that the platform turns on (`Zimop`, `Zicond`, `Zihintntl`, `Zihintpause`) |
 | `generate` | Yes | `specs`, `bank_specs`, `boot_ld`, `runtime`, `banks_h` and `vhdl`, each with the `path` to write |
 | `config` | Yes | `rom`, `ram` and `addr_widths`, what the `config.yaml` reads from the map |
 | `checks` | No | Hand-written copies to check, each with `name`, `file`, `pattern` or `yaml`, and `expect` |
