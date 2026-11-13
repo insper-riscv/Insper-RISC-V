@@ -2,9 +2,9 @@
 
 ## 1. What it is
 
-A single simulation top, `modular_sim_top` (`src/simulation/modular/`), instantiates the [SoC](../soc/soc.md) and adds the three-phase clock and the chip models to it. The SoC builds the core with four independent choices: the ROM and the RAM inside or outside the chip, and the instruction cache and the data cache present or not. A memory that the core reaches through its port (external, or internal behind a cache) sits in a simulated chip model of configurable size. It serves any variation of the core (the `has_*` generics pick the extensions), runs the programs of the test repositories (section 7) and is the base of the ACT4 simulation of the 60 profiles.
+A single simulation top, `modular_sim_top` (`src/simulation/modular/`), instantiates the [SoC](../soc/soc.md) and adds the three-phase clock and the chip models to it. The SoC builds the core with four independent choices: the FLASH and the RAM direct or on the bus, and the instruction cache and the data cache present or not. A memory on the bus sits in a simulated chip model of configurable size. It serves any variation of the core (the `has_*` generics pick the extensions), runs the programs of the test repositories (section 7) and is the base of the ACT4 simulation of the 60 profiles.
 
-The top also wires, through generics, optional board peripherals (switches, buttons, displays and the two UARTs) that the [ten platforms](dez-plataformas.md) use; without them the peripheral window has only the CLINT and the external controller, when the interrupts are on.
+The top also wires, through generics, optional board peripherals (switches, buttons, displays and the two UARTs) that the [ten platforms](dez-plataformas.md) use; without them the peripheral window table has only the CLINT and the external controller, when the interrupts are on.
 
 Every combination has the BOOT_MEMORY, the boot memory that leaves the CPU in a known state, and the ROM always starts right after it.
 
@@ -12,28 +12,33 @@ Every combination has the BOOT_MEMORY, the boot memory that leaves the CPU in a 
 
 | Choice | Generic | Values |
 | :--- | :--- | :--- |
-| ROM | `rom_external` | internal (false) or external (true) |
-| RAM | `ram_external` | internal (false) or external (true) |
+| FLASH | `rom_external` | direct (false) or on the bus (true) |
+| RAM | `ram_external` | direct (false) or on the bus (true) |
 | Instruction cache | `has_icache` | without or with |
 | Data cache | `has_dcache` | without or with |
 
-The core knows only the protocol of its port, so a cache exists only on that side. The two conditions below say when the core reaches each memory through the port.
+The caches speak the bus protocol, so a cache exists only on the bus side: the instruction cache requires `rom_external` and the data cache requires `ram_external`, the strict rule of the `check_isa` of the `config_pkg`. Of the 16 combinations of `rom_external`, `ram_external`, `has_icache` and `has_dcache`, 9 are valid and 7 are refused.
 
-$$\text{rom\_via\_port} = \text{rom\_external} \lor \text{has\_icache} \qquad \text{ram\_via\_port} = \text{ram\_external} \lor \text{has\_dcache}$$
+| `rom_external` | `ram_external` | Valid cache combinations |
+| :---: | :---: | :--- |
+| false | false | no cache |
+| false | true | no cache or only the data cache |
+| true | false | no cache or only the instruction cache |
+| true | true | all four: no cache, only instruction, only data or both |
 
-The `rom_external` and `ram_external` generics of the core receive these two values. The physical position (internal or external) changes nothing else in the simulation, because the simulated chip plays the memory in either. The 16 combinations give 9 distinct structures, one per pair of sides.
+Each memory is in the core or on the bus, and the simulated chip plays it when it is on the bus. The 9 valid combinations give distinct structures, one per pair of sides.
 
-| ROM side | Instruction fetch | ROM data |
+| FLASH side | Instruction fetch | FLASH data |
 | :--- | :--- | :--- |
-| In the core (not via port) | Two-port internal FLASH | Second port of the internal FLASH |
-| Via port, no cache | Fetch bridge, which keeps only the current line | Data router, arbiter and FLASH chip |
-| Via port, with cache | Instruction cache | Data router, arbiter and FLASH chip |
+| Direct | Two-port internal FLASH | Second port of the internal FLASH |
+| On the bus, no cache | Fetch bridge, which keeps only the current line | Data router, arbiter and FLASH chip |
+| On the bus, with cache | Instruction cache | Data router, arbiter and FLASH chip |
 
 | RAM side | Data access |
 | :--- | :--- |
-| In the core (not via port) | Internal RAM of the core |
-| Via port, no cache | Interconnect, word by word, straight to the RAM chip |
-| Via port, with cache | Interconnect, data cache and RAM chip |
+| Direct | Internal RAM of the core |
+| On the bus, no cache | Interconnect, word by word, straight to the RAM chip |
+| On the bus, with cache | Interconnect, data cache and RAM chip |
 
 The four architectures that the test repositories and ACT4 use are the following.
 
@@ -50,9 +55,9 @@ When not given, the `has_icache` and `has_dcache` generics are `rom_external` or
 
 ### 3.1. Data via port
 
-When the ROM or the RAM is via port, the core has the external data bus. The interconnect splits off the peripheral window and hands the request to the data cache or, without one, straight to the memory side, with the addresses of the map and one word at a time.
+When the FLASH or the RAM is on the bus, the core has the external data port. The interconnect splits off the peripherals of the window table, ends in an error what has no slave and hands the request to the data cache or, without one, straight to the memory side, with the addresses of the map and one word at a time.
 
-| ROM via port | RAM via port | Destination of the data requests |
+| FLASH on the bus | RAM on the bus | Destination of the data requests |
 | :--- | :--- | :--- |
 | no | yes | RAM chip |
 | yes | no | Data router: the ROM goes to the FLASH chip and what falls outside it answers zero |
@@ -64,26 +69,26 @@ With the ROM via port, the data router and the FLASH arbiter sit between the cor
 
 The write-back stage (WB) reads the data of a load after the request ends, and by then the address of the core has changed. The data cache keeps the data, but without it the data router would choose the region by the new address and return the wrong data. The data router then uses `hold_rdata`, which makes the data read follow the region of the last completed request (documented in the `mem_region_router` of Memory).
 
-### 3.3. Internal memory with a cache and external memory without one
+### 3.3. Memory on the bus with and without a cache
 
 | Combination | How the simulation builds it |
 | :--- | :--- |
-| Internal memory with a cache | The cache sits over the chip model, with the latency of the chip generics; the cache only adds latency on a miss |
-| External ROM without an instruction cache | The fetch bridge reads the FLASH chip, which serves word and line requests |
-| External RAM without a data cache | The interconnect talks to the RAM chip with word requests |
+| Memory on the bus with a cache | The cache sits over the chip model, with the latency of the chip generics; the cache only adds latency on a miss |
+| FLASH on the bus without an instruction cache | The fetch bridge reads the FLASH chip, which serves word and line requests |
+| RAM on the bus without a data cache | The interconnect talks to the RAM chip with word requests |
 
 Both simulated chips serve word requests without a cache. The FLASH and the SDRAM of the DE0-CV board stay behind the caches in the board top, which does not change with the choice.
 
 ## 4. Memory map
 
-The map comes from generics and holds for the core and for the top. The default value of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses, to the `memory_map.h` header of the runtime, to the linker specs file and to the linker script of the BOOT_MEMORY (`make generate`, and `make generate-check` verifies it in CI). The values are those of the ACT4 simulation. The package also carries the `HAS_*` of the platform (`HAS_E` among them), which the top does not pass on as generics: the core and the SoC read the base and the extensions from the `config_pkg`. It also carries `BOOT_MEMORY_BITS` (12) and `ROM_STORAGE_BYTES` (1048576). The default choice is the `memory` section of `platform.yaml` (both memories in the core, no cache), which yields `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` and `HAS_DCACHE`; `--memory` of `riscv-tools` replaces it for one run, and each test overrides it through the parameters of `tests.json`. The checks of `riscv-tools check-memory-map` (`checks` of `platform.yaml`) cover the hand-written copy of the RAM base in the tests and the platform header of the test repository. `HAS_ZIMOP`, `HAS_ZICOND` and `HAS_SSCOFPMF` come from the package, turned on by the `extras` field of `platform.yaml`; the last one needs Zihpm in the profile and `Interrupts` in the `extras`.
+The map comes from generics and holds for the core and for the top. The default value of each one is in `src/simulation/modular/platform.yaml`, which is the source of the map, and `riscv-tools generate-memory-map` carries it to the `modular_map_pkg.vhd` package that the top uses, to the `memory_map.h` header of the runtime, to the linker specs file and to the linker script of the BOOT_MEMORY (`make generate`, and `make generate-check` verifies it in CI). The values are those of the ACT4 simulation. The package also carries the `HAS_*` of the platform (`HAS_E` among them), which the top does not pass on as generics: the core and the SoC read the base and the extensions from the `config_pkg`. It also carries `BOOT_MEMORY_BITS` (12) and `FLASH_STORAGE_BYTES` (1048576). The default choice is the `memory` section of `platform.yaml` (both memories in the core, no cache), which yields `FLASH_ON_BUS`, `RAM_ON_BUS`, `HAS_ICACHE` and `HAS_DCACHE`; `--memory` of `riscv-tools` replaces it for one run, and each test overrides it through the parameters of `tests.json`. The checks of `riscv-tools check-memory-map` (`checks` of `platform.yaml`) cover the hand-written copy of the RAM base in the tests and the platform header of the test repository. `HAS_ZIMOP`, `HAS_ZICOND` and `HAS_SSCOFPMF` come from the package, turned on by the `extras` field of `platform.yaml`; the last one needs Zihpm in the profile and `Interrupts` in the `extras`.
 
 | Region | Start | End | Generics |
 | :--- | :--- | :--- | :--- |
 | BOOT_MEMORY | `0x00000000` | `0x00001000` | `boot_memory_size_bytes` |
-| ROM | right after the BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
+| FLASH | right after the BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
-| External window and peripherals | `0x80000000` | | `ext_base_kib`, `periph_base_kib` |
+| Peripherals | the windows of the table of the map package, from `0x80000000` | | `periph_count`, `periph_bases`, `periph_masks` |
 
 The limits are in KiB. The words that the host and the program share (the standard output, `tohost` and `fromhost`) sit at the top of the RAM, in the last 4 KiB page, which the caches bypass. The BOOT_MEMORY clears those words and jumps to the start of the ROM.
 
@@ -126,7 +131,7 @@ riscv-tools --profile rv32im_zicclsm_zicntr_zihpm_zifencei \
   --output tools/riscv_build/config.generated.yaml
 ```
 
-The command writes, in the test repository, `config.generated.yaml` with the `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` and `HAS_DCACHE` generics and the text of the `config_pkg` of the profile in `sim.config_pkg`, which the simulation compiles in place of the `config_pkg.vhd` of the platform (the base and the extensions of the profile are not generics of the top). A file that extends it and points `paths.include_dir` to the header directory of the modular platform (`tools/riscv_build/include-modular` of the test repository, with the map of section 4) compiles and simulates the programs of `c/` and `asm/` with `compile --emit hex` and `sim`.
+The command writes, in the test repository, `config.generated.yaml` with the `FLASH_ON_BUS`, `RAM_ON_BUS`, `HAS_ICACHE` and `HAS_DCACHE` generics and the text of the `config_pkg` of the profile in `sim.config_pkg`, which the simulation compiles in place of the `config_pkg.vhd` of the platform (the base and the extensions of the profile are not generics of the top). A file that extends it and points `paths.include_dir` to the header directory of the modular platform (`tools/riscv_build/include-modular` of the test repository, with the map of section 4) compiles and simulates the programs of `c/` and `asm/` with `compile --emit hex` and `sim`.
 
 | Item | Behavior on the modular platform |
 | :--- | :--- |
@@ -151,7 +156,7 @@ The command writes, in the test repository, `config.generated.yaml` with the `RO
 | `ModularBridgeDirect` | via port, fetch bridge | via port, direct |
 | `ModularBridgeDcache` | via port, fetch bridge | via port, data cache |
 | `ModularIcacheDirect` | via port, instruction cache | via port, direct |
-| `ModularInternalCaches` | internal with instruction cache | internal with data cache |
+| `ModularBridgeCaches` | via port, instruction cache | via port, data cache |
 | `ModularInterrupts` | in the core, with `HAS_ZICSR` of the `config_pkg` and the CLINT in the peripheral window | in the core |
 
 The entries that extend `ModularIntegrated` (`extends` in `tests.json`) inherit the list of sources and change only the parameters. `make check-tops` elaborates the top and `make check-generics` checks that the top declares every `HAS_*` of the generated package.

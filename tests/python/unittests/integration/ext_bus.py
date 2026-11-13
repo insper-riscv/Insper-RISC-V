@@ -85,10 +85,12 @@ async def access(
     write: int | None = None,
     hold: int = 0,
     mem_latency: int = 2,
+    error: list[int] | None = None,
 ):
     """One core access; returns (read data, cycles until ready).
 
     `write` is the word to store, and None makes the access a read.
+    `error`, when given, receives the o_error seen with the ready.
 
     The port holds until ready, then `hold` more cycles (the pipeline
     stopped by something else) before mem_advance.
@@ -105,6 +107,8 @@ async def access(
         cycles += 1
         drive_memory(dut, addr, cycles, mem_latency)
         if int(dut.o_ready.value):
+            if error is not None:
+                error.append(int(dut.o_error.value))
             break
         check_true(cycles < TIMEOUT, "the access never completed")
     for _ in range(hold):
@@ -365,3 +369,44 @@ async def test_status_tells_whether_a_host_has_scanned(dut: Dut):
     await scan(dut)
     await Timer(1, unit="us")
     check_equal((await _status(dut)) >> 17 & 1, 1)
+
+
+async def _error_of(dut: Dut, addr: int, write: int | None = None):
+    """Make one access and return (read data, the error seen with the ready)."""
+    seen: list[int] = []
+    value, _c = await access(dut, addr, write=write, error=seen)
+    return value, seen[0]
+
+
+@cocotb.test()
+async def test_an_address_with_no_window_ends_in_error(dut: Dut):
+    """A hole of the map, not memory and not a window, ends in an error."""
+    await start(dut)
+    for addr in (0x20000000, 0x50000000, 0x00000100):
+        value, error = await _error_of(dut, addr)
+        check_equal(error, 1, f"read of {addr:#x}")
+        check_equal(value, 0, f"read of {addr:#x} gives zero")
+        _v, error = await _error_of(dut, addr, write=0xFFFFFFFF)
+        check_equal(error, 1, f"write of {addr:#x}")
+
+
+@cocotb.test()
+async def test_the_padding_of_a_window_ends_in_error(dut: Dut):
+    """What follows the registers of a window (64 KiB here) is an error."""
+    await start(dut)
+    value, error = await _error_of(dut, PERIPHERALS + 0x10000)
+    check_equal(error, 1, "read of the padding")
+    check_equal(value, 0)
+    _v, error = await _error_of(dut, PERIPHERALS + 0x50000000 + 0x20000, 1)
+    check_equal(error, 1, "write of the padding")
+
+
+@cocotb.test()
+async def test_a_good_access_is_not_an_error(dut: Dut):
+    """Memory, the UART and a silent window end without an error."""
+    await start(dut)
+    for addr in (MEM, STATUS, 0xA0000000):
+        _v, error = await _error_of(dut, addr)
+        check_equal(error, 0, f"read of {addr:#x}")
+    _v, error = await _error_of(dut, TXDATA, write=0x41)
+    check_equal(error, 0, "write of the UART")

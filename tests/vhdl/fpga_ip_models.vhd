@@ -18,6 +18,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.config_pkg.word_t;
 
 package fpga_ip_models_pkg is
 
@@ -28,7 +29,7 @@ package fpga_ip_models_pkg is
     constant PROGRAM_WORDS : natural := 7;
 
     -- Vetor de palavras do programa mínimo (lui, addi, sw, lw, addi, sw, jal).
-    type program_t is array(0 to PROGRAM_WORDS - 1) of std_logic_vector(31 downto 0);
+    type program_t is array(0 to PROGRAM_WORDS - 1) of word_t;
 
     -- Programa mínimo da FLASH, a partir da entrada.
     constant PROGRAM : program_t :=
@@ -43,7 +44,7 @@ package fpga_ip_models_pkg is
     );
 
     -- Instrução jal x0, 0x1000 da BOOT_MEMORY.
-    constant BOOT_JUMP : std_logic_vector(31 downto 0) := x"0000106F";
+    constant BOOT_JUMP : word_t := x"0000106F";
 
 end package fpga_ip_models_pkg;
 
@@ -55,6 +56,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.config_pkg.word_t;
 use work.fpga_ip_models_pkg.all;
 
 entity boot_memory is
@@ -72,22 +74,22 @@ entity boot_memory is
         -- Habilita a escrita (a BOOT_MEMORY não escreve).
         i_wren    : in    std_logic                     := '0';
         -- Dado de escrita (não usado).
-        i_data    : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_data    : in    word_t := (others => '0');
         -- Palavra lida, um ciclo depois do endereço.
-        o_q       : out   std_logic_vector(31 downto 0)
+        o_q       : out   word_t
     );
 end entity boot_memory;
 
 architecture sim of boot_memory is
 
     -- Vetor de palavras da BOOT_MEMORY.
-    type words_t is array(0 to size_bytes / 4 - 1) of std_logic_vector(31 downto 0);
+    type words_t is array(0 to size_bytes / 4 - 1) of word_t;
 
     -- Conteúdo da BOOT_MEMORY: o salto para a FLASH na palavra 0.
     constant CONTENT : words_t := (0 => BOOT_JUMP, others => (others => '0'));
 
     -- Registrador de saída.
-    signal q_r : std_logic_vector(31 downto 0) := (others => '0');
+    signal q_r : word_t := (others => '0');
 
 begin
 
@@ -114,6 +116,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.config_pkg.word_t;
 use work.fpga_ip_models_pkg.all;
 
 entity flash is
@@ -129,7 +132,7 @@ entity flash is
         -- Habilita a leitura da porta A.
         i_rden_a    : in    std_logic                     := '1';
         -- Palavra lida pela porta A.
-        o_q_a       : out   std_logic_vector(31 downto 0);
+        o_q_a       : out   word_t;
         -- Clock da porta B.
         i_clk_b     : in    std_logic                     := '1';
         -- Índice da palavra acessada pela porta B.
@@ -139,16 +142,16 @@ entity flash is
         -- Habilita a escrita da porta B.
         i_wren_b    : in    std_logic                     := '0';
         -- Dado de escrita da porta B.
-        i_data_b    : in    std_logic_vector(31 downto 0) := (others => '0');
+        i_data_b    : in    word_t := (others => '0');
         -- Palavra lida pela porta B.
-        o_q_b       : out   std_logic_vector(31 downto 0)
+        o_q_b       : out   word_t
     );
 end entity flash;
 
 architecture sim of flash is
 
     -- Vetor de palavras da FLASH.
-    type words_t is array(0 to size_bytes / 4 - 1) of std_logic_vector(31 downto 0);
+    type words_t is array(0 to size_bytes / 4 - 1) of word_t;
 
     -- Monta o conteúdo inicial: o programa mínimo a partir da entrada.
 
@@ -173,10 +176,10 @@ architecture sim of flash is
     signal mem : words_t := initial;
 
     -- Registrador de saída da porta A.
-    signal q_a_r : std_logic_vector(31 downto 0) := (others => '0');
+    signal q_a_r : word_t := (others => '0');
 
     -- Registrador de saída da porta B.
-    signal q_b_r : std_logic_vector(31 downto 0) := (others => '0');
+    signal q_b_r : word_t := (others => '0');
 
 begin
 
@@ -220,6 +223,7 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
+use work.config_pkg.word_t;
 
 entity ram is
     generic (
@@ -236,23 +240,23 @@ entity ram is
         -- Clock do acesso.
         i_clk     : in    std_logic                    := '1';
         -- Dado de escrita.
-        i_data    : in    std_logic_vector(31 downto 0);
+        i_data    : in    word_t;
         -- Habilita a leitura.
         i_rden    : in    std_logic                    := '1';
         -- Habilita a escrita.
         i_wren    : in    std_logic;
         -- Palavra lida, um ciclo depois do endereço.
-        o_q       : out   std_logic_vector(31 downto 0)
+        o_q       : out   word_t
     );
 end entity ram;
 
 architecture sim of ram is
 
     -- Vetor de palavras da RAM.
-    type words_t is array(0 to size_bytes / 4 - 1) of std_logic_vector(31 downto 0);
+    type words_t is array(0 to size_bytes / 4 - 1) of word_t;
 
     -- Registrador de saída.
-    signal q_r : std_logic_vector(31 downto 0) := (others => '0');
+    signal q_r : word_t := (others => '0');
 
 begin
 
@@ -295,7 +299,7 @@ end architecture sim;
 
 library ieee;
 use ieee.std_logic_1164.all;
-
+use work.config_pkg.word_t;
 entity flash_jtag_shell is
     port (
         -- Alternância que pede um comando ao carregador (parada).
@@ -305,13 +309,13 @@ entity flash_jtag_shell is
         -- Endereço de palavra do comando.
         o_addr       : out   std_logic_vector(23 downto 0);
         -- Dado do comando.
-        o_data       : out   std_logic_vector(31 downto 0);
+        o_data       : out   word_t;
         -- Alternância que confirma o comando concluído (não usada).
         i_done_tog   : in    std_logic;
         -- Endereço da resposta do comando (não usado).
         i_rsp_addr   : in    std_logic_vector(23 downto 0);
         -- Dado da resposta do comando (não usado).
-        i_rsp_data   : in    std_logic_vector(31 downto 0);
+        i_rsp_data   : in    word_t;
         -- Status da resposta do comando (não usado).
         i_rsp_status : in    std_logic_vector(7 downto 0)
     );

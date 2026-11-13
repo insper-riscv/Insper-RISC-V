@@ -119,7 +119,7 @@ The `platform.yaml` is the only source of the map. Nothing of the map is written
 | `regions` | Each region with `name`, `base`, `size` (integer with suffix `K`, `M` or a sum, such as `1M-4K`), `kind` (`rom` or `ram`) and `exec` |
 | `reserved` | The three words at the top of the RAM, `stdout`, `tohost` and `fromhost`, which must fit inside the RAM region |
 | `boot` | `entry`, the address of the ROM `_start`, and `wait_restart`, the fixed address of the wait routine |
-| `peripherals` | Each peripheral with `name`, `base` and `id` (address bits 30:28) |
+| `peripherals` | Each peripheral with `name`, `base` (address of the window, aligned to its size) and `size` (bytes of registers); the window is the smallest power of two of at least 16 bytes that holds them, and the index of the peripheral in the table is its position in the list |
 | `generate` | The files to write and the parameters of the VHDL package |
 | `config` | What the `config.yaml` reads from the map |
 | `checks` | Where the hand-written copies that `check-memory-map` checks live |
@@ -301,11 +301,11 @@ The core has three memory outputs: the instruction fetch (BOOT_MEMORY and ROM), 
 
 ### 6.2. Size generics
 
-The memory sizes are power-of-two generics whose default value comes from the generated package (`BOOT_MEMORY_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). No size is written in the top.
+The memory sizes are power-of-two generics whose default value comes from the generated package (`BOOT_MEMORY_SIZE_BYTES`, `FLASH_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). No size is written in the top.
 
 ### 6.3. Profile and map in the `core`
 
-The core has no extension generic: it reads the base and the extensions from the `HAS_*` constants of the generated `config_pkg` of the platform, which the top compiles in place of the default package of Common-Components. The `generic map` of the `core` carries only what does not come from the package (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external` and `periph_slots`). The top that instantiates the SoC keeps one `has_*` generic per extension, with the `HAS_*` constant of the map package as default value, and the SoC asserts that `has_dcache` equals the constant of the `config_pkg`. The region limits (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) receive the constants of the same name of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
+The core has no extension generic: it reads the base and the extensions from the `HAS_*` constants of the generated `config_pkg` of the platform, which the top compiles in place of the default package of Common-Components. The `generic map` of the `core` carries only what does not come from the package (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external`). The top that instantiates the SoC keeps one `has_*` generic per extension, with the `HAS_*` constant of the map package as default value, and the SoC asserts that `has_dcache` equals the constant of the `config_pkg`. The region limits (`flash_end_kib`, `ram_base_kib`, `ram_end_kib`) and the window table (`periph_count`, `periph_bases`, `periph_masks`, `periph_sizes`, `strict_periph`) receive the constants of the package. If the profile of step 4.2 turns on `M`, `has_m` already arrives true, and nothing else changes in the top.
 
 A simulation parameter that names a generic the top does not declare fails at elaboration with `cannot find in top entity generic`; the top that does not instantiate the SoC declares no extension generic, and the extension of a test changes by swapping the `config_pkg` of the source list.
 
@@ -759,11 +759,11 @@ A platform repository uses the peripheral after the `Peripherals` submodule poin
 
 ```yaml
 peripherals:
-  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: LED,  offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
+  - {name: UART, base: 0xC0000000, size: 1K}
+  - {name: LED,  base: 0xD0000000, size: 1K}
 ```
 
-After `generate-memory-map`, the package gains `LED_BASE` and `LED_ID`, and `memory_map.h` gains `RV32_LED_BASE`. In the top, the window selector, the filtered enables and the read data follow the pattern of step 6.4, and the source `led_register.vhd` enters the `sim.vhdl_sources` list of the `config.yaml`, the `Makefile` of the platform and the `.qsf`, if there is a board.
+After `generate-memory-map`, the package gains `LED_BASE` and `LED_INDEX`, and one window in the `PERIPH_BASES` and `PERIPH_MASKS` tables, and `memory_map.h` gains `RV32_LED_BASE`. In the top, the window selector, the filtered enables and the read data follow the pattern of step 6.4, and the source `led_register.vhd` enters the `sim.vhdl_sources` list of the `config.yaml`, the `Makefile` of the platform and the `.qsf`, if there is a board.
 
 ## 12. Add a new memory type
 

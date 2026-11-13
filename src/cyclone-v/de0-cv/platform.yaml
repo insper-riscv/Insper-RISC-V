@@ -45,20 +45,20 @@ flash:
     - {name: A, base: 0x00001000, size: 124K}
     - {name: B, base: 0x00020000, size: 128K}
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
-# The slots of the external interconnect (bits 30:28 of the address): the FLASH controller of the program update
+# The peripheral windows of the external interconnect (base and size of the registers of each): the FLASH controller of the program update
 # (commands of the FLASH chip; wired in the board top and, with HAS_FLASH_CONTROLLER, in the simulation top), the
-# JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB slot: msip, mtimecmp and mtime) and the
+# JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB window: msip, mtimecmp and mtime) and the
 # PLIC (a 4 MiB window), the controller of the external interrupt lines, whose output is the MEIP of the core.
 peripherals:
-  - {name: FLASH_CTRL, offset: 0x30000000, id: 3, size: 32, padding: 0x0FFFFFE0}
-  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
-  - {name: CLINT,   offset: 0x60000000, id: 6, size: 64K, padding: 0x0FFF0000}
-  - {name: PLIC,    offset: 0x70000000, id: 7, size: 4M, padding: 0x0FC00000}
+  - {name: FLASH_CTRL, base: 0xB0000000, size: 32}
+  - {name: UART, base: 0xC0000000, size: 1K}
+  - {name: DISPLAY, base: 0xD0000000, size: 1K}
+  - {name: CLINT, base: 0xE0000000, size: 64K}
+  - {name: PLIC, base: 0xF0000000, size: 4M}
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
 # (76.923077 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (77 cycles per tick) and is
@@ -76,8 +76,8 @@ interrupts:
 
 # The memory model: the FLASH is emulated in the M10K blocks with the latency of a serial chip (24 cycles for the first
 # word of a burst, 4 for each following) and the SDRAM is the device of the board, both outside the core behind the
-# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities). The package takes ROM_EXTERNAL,
-# RAM_EXTERNAL and the caches from here.
+# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities). The package takes FLASH_ON_BUS,
+# RAM_ON_BUS and the caches from here.
 memory:
   rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
   ram:    {external: true, backend: dispositivo, device: sdram}
@@ -136,7 +136,6 @@ config:
 
 checks:
   # --- config.yaml ---------------------------------------------------------
-  - {name: config.yaml UART_SLOT, file: src/cyclone-v/de0-cv/config.yaml, pattern: 'UART_SLOT: "(\d+)"', expect: UART.id}
 
   # --- boot memory (boot_memory.S; its linker script is generated) --------------
 

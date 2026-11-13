@@ -68,6 +68,7 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/s
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/Cyclone-V/sdram_jtag_shell.vhd
+set_global_assignment -name VHDL_FILE ../../interconnect/interconnect_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../interconnect/ext_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/byte_mask_consts.vhd

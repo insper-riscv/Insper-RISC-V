@@ -212,13 +212,13 @@ ENTRADAS = (
     ),
     Saida(
         TESTS_JSON,
-        ("modular_internal_caches_map", "modular_sim_top"),
-        "ModularInternalCachesWindow128",
+        ("modular_bridge_caches_map", "modular_sim_top"),
+        "ModularBridgeCachesWindow128",
     ),
     Saida(
         TESTS_JSON,
-        ("modular_internal_caches_map", "modular_sim_top"),
-        "ModularInternalCaches",
+        ("modular_bridge_caches_map", "modular_sim_top"),
+        "ModularBridgeCaches",
     ),
     Saida(
         TESTS_JSON,

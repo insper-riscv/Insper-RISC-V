@@ -253,7 +253,7 @@ Sections 3.6 and 3.7.
 | ID | Requirement | Status | Evidence |
 | :--- | :--- | :--- | :--- |
 | A1 | The physical memory attributes (PMA) of each region are fixed at design time and known to software | Conforming | The memory map of `platform.yaml` is the source, and `generate-memory-map` writes it to the VHDL, the linker and the runtime header |
-| A2 | A PMA violation (execution from a region with no fetch, write to read-only memory, access to a region without memory) raises a precise access fault, wherever possible | Conforming | With `has_access_faults`: see X2 and X8. The valid map (ROM, RAM, external window and occupied peripheral slots) comes from `platform.yaml`. On platforms without the `AccessFaults` extra the Core raises no causes 1, 5 and 7 (a platform choice) |
+| A2 | A PMA violation (execution from a region with no fetch, write to read-only memory, access to a region without memory) raises a precise access fault, wherever possible | Conforming | With `has_access_faults`: see X2 and X8. The valid map (BOOT_MEMORY, FLASH and RAM in the core, and what the interconnect serves) comes from `platform.yaml`. On platforms without the `AccessFaults` extra the Core raises no causes 1, 5 and 7 (a platform choice) |
 | A3 | A misaligned access to main memory executes or traps, and execution need not be atomic | Conforming | Zicclsm. Program `misaligned-crossing`, ACT4 `rv32i/Zicclsm` (13) |
 | A4 | The atomicity PMAs (AMO, reservability), coherence and cacheability per region | Not applicable | The Core has neither the A extension nor coherence between harts |
 | A5 | PMP (`pmpcfg`, `pmpaddr`) and Smepmp (`mseccfg`) | Not applicable | The Core implements no PMP; the addresses `0x3A0` to `0x3EF` and `0x747` are illegal. cocotb `CoreTrapPriority` |
@@ -261,7 +261,7 @@ Sections 3.6 and 3.7.
 
 ### 14.1. Access faults
 
-The manual strongly recommends that PMA violations be precise exceptions, "wherever possible". The Core raises them with the `has_access_faults` generic (off by default; the `de0-cv` turns it on with `extras: [AccessFaults]`). The valid map comes from `platform.yaml`: the KiB generics the Core already received (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) and the `periph_slots` generic, which `riscv-tools` writes as `PERIPH_SLOTS` (one bit per 256 MiB window of the peripheral bus that holds a peripheral).
+The manual strongly recommends that PMA violations be precise exceptions, "wherever possible". The Core raises them with the `has_access_faults` generic (off by default; the `de0-cv` turns it on with `extras: [AccessFaults]`). The valid map comes from `platform.yaml`: the Core knows the BOOT_MEMORY, the FLASH and the RAM through the `config_pkg`, and every address outside them leaves through the external port. The interconnect answers with `error` when no bus memory and no peripheral window serves the address (the `PERIPH_BASES`, `PERIPH_MASKS` and `PERIPH_SIZES` table of the map package), and the Core raises the load or store access fault through the `i_ext_error` port.
 
 | Violation | Cause | `mtval` | Where it is decided |
 | :--- | :---: | :--- | :--- |

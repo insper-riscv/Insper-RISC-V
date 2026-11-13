@@ -33,18 +33,18 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
-# The slots of the external interconnect (bits 30:28 of the address): the JTAG UART and the seven-segment
+# The peripheral windows of the external interconnect (base and size of the registers of each): the JTAG UART and the seven-segment
 # display of the board top.
 peripherals:
-  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
+  - {name: UART, base: 0xC0000000, size: 1K}
+  - {name: DISPLAY, base: 0xD0000000, size: 1K}
 
 # The memory model (external-data): the ROM inside the core, the SDRAM outside it behind the data cache (32768 bits,
-# 4 KiB, the size of the cache entity), and no instruction cache. The package takes ROM_EXTERNAL, RAM_EXTERNAL and the
+# 4 KiB, the size of the cache entity), and no instruction cache. The package takes FLASH_ON_BUS, RAM_ON_BUS and the
 # caches from here.
 memory:
   rom:    {external: false}
