@@ -1700,9 +1700,9 @@
         "sources": [
             "Common-Components/src/synchronizer.vhd",
             "Peripherals/src/UART/jtag/jtag_uart.vhd",
+            "Memory/src/barramento/SoC/axi_slave_word_bridge.vhd",
             "Common-Components/src/utils_pkg.vhd",
             "Common-Components/src/config_pkg.vhd",
-            "Memory/src/barramento/SoC/axi_slave_word_bridge.vhd",
             "src/interconnect/interconnect_pkg.vhd",
             "Memory/src/barramento/SoC/axi_master_bridge.vhd",
             "Memory/src/cache/SoC/cache_pkg.vhd",
@@ -1725,9 +1725,9 @@
         "sources": [
             "Common-Components/src/synchronizer.vhd",
             "Peripherals/src/UART/jtag/jtag_uart.vhd",
+            "Memory/src/barramento/SoC/axi_slave_word_bridge.vhd",
             "Common-Components/src/utils_pkg.vhd",
             "Common-Components/src/config_pkg.vhd",
-            "Memory/src/barramento/SoC/axi_slave_word_bridge.vhd",
             "src/interconnect/interconnect_pkg.vhd",
             "Memory/src/barramento/SoC/axi_master_bridge.vhd",
             "Memory/src/cache/SoC/cache_pkg.vhd",
