@@ -118,6 +118,7 @@ YAMLS = (
         ("fpga_uart_pins_map", "modular_sim_top"),
     ),
     Saida("src/cyclone-v/de0-cv/config.yaml", ("de0_cv_sim_top",)),
+    Saida("src/cyclone-v/doom/config.yaml", ("doom_sim_top",)),
     Saida(
         "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)
     ),
@@ -251,6 +252,7 @@ ENTRADAS = (
         "ModularExternalInstruction",
     ),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
+    Saida(TESTS_JSON, ("doom_sim_top",), "DoomSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),
     Saida(
