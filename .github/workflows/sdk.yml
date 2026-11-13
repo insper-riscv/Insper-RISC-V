@@ -1,8 +1,12 @@
 name: SDK
 on:
   push:
-    branches: [main, live-vscode, sdk-review, sdk-profiles-drivers, kpi-benchmarks]
+    branches: [main]
   pull_request:
+concurrency:
+  group: sdk-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 jobs:
@@ -11,7 +15,7 @@ jobs:
     timeout-minutes: 30
     container:
       options: --memory=8g --memory-swap=8g --cpus=2
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,7 +55,7 @@ jobs:
     timeout-minutes: 40
     container:
       options: --memory=8g --memory-swap=8g --cpus=2
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
     env:
       CARGO_BUILD_JOBS: 2
       RUSTUP_HOME: /tmp/rv32-rustup
