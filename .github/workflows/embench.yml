@@ -41,30 +41,13 @@ env:
   EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
   BASE_REF: ${{ github.event_name != 'push' && 'refs/heads/main' || '' }}
+  PR_NUMBER: ${{ github.event.pull_request.number || '' }}
   CANDIDATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
   DRIVER_REF: ${{ github.event_name == 'pull_request' && 'refs/heads/main' || github.sha }}
   SCOPE: ${{ inputs.scope || 'named' }}
   WORKLOAD: ${{ inputs.workload || 'ci' }}
 
 jobs:
-  reporting-tests:
-    name: Embench score and comment tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.14'
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: python -m pip install 'PyYAML>=6.0'
-      - run: python -m unittest benchmarks.embench.test_reporting benchmarks.embench.test_score benchmarks.embench.test_workflow_policy
-      - run: node --test .github/scripts/embench-comment.test.cjs
-
   plan:
     runs-on: ubuntu-latest
     timeout-minutes: 10

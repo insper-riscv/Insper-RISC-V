@@ -45,6 +45,7 @@ def calculate(
     """Normalize main=100, with equal program and profile weights."""
     document: dict[str, Any] = {
         "schema": 1,
+        "pull_request_number": expected.get("pull_request_number"),
         "status": "incomplete",
         "baseline_branch": "main",
         "baseline_sha": expected["revisions"].get("base"),

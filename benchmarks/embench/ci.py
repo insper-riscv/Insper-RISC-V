@@ -80,6 +80,11 @@ def plan(args: argparse.Namespace) -> None:
         json.dumps(
             {
                 "profiles": names,
+                "pull_request_number": (
+                    int(os.environ["PR_NUMBER"])
+                    if os.environ.get("PR_NUMBER")
+                    else None
+                ),
                 "batches": batches,
                 "revisions": revisions,
                 "available": available,

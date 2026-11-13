@@ -67,3 +67,13 @@ test("missing PR association cannot update a newer head with an old failure", as
   const state = setup({head: "c".repeat(40)}); state.run.pull_requests = []; state.run.conclusion = "failure";
   await publish({...state, score: null}); assert.equal(state.writes.length, 0);
 });
+
+test("successful results still reach a closed unmerged PR when GitHub omits its association", async () => {
+  const state = setup({state: "closed", merged: false});
+  state.run.pull_requests = [];
+  state.github.rest.repos.listPullRequestsAssociatedWithCommit = async () => ({data: []});
+  const value = score(); value.pull_request_number = 7;
+  await publish({...state, score: value});
+  assert.equal(state.writes.length, 1);
+  assert.match(state.writes[0].body, /finished after the PR was closed/);
+});

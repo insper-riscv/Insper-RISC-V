@@ -12,6 +12,9 @@ function validateScore(value) {
       !Number.isInteger(value.expected_profiles) || value.expected_profiles < 1 || value.expected_profiles > 256) {
     throw new Error("Invalid Embench score document");
   }
+  if (value.pull_request_number != null && (!Number.isSafeInteger(value.pull_request_number) || value.pull_request_number < 1)) {
+    throw new Error("Invalid pull request number");
+  }
   const names = new Set();
   for (const row of value.profiles) {
     if (!/^rv32[a-z0-9_]{0,100}$/.test(row.profile) || names.has(row.profile) ||
@@ -75,6 +78,12 @@ async function publish({github, context, core, score = null}) {
   let associated = run.pull_requests || [];
   if (!associated.length) {
     associated = (await github.rest.repos.listPullRequestsAssociatedWithCommit({...context.repo, commit_sha: run.head_sha, per_page: 100})).data;
+  }
+  // GitHub's commit-association endpoint omits some closed, unmerged PRs.
+  // A recorded number is only a hint: pulls.get must still prove the repo and
+  // exact workflow head SHA before any write is allowed.
+  if (!associated.length && score?.pull_request_number) {
+    associated = [{number: score.pull_request_number}];
   }
   const allowed = new Set([run.head_sha, ...(run.pull_requests || []).map(pr => pr.head?.sha)].filter(Boolean));
   if (score && !allowed.has(score.candidate_sha)) throw new Error("Score does not belong to this workflow's PR head");
