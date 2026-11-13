@@ -47,6 +47,7 @@ console:
 pins: pins.yaml
 notes:
   - "JP6 e JP7 mudam a tensao dos bancos de usuario: KEY, SW e parte dos HEX seguem o JP7 (fabrica 2.5 V), o GPIO e o SMA_CLKOUT seguem o JP6 (fabrica 3.3 V). O io_standard de cada pino esta em pins.yaml."
+  - "Expansao: o cabecalho de 40 pinos tem GPIO[35:0] (tabela 4-12), mais VCC5, VCC3P3 e dois GND, e EX_IO[6:0] (tabela 4-13) fica em outro conector; o HSMC tem 82 pinos de E/S, HSMC_* (tabela 4-9). Todos bidirecionais, sem polaridade, e o esquema do board.yaml ainda nao tem papel para eles. LEDG[8:0] (tabela 4-3) e SMA_CLKIN, SMA_CLKOUT, CLOCK2_50 e CLOCK3_50 (tabela 4-5) estao em pins.yaml; CLOCK2_50 e CLOCK3_50 estao em clocks.inputs, e os LEDG e os SMA ainda nao tem papel."
   - "JP3 com os pinos 1 e 2 fechados isola a cadeia JTAG do HSMC, de modo que so o EP4CE115 aparece na cadeia."
   - "A chave RUN/PROG (SW19) fica em RUN para configurar pela JTAG; PROG so para o modo AS (EPCS64)."
   - "As pecas da SDRAM (IS42S16320B-7), da SRAM e da FLASH (S29GL064N90, sufixo nao verificado) sao inferidas de fonte de terceiros; o mapa de setores da FLASH e os tempos dependem do datasheet."
