@@ -28,10 +28,26 @@ core:
     - AccessFaults
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00001000, size: 1024K, kind: rom, exec: true}   # the first 1 MiB of the NOR chip (the window of the region router): offset 0 of the chip is 0x1000
-  - {name: RAM,      base: 0x40000000, size: 128M, kind: ram}   # the whole SDRAM; the generator widens the window of the cache tag to 128 MiB
+# The memory model: the FLASH is the NOR chip of the board and the RAM is the 128 MB SDRAM, both outside the core behind the
+# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities).
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: flash
+      base: 0x00001000
+      size: 1024K
+      on_bus: true
+      cache:
+        size_bits: 32768
+  data:
+    - type: sdram
+      base: 0x40000000
+      size: 128M
+      on_bus: true
+      cache:
+        size_bits: 32768
 
 # Words at the top of RAM: the contract between the boot memory, the program and the host.
 reserved:
@@ -59,11 +75,21 @@ strict_periph: true
 # The peripheral windows of the external interconnect (base and size of the registers of each): the FLASH controller of the program update, the
 # JTAG UART, the seven-segment display, the CLINT and the PLIC.
 peripherals:
-  - {name: FLASH_CTRL, base: 0xB0000000, size: 32}
-  - {name: UART, base: 0xC0000000, size: 1K}
-  - {name: DISPLAY, base: 0xD0000000, size: 1K}
-  - {name: CLINT, base: 0xE0000000, size: 64K}
-  - {name: PLIC, base: 0xF0000000, size: 4M}
+  FLASH_CTRL:
+    base: 0xB0000000
+    size: 32
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core.
 interrupts:
@@ -72,14 +98,6 @@ interrupts:
   sources:
     - {name: UART_JTAG, id: 2}
     - {name: FLASH,     id: 6}
-
-# The memory model: the FLASH is the NOR chip of the board and the RAM is the 128 MB SDRAM, both outside the core behind the
-# instruction and the data caches (32768 bits, 4 KiB, the size of the cache entities).
-memory:
-  rom:    {external: true, backend: dispositivo, device: nor}
-  ram:    {external: true, backend: dispositivo, device: sdram}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 
 # The clocks of the PLL (`riscv-tools board generate`). The core is delayed 8250 ps against the fetch clock (the phase measured at
 # 50 MHz in docs/pt-br/platform/timing/MARCOS.md): the instruction memories read on the fetch clock, one cycle ahead of the core.
