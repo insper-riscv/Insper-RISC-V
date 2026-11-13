@@ -5,6 +5,10 @@ on:
     workflows: [embench]
     types: [in_progress, completed]
 
+concurrency:
+  group: embench-comment-${{ github.event.workflow_run.pull_requests[0].number || format('{0}:{1}', github.event.workflow_run.head_repository.full_name, github.event.workflow_run.head_branch) }}
+  cancel-in-progress: false
+
 permissions:
   contents: read
   actions: read

@@ -48,7 +48,7 @@ function validateScore(value) {
 function bodyFor(run, pr, score) {
   const completed = run.status === "completed";
   const success = completed && run.conclusion === "success" && score?.status === "complete";
-  const lines = [MARKER, `<!-- embench-run:${run.id} -->`, "### 🧪 Embench benchmark", ""];
+  const lines = [MARKER, `<!-- embench-run:${run.id} -->`, `<!-- embench-phase:${completed ? "completed" : "running"} -->`, "### 🧪 Embench benchmark", ""];
   if (!completed) {
     lines.push("⏳ **Running** — this benchmark is informational and does not need to finish before merging.");
   } else if (!success) {
@@ -97,6 +97,7 @@ async function publish({github, context, core, score = null}) {
     const existing = comments.find(comment => comment.user?.login === "github-actions[bot]" && comment.user?.type === "Bot" && comment.body?.includes(MARKER));
     const previousRun = existing?.body.match(/<!-- embench-run:(\d+) -->/);
     if (previousRun && BigInt(previousRun[1]) > BigInt(run.id)) continue;
+    if (previousRun && BigInt(previousRun[1]) === BigInt(run.id) && run.status !== "completed" && existing.body.includes("<!-- embench-phase:completed -->")) continue;
     const body = bodyFor(run, pr, score);
     if (existing) await github.rest.issues.updateComment({...context.repo, comment_id: existing.id, body});
     else await github.rest.issues.createComment({...context.repo, issue_number: pr.number, body});

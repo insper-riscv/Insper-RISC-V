@@ -77,3 +77,11 @@ test("successful results still reach a closed unmerged PR when GitHub omits its 
   assert.equal(state.writes.length, 1);
   assert.match(state.writes[0].body, /finished after the PR was closed/);
 });
+
+test("a delayed running event never replaces the same run's final score", async () => {
+  const state = setup({comments: [{id: 9, user: {login: "github-actions[bot]", type: "Bot"},
+    body: "<!-- rv32-embench-score -->\n<!-- embench-run:3 -->\n<!-- embench-phase:completed -->"}]});
+  state.run.status = "in_progress";
+  await publish({...state, score: null});
+  assert.equal(state.writes.length, 0);
+});
