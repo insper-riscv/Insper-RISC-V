@@ -27,10 +27,25 @@ core:
     - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00001000, size: 252K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
+# The memory model (external-data): the ROM inside the core, the SDRAM outside it behind the data cache (32768 bits,
+# 4 KiB, the size of the cache entity), and no instruction cache. The package takes FLASH_ON_BUS, RAM_ON_BUS and the
+# caches from here.
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 252K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x40000000
+      size: 64M
+      on_bus: true
+      cache:
+        size_bits: 32768
 
 # Words at the top of RAM: the contract between the boot memory, the program and
 # the host (platform/boot_memory.S clears them at every reset).
@@ -50,17 +65,12 @@ strict_periph: true
 # The peripheral windows of the external interconnect (base and size of the registers of each): the JTAG UART and the seven-segment
 # display of the board top.
 peripherals:
-  - {name: UART, base: 0xC0000000, size: 1K}
-  - {name: DISPLAY, base: 0xD0000000, size: 1K}
-
-# The memory model (external-data): the ROM inside the core, the SDRAM outside it behind the data cache (32768 bits,
-# 4 KiB, the size of the cache entity), and no instruction cache. The package takes FLASH_ON_BUS, RAM_ON_BUS and the
-# caches from here.
-memory:
-  rom:    {external: false}
-  ram:    {external: true}
-  icache: {enabled: false}
-  dcache: {enabled: true, size_bits: 32768}
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
 
 # The clocks of the PLL (src/cyclone-v/external-data/pll/sdram_platform_pll.v, tied to these values by the checks below): the
 # SDRAM controller at 100 MHz and the core and the fetch at 76.923077 MHz (1000 MHz / 13), the frequency whose five seeds close

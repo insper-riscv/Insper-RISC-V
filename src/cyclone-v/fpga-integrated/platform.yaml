@@ -17,10 +17,20 @@ core:
     - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
-  - {name: FLASH, base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM, base: 0x00008000, size: 160K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 160K
+      on_bus: false
 
 reserved:
   stdout:   {base: 0x0002FBE0, size: 1K+8}
@@ -38,15 +48,15 @@ strict_periph: true
 # The peripheral windows (the base is where the program sees the peripheral; the window is the smallest power of
 # two, of at least 16 bytes, that holds the registers).
 peripherals:
-  - {name: SWITCHES, base: 0x90000000, size: 64}   # the ten slide switches SW (GPIO)
-  - {name: KEYS, base: 0xA0000000, size: 64}   # the four push buttons KEY (GPIO)
-  - {name: DISPLAY, base: 0xD0000000, size: 1K}   # the six seven-segment displays HEX0 to HEX5 (display)
-
-memory:
-  rom:    {external: false}
-  ram:    {external: false}
-  icache: {enabled: false}
-  dcache: {enabled: false}
+  SWITCHES:   # the ten slide switches SW (GPIO)
+    base: 0x90000000
+    size: 64
+  KEYS:   # the four push buttons KEY (GPIO)
+    base: 0xA0000000
+    size: 64
+  DISPLAY:   # the six seven-segment displays HEX0 to HEX5 (display)
+    base: 0xD0000000
+    size: 1K
 
 generate:
   specs: {path: src/cyclone-v/fpga-integrated/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}

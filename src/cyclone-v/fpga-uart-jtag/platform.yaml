@@ -19,10 +19,24 @@ core:
     - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K, kind: rom, exec: true}
-  - {name: FLASH, base: 0x00001000, size: 252K, kind: rom, exec: true}
-  - {name: RAM, base: 0x40000000, size: 32M, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 252K
+      on_bus: true
+      cache:
+        size_bits: 32768
+  data:
+    - type: onchip
+      base: 0x40000000
+      size: 32M
+      on_bus: true
+      cache:
+        size_bits: 32768
 
 reserved:
   stdout:   {base: 0x41FFFBE0, size: 1K+8}
@@ -40,13 +54,9 @@ strict_periph: true
 # The peripheral windows (the base is where the program sees the peripheral; the window is the smallest power of
 # two, of at least 16 bytes, that holds the registers).
 peripherals:
-  - {name: UART, base: 0xC0000000, size: 1K}   # the UART whose other end is the host on the JTAG cable (UART/jtag)
-
-memory:
-  rom:    {external: true}
-  ram:    {external: true}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
+  UART:   # the UART whose other end is the host on the JTAG cable (UART/jtag)
+    base: 0xC0000000
+    size: 1K
 
 generate:
   specs: {path: src/cyclone-v/fpga-uart-jtag/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
