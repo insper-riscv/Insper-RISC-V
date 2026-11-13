@@ -14,7 +14,7 @@ from riscv_tools.memory_map.interrupts import sources_of
 from riscv_tools.memory_map.problems import platform_problems
 from riscv_tools.memory_map.profile import resolve
 
-from rv32_sdk import cpu_profiles, driver_examples
+from rv32_sdk import cpu_profiles, driver_examples, rust_support
 
 IDENTIFIER = re.compile(r"[A-Z][A-Z0-9_]*")
 
@@ -222,8 +222,13 @@ def plan(
         if name == "GPIO":
             gpio_definitions = []
             for alias in ("DEFAULT", "SWITCHES", "KEYS"):
-                selected = instances[0] if alias == "DEFAULT" else next(
-                    (item for item in instances if item["name"] == alias), None
+                selected = (
+                    instances[0]
+                    if alias == "DEFAULT"
+                    else next(
+                        (item for item in instances if item["name"] == alias),
+                        None,
+                    )
                 )
                 base, width = "0", "0"
                 if selected is not None:
@@ -231,23 +236,82 @@ def plan(
                     width = driver_examples.context(
                         sdk, platform_file, platform, name, selected
                     )["PIN_COUNT"]
-                gpio_definitions.extend([
-                    f"#define RV32_GPIO_{alias}_BASE {base}",
-                    f"#define RV32_GPIO_{alias}_PIN_COUNT {width}",
-                ])
+                gpio_definitions.extend(
+                    [
+                        f"#define RV32_GPIO_{alias}_BASE {base}",
+                        f"#define RV32_GPIO_{alias}_PIN_COUNT {width}",
+                    ]
+                )
             files["GPIO/rv32_gpio_platform.h"] = header(
                 ['#include "../rv32_platform.h"', *gpio_definitions],
                 "RV32_GPIO_PLATFORM_H",
             )
+        if name != "GPIO":
+            fields = {
+                "TIMER": {},
+                "CLINT": {},
+                "PLIC": {"SOURCE_COUNT": "0", "PRIORITY_BITS": "0"},
+                "UART": {"BACKEND": "RV32_UART_SERIAL", "TX_CAPACITY": "0"},
+                "DISPLAY": {"DIGIT_COUNT": "0"},
+                "FLASH": {"PAGE_BYTES": "0"},
+            }[name]
+            configured = [
+                (
+                    item,
+                    driver_examples.context(
+                        sdk, platform_file, platform, name, item
+                    ),
+                )
+                for item in instances
+            ]
+            definitions = ['#include "../rv32_platform.h"']
+            aliases = (
+                ["DEFAULT", "SERIAL", "JTAG"]
+                if name == "UART"
+                else ["DEFAULT"]
+            )
+            for alias in aliases:
+                chosen = (
+                    configured[0]
+                    if alias == "DEFAULT"
+                    else next(
+                        (
+                            item
+                            for item in configured
+                            if item[1]["BACKEND"] == f"RV32_UART_{alias}"
+                        ),
+                        None,
+                    )
+                )
+                values = {"BASE": "0", **fields}
+                if chosen is not None:
+                    instance, context = chosen
+                    values = {
+                        "BASE": f"((uintptr_t)RV32_PERIPH_{instance['name']}_BASE)",
+                        **{key: context[key] for key in fields},
+                    }
+                definitions.extend(
+                    f"#define RV32_{name}_{alias}_{key} {value}"
+                    for key, value in values.items()
+                )
+            files[f"{name}/rv32_{name.lower()}_platform.h"] = header(
+                definitions, f"RV32_{name}_PLATFORM_H"
+            )
+        if project.get("language") == "rust":
+            rust_support.vendor_driver(files, descriptor, name)
         if examples_enabled and "example" in spec:
-            rendered = driver_examples.project_files(
-                sdk,
-                project,
-                platform_file,
-                platform,
-                descriptor,
-                spec,
-                instances[0],
+            rendered = (
+                rust_support.example_files(sdk, project, name)
+                if project.get("language") == "rust"
+                else driver_examples.project_files(
+                    sdk,
+                    project,
+                    platform_file,
+                    platform,
+                    descriptor,
+                    spec,
+                    instances[0],
+                )
             )
             files.update(rendered)
             if rendered:
@@ -256,6 +320,8 @@ def plan(
         files["LICENSE.peripherals"] = (
             sdk / "Peripherals/LICENSE"
         ).read_bytes()
+    if project.get("language") == "rust":
+        rust_support.vendor_runtime(sdk, files)
     metadata = {
         "schema": 1,
         "profile": profile,
@@ -263,6 +329,7 @@ def plan(
         "platform": str(platform["platform"]),
         "platform_sha256": digest(platform_file.read_bytes()),
         "sources": sources,
+        "rust_dependencies": rust_support.dependencies(files),
         "example_projects": examples,
         "include_dirs": includes,
         "umbrella": ["rv32_platform.h", *umbrella],
@@ -352,5 +419,13 @@ def generate(
 ) -> dict[str, Any]:
     """Regenerate and return C compiler inputs without terminal noise."""
     files, metadata = plan(sdk, project, platform_file)
+    if project.get("language") == "rust":
+        rust_support.check_dependencies(
+            root, project, metadata["rust_dependencies"]
+        )
     install(root, files, metadata)
+    if project.get("language") == "rust":
+        rust_support.install_dependencies(
+            root, project, metadata["rust_dependencies"]
+        )
     return metadata

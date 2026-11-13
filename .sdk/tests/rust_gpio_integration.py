@@ -7,7 +7,7 @@ import tempfile
 from pathlib import Path
 
 SDK = Path(__file__).resolve().parents[2]
-SOURCE = r'''
+SOURCE = r"""
 #![no_std]
 #![no_main]
 
@@ -71,7 +71,7 @@ pub extern "C" fn main() -> i32 {
 fn panic(_: &core::panic::PanicInfo<'_>) -> ! {
     unsafe { _exit(2) }
 }
-'''
+"""
 
 
 def main() -> None:
@@ -82,30 +82,48 @@ def main() -> None:
         shutil.copytree(SDK / "templates/rust", root, dirs_exist_ok=True)
         (root / "src/main.rs").write_text(SOURCE)
         manifest = root / "Cargo.toml"
-        dependency = SDK / "Peripherals/src/GPIO/soc/driver/rust/insper-riscv-gpio"
+        dependency = (
+            SDK / "Peripherals/src/GPIO/soc/driver/rust/insper-riscv-gpio"
+        )
         manifest.write_text(
             manifest.read_text()
-            + f'\n[dependencies]\ninsper-riscv-gpio = {{ path = "{dependency}" }}\n'
+            + f'\ninsper-riscv-gpio = {{ path = "{dependency}" }}\n'
         )
         for profile in ("rv32i", "rv32im"):
             (root / "rv32.toml").write_text(
                 '[project]\nname="rust-gpio"\nlanguage="rust"\n'
                 f'platform="modular"\ncpu_profile="{profile}"\n'
-                'generate_drivers=true\ngenerate_driver_examples=false\n'
+                "generate_drivers=true\ngenerate_driver_examples=false\n"
             )
             result = subprocess.run(
-                [str(SDK / "scripts/rv32-project"), "--project", str(root), "simulate"],
-                env=dict(os.environ, RV32_SDK_ROOT=str(SDK), CARGO_NET_OFFLINE="true", CARGO_BUILD_JOBS="2"),
+                [
+                    str(SDK / "scripts/rv32-project"),
+                    "--project",
+                    str(root),
+                    "simulate",
+                ],
+                env=dict(
+                    os.environ,
+                    RV32_SDK_ROOT=str(SDK),
+                    CARGO_NET_OFFLINE="true",
+                    CARGO_BUILD_JOBS="2",
+                ),
                 capture_output=True,
                 timeout=300,
             )
-            if result.returncode or result.stderr or result.stdout != b"Rust GPIO platform bindings: PASS\n":
+            if (
+                result.returncode
+                or result.stderr
+                or result.stdout != b"Rust GPIO platform bindings: PASS\n"
+            ):
                 print(profile, result.returncode, result.stdout, result.stderr)
                 log = root / "logs/rv32/simulate-latest.log"
                 if log.exists():
                     print(log.read_text()[-12000:])
                 raise SystemExit(1)
-            print("PASS Rust/C GPIO platform integration on", profile, flush=True)
+            print(
+                "PASS Rust/C GPIO platform integration on", profile, flush=True
+            )
 
 
 if __name__ == "__main__":

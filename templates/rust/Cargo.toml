@@ -22,3 +22,6 @@ bench = false
 
 # Firmware projects remain independent when created inside another Cargo tree.
 [workspace]
+
+[dependencies]
+rv32-runtime = { path = "vendor/rv32-runtime" }

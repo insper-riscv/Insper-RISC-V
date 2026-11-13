@@ -45,3 +45,45 @@ jobs:
             .sdk/*.log
             logs/
           include-hidden-files: true
+  rust:
+    name: Rust runtime and peripheral drivers
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      options: --memory=8g --memory-swap=8g --cpus=2
+      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+    env:
+      CARGO_BUILD_JOBS: 2
+      RUSTUP_HOME: /tmp/rv32-rustup
+      CARGO_HOME: /tmp/rv32-cargo
+      CARGO_TARGET_DIR: /tmp/rv32-rust-target
+      RUSTUP_TOOLCHAIN: 1.85.1
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install Rust and host bindgen dependencies
+        shell: bash
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends clang libclang-dev
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain 1.85.1
+          echo "$CARGO_HOME/bin" >> "$GITHUB_PATH"
+          "$CARGO_HOME/bin/rustup" target add riscv32i-unknown-none-elf riscv32im-unknown-none-elf
+          python3 .sdk/prepare_tools.py
+          uv sync --project .sdk --locked
+      - name: Native allocator, FFI tests and Rust documentation examples
+        shell: bash
+        run: |
+          cargo test --manifest-path .sdk/rust/rv32-runtime/Cargo.toml --locked -j 2
+          find Peripherals/src -path '*/driver/rust/Cargo.toml' -not -path '*/target/*' -print0 | while IFS= read -r -d '' manifest; do
+            cargo test --manifest-path "$manifest" --workspace --locked -j 2
+            for target in riscv32i-unknown-none-elf riscv32im-unknown-none-elf; do
+              cargo build --manifest-path "$manifest" --workspace --release --target "$target" --locked -j 2
+            done
+          done
+      - name: Generated Rust projects on actual CPU RTL
+        shell: bash
+        run: |
+          source scripts/env.sh
+          uv run --project .sdk python .sdk/tests/rust_addons_integration.py

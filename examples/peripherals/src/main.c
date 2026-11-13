@@ -4,7 +4,7 @@
 
 static bool test_timer(void)
 {
-    rv32_timer_t timer = rv32_timer_new(RV32_TIMER_TIMER_BASE);
+    rv32_timer_t timer = rv32_timer_platform_new();
 
     if (!rv32_timer_valid(timer) || !rv32_timer_set_divider(timer, 1)) {
         return false;
@@ -35,7 +35,7 @@ static bool test_timer(void)
 
 static bool test_clint(void)
 {
-    rv32_clint_t clint = rv32_clint_new(RV32_CLINT_CLINT_BASE);
+    rv32_clint_t clint = rv32_clint_platform_new();
     uint64_t before = rv32_clint_time(clint);
 
     rv32_clint_set_deadline(clint, UINT64_MAX);
@@ -53,7 +53,7 @@ static bool test_clint(void)
 static bool test_plic_gpio(void)
 {
     /* Six source lines and three priority bits in modular_sim_top. */
-    rv32_plic_t plic = rv32_plic_new(RV32_PLIC_PLIC_BASE, 6, 3);
+    rv32_plic_t plic = rv32_plic_platform_new();
     rv32_gpio_t gpio = rv32_gpio_platform_new(RV32_GPIO_SWITCHES_INSTANCE);
     size_t source = RV32_GPIO_SWITCHES_IRQ;
 
@@ -92,9 +92,9 @@ static bool test_plic_gpio(void)
 
 static bool test_uart_display(void)
 {
-    rv32_uart_t serial = rv32_uart_new(RV32_UART_UART_BASE, RV32_UART_SERIAL, 16);
-    rv32_uart_t jtag = rv32_uart_new(RV32_UART_UART_JTAG_BASE, RV32_UART_JTAG, 64);
-    rv32_display_t display = rv32_display_new(RV32_DISPLAY_DISPLAY_BASE, 6);
+    rv32_uart_t serial = rv32_uart_platform_new(RV32_UART_SERIAL_INSTANCE);
+    rv32_uart_t jtag = rv32_uart_platform_new(RV32_UART_JTAG_INSTANCE);
+    rv32_display_t display = rv32_display_platform_new();
     uint8_t digit = 0;
     uint8_t byte = 0;
 
