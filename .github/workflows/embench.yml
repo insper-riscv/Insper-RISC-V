@@ -29,7 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+  EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
   BASE_REF: ${{ github.event.before || inputs.compare_ref || '' }}
   CANDIDATE_REF: ${{ github.sha }}
@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=8g --memory-swap=8g --cpus=2
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 350
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=8g --memory-swap=8g --cpus=2
     strategy:
       fail-fast: false
@@ -257,7 +257,7 @@ jobs:
     env:
       BASE_SHA: ${{ needs.plan.outputs.base }}
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=2g --memory-swap=2g --cpus=1
     steps:
       - uses: actions/checkout@v7
