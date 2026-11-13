@@ -55,7 +55,7 @@ expose() {
     ports+=",
    output ${w}dbg_$nm"
     # a signal the netlist no longer has (GHDL drops what nothing reads) is exposed as 0, never left without a driver
-    if awk -v nm="$nm;" '/^module / { n = 0 } $1 ~ /^(reg|wire)$/ && $NF == nm { n = 1 } END { exit !n }' "$v"; then src="$nm"; else src="${width}'b0"; fi
+    if awk -v nm="$nm;" '/^module / { n = 0 } { sub(/^[ \t]*\(\*.*\*\)[ \t]*/, "") } $1 ~ /^(reg|wire)$/ && $NF == nm { n = 1 } END { exit !n }' "$v"; then src="$nm"; else src="${width}'b0"; fi
     assigns+="  assign dbg_$nm = $src;
 "
   done
@@ -139,12 +139,15 @@ EOS
 }
 
 
-# netlist <vhdl> <name>: the Verilog netlist GHDL synthesizes for the interconnect, with the state exposed.
+# netlist <vhdl> <name>: the Verilog netlist GHDL synthesizes for the interconnect, with the state exposed. The interconnect
+# reads the types of the config_pkg (the default one, 32-bit addresses and words) and the table functions of the
+# interconnect_pkg, which GHDL analyzes first; the generics keep their defaults (the table of eight windows).
 netlist() {
   local work="$out/work_$2"; mkdir -p "$work"
-  ghdl_run -a --std=08 --workdir="$work" "$1"
+  ghdl_run -a --std=08 --workdir="$work" "$root/Common-Components/src/utils_pkg.vhd" "$root/Common-Components/src/config_pkg.vhd" \
+    "$root/src/interconnect/interconnect_pkg.vhd" "$1"
   ghdl_run --synth --std=08 --workdir="$work" --out=verilog ext_interconnect > "$2.v"
-  expose "$2.v" st sel_wb p_rdata_q:31 pending:31
+  expose "$2.v" st sel_wb p_rdata_q:31 pending:31 err_q
   grep -q dbg_st "$2.v" || { echo "the netlist has no register named st: the exposure did not apply"; exit 1; }
 }
 
@@ -152,8 +155,8 @@ ic="$root/src/interconnect/ext_interconnect.vhd"; props="$root/formal/ext_interc
 
 echo "ext_interconnect"
 netlist "$ic" ext
-expect "one slave per access, memory and peripheral apart, one pulse, no hang, the data of the selected slave (induction)" PASS "$(prove ext.v "$props" prove 4 '' ext_safety)"
-expect "cover: a read and a write of peripherals, a delivered peripheral read and a memory read are reachable" PASS "$(prove ext.v "$props" cover 12 '-DCOVER' ext_cover)"
+expect "one slave per access, memory and peripheral apart, one pulse, no hang, the data of the selected slave, the error of an access with no slave (induction)" PASS "$(prove ext.v "$props" prove 4 '' ext_safety)"
+expect "cover: a read and a write of peripherals, a delivered peripheral read, a memory read and a read and a write that end in an error are reachable" PASS "$(prove ext.v "$props" cover 12 '-DCOVER' ext_cover)"
 
 # Mutants of the VHDL: each defect must make a proof fail.
 mutant() {  # <file> <props> <entity> <defines> <name> <sed expression> [bmc depth]
@@ -163,13 +166,17 @@ mutant() {  # <file> <props> <entity> <defines> <name> <sed expression> [bmc dep
   netlist "$copy" "mut_$5"
   expect "mutant $5 is caught" FAIL "$(prove "mut_$5.v" "$2" bmc "${7:-10}" "$4" "mut_$5")"
 }
-mutant "$ic" "$props" ext_interconnect '' slot_off_by_one  "s/id        <= to_integer(unsigned(i_addr(30 downto 28)));/id        <= to_integer(unsigned(i_addr(31 downto 29)));/"
+mutant "$ic" "$props" ext_interconnect '' window_of_slot_zero "s/hit(i)    <= '1' when window_hit(i_addr, BASES(i), MASKS(i)) else '0';/hit(i)    <= '1' when window_hit(i_addr, BASES(0), MASKS(0)) else '0';/"
 mutant "$ic" "$props" ext_interconnect '' pulse_not_gated  "s/pulse <= '1' when st = ST_IDLE and is_periph = '1' and active = '1' else '0';/pulse <= '1' when is_periph = '1' and active = '1' else '0';/"
-mutant "$ic" "$props" ext_interconnect '' memory_sees_periph "s/o_m_rden    <= i_rden and not is_periph;/o_m_rden    <= i_rden;/"
+mutant "$ic" "$props" ext_interconnect '' memory_sees_periph "s/o_m_rden    <= i_rden and is_mem;/o_m_rden    <= i_rden;/"
 mutant "$ic" "$props" ext_interconnect '' ready_always     "s/'1' when st = ST_DONE else/'1' when true else/"
-mutant "$ic" "$props" ext_interconnect '' slot_zero_data   "s/pending <= i_p_rdata(32 \* id + 31 downto 32 \* id);/pending <= i_p_rdata(31 downto 0);/"
+mutant "$ic" "$props" ext_interconnect '' slot_zero_data   "s/pending <= i_p_rdata(XLEN \* idx + XLEN - 1 downto XLEN \* idx);/pending <= i_p_rdata(31 downto 0);/"
 mutant "$ic" "$props" ext_interconnect '' select_kept      "s/sel_wb <= '0';/null;/"
-mutant "$ic" "$props" ext_interconnect '' write_reads      "s/o_p_we(id) <= i_wren;/o_p_we(id) <= i_rden;/"
+mutant "$ic" "$props" ext_interconnect '' write_reads      "s/o_p_we(idx) <= i_wren;/o_p_we(idx) <= i_rden;/"
 mutant "$ic" "$props" ext_interconnect '' address_dropped  "s/o_p_addr    <= i_addr(periph_addr_width + 1 downto 2);/o_p_addr    <= i_addr(periph_addr_width + 2 downto 3);/"
+mutant "$ic" "$props" ext_interconnect '' hole_without_error "s/err_q   <= '1';/err_q   <= '0';/"
+mutant "$ic" "$props" ext_interconnect '' padding_is_a_slave "s/(not strict_periph or in_reg(idx) = '1')/(true)/"
+mutant "$ic" "$props" ext_interconnect '' hole_is_memory "s/(ram_on_bus and in_range(i_addr, ram_base, ram_last))/(ram_on_bus)/"
+mutant "$ic" "$props" ext_interconnect '' error_kept "s/o_error <= '1' when st = ST_DONE and err_q = '1' else '0';/o_error <= err_q;/;s/err_q <= '0';/null;/"
 
 [ "$fail" -eq 0 ] && echo "formal: all expectations met" || { echo "formal: FAILED (logs in build/formal)"; exit 1; }

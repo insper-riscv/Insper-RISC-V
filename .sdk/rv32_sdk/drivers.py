@@ -119,6 +119,30 @@ def instance_irqs(platform: dict[str, Any]) -> dict[str, int]:
     return irq
 
 
+def core_profile_name(platform: dict[str, Any]) -> str:
+    """Name the core of a platform from its `core` block, or `rv32i` without one.
+
+    Parameters
+    ----------
+    platform : dict
+        The platform specification.
+
+    Returns
+    -------
+    str
+        The profile name, such as `rv32im_zicsr`.
+    """
+    core = platform.get("core")
+    if not isinstance(core, dict):
+        return str(platform.get("profile", "rv32i"))
+    extensions = [str(e).lower() for e in core.get("extensions", [])]
+    base = str(core.get("base", "I")).lower()
+    name = f"rv{core.get('type', 32)}{base}" + (
+        "m" if "m" in extensions else ""
+    )
+    return name + "".join(f"_{e}" for e in extensions if e != "m")
+
+
 def plan(
     sdk: Path, project: dict[str, Any], platform_file: Path
 ) -> tuple[dict[str, bytes], dict[str, Any]]:
@@ -130,9 +154,7 @@ def plan(
             "Invalid peripheral map: " + "; ".join(str(p) for p in problems)
         )
     selected = cpu_profiles.selected(sdk, project)
-    profile = (
-        selected["name"] if selected else str(platform.get("profile", "rv32i"))
-    )
+    profile = selected["name"] if selected else core_profile_name(platform)
     table = symbols(platform)
     peripherals = peripheral_list(platform)
     irq = instance_irqs(platform)

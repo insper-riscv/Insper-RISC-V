@@ -31,6 +31,7 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/simulation/template/rtl/config_pkg.vhd
     - src/simulation/template/rtl/template_map_pkg.vhd
+    - src/interconnect/interconnect_pkg.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd

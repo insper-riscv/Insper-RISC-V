@@ -4,15 +4,26 @@
 #
 #   riscv-tools --root . generate-memory-map --platform src/simulation/template/platform.yaml
 platform: template
-# O perfil da plataforma: a base RV32I, sem extensões. `--profile NOME` do riscv-tools o troca por uma
+# O núcleo da plataforma: a base RV32I e as extensões que ele implementa. `--profile NOME` do riscv-tools as troca por uma
 # execução; `profiles` é a especificação dos perfis.
-profile: rv32i
+core:
+  type: 32
+  base: I
+  extensions: []
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 32K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 32K
 
 # Palavras no topo da RAM: o contrato entre a BOOT_MEMORY, o programa e o hospedeiro (a BOOT_MEMORY as zera
 # a cada reset).
@@ -25,22 +36,24 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
 # A UART sobre JTAG é opcional: o topo a instancia quando o genérico has_uart é verdadeiro.
 peripherals:
-  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
+  UART:
+    base: 0xC0000000
+    size: 1K
 
 generate:
-  specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/template/runtime/boot_memory.ld}
   runtime: {path: src/simulation/template/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/template/rtl/template_map_pkg.vhd
     package: template_map_pkg
-    rom: ROM
+    rom: FLASH
     ram: RAM
     rom_external: false
     ram_external: false
@@ -52,7 +65,7 @@ generate:
 # das memórias, tohost e fromhost. Os tamanhos das memórias de simulação são os genéricos do topo, cujo
 # padrão vem de template_map_pkg.
 config:
-  rom: ROM
+  rom: FLASH
   ram: RAM
 
 checks: []

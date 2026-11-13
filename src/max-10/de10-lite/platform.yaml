@@ -11,13 +11,45 @@ boards: [de10-lite]
 # The component of paths.yaml whose closure of `requires` is the source list of the generated project.
 top: Insper-RISC-V/de10_lite_board
 # The profile of the platform and its specification.
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
+    - AccessFaults
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00001000, size: 124K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x40000000, size: 64M,  kind: ram}   # the SDRAM
+# The FLASH is emulated in the M9K blocks with the latency of a serial chip and the SDRAM is the device of the board.
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: emulated
+      base: 0x00001000
+      size: 124K
+      on_bus: true
+      latency: {first: 24, next: 4}
+      sector_bytes: 4096
+      cache:
+        size_bits: 32768
+  data:
+    - type: sdram
+      base: 0x40000000
+      size: 64M
+      on_bus: true
+      cache:
+        size_bits: 32768
 
 # Words at the top of RAM: the contract between the boot memory, the program and the host.
 reserved:
@@ -36,17 +68,27 @@ flash:
     - {name: A, base: 0x00001000, size: 60K}
     - {name: B, base: 0x00010000, size: 64K}
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
-# The slots of the external interconnect (bits 30:28 of the address).
+# The peripheral windows of the external interconnect (base and size of the registers of each).
 peripherals:
-  - {name: FLASH_CTRL, offset: 0x30000000, id: 3, size: 32, padding: 0x0FFFFFE0}
-  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
-  - {name: CLINT,   offset: 0x60000000, id: 6, size: 64K, padding: 0x0FFF0000}
-  - {name: PLIC,    offset: 0x70000000, id: 7, size: 4M, padding: 0x0FC00000}
+  FLASH_CTRL:
+    base: 0xB0000000
+    size: 32
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core.
 interrupts:
@@ -55,13 +97,6 @@ interrupts:
   sources:
     - {name: UART_JTAG, id: 2}
     - {name: FLASH,     id: 6}
-
-# The FLASH is emulated in the M9K blocks with the latency of a serial chip and the SDRAM is the device of the board.
-memory:
-  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
-  ram:    {external: true, backend: dispositivo, device: sdram}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 
 # The clocks of the PLL, the single source of the generated PLL. The core is delayed 8250 ps against the fetch clock (the phase measured
 # at 50 MHz in docs/pt-br/platform/timing/MARCOS.md): the instruction memories read on the fetch clock, one cycle ahead of the core. `mem` is the clock of the SDRAM controller.
@@ -77,9 +112,6 @@ io:
   switches: {count: 10, need: optional}
   keys:     {count: 2,  need: optional}
   display:  {count: 6,  need: optional}
-
-# Extensions outside the matrix of the Core that the platform turns on.
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf, AccessFaults]
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`).
 generate:

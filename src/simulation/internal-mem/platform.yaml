@@ -10,15 +10,35 @@
 # generated rv32_test.h) are not here: its memory section is this platform's
 # config.yaml, extended, and the header is generated from it.
 platform: internal-mem
-# The profile of the platform: its base ISA (rv32i: 32 registers, rv32e: 16) and the extensions of the core.
-# `--profile NAME` of riscv-tools replaces it for one run (a matrix of tests); `profiles` is the specification.
-profile: rv32im_zicclsm_zicntr_zihpm
+# The core of the platform: the width of the ISA, its base (I: 32 registers, E: 16) and the extensions it implements.
+# `--profile NAME` of riscv-tools replaces them for one run (a matrix of tests); `profiles` is the specification.
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zimop
+    - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,    base: 0x00001000, size: 28K,  kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 160K, kind: ram}
+# The memory model: both memories inside the chip, no cache. The package takes FLASH_ON_BUS and RAM_ON_BUS from here.
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 160K
+      on_bus: false
 
 # Words at the top of RAM: the contract between the boot memory, the program and
 # the host (platform/boot_memory.S clears them at every reset).
@@ -31,22 +51,14 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
 peripherals:
-  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-
-# The memory model: both memories inside the chip, no cache. The package takes ROM_EXTERNAL and RAM_EXTERNAL from here.
-memory:
-  rom:    {external: false}
-  ram:    {external: false}
-  icache: {enabled: false}
-  dcache: {enabled: false}
-
-# Extensions outside the matrix of the Core that the platform turns on (HAS_ZIMOP and HAS_ZICOND of the package).
-extras: [Zimop, Zicond]
+  UART:
+    base: 0xC0000000
+    size: 1K
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.

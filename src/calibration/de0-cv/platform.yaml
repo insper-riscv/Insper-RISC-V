@@ -7,12 +7,43 @@ board: auto
 boards: [de0-cv]
 # O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
 top: Insper-RISC-V/cal_de0_cv_board
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
 profiles: ../../../Core/profiles/matrix.yaml
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,       base: 0x00001000, size: 28K,  kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 16M, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: emulated
+      base: 0x00001000
+      size: 28K
+      on_bus: true
+      latency: {first: 24, next: 4}
+      sector_bytes: 4096
+      cache:
+        size_bits: 32768
+  data:
+    - type: sdram
+      base: 0x40000000
+      size: 16M
+      on_bus: true
+      cache:
+        size_bits: 32768
+
 reserved:
   stdout:   {base: 0x40FFFBE0, size: 1K+8}
   tohost:   {base: 0x40FFFFE8, size: 8}
@@ -20,11 +51,6 @@ reserved:
 boot:
   entry: 0x00001000
   wait_restart: 0x00000100
-memory:
-  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
-  ram:    {external: true, backend: dispositivo, device: sdram}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 clocks:
   core: {mhz: 50, phase_ps: 8250}
   mem:  {mhz: 100}
@@ -32,22 +58,32 @@ console: jtag
 io:
   leds: {count: 10, need: required}
   display: {count: 6, need: optional}
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
   vhdl: {path: src/calibration/de0-cv/de0_cv_map_pkg.vhd, package: de0_cv_map_pkg, rom: FLASH, ram: RAM}
   # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
   # this file takes the place of the default config_pkg of the Common-Components in the source lists.
   config_pkg: {path: src/calibration/de0-cv/config_pkg.vhd}
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
 peripherals:
-  - {name: FLASH_CTRL, offset: 0x30000000, id: 3, size: 32, padding: 0x0FFFFFE0}
-  - {name: UART,    offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
-  - {name: CLINT,   offset: 0x60000000, id: 6, size: 64K, padding: 0x0FFF0000}
-  - {name: PLIC,    offset: 0x70000000, id: 7, size: 4M, padding: 0x0FC00000}
+  FLASH_CTRL:
+    base: 0xB0000000
+    size: 32
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
+
 interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000

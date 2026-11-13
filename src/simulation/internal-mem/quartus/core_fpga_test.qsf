@@ -64,6 +64,7 @@ set_global_assignment -name VHDL_FILE ../pll/pll.vhd
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/utils_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/config_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/internal_mem_map_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../interconnect/interconnect_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/Blinky.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/byte_mask_consts.vhd
