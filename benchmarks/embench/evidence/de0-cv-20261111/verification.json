@@ -1,0 +1,15 @@
+{
+  "status": "pass",
+  "programs": 19,
+  "passing_hardware_runs": 57,
+  "counter_binary_only_difference": "LUI 4096 versus 8192",
+  "expected_retired_delta": 8192,
+  "recorded_retired_delta": 8192,
+  "all_22_firmware_elf_and_image_hashes_match": true,
+  "xgboost_exact_126_guard_present_in_disassembly": true,
+  "source_port_hashes_match": true,
+  "all_84_sta_summary_entries_nonnegative_tns_zero": true,
+  "clock_nominal_within_independent_measurement_bounds": true,
+  "additional_quiet_control_passes": 9,
+  "max_quiet_vs_monitored_median_change_percent": 0.00299160522334585
+}

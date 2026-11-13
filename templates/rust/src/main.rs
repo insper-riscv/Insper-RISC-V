@@ -1,25 +1,15 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
+use rv32_runtime::{entry, prelude::*};
 
-unsafe extern "C" {
-    fn puts(message: *const u8) -> i32;
-    fn _exit(code: i32) -> !;
-}
+entry!(main);
 
-#[unsafe(no_mangle)]
-pub extern "C" fn main() -> i32 {
-    static MESSAGE: &[u8] = b"Hello from an external RV32 Rust project.\0";
+fn main() {
+    let mut values = vec![1_u32, 2, 3];
+    values.push(4);
 
-    unsafe {
-        puts(MESSAGE.as_ptr());
-    }
-
-    0
-}
-
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    unsafe { _exit(1) }
+    let message = String::from("Hello from an RV32 Rust project.");
+    println!("{}", message);
+    println!("values = {:?}", values);
 }

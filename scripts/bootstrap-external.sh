@@ -30,8 +30,20 @@ if [[ "${language}" == "rust" ]]; then
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
             | sh -s -- -y --profile minimal --default-toolchain 1.85.1
     fi
-    rustup target add riscv32im-unknown-none-elf
+    rustup target add riscv32i-unknown-none-elf riscv32im-unknown-none-elf
     rustup component add rust-src
+    # Bindgen runs on the development host, even when building bare-metal code.
+    # Keep this installation confined to the intended disposable Dev Container.
+    if python3 - "${manifest}" <<'PYTHON'
+import sys
+import tomllib
+with open(sys.argv[1], "rb") as stream:
+    enabled = tomllib.load(stream)["project"].get("generate_drivers", False)
+raise SystemExit(0 if enabled else 1)
+PYTHON
+    then
+        bash "${RV32_SDK_ROOT}/scripts/rust-build-deps.sh"
+    fi
 fi
 
 bash "${RV32_SDK_ROOT}/scripts/install-vscode-extension.sh"

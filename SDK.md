@@ -1,4 +1,4 @@
-# Live SDK 0.8.0 (review candidate)
+# Live SDK 0.9.1 (review candidate)
 
 This SDK adds external C/Rust application projects and the Live VS Code
 extension to the current processor tree. It does not replace upstream RTL or
@@ -107,7 +107,7 @@ Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an availabl
 board; simulation is not a substitute for those tests.
 
 The processor package release is 0.5.1; the isolated SDK and bundled extension
-are 0.8.0. SDK CI runs on pushes to main and both review branches, as well
+are 0.9.0. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.
 
@@ -194,3 +194,41 @@ it; refresh refuses to overwrite edits. The FLASH example only reads busy/refuse
 status and sends no destructive commands. GPIO drives pin 0 high/low and restores
 input; DISPLAY restores its previous word. Every wait is bounded. Physical examples
 were compiled without programming any board; modular examples were also simulated.
+
+
+## Rust add-ons (0.9.0)
+
+New Rust templates set generate_drivers=true. Setup/build generates the
+rv32-runtime crate and safe + sys driver crates in vendor, adds relative Cargo
+path dependencies, and removes only unchanged managed dependencies when the CPU
+profile changes. Handwritten dependencies/source and edited vendor files are
+protected. Disable per-driver child projects with generate_driver_examples=false.
+
+Each C driver has a zero-placeholder platform header. Generation supplies real
+addresses and hardware parameters from platform.yaml/RTL generics. The new
+platform constructors hide those values; explicit-address constructors remain
+for C ABI compatibility and raw tests. Rust handles are neither Send nor Sync;
+serialize accesses with interrupt handlers.
+
+The no_std runtime provides alignment-preserving C malloc/free allocation,
+Vec/String/Box and formatting macros, entry!(main), and panic output followed by
+a permanent debugging loop. No OS-backed std services are implied. Use the
+allocator/panic-handler Cargo features to opt out when installing custom hooks.
+Clang/libclang are installed inside the Rust Dev Container during bootstrap.
+
+examples/peripherals/rust is an independent project demonstrating all peripherals
+on modular + rv32im_zicsr_irq. FLASH is demonstrated read-only in its generated
+physical-platform example. Driver public methods contain no_run API examples;
+native tests model MMIO with RAM, while the integration suite executes real CPU
+RTL to validate generated firmware. No physical programming occurs in SDK CI.
+
+
+## Container startup repair (0.9.1)
+
+The published image does not provide sudo or libclang. Shared Compose templates
+therefore start scripts/container-start.sh as root, install Rust binding build
+dependencies when requested by TOML, then run sleep. Editor/lifecycle commands
+remain ubuntu. rust-build-deps.sh verifies both the compiler and a loadable shared
+libclang, waits for root startup when necessary, and provides an actionable error
+for old containers/native hosts. It never attempts host package installation.
+Use the matching extension 0.9.1 and reload the VS Code window after installing it.

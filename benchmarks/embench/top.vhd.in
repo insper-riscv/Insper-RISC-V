@@ -1,0 +1,64 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity embench_top is
+    generic (
+        rom_file : string;
+        boot_file : string;
+        max_cycles : positive := 500000000;
+        hpm_counters : natural := 29;
+        hpm_width : natural := 64
+    );
+end entity;
+
+architecture sim of embench_top is
+    signal clk : std_logic := '0';
+    signal rst : std_logic := '1';
+    signal enabled, writing : std_logic;
+    signal address, data : std_logic_vector(31 downto 0);
+    signal byteena : std_logic_vector(3 downto 0);
+    signal switches : std_logic_vector(9 downto 0) := (others => '0');
+    signal keys : std_logic_vector(3 downto 0) := (others => '1');
+begin
+    clk <= not clk after 5 ns;
+    rst <= '0' after 295 ns;
+    dut : entity work.modular_sim_top
+        generic map (
+            rom_file => rom_file,
+            boot_memory_file => boot_file,
+            rom_external => false, ram_external => false,
+            has_icache => false, has_dcache => false,
+            hpm_counters => hpm_counters, hpm_width => hpm_width
+        )
+        port map (
+            i_clk => clk, i_rst => rst,
+            o_ram_en => enabled, o_ram_wren => writing,
+            o_ram_addr => address, o_ram_wdata => data,
+            o_ram_byteena => byteena,
+            io_sw => switches, io_key => keys
+        );
+    -- RAM stores complete on the core clock; here signals are observed on
+    -- the faster base clock. Duplicate observation cannot change PASS/FAIL.
+    host : process (clk)
+        file verdict : std.textio.text open write_mode is "verdict.txt";
+        variable row : std.textio.line;
+        variable ticks : natural := 0;
+    begin
+        if falling_edge(clk) and rst = '0' then
+            ticks := ticks + 1;
+            assert ticks < max_cycles * 3
+                report "Embench cycle limit exceeded" severity failure;
+            if enabled = '1' and writing = '1' and byteena = "1111"
+                and unsigned(address) = @TOHOST@ and data(0) = '1' then
+                assert data = x"00000001"
+                    report "Embench original verifier failed: " & to_hstring(data)
+                    severity failure;
+                std.textio.write(row, string'("PASS"));
+                std.textio.writeline(verdict, row);
+                std.textio.flush(verdict);
+                std.env.finish;
+            end if;
+        end if;
+    end process;
+end architecture;

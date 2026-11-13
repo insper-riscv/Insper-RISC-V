@@ -1,0 +1,45 @@
+architecture rtl of ram_simulation is
+begin
+    -- Same synchronous read-before-write contract as the signal-array model.
+    -- A process variable avoids scheduling every stored bit after each store.
+    storage : process
+        type words_t is array (0 to size_bytes / 4 - 1)
+            of std_logic_vector(31 downto 0);
+        variable words : words_t := (others => (others => '0'));
+        file image : std.textio.text;
+        variable row : std.textio.line;
+        variable word : std_logic_vector(31 downto 0);
+        variable ok : boolean;
+        variable index : natural := 0;
+        constant bits : natural := log2_exact(size_bytes) - 2;
+    begin
+        o_data_out <= (others => '0');
+        if ram_file'length > 0 then
+            file_open(image, ram_file, read_mode);
+            while not std.textio.endfile(image) loop
+                std.textio.readline(image, row);
+                if row'length >= 8 then
+                    hread(row, word, ok);
+                    if ok and index <= words'high then words(index) := word; end if;
+                    index := index + 1;
+                end if;
+            end loop;
+            file_close(image);
+        end if;
+        loop
+            wait until rising_edge(i_clk);
+            index := to_integer(unsigned(i_addr(bits - 1 downto 0)));
+            if i_en_ram = '1' then
+                if i_re_ram = '1' then o_data_out <= words(index); end if;
+                if i_we_ram = '1' then
+                    for lane in 0 to 3 loop
+                        if i_mask(lane) = '1' then
+                            words(index)(8 * lane + 7 downto 8 * lane) :=
+                                i_data_in(8 * lane + 7 downto 8 * lane);
+                        end if;
+                    end loop;
+                end if;
+            end if;
+        end loop;
+    end process;
+end architecture;
