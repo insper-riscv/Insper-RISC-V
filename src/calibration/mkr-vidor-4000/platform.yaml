@@ -7,7 +7,21 @@ board: auto
 boards: [mkr-vidor-4000]
 # O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
 top: Insper-RISC-V/cal_mkr_vidor_4000_board
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
 profiles: ../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
@@ -30,7 +44,6 @@ clocks:
   mem:  {mhz: 100}
 console: jtag
 io: {}
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
   vhdl: {path: src/calibration/mkr-vidor-4000/mkr_vidor_4000_map_pkg.vhd, package: mkr_vidor_4000_map_pkg, rom: FLASH, ram: RAM}
   # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):

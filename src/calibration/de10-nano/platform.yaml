@@ -7,7 +7,21 @@ board: auto
 boards: [de10-nano]
 # O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
 top: Insper-RISC-V/cal_de10_nano_board
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
 profiles: ../../../Core/profiles/matrix.yaml
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
@@ -31,7 +45,6 @@ clocks:
 console: jtag
 io:
   leds: {count: 8, need: required}
-extras: [Zimop, Zicond, Zihintntl, Zihintpause, Interrupts, Sscofpmf]
 generate:
   vhdl: {path: src/calibration/de10-nano/de10_nano_map_pkg.vhd, package: de10_nano_map_pkg, rom: FLASH, ram: RAM}
   # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
