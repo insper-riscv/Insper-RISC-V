@@ -58,3 +58,7 @@ but there is no automatic FPGA workflow or hardware acceptance gate.
 
 See [README.md](README.md) for reproduction and metric definitions and
 [SIMULATION-VALIDATION.md](SIMULATION-VALIDATION.md) for this change's checks.
+
+
+See [PR-SCORE.md](PR-SCORE.md) for the complete overall-index formula, shared main
+cache, optional merge behavior, and safe bot comment publisher.

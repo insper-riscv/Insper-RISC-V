@@ -3,12 +3,22 @@ name: embench
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+    paths:
+      - 'Core'
+      - 'Core/**'
+      - 'Memory'
+      - 'Memory/**'
+      - 'Peripherals'
+      - 'Peripherals/**'
+      - 'Common-Components'
+      - 'Common-Components/**'
+      - 'src/**'
+      - 'benchmarks/embench/**'
+      - '.github/workflows/embench.yml'
   workflow_dispatch:
     inputs:
-      compare_ref:
-        description: Target branch or SHA for manual comparison (empty disables it)
-        type: string
-        default: main
       scope:
         description: Explicit Core profiles, or the complete generated matrix
         type: choice
@@ -25,18 +35,38 @@ permissions:
 
 concurrency:
   group: embench-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
-  BASE_REF: ${{ github.event.pull_request.base.sha || inputs.compare_ref || '' }}
+  BASE_REF: ${{ github.event_name != 'push' && 'refs/heads/main' || '' }}
+  CANDIDATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+  DRIVER_REF: ${{ github.event_name == 'pull_request' && 'refs/heads/main' || github.sha }}
   SCOPE: ${{ inputs.scope || 'named' }}
   WORKLOAD: ${{ inputs.workload || 'ci' }}
 
 jobs:
+  reporting-tests:
+    name: Embench score and comment tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: python -m pip install 'PyYAML>=6.0'
+      - run: python -m unittest benchmarks.embench.test_reporting benchmarks.embench.test_score benchmarks.embench.test_workflow_policy
+      - run: node --test .github/scripts/embench-comment.test.cjs
+
   plan:
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
       image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
@@ -44,13 +74,16 @@ jobs:
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       base: ${{ steps.plan.outputs.base }}
+      driver: ${{ steps.plan.outputs.driver }}
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.DRIVER_REF }}
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.CANDIDATE_REF }}
           path: candidate
           submodules: recursive
           persist-credentials: false
@@ -67,6 +100,7 @@ jobs:
         shell: bash
         run: |
           git config --global --add safe.directory '*'
+          printf 'driver=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --scope "$SCOPE" --workload "$WORKLOAD" --output "$GITHUB_WORKSPACE/plan.json")
           if [ -n "$BASE_REF" ]; then
             args+=(--base "$GITHUB_WORKSPACE/base")
@@ -81,7 +115,7 @@ jobs:
 
   measure:
     needs: plan
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 350
     container:
       image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
@@ -97,10 +131,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.plan.outputs.driver }}
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.CANDIDATE_REF }}
           path: candidate
           submodules: recursive
           persist-credentials: false
@@ -147,42 +183,59 @@ jobs:
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci keys "${args[@]}"
       - uses: actions/cache/restore@v5
         with:
-          path: cache/candidate
+          path: cache/${{ steps.keys.outputs.candidate }}
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/restore@v5
         if: env.BASE_SHA != ''
         with:
-          path: cache/base
+          path: cache/${{ steps.keys.outputs.base }}
           key: ${{ steps.keys.outputs.base }}
       - name: Run programs serially, verifying every result
+        env:
+          CANDIDATE_KEY: ${{ steps.keys.outputs.candidate }}
+          BASE_KEY: ${{ steps.keys.outputs.base }}
         working-directory: driver
         shell: bash
         run: |
           mkdir -p "$GITHUB_WORKSPACE/results"
-          if [ -d "$GITHUB_WORKSPACE/cache" ]; then
-            cp -a "$GITHUB_WORKSPACE/cache/." "$GITHUB_WORKSPACE/results/"
-          fi
+          for side in candidate base; do
+            key="$CANDIDATE_KEY"
+            if [ "$side" = base ]; then key="$BASE_KEY"; fi
+            if [ -n "$key" ] && [ -d "$GITHUB_WORKSPACE/cache/$key" ]; then
+              mkdir -p "$GITHUB_WORKSPACE/results/$side"
+              cp -a "$GITHUB_WORKSPACE/cache/$key/." "$GITHUB_WORKSPACE/results/$side/"
+            fi
+          done
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --scope "$SCOPE" --workload "$WORKLOAD" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results")
           if [ -n "$BASE_SHA" ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci execute "${args[@]}"
       - name: Keep small successful result records for reuse
         if: success()
+        env:
+          CANDIDATE_KEY: ${{ steps.keys.outputs.candidate }}
+          BASE_KEY: ${{ steps.keys.outputs.base }}
         shell: bash
         run: |
-          find results -name results.json -print0 | while IFS= read -r -d '' file; do
-            target="cache/${file#results/}"
-            mkdir -p "$(dirname "$target")"
-            cp "$file" "$target"
+          for side in candidate base; do
+            key="$CANDIDATE_KEY"
+            if [ "$side" = base ]; then key="$BASE_KEY"; fi
+            if [ -z "$key" ] || [ ! -d "results/$side" ]; then continue; fi
+            find "results/$side" -name results.json -print0 | while IFS= read -r -d '' file; do
+              relative="${file#results/$side/}"
+              target="cache/$key/$relative"
+              mkdir -p "$(dirname "$target")"
+              cp "$file" "$target"
+            done
           done
       - uses: actions/cache/save@v5
         if: success()
         with:
-          path: cache/candidate
+          path: cache/${{ steps.keys.outputs.candidate }}
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/save@v5
         if: success() && env.BASE_SHA != ''
         with:
-          path: cache/base
+          path: cache/${{ steps.keys.outputs.base }}
           key: ${{ steps.keys.outputs.base }}
       - uses: actions/upload-artifact@v7
         if: always()
@@ -199,10 +252,10 @@ jobs:
           retention-days: 14
 
   embench:
-    name: embench
+    name: Embench results (informational)
     needs: [plan, measure]
     if: ${{ !cancelled() }}
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       BASE_SHA: ${{ needs.plan.outputs.base }}
@@ -212,6 +265,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.plan.outputs.driver }}
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
@@ -234,10 +288,18 @@ jobs:
           name: embench-summary
           path: |
             embench-summary.md
+            embench-score.json
             results/**/*.json
             results/**/*.csv
           retention-days: 14
-      - name: Require every measuring job to pass
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: embench-score
+          path: embench-score.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Report incomplete measurements as a diagnostic failure
         if: always()
         env:
           MEASURE_RESULT: ${{ needs.measure.result }}

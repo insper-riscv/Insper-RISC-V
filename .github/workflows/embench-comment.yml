@@ -1,0 +1,51 @@
+name: Embench PR score comment
+
+on:
+  workflow_run:
+    workflows: [embench]
+    types: [in_progress, completed]
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Never check out/execute PR code in this write-token workflow.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/github-script@v8
+        id: artifact
+        if: github.event.action == 'completed'
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {...context.repo, run_id: run.id, per_page: 100});
+            const score = artifacts.find(item => item.name === 'embench-score' && !item.expired && item.size_in_bytes < 2000000);
+            core.setOutput('available', score ? 'true' : 'false');
+      - uses: actions/download-artifact@v8
+        if: steps.artifact.outputs.available == 'true'
+        with:
+          name: embench-score
+          path: score
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('node:fs');
+            const {publish} = require('./.github/scripts/embench-comment.cjs');
+            let score = null;
+            const file = 'score/embench-score.json';
+            if (fs.existsSync(file)) {
+              if (fs.statSync(file).size > 1000000) throw new Error('Score document too large');
+              score = JSON.parse(fs.readFileSync(file, 'utf8'));
+            }
+            await publish({github, context, core, score});
