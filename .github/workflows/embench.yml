@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       compare_ref:
-        description: Target branch or SHA for manual comparison (empty disables it)
+        description: Baseline SHA for an explicit manual main run
         type: string
         default: main
       scope:
@@ -22,35 +22,65 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
   group: embench-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' }}
+  cancel-in-progress: false
 
 env:
-  EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+  EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
   BASE_REF: ${{ github.event.before || inputs.compare_ref || '' }}
+  CANDIDATE_REF: ${{ github.sha }}
+  DRIVER_REF: ${{ github.sha }}
   SCOPE: ${{ inputs.scope || 'named' }}
   WORKLOAD: ${{ inputs.workload || 'ci' }}
 
 jobs:
+  eligible:
+    name: Confirm merged main update
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.merge.outputs.run }}
+      pr: ${{ steps.merge.outputs.pr }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/github-script@v8
+        id: merge
+        with:
+          script: |
+            const {eligibleMainUpdate} = require('./.github/scripts/embench-comment.cjs');
+            await eligibleMainUpdate({github, context, core});
+
   plan:
-    runs-on: ubuntu-26.04
+    needs: eligible
+    if: needs.eligible.outputs.run == 'true'
+    env:
+      PR_NUMBER: ${{ needs.eligible.outputs.pr }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=8g --memory-swap=8g --cpus=2
     outputs:
       matrix: ${{ steps.plan.outputs.matrix }}
       base: ${{ steps.plan.outputs.base }}
+      driver: ${{ steps.plan.outputs.driver }}
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.DRIVER_REF }}
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.CANDIDATE_REF }}
           path: candidate
           submodules: recursive
           persist-credentials: false
@@ -67,6 +97,7 @@ jobs:
         shell: bash
         run: |
           git config --global --add safe.directory '*'
+          printf 'driver=%s\n' "$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --scope "$SCOPE" --workload "$WORKLOAD" --output "$GITHUB_WORKSPACE/plan.json")
           if [ -n "$BASE_REF" ]; then
             args+=(--base "$GITHUB_WORKSPACE/base")
@@ -81,14 +112,14 @@ jobs:
 
   measure:
     needs: plan
-    runs-on: ubuntu-26.04
+    runs-on: ubuntu-latest
     timeout-minutes: 350
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=8g --memory-swap=8g --cpus=2
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 4
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     env:
       BASE_SHA: ${{ needs.plan.outputs.base }}
@@ -97,10 +128,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.plan.outputs.driver }}
           path: driver
           persist-credentials: false
       - uses: actions/checkout@v7
         with:
+          ref: ${{ env.CANDIDATE_REF }}
           path: candidate
           submodules: recursive
           persist-credentials: false
@@ -147,42 +180,59 @@ jobs:
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci keys "${args[@]}"
       - uses: actions/cache/restore@v5
         with:
-          path: cache/candidate
+          path: cache/${{ steps.keys.outputs.candidate }}
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/restore@v5
         if: env.BASE_SHA != ''
         with:
-          path: cache/base
+          path: cache/${{ steps.keys.outputs.base }}
           key: ${{ steps.keys.outputs.base }}
       - name: Run programs serially, verifying every result
+        env:
+          CANDIDATE_KEY: ${{ steps.keys.outputs.candidate }}
+          BASE_KEY: ${{ steps.keys.outputs.base }}
         working-directory: driver
         shell: bash
         run: |
           mkdir -p "$GITHUB_WORKSPACE/results"
-          if [ -d "$GITHUB_WORKSPACE/cache" ]; then
-            cp -a "$GITHUB_WORKSPACE/cache/." "$GITHUB_WORKSPACE/results/"
-          fi
+          for side in candidate base; do
+            key="$CANDIDATE_KEY"
+            if [ "$side" = base ]; then key="$BASE_KEY"; fi
+            if [ -n "$key" ] && [ -d "$GITHUB_WORKSPACE/cache/$key" ]; then
+              mkdir -p "$GITHUB_WORKSPACE/results/$side"
+              cp -a "$GITHUB_WORKSPACE/cache/$key/." "$GITHUB_WORKSPACE/results/$side/"
+            fi
+          done
           args=(--candidate "$GITHUB_WORKSPACE/candidate" --profiles "$PROFILES" --programs "$PROGRAMS" --scope "$SCOPE" --workload "$WORKLOAD" --upstream "$GITHUB_WORKSPACE/upstream" --output "$GITHUB_WORKSPACE/results")
           if [ -n "$BASE_SHA" ]; then args+=(--base "$GITHUB_WORKSPACE/base"); fi
           /opt/riscv-tools/riscv-tools/bin/python -m benchmarks.embench.ci execute "${args[@]}"
       - name: Keep small successful result records for reuse
         if: success()
+        env:
+          CANDIDATE_KEY: ${{ steps.keys.outputs.candidate }}
+          BASE_KEY: ${{ steps.keys.outputs.base }}
         shell: bash
         run: |
-          find results -name results.json -print0 | while IFS= read -r -d '' file; do
-            target="cache/${file#results/}"
-            mkdir -p "$(dirname "$target")"
-            cp "$file" "$target"
+          for side in candidate base; do
+            key="$CANDIDATE_KEY"
+            if [ "$side" = base ]; then key="$BASE_KEY"; fi
+            if [ -z "$key" ] || [ ! -d "results/$side" ]; then continue; fi
+            find "results/$side" -name results.json -print0 | while IFS= read -r -d '' file; do
+              relative="${file#results/$side/}"
+              target="cache/$key/$relative"
+              mkdir -p "$(dirname "$target")"
+              cp "$file" "$target"
+            done
           done
       - uses: actions/cache/save@v5
         if: success()
         with:
-          path: cache/candidate
+          path: cache/${{ steps.keys.outputs.candidate }}
           key: ${{ steps.keys.outputs.candidate }}
       - uses: actions/cache/save@v5
         if: success() && env.BASE_SHA != ''
         with:
-          path: cache/base
+          path: cache/${{ steps.keys.outputs.base }}
           key: ${{ steps.keys.outputs.base }}
       - uses: actions/upload-artifact@v7
         if: always()
@@ -199,19 +249,20 @@ jobs:
           retention-days: 14
 
   embench:
-    name: embench
-    needs: [plan, measure]
-    if: ${{ !cancelled() }}
-    runs-on: ubuntu-26.04
+    name: Embench results (informational)
+    needs: [eligible, plan, measure]
+    if: ${{ !cancelled() && needs.eligible.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
       BASE_SHA: ${{ needs.plan.outputs.base }}
     container:
-      image: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
+      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
       options: --memory=2g --memory-swap=2g --cpus=1
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ needs.plan.outputs.driver }}
           persist-credentials: false
       - uses: actions/download-artifact@v8
         with:
@@ -234,10 +285,18 @@ jobs:
           name: embench-summary
           path: |
             embench-summary.md
+            embench-score.json
             results/**/*.json
             results/**/*.csv
           retention-days: 14
-      - name: Require every measuring job to pass
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: embench-score
+          path: embench-score.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Report incomplete measurements as a diagnostic failure
         if: always()
         env:
           MEASURE_RESULT: ${{ needs.measure.result }}
