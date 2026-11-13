@@ -6,7 +6,17 @@
 # The source of truth of the generics of modular_sim_top and of the linker script of the programs. The
 # `memory` section is the combination of this platform; a test replaces it for one run (`--memory`).
 platform: fpga-uart-pins
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -37,8 +47,6 @@ memory:
   ram:    {external: true}
   icache: {enabled: true, size_bits: 32768}
   dcache: {enabled: true, size_bits: 32768}
-
-extras: [Zimop, Zicond]
 
 # The console is the UART on the two board pins (an external serial converter), not the JTAG UART.
 console: pins
