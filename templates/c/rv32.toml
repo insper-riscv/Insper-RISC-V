@@ -15,3 +15,6 @@ cpu_profile = "auto"
 
 # Generate mapped C peripheral headers and vendor available drivers.
 generate_drivers = true
+
+# Independent sample projects for each available C driver.
+generate_driver_examples = true

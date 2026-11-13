@@ -10,6 +10,7 @@ REQUIRED_SOURCES = (
     "Memory/src/RAM/SoC/ram_simulation.vhd",
     "Memory/src/common/src/utils_pkg.vhd",
     "Peripherals/src/GPIO/soc/driver/c/driver.yaml",
+    "Peripherals/src/GPIO/soc/driver/c/examples/main.c.in",
     "Peripherals/src/common/src/utils_pkg.vhd",
     "Common-Components/src/utils_pkg.vhd",
 )

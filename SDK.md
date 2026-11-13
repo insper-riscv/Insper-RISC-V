@@ -1,4 +1,4 @@
-# Live SDK 0.7.1 (review candidate)
+# Live SDK 0.9.1 (review candidate)
 
 This SDK adds external C/Rust application projects and the Live VS Code
 extension to the current processor tree. It does not replace upstream RTL or
@@ -107,7 +107,7 @@ Program FPGA, Fast Update, long stdout, and C/Rust mode switching on an availabl
 board; simulation is not a substitute for those tests.
 
 The processor package release is 0.5.1; the isolated SDK and bundled extension
-are 0.7.1. SDK CI runs on pushes to main and both review branches, as well
+are 0.9.0. SDK CI runs on pushes to main and both review branches, as well
 as pull requests. Processor RTL and ordinary platform runtimes are unchanged
 by these SDK additions.
 
@@ -160,3 +160,75 @@ See `examples/gpio` for constructor/pin operations and bounded synchronization/I
 `platform = "modular"` is a simulation-only SDK view of the stock modular platform with internal memories. It uses compact storage models and the public RAM observation ports to stay within the container's 8 GiB limit. Its runtime/testbench/stdout adjustments are private; main's source files are unchanged. FPGA actions reject this selection before accessing a board. Explicit CPU profiles now also work on this simulation platform.
 
 The default internal-mem and de0-cv maps, and the fpga-uart-jtag example map, do not declare GPIO. They must not acquire invented GPIO addresses or a GPIO driver. Only mapped instances with a supported descriptor and satisfied elaboration requirements acquire drivers. A FLASH memory region is not a FLASH_CTRL peripheral and must never be treated as one.
+
+
+## Complete examples and Rust project creation
+
+The extension offers **RV32: Create New Rust Project** and **RV32: Add Rust
+Infrastructure to Current Folder**, alongside the C commands. Rust projects have
+Cargo/target configuration, `no_std` firmware, editor settings/tasks and a Dev
+Container. The Rust template uses edition 2024 with the SDK's Rust 1.85.1 toolchain.
+No GPIO wrapper implementation is generated or replaced.
+
+`examples/gpio` and `examples/peripherals` are independently openable projects,
+including `.devcontainer`, `.vscode`, `include` and `rv32.toml`. The latter defaults
+to the interrupt-capable CPU profile. Both use simulation-only modular hardware.
+
+With `generate_drivers = true`, each available driver descriptor's `example`
+template produces `vendor/<DRIVER>/example/`, a complete C project. Set
+`generate_driver_examples = false` to opt out. Generated example sources are NOT
+added to the parent application's compiler inputs. Each child inherits the parent
+platform/profile and disables further example generation. The extension's buttons
+select the closest `rv32.toml` for the active file, so nested example files run their
+own project; alternatively open the child folder directly in a new VS Code window.
+
+Constructor parameters come from platform I/O counts, explicit simulation generic
+overrides or the instantiated RTL's literal defaults, never from MMIO slot sizes.
+UART examples select serial/JTAG and the corresponding FIFO capacity. CLINT/PLIC
+examples require the enabled interrupt fabric. Standalone SDK examples are generated
+for supported SDK platforms (`internal-mem`, `modular`, `de0-cv`). Raw map inspection
+of other platforms still works without claiming a runnable SDK child project.
+
+Generated examples are managed files. Copy the whole project elsewhere to customize
+it; refresh refuses to overwrite edits. The FLASH example only reads busy/refused
+status and sends no destructive commands. GPIO drives pin 0 high/low and restores
+input; DISPLAY restores its previous word. Every wait is bounded. Physical examples
+were compiled without programming any board; modular examples were also simulated.
+
+
+## Rust add-ons (0.9.0)
+
+New Rust templates set generate_drivers=true. Setup/build generates the
+rv32-runtime crate and safe + sys driver crates in vendor, adds relative Cargo
+path dependencies, and removes only unchanged managed dependencies when the CPU
+profile changes. Handwritten dependencies/source and edited vendor files are
+protected. Disable per-driver child projects with generate_driver_examples=false.
+
+Each C driver has a zero-placeholder platform header. Generation supplies real
+addresses and hardware parameters from platform.yaml/RTL generics. The new
+platform constructors hide those values; explicit-address constructors remain
+for C ABI compatibility and raw tests. Rust handles are neither Send nor Sync;
+serialize accesses with interrupt handlers.
+
+The no_std runtime provides alignment-preserving C malloc/free allocation,
+Vec/String/Box and formatting macros, entry!(main), and panic output followed by
+a permanent debugging loop. No OS-backed std services are implied. Use the
+allocator/panic-handler Cargo features to opt out when installing custom hooks.
+Clang/libclang are installed inside the Rust Dev Container during bootstrap.
+
+examples/peripherals/rust is an independent project demonstrating all peripherals
+on modular + rv32im_zicsr_irq. FLASH is demonstrated read-only in its generated
+physical-platform example. Driver public methods contain no_run API examples;
+native tests model MMIO with RAM, while the integration suite executes real CPU
+RTL to validate generated firmware. No physical programming occurs in SDK CI.
+
+
+## Container startup repair (0.9.1)
+
+The published image does not provide sudo or libclang. Shared Compose templates
+therefore start scripts/container-start.sh as root, install Rust binding build
+dependencies when requested by TOML, then run sleep. Editor/lifecycle commands
+remain ubuntu. rust-build-deps.sh verifies both the compiler and a loadable shared
+libclang, waits for root startup when necessary, and provides an actionable error
+for old containers/native hosts. It never attempts host package installation.
+Use the matching extension 0.9.1 and reload the VS Code window after installing it.

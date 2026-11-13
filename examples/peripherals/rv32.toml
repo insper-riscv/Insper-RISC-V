@@ -2,7 +2,7 @@
 name = "peripherals-demo"
 language = "c"
 platform = "modular"
-cpu_profile = "rv32im"
+cpu_profile = "rv32im_zicsr_irq"
 generate_drivers = true
 source = "src/main.c"
 include_dirs = ["include"]
