@@ -1,24 +1,14 @@
 name: embench
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   push:
     branches: [main]
-    paths:
-      - 'Core'
-      - 'Core/**'
-      - 'Memory'
-      - 'Memory/**'
-      - 'Peripherals'
-      - 'Peripherals/**'
-      - 'Common-Components'
-      - 'Common-Components/**'
-      - 'src/**'
-      - 'benchmarks/embench/**'
-      - '.github/workflows/embench.yml'
   workflow_dispatch:
     inputs:
+      compare_ref:
+        description: Baseline SHA for an explicit manual main run
+        type: string
+        default: main
       scope:
         description: Explicit Core profiles, or the complete generated matrix
         type: choice
@@ -32,23 +22,47 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 concurrency:
-  group: embench-${{ github.event.pull_request.number || github.ref }}
+  group: embench-main
   cancel-in-progress: false
 
 env:
   EMBENCH_IMAGE: ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8
   EMBENCH_COMMIT: 09c2ed8c3b7008c95d08b038de4a3f6dc103ed70
-  BASE_REF: ${{ github.event_name != 'push' && 'refs/heads/main' || '' }}
-  PR_NUMBER: ${{ github.event.pull_request.number || '' }}
-  CANDIDATE_REF: ${{ github.event.pull_request.head.sha || github.sha }}
-  DRIVER_REF: ${{ github.event_name == 'pull_request' && 'refs/heads/main' || github.sha }}
+  BASE_REF: ${{ github.event.before || inputs.compare_ref || '' }}
+  CANDIDATE_REF: ${{ github.sha }}
+  DRIVER_REF: ${{ github.sha }}
   SCOPE: ${{ inputs.scope || 'named' }}
   WORKLOAD: ${{ inputs.workload || 'ci' }}
 
 jobs:
+  eligible:
+    name: Confirm merged main update
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.merge.outputs.run }}
+      pr: ${{ steps.merge.outputs.pr }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/github-script@v8
+        id: merge
+        with:
+          script: |
+            const {eligibleMainUpdate} = require('./.github/scripts/embench-comment.cjs');
+            await eligibleMainUpdate({github, context, core});
+
   plan:
+    needs: eligible
+    if: needs.eligible.outputs.run == 'true'
+    env:
+      PR_NUMBER: ${{ needs.eligible.outputs.pr }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:
@@ -105,7 +119,7 @@ jobs:
       options: --memory=8g --memory-swap=8g --cpus=2
     strategy:
       fail-fast: false
-      max-parallel: 11
+      max-parallel: 4
       matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
     env:
       BASE_SHA: ${{ needs.plan.outputs.base }}
@@ -236,8 +250,8 @@ jobs:
 
   embench:
     name: Embench results (informational)
-    needs: [plan, measure]
-    if: ${{ !cancelled() }}
+    needs: [eligible, plan, measure]
+    if: ${{ !cancelled() && needs.eligible.outputs.run == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:

@@ -50,20 +50,20 @@ function bodyFor(run, pr, score) {
   const success = completed && run.conclusion === "success" && score?.status === "complete";
   const lines = [MARKER, `<!-- embench-run:${run.id} -->`, `<!-- embench-phase:${completed ? "completed" : "running"} -->`, "### 🧪 Embench benchmark", ""];
   if (!completed) {
-    lines.push("⏳ **Running** — this benchmark is informational and does not need to finish before merging.");
+    lines.push("⏳ **Running after merge** — comparing the merged main commit with the previous main commit.");
   } else if (!success) {
     lines.push("⚠️ **Score unavailable or incomplete.** No total is reported until every expected profile/program has compatible, verified results.");
   } else {
     const change = `${score.delta_percent >= 0 ? "+" : ""}${score.delta_percent.toFixed(2)}%`;
     const units = score.workload === "ci" ? "CI index/MHz" : "Embench/MHz";
-    lines.push(`**Overall score: ${score.head_score_per_mhz.toFixed(5)} ${units}** · main: **${score.base_score_per_mhz.toFixed(5)}**`, "",
-      `**Overall index: ${score.relative_index.toFixed(2)}** · **main = 100** · **${change}**`, "",
-      `Candidate \`${score.candidate_sha.slice(0, 12)}\` versus **main** \`${score.baseline_sha.slice(0, 12)}\` (main frozen at run start).`, "",
-      "| CPU profile | main score/MHz | PR score/MHz | Speed change |", "|---|---:|---:|---:|");
+    lines.push(`**Overall score: ${score.head_score_per_mhz.toFixed(5)} ${units}** · previous main: **${score.base_score_per_mhz.toFixed(5)}**`, "",
+      `**Overall index: ${score.relative_index.toFixed(2)}** · **previous main = 100** · **${change}**`, "",
+      `Merged main \`${score.candidate_sha.slice(0, 12)}\` versus **previous main** \`${score.baseline_sha.slice(0, 12)}\`.`, "",
+      "| CPU profile | Previous main score/MHz | Merged main score/MHz | Speed change |", "|---|---:|---:|---:|");
     for (const row of score.profiles) {
       lines.push(`| \`${row.profile}\` | ${row.base_score_per_mhz.toFixed(5)} | ${row.head_score_per_mhz.toFixed(5)} | ${row.delta_percent >= 0 ? "+" : ""}${row.delta_percent.toFixed(2)}% |`);
     }
-    lines.push("", "Higher is faster. The overall index is the geometric mean of main/PR cycle ratios, with equal program weight within each profile and equal profile weight.",
+    lines.push("", "Higher is faster. The overall index is the geometric mean of previous-main/merged-main cycle ratios, with equal program weight within each profile and equal profile weight.",
       score.workload === "ci" ? "The shortened workload gives a **CI index**, not an official full Embench result. Scores come from simulation, not measured FPGA frequency/MIPS." : "Full Embench workload; simulation does not measure FPGA frequency/MIPS.");
   }
   if (completed && pr.state === "closed") lines.push("", pr.merged ? "This benchmark finished after the PR was merged." : "This benchmark finished after the PR was closed.");
@@ -71,25 +71,38 @@ function bodyFor(run, pr, score) {
   return lines.join("\n");
 }
 
+function isMergedMainPR(pr, sha, repo) {
+  return (pr.merged === true || pr.merged_at != null) &&
+    pr.base?.ref === "main" && pr.base?.repo?.full_name === repo && pr.merge_commit_sha === sha;
+}
+
+async function eligibleMainUpdate({github, context, core}) {
+  const main = context.ref === "refs/heads/main";
+  if (context.eventName === "workflow_dispatch") {
+    core.setOutput("run", main ? "true" : "false");
+    return;
+  }
+  if (!main || context.eventName !== "push") {
+    core.setOutput("run", "false");
+    return;
+  }
+  const associated = await github.paginate(github.rest.repos.listPullRequestsAssociatedWithCommit,
+    {...context.repo, commit_sha: context.sha, per_page: 100});
+  const pr = associated.find(pr => isMergedMainPR(pr, context.sha, `${context.repo.owner}/${context.repo.repo}`));
+  core.setOutput("run", pr ? "true" : "false");
+  core.setOutput("pr", pr ? String(pr.number) : "");
+}
+
 async function publish({github, context, core, score = null}) {
   const run = context.payload.workflow_run;
-  if (run.event !== "pull_request" || (run.repository?.full_name || context.payload.repository?.full_name) !== `${context.repo.owner}/${context.repo.repo}`) return;
+  if (run.event !== "push" || run.head_branch !== "main" ||
+      (run.repository?.full_name || context.payload.repository?.full_name) !== `${context.repo.owner}/${context.repo.repo}`) return;
   if (score) validateScore(score);
-  let associated = run.pull_requests || [];
-  if (!associated.length) {
-    associated = (await github.rest.repos.listPullRequestsAssociatedWithCommit({...context.repo, commit_sha: run.head_sha, per_page: 100})).data;
-  }
-  // GitHub's commit-association endpoint omits some closed, unmerged PRs.
-  // A recorded number is only a hint: pulls.get must still prove the repo and
-  // exact workflow head SHA before any write is allowed.
-  if (!associated.length && score?.pull_request_number) {
-    associated = [{number: score.pull_request_number}];
-  }
-  const allowed = new Set([run.head_sha, ...(run.pull_requests || []).map(pr => pr.head?.sha)].filter(Boolean));
-  if (score && !allowed.has(score.candidate_sha)) throw new Error("Score does not belong to this workflow's PR head");
+  if (score && score.candidate_sha !== run.head_sha) throw new Error("Score does not belong to this merged main commit");
+  const associated = (await github.rest.repos.listPullRequestsAssociatedWithCommit({...context.repo, commit_sha: run.head_sha, per_page: 100})).data;
   for (const item of associated.slice(0, 20)) {
     const pr = (await github.rest.pulls.get({...context.repo, pull_number: item.number})).data;
-    if (pr.base.repo.full_name !== `${context.repo.owner}/${context.repo.repo}` || !allowed.has(pr.head.sha) || (score && pr.head.sha !== score.candidate_sha)) {
+    if (!isMergedMainPR(pr, run.head_sha, `${context.repo.owner}/${context.repo.repo}`)) {
       core.info("Skipping stale or unrelated PR benchmark result");
       continue;
     }
@@ -104,4 +117,4 @@ async function publish({github, context, core, score = null}) {
   }
 }
 
-module.exports = {validateScore, bodyFor, publish};
+module.exports = {validateScore, bodyFor, publish, eligibleMainUpdate};

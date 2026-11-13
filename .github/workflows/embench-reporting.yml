@@ -2,6 +2,7 @@ name: Embench reporting tests
 
 on:
   push:
+    branches: [main]
     paths:
       - 'benchmarks/embench/**'
       - '.github/scripts/embench-comment*'

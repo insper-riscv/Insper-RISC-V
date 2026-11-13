@@ -122,7 +122,7 @@ def markdown(document: dict[str, Any]) -> str:
         "## Overall benchmark score",
         "",
         f"Comparing candidate `{head}` to `main` at `{base}` "
-        "(frozen when this run started).",
+        "(the previous main snapshot for automatic merge runs).",
         "",
     ]
     if document["status"] == "complete":
