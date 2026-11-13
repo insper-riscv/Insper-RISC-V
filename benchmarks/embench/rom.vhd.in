@@ -1,0 +1,38 @@
+architecture rtl of rom_simulation is
+begin
+    -- Read-only variable storage with the original two synchronous ports.
+    storage : process
+        type words_t is array (0 to size_bytes / 4 - 1)
+            of std_logic_vector(data_width - 1 downto 0);
+        variable words : words_t := (others => (others => '0'));
+        file image : std.textio.text open read_mode is rom_file;
+        variable row : std.textio.line;
+        variable word : std_logic_vector(data_width - 1 downto 0);
+        variable ok : boolean;
+        variable index : natural := 0;
+        constant bits : natural := log2_exact(size_bytes) - 2;
+    begin
+        o_data <= (others => '0');
+        o_data2 <= (others => '0');
+        while not std.textio.endfile(image) loop
+            std.textio.readline(image, row);
+            if row'length >= 8 then
+                hread(row, word, ok);
+                assert ok report "Invalid benchmark ROM image" severity failure;
+                if index <= words'high then words(index) := word; end if;
+                index := index + 1;
+            end if;
+        end loop;
+        loop
+            wait on i_clk, i_clk2;
+            if rising_edge(i_clk) and i_re = '1' then
+                index := to_integer(unsigned(i_addr(bits - 1 downto 0)));
+                o_data <= words(index);
+            end if;
+            if rising_edge(i_clk2) and i_re2 = '1' then
+                index := to_integer(unsigned(i_addr2(bits - 1 downto 0)));
+                o_data2 <= words(index);
+            end if;
+        end loop;
+    end process;
+end architecture;

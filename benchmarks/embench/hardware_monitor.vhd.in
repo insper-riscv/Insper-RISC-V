@@ -1,0 +1,51 @@
+    -- Only appended to the build-directory copy of core.vhd.
+    -- Configuration is written while the CPU is halted and held until reset.
+    -- Results are immutable after stop; the two-flop done synchronizer gives
+    -- the bundled counter bus settling time before JTAG Capture-DR accepts it.
+    embench_hardware : block
+        signal tck, tdi, tdo, cdr, sdr, udr, uir : std_logic;
+        signal ir : std_logic_vector(1 downto 0);
+        signal shift : std_logic_vector(447 downto 0) := (others => '0');
+        signal config, config_meta, config_sync : std_logic_vector(63 downto 0) := (others => '0');
+        signal result : std_logic_vector(447 downto 0);
+        signal done_meta, done_sync : std_logic := '0';
+        attribute altera_attribute : string;
+        attribute altera_attribute of config_meta, config_sync, done_meta, done_sync : signal is
+            "-name SYNCHRONIZER_IDENTIFICATION FORCED";
+    begin
+        tap : entity work.virtual_jtag
+            generic map (instance_index => 4, auto_instance_index => "NO", ir_width => 2)
+            port map (o_tck => tck, o_tdi => tdi, i_tdo => tdo, o_ir_in => ir,
+                o_state_cdr => cdr, o_state_sdr => sdr, o_state_udr => udr, o_state_uir => uir);
+        tdo <= shift(0);
+        synchronize_config : process (i_clk)
+        begin
+            if rising_edge(i_clk) then
+                config_meta <= config;
+                config_sync <= config_meta;
+            end if;
+        end process synchronize_config;
+        observe : entity work.embench_retirement_counter
+            port map (i_clk => i_clk, i_rst => i_rst, i_retire => retire_pulse,
+                i_trap => trap_sig or trap_take, i_pc => ex_pc, i_opcode => ex_opcode,
+                i_start => config_sync(31 downto 0), i_stop => config_sync(63 downto 32),
+                o_result => result);
+        scan : process (tck)
+        begin
+            if rising_edge(tck) then
+                done_meta <= result(32);
+                done_sync <= done_meta;
+                if cdr = '1' then
+                    shift <= (others => '0');
+                    if ir = "01" and done_sync = '1' then
+                        shift <= result;
+                    end if;
+                elsif sdr = '1' then
+                    shift <= tdi & shift(447 downto 1);
+                elsif udr = '1' and ir = "00" then
+                    -- 64-bit configuration scan shifts into the high end.
+                    config <= shift(447 downto 384);
+                end if;
+            end if;
+        end process scan;
+    end block embench_hardware;

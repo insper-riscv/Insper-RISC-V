@@ -84,7 +84,11 @@ The Quartus project of the DE0-CV (Cyclone V 5CEBA4F23) is written by `riscv-too
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
+`scripts/kpi_report.py` and `scripts/compare_kpis.py` generate the KPI reports (clock, resources, CPI and tests) from a Quartus run, as described in [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md). The `embench` workflow compares each PR base with its proposed merge using all 19 Embench IoT programs on the explicit Core profiles. Its summary uses GHDL simulation only, including cycles, instructions, CPI/IPC and per-program/profile/operation-category indices. Physical clock, Fmax and MIPS are not measured by simulation. The `ci` workload uses one local repetition per algorithm and labels its index as an estimate; `workload=full` preserves the original loops. No board or lab runner is required. Methodology, limits and reproduction are documented in [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
+
+## 7. Application development in VS Code
+
+See the [C/Rust application SDK](SDK.md) and the [Live example](examples/live-c/README.md). The extension provides FPGA programming, fast updates and simulation. The SDK keeps private builds and accepts CPU profile selection and C peripheral driver generation in `rv32.toml`.
 
 ---
 

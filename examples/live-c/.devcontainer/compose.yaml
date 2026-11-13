@@ -1,0 +1,33 @@
+services:
+  rv32-app:
+    # External applications use the published tool image directly.  In
+    # particular, do not build the SDK Dockerfile here: Dev Containers creates
+    # a temporary Dockerfile outside the Compose context and recent Buildx
+    # Bake versions reject that file unless an fs.read entitlement is granted.
+    image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8}"
+    mem_limit: 8g
+    memswap_limit: 8g
+    cpus: 2
+    command: sleep infinity
+    network_mode: host
+    security_opt:
+      - label=disable
+    environment:
+      RV32_SOF_CACHE_DIR: /home/ubuntu/.cache/sof
+      RV32_SDK_ROOT: /opt/rv32-sdk
+      RV32_PROJECT_ROOT: /workspace
+      RV32_TESTS_ROOT: /opt/rv32-sdk/Tests
+      RV32_TOOLCHAIN_ROOT: /opt/riscv-foundation/riscv32-elf
+      RV32_GCC: /opt/riscv-foundation/riscv32-elf/bin/riscv32-unknown-elf-gcc
+      QUARTUS_ROOTDIR: /opt/altera_lite/25.1std/quartus
+      PATH: /opt/ghdl/bin:/home/ubuntu/.cargo/bin:/opt/rv32-sdk/scripts:/opt/altera_lite/25.1std/quartus/bin:/opt/riscv-foundation/riscv32-elf/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+    volumes:
+      - ..:/workspace:cached
+      # scripts/install-user.sh creates these stable, per-user locations once.
+      # Projects therefore need no shell exports or project-specific .env file.
+      - "${HOME}/.local/share/rv32-sdk:/opt/rv32-sdk:cached"
+      - "${HOME}/.local/share/rv32-quartus:/opt/altera_lite/25.1std:ro"
+      - "${HOME}/.local/share/rv32-rustup:/home/ubuntu/.rustup"
+      - "${HOME}/.cache/rv32-cargo:/home/ubuntu/.cargo"
+
+      - "${HOME}/.cache/rv32:/home/ubuntu/.cache"
