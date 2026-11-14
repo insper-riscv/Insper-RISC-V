@@ -41,6 +41,7 @@ extras: [Zimop, Zicond]
 generate:
   specs: {path: src/simulation/test-external-data/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/test-external-data/runtime/boot_memory.ld}
+  boot_config_h: {path: src/simulation/test-external-data/runtime/boot_config.h}
   runtime: {path: src/simulation/test-external-data/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/test-external-data/modular_map_pkg.vhd

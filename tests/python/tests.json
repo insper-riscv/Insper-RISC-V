@@ -147,6 +147,13 @@
             "--max-stack-alloc=0"
         ]
     },
+    "ModularRealBoot": {
+        "extends": "ModularIntegrated",
+        "parameters": {
+            "boot_memory_file": "tests/python/unittests/rtl/data/modular/boot_memory_real.hex",
+            "rom_file": "tests/python/unittests/rtl/data/modular/rom_program.hex"
+        }
+    },
     "ModularInterrupts": {
         "toplevel": "modular_sim_top",
         "sources": [
@@ -2131,6 +2138,13 @@
         "plusargs": [
             "--max-stack-alloc=0"
         ]
+    },
+    "TemplateRealBoot": {
+        "extends": "TemplateSimTop",
+        "parameters": {
+            "boot_memory_file": "tests/python/unittests/rtl/data/template/boot_memory_real.hex",
+            "rom_file": "tests/python/unittests/rtl/data/template/rom_program.hex"
+        }
     },
     "Blinky": {
         "toplevel": "blinky",

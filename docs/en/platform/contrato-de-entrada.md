@@ -73,7 +73,7 @@ There are two jump policies, depending on whether the platform has banks in the 
 1. The FPGA is programmed with the `.sof`, which already carries the BOOT_MEMORY and the initial image of the FLASH.
 2. When the PLL locks, the core reset is released. The core reset combines the unlocked PLL, the board button and, where there is a loader, its halt output.
 3. The loader leaves reset with the halt off, so the core is not held.
-4. The core fetches address `0x0`, runs `_reset`, zeroes `fromhost`, `tohost` and the `stdout` header, runs `fence.i` where there are caches and jumps to `boot.entry`.
+4. The core fetches address `0x0`, runs `_reset`, zeroes `fromhost`, `tohost` and the `stdout` header, runs the `fence.i` of the Zifencei fragment, when the core has the extension, and jumps to `boot.entry`.
 5. What the core finds at `boot.entry` is the initial image of the `.sof`. On `internal-mem` it is a test program. On `de0-cv` the initial FLASH has no valid image header, so the BOOT_MEMORY jumps to no bank and parks the core in `rv32_wait_restart` until the host writes an image.
 
 On platforms without banks no step of the cold start checks the FLASH before the jump. On `de0-cv` step 4 includes the choice of the bank.
@@ -94,7 +94,7 @@ The host does not write `fromhost` on this path. The restart comes from releasin
 1. The host zeroes `tohost` through the SDRAM debug port.
 2. It writes the FLASH image through the Quartus in-system memory. The core is in the `rv32_wait_restart` loop, which sits in the BOOT_MEMORY, uncached, so it executes nothing from the FLASH being rewritten.
 3. It writes a nonzero value to `fromhost`.
-4. The loop reads `fromhost`, exits and jumps to `_reset`, which zeroes the shared words, runs `fence.i` to drop the lines of the previous program and jumps to `boot.entry`, or, on `de0-cv`, to the bank that section 6.6 chooses.
+4. The loop reads `fromhost`, exits and jumps to `_reset`, which zeroes the shared words, runs the `fence.i` of the Zifencei fragment to drop the lines of the previous program and jumps to `boot.entry`, or, on `de0-cv`, to the bank that section 6.6 chooses.
 
 ### 6.4. End of a test
 

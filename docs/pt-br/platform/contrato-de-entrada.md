@@ -73,7 +73,7 @@ Há duas políticas de salto, conforme a plataforma tenha ou não bancas na FLAS
 1. A FPGA é programada com o `.sof`, que já traz a BOOT_MEMORY e a imagem inicial da FLASH.
 2. Com o PLL travado, o reset do núcleo é solto. O reset do núcleo é a combinação do PLL destravado, do botão da placa e, onde há carregador, da saída de parada dele.
 3. O carregador sai do reset com a parada desligada, então o núcleo não fica retido.
-4. O núcleo busca o endereço `0x0`, executa o `_reset`, zera `fromhost`, `tohost` e o cabeçalho do `stdout`, executa `fence.i` onde há caches e salta para `boot.entry`.
+4. O núcleo busca o endereço `0x0`, executa o `_reset`, zera `fromhost`, `tohost` e o cabeçalho do `stdout`, executa o `fence.i` do fragmento Zifencei, quando o núcleo tem a extensão, e salta para `boot.entry`.
 5. O que o núcleo encontra em `boot.entry` é a imagem inicial do `.sof`. Na `internal-mem` é um programa de teste. Na `de0-cv` a FLASH inicial não tem cabeçalho de imagem válido, então a BOOT_MEMORY não salta para banca nenhuma e estaciona o núcleo no `rv32_wait_restart` até o hospedeiro gravar uma imagem.
 
 Nas plataformas sem bancas nenhuma etapa da partida a frio confere a FLASH antes do salto. Na `de0-cv` a etapa 4 inclui a escolha da banca.
@@ -94,7 +94,7 @@ O hospedeiro não escreve `fromhost` nesse caminho. O reinício vem da liberaç�
 1. O hospedeiro zera `tohost` pela porta de depuração da SDRAM.
 2. Escreve a imagem da FLASH pela memória interna do Quartus. O núcleo está no laço do `rv32_wait_restart`, que fica na BOOT_MEMORY, sem cache, e por isso não executa nada da FLASH que está sendo reescrita.
 3. Escreve um valor diferente de zero em `fromhost`.
-4. O laço lê `fromhost`, sai e salta para o `_reset`, que zera as palavras compartilhadas, executa `fence.i` para descartar as linhas do programa anterior e salta para `boot.entry`, ou, na `de0-cv`, para a banca que a seção 6.6 escolhe.
+4. O laço lê `fromhost`, sai e salta para o `_reset`, que zera as palavras compartilhadas, executa o `fence.i` do fragmento Zifencei para descartar as linhas do programa anterior e salta para `boot.entry`, ou, na `de0-cv`, para a banca que a seção 6.6 escolhe.
 
 ### 6.4. Fim de teste
 

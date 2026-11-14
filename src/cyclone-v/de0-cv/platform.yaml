@@ -117,6 +117,7 @@ generate:
     - {path: src/cyclone-v/de0-cv/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
   banks_h: {path: src/cyclone-v/de0-cv/runtime/flash_banks.h}
   boot_ld: {path: src/cyclone-v/de0-cv/runtime/boot_memory.ld}
+  boot_config_h: {path: src/cyclone-v/de0-cv/runtime/boot_config.h}
   runtime: {path: src/cyclone-v/de0-cv/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd

@@ -75,6 +75,7 @@ generate:
     - {path: src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
   banks_h: {path: src/cyclone-iv-e/de0-nano/runtime/flash_banks.h}
   boot_ld: {path: src/cyclone-iv-e/de0-nano/runtime/boot_memory.ld}
+  boot_config_h: {path: src/cyclone-iv-e/de0-nano/runtime/boot_config.h}
   runtime: {path: src/cyclone-iv-e/de0-nano/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-iv-e/de0-nano/de0_nano_map_pkg.vhd
