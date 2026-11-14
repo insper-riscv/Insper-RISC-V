@@ -32,6 +32,11 @@ io:
   leds:     {signals: "LED[7:0]", active: high}
   switches: {signals: "SW[3:0]",  active: high}
   keys:     {signals: "KEY[1:0]", active: low}
+  gpio:
+    signals: ["GPIO_0[35:0]", "GPIO_1[35:0]", "ARDUINO_IO[15:0]"]
+    bidirectional: true
+  clock_extra:
+    signals: ["FPGA_CLK2_50", "FPGA_CLK3_50"]
 console:
   default: jtag
 pins: pins.yaml
@@ -42,4 +47,7 @@ notes:
   - "Sem memoria ligada ao fabric: a DDR3 pertence ao HPS e so serve ao fabric depois do preloader (decisao DM4: limitar a placa a memoria emulada). Nao ha SDRAM, SRAM nem FLASH de usuario; o EPCS e so de configuracao."
   - "Sem botao de reset de fabric: o reset do SoC e o KEY[0]; KEY3 e KEY4 resetam so o HPS."
   - "A UART USB e do HPS; o console do SoC e a JTAG UART. ARDUINO_IO[0] (RXD) e ARDUINO_IO[1] (TXD) servem a um adaptador externo."
+  - "Polaridades lidas no manual (secao 3.6.1): o botao da nivel baixo ao ser apertado, o LED acende em nivel alto e a chave da nivel alto na posicao de cima."
+  - "Expansao (secoes 3.6.2 e 3.6.3): dois cabecalhos de 40 pinos, GPIO_0 e GPIO_1, com 36 pinos de E/S cada (mais VCC5, VCC3P3 e dois GND), e o cabecalho Arduino Uno R3 com ARDUINO_IO[15:0]. O papel gpio numera GPIO_0 de 0 a 35, GPIO_1 de 36 a 71 e o Arduino de 72 a 87. ARDUINO_RESET_N e as entradas analogicas ficam fora do papel. O ADC LTC2308 (secao 3.6.4: ADC_CONVST, ADC_SCK, ADC_SDI, ADC_SDO) esta em pins.yaml sem papel de E/S."
+  - "O terceiro relogio, FPGA_CLK3_50, divide o pino com o FPGA_CLK1_50 (tabela 3-5)."
   - "O MSEL de fabrica (FPPx32) delega a configuracao ao HPS a partir do cartao SD; a carga por JTAG continua sendo o caminho de desenvolvimento. O manual traz so 3.3V como padrao de E/S."

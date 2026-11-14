@@ -27,6 +27,29 @@ io:
   switches: {signals: "SW[17:0]",       active: high}
   keys:     {signals: "KEY[3:0]",       active: low}
   display:  {signals: "HEX[7:0][6:0]",  active: low}
+  leds_green: {signals: "LEDG[8:0]", active: high}
+  gpio:
+    signals: "GPIO[35:0]"
+    bidirectional: true
+  ex_io:
+    signals: "EX_IO[6:0]"
+    bidirectional: true
+  hsmc:
+    signals:
+      - "HSMC_CLKIN0"
+      - "HSMC_CLKIN_N[2:1]"
+      - "HSMC_CLKIN_P[2:1]"
+      - "HSMC_CLKOUT0"
+      - "HSMC_CLKOUT_N[2:1]"
+      - "HSMC_CLKOUT_P[2:1]"
+      - "HSMC_D[3:0]"
+      - "HSMC_RX_D_N[16:0]"
+      - "HSMC_RX_D_P[16:0]"
+      - "HSMC_TX_D_N[16:0]"
+      - "HSMC_TX_D_P[16:0]"
+    bidirectional: true
+  clock_extra:
+    signals: ["CLOCK2_50", "CLOCK3_50", "SMA_CLKIN", "SMA_CLKOUT", "ENETCLK_25", "TD_CLK27"]
 memories:
   sdram:
     chip: IS42S16320B-7
@@ -47,7 +70,8 @@ console:
 pins: pins.yaml
 notes:
   - "JP6 e JP7 mudam a tensao dos bancos de usuario: KEY, SW e parte dos HEX seguem o JP7 (fabrica 2.5 V), o GPIO e o SMA_CLKOUT seguem o JP6 (fabrica 3.3 V). O io_standard de cada pino esta em pins.yaml."
-  - "Expansao: o cabecalho de 40 pinos tem GPIO[35:0] (tabela 4-12), mais VCC5, VCC3P3 e dois GND, e EX_IO[6:0] (tabela 4-13) fica em outro conector; o HSMC tem 82 pinos de E/S, HSMC_* (tabela 4-9). Todos bidirecionais, sem polaridade, e o esquema do board.yaml ainda nao tem papel para eles. LEDG[8:0] (tabela 4-3) e SMA_CLKIN, SMA_CLKOUT, CLOCK2_50 e CLOCK3_50 (tabela 4-5) estao em pins.yaml; CLOCK2_50 e CLOCK3_50 estao em clocks.inputs, e os LEDG e os SMA ainda nao tem papel."
+  - "Expansao: o cabecalho de 40 pinos (secao 4.8, tabela 4-12) tem GPIO[35:0] mais VCC5, VCC3P3 e dois GND; EX_IO[6:0] (secao 4.9, tabela 4-13) e outro conector, de 14 pinos; o HSMC (secao 4.7, tabela 4-9) tem 82 pinos de E/S, HSMC_*, todos de uso geral (os pares LVDS tambem funcionam como CMOS). Alimentacao do HSMC (12 V e 3,3 V), JTAG e HSMC_SDA e HSMC_SCLK nao sao pinos de E/S da tabela 4-9."
+  - "Papeis de uso geral sem polaridade: gpio, ex_io e hsmc sao bidirecionais; leds_green (LEDG, tabela 4-3) acende em nivel alto (secao 4.3). clock_extra reune CLOCK2_50 e CLOCK3_50 (que tambem estao em clocks.inputs), SMA_CLKIN (entrada), SMA_CLKOUT (saida), ENETCLK_25 e TD_CLK27 (entradas de 25 e 27 MHz das placas de Ethernet e de TV)."
   - "JP3 com os pinos 1 e 2 fechados isola a cadeia JTAG do HSMC, de modo que so o EP4CE115 aparece na cadeia."
   - "A chave RUN/PROG (SW19) fica em RUN para configurar pela JTAG; PROG so para o modo AS (EPCS64)."
   - "As pecas da SDRAM (IS42S16320B-7), da SRAM e da FLASH (S29GL064N90, sufixo nao verificado) sao inferidas de fonte de terceiros; o mapa de setores da FLASH e os tempos dependem do datasheet."

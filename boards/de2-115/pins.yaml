@@ -407,3 +407,5 @@ signals:
   - {name: "HSMC_TX_D_P[14]", pin: "U27", io_standard: "2.5 V", direction: "inout", source: "Table 4-9, p.42-46", confirmed: "manual", note: "LVDS TX ou E/S CMOS; nivel depende do jumper JP7 (padrao de fabrica 2,5 V)"}
   - {name: "HSMC_TX_D_P[15]", pin: "V27", io_standard: "2.5 V", direction: "inout", source: "Table 4-9, p.42-46", confirmed: "manual", note: "LVDS TX ou E/S CMOS; nivel depende do jumper JP7 (padrao de fabrica 2,5 V)"}
   - {name: "HSMC_TX_D_P[16]", pin: "U22", io_standard: "2.5 V", direction: "inout", source: "Table 4-9, p.42-46", confirmed: "manual", note: "LVDS TX ou E/S CMOS; nivel depende do jumper JP7 (padrao de fabrica 2,5 V)"}
+  - {name: "ENETCLK_25", pin: "A14", io_standard: "3.3-V LVTTL", direction: "in", source: "Table 4-23, p.60", confirmed: "manual", note: "25 MHz, fonte de relogio da Ethernet"}
+  - {name: "TD_CLK27", pin: "B14", io_standard: "3.3-V LVTTL", direction: "in", source: "Table 4-24, p.61", confirmed: "manual", note: "27 MHz, entrada de relogio do decodificador de TV"}

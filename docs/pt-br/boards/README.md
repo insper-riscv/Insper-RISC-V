@@ -22,13 +22,14 @@ As placas são dados: um pacote por placa, uma família por dispositivo e um cat
 
 | Página | Placa |
 | :--- | :--- |
+| [de0-cv.md](de0-cv.md) | Terasic DE0-CV |
 | [de2-115.md](de2-115.md) | Terasic DE2-115 |
 | [de0-nano.md](de0-nano.md) | Terasic DE0-Nano |
 | [de10-lite.md](de10-lite.md) | Terasic DE10-Lite |
 | [de10-nano.md](de10-nano.md) | Terasic DE10-Nano e DE0-Nano-SoC |
 | [mkr-vidor-4000.md](mkr-vidor-4000.md) | Arduino MKR Vidor 4000 |
 
-A DE0-CV tem a página [../platform/de0-cv.md](../platform/de0-cv.md).
+A plataforma da DE0-CV está em [../platform/de0-cv.md](../platform/de0-cv.md).
 
 ---
 

@@ -56,6 +56,18 @@ O `board_run.py --stages de10-lite-regression de10-lite-sdram de10-lite-irq` rod
 
 Ficam fora a `monitor`, a `hex-id` e as três de UART em pinos, que a placa não tem.
 
+## 7. Pinos de expansão
+
+O papel `gpio` é bidirecional e numera `GPIO` de 0 a 35 e o Arduino de 36 a 51.
+
+| Papel | Sinais | Pinos | Manual | Nível |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO[35:0]` | 36 | 3.5, tabela 3-7 | 3,3 V |
+| `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6, tabela 3-8 | 3,3 V |
+| `clock_extra` | `MAX10_CLK2_50`, `ADC_CLK_10` | 2 | 3.2, tabela 3-2 | 3,3 V |
+
+Ficam só no `pins.yaml`, sem papel: `ARDUINO_RESET_N` (tabela 3-8), o acelerômetro ADXL345 (seção 3.10, tabela 3-13, `GSENSOR_*`) e o vídeo VGA (seção 3.8, tabela 3-11). O ADC é interno ao MAX 10 e não tem pino de sinal (seção 3.7).
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).
