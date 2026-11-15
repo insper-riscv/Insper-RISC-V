@@ -128,7 +128,7 @@ package config_pkg is
     -- Base da FLASH em bytes, logo depois da BOOT_MEMORY.
     constant FLASH_BASE          : map_addr_t := resize(unsigned'(x"00001000"), ADDR_BITS + 1);
     -- Fim exclusivo da FLASH em bytes.
-    constant FLASH_END           : map_addr_t := resize(unsigned'(x"00040000"), ADDR_BITS + 1);
+    constant FLASH_END           : map_addr_t := resize(unsigned'(x"02000000"), ADDR_BITS + 1);
 
     -- Configurações da RAM (memória de dados)
 
@@ -137,7 +137,7 @@ package config_pkg is
     -- Base da RAM em bytes.
     constant RAM_BASE            : map_addr_t := resize(unsigned'(x"40000000"), ADDR_BITS + 1);
     -- Fim exclusivo da RAM em bytes.
-    constant RAM_END             : map_addr_t := resize(unsigned'(x"44000000"), ADDR_BITS + 1);
+    constant RAM_END             : map_addr_t := resize(unsigned'(x"42000000"), ADDR_BITS + 1);
 
     -- Devolve o nome da ISA configurada, como rv32im_zicclsm, na ordem canônica das extensões.
     function isa_string return string;

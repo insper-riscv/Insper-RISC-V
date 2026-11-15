@@ -22,10 +22,12 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
 
+from tests.python.gen_de0_cv_images import RAM_BASE
 from tests.python.unittests.rtl.de0_cv_sim_top import (
     CLK_MEM_NS,
     CLK_NS,
     TOHOST_WORD,
+    ram_word,
     sdram_word,
 )
 from tests.python.utils.checks import check
@@ -38,7 +40,8 @@ PARK_CYCLES = 150_000
 PARK_SAMPLES = 8
 WAIT_RESTART = 0x100
 WAIT_RESTART_END = 0x114
-A0_WORD, A1_WORD = 1, 2
+MARK_WORD = ram_word(RAM_BASE)
+A0_WORD, A1_WORD = MARK_WORD + 1, MARK_WORD + 2
 A0_SEEN, A1_SEEN = 0x55, 0x66
 RESET_CYCLES = 5
 
@@ -66,14 +69,14 @@ def cases(build_dir: Path) -> list[dict[str, Any]]:
         for bank in case["banks"].values():
             words += [0] * (bank["index"] - len(words))
             words += bank["words"]
-        flash_path = build_dir / f"flash-{case['name']}.hex"
-        flash_path.write_text(hex_text(words or [0]))
+        chip_path = build_dir / f"sdram-{case['name']}.hex"
+        chip_path.write_text(hex_text(words or [0]))
         runs.append(
             {
                 "name": case["name"],
                 "parameters": {
                     "BOOT_MEMORY_FILE": str(boot_path),
-                    "ROM_FILE": str(flash_path),
+                    "SDRAM_FILE": str(chip_path),
                 },
                 "env": {"BOOT_CASE": case["name"]},
                 "wave": False,
@@ -141,7 +144,7 @@ async def check_parked(dut: Any, name: str) -> None:
     check(
         await sdram_word(dut, TOHOST_WORD) == 0, f"{name}: tohost was written"
     )
-    mark = await sdram_word(dut, 0)
+    mark = await sdram_word(dut, MARK_WORD)
     check(mark == 0, f"{name}: a program stored the mark {mark:#x}")
 
 
@@ -163,7 +166,7 @@ async def test_the_boot_memory_chooses_the_bank(dut: Any) -> None:
         await check_parked(dut, name)
         return
     check(await wait_for_tohost(dut), f"{name}: no program wrote tohost")
-    mark = await sdram_word(dut, 0)
+    mark = await sdram_word(dut, MARK_WORD)
     check(
         mark == case["mark"],
         f"{name}: mark {mark:#x}, want {case['mark']:#x} "
