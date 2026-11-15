@@ -301,7 +301,7 @@ Uma mudança no que o ACT4 ou a Certification esperam: os endereços `0x723` a `
 | O que | Comando |
 | :--- | :--- |
 | Testes de entidade do Core | `make test` no Core, ou `make test TEST=CoreTrapPriority` e os outros por nome |
-| Provas formais do Core | `make formal` no Core, com `FORMAL_ENGINE=bitwuzla`, `yices`, `boolector` ou `abc-bmc3` |
+| Provas formais do Core | `make formal` no Core, com `FORMAL_ENGINE=bitwuzla`, `yices` ou `abc-bmc3` |
 | Programas de interrupção | `uv run python tests/python/runner.py irq-programs` no Tests |
 | Programas de exceção e de CSR | `riscv-tools` do Tests, em simulação e na placa |
 | Provas do CLINT e do PLIC | `make formal` no Peripherals |

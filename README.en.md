@@ -74,7 +74,7 @@ The tools come from the `ci-vhdl` image (`ghcr.io/insper-riscv/ci-vhdl`) of Infr
 | `make check` | The build of the simulation top of each platform with the pinned submodules and the check that no entity or package is defined in two repositories |
 | `make memory-map` | Agreement of every copy of the memory map with the `platform.yaml` of the platform |
 | `make unit-tests` | Cocotb tests of the platforms of this repository, plus `memory-map` |
-| `make formal` | Formal proofs (SymbiYosys) of the interconnect of this repository, with the engine of `FORMAL_ENGINE` (`bitwuzla` by default; the CI runs `yices`, `bitwuzla`, `boolector` and `abc-bmc3`) |
+| `make formal` | Formal proofs (SymbiYosys) of the interconnect of this repository, with the engine of `FORMAL_ENGINE` (`bitwuzla` by default; the CI runs `yices`, `bitwuzla` and `abc-bmc3`) |
 
 Each repository runs only its own checks, tests and proofs; those of the submodules run in the CI of each one.
 

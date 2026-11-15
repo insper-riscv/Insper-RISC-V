@@ -134,7 +134,7 @@ Um aviso do GHDL, do Yosys ou do SymbiYosys indica código fora da norma ou no l
 | `ghdl -a` e `ghdl --synth` | Saída de erro do GHDL, lida por `ghdl_run` | O comando falha e imprime cada aviso com o arquivo e a linha do VHDL |
 | `sby` de cada prova e de cada mutante | Log completo da prova, lido por `prove` | O veredito vira `error`, mesmo quando o código de saída foi 0 ou 2, e a mensagem aponta `<log>:<linha>` |
 
-Um aviso é uma linha com a palavra `warning` ou `warnings`, em qualquer caixa, como palavra inteira. Nomes que apenas contêm a palavra (`no_warnings.sv`) e o resumo do Yosys com contagem zero (`Warnings: 0 unique messages, 0 total`) não contam. A única exceção são três mensagens do ABC, aceitas só no log do motor `abc-bmc3` (o relógio do módulo de propriedades sem driver, a contagem de bits sem driver e as saídas lidas como restrições), pois a leitura da netlist pelo ABC as produz. Yices, Bitwuzla e Boolector não têm exceção, e qualquer outra mensagem do ABC continua sendo erro.
+Um aviso é uma linha com a palavra `warning` ou `warnings`, em qualquer caixa, como palavra inteira. Nomes que apenas contêm a palavra (`no_warnings.sv`) e o resumo do Yosys com contagem zero (`Warnings: 0 unique messages, 0 total`) não contam. A única exceção são três mensagens do ABC, aceitas só no log do motor `abc-bmc3` (o relógio do módulo de propriedades sem driver, a contagem de bits sem driver e as saídas lidas como restrições), pois a leitura da netlist pelo ABC as produz. Yices e Bitwuzla não têm exceção, e qualquer outra mensagem do ABC continua sendo erro.
 
 Duas regras mantêm as netlists sem aviso.
 
