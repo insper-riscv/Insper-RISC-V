@@ -256,7 +256,7 @@ Warning no formal é erro. O fluxo de verificação formal varre a saída do GHD
 
 O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python, e o nome do job é o check que o ruleset da branch padrão exige, então não o renomeie.
 
-O job `boot-memory-images` do CI monta de novo, na imagem `ci-elf`, as imagens de teste da boot memory (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` e `external_data/boot_memory_real.hex`) a partir da `boot_memory.S` e falha se o resultado diferir do que está versionado. Depois de mudar a boot memory, regere os dois com `tests/python/gen_de0_cv_boot_images.py` e `tests/python/gen_external_data_images.py` e versione o resultado.
+O job `boot-memory-images` do CI monta de novo, na imagem `ci-elf`, as imagens de teste da boot memory (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` e `external_data/boot_memory_real.hex`) a partir da `boot_memory.S` e falha se o resultado diferir do que está versionado. O `--check` do `gen_de0_cv_boot_images.py` também confere o `boot_memory_real.hex` do template e o do modular (`tests/python/gen_real_boot_images.py`) e roda o contrato da BOOT em cada plataforma (`tests/python/check_boot_contract.py`). Depois de mudar a boot memory ou o `boot_core.S`, regere as imagens com `tests/python/gen_de0_cv_boot_images.py`, `tests/python/gen_external_data_images.py` e `tests/python/gen_real_boot_images.py` e versione o resultado.
 
 Ao adicionar, renomear ou remover qualquer arquivo versionado, atualize imediatamente:
 - `paths.yaml`
