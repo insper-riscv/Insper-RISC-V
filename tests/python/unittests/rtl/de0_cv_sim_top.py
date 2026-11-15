@@ -13,8 +13,6 @@ saem de `gen_de0_cv_images.py`.
 from typing import Any
 
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles, Timer
 
 from tests.python.gen_de0_cv_images import (
     BOOT_MARK,
@@ -31,12 +29,13 @@ from tests.python.gen_de0_cv_images import (
     TOHOST,
     WORD,
 )
+from tests.python.unittests.rtl.sdram_sim_common import sdram_word, start
+from tests.python.unittests.rtl.sdram_sim_common import (
+    wait_for_tohost as wait_for_word,
+)
 from tests.python.utils.checks import check
 
-CLK_NS = 10  # clock base do núcleo (dividido por três dentro do topo)
-CLK_MEM_NS = 10  # clock da SDRAM, sem relação fixa com o do núcleo
-RESET_CYCLES = 5
-POLL_CYCLES = 500
+# Ciclos do núcleo até desistir de esperar o `tohost`.
 TIMEOUT_CYCLES = 600_000
 # A RAM começa dentro do chip logo depois da FLASH (FLASH_END do mapa).
 RAM_CHIP_OFFSET = FLASH_END
@@ -69,44 +68,6 @@ CAUSE_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["cause"])
 TVAL_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["tval"])
 
 
-async def start(dut: Any) -> None:
-    """Start both clocks and release the reset.
-
-    Parameters
-    ----------
-    dut : Any
-        The device under test.
-    """
-    cocotb.start_soon(Clock(dut.i_clk, CLK_NS, unit="ns").start())
-    cocotb.start_soon(Clock(dut.i_clk_mem, CLK_MEM_NS, unit="ns").start())
-    dut.i_rst.value = 1
-    dut.i_dbg_word_addr.value = 0
-    await ClockCycles(dut.i_clk, RESET_CYCLES)
-    dut.i_rst.value = 0
-
-
-async def sdram_word(dut: Any, index: int) -> int:
-    """Read a word of the SDRAM chip model through the debug port.
-
-    Parameters
-    ----------
-    dut : Any
-        The device under test.
-    index : int
-        Word index from the start of the chip (the FLASH is there, the
-        RAM starts at the end of the FLASH).
-
-    Returns
-    -------
-    int
-        The word.
-    """
-    dut.i_dbg_word_addr.value = index
-    await ClockCycles(dut.i_clk_mem, 3)
-    await Timer(1, unit="ns")
-    return int(dut.o_dbg_word_data.value)
-
-
 async def wait_for_tohost(dut: Any) -> None:
     """Wait until the program writes a nonzero value to tohost.
 
@@ -114,20 +75,8 @@ async def wait_for_tohost(dut: Any) -> None:
     ----------
     dut : Any
         The device under test.
-
-    Raises
-    ------
-    AssertionError
-        If it does not happen before the timeout.
     """
-    cycles = 0
-    while cycles < TIMEOUT_CYCLES:
-        await ClockCycles(dut.i_clk, POLL_CYCLES)
-        cycles += POLL_CYCLES
-        if await sdram_word(dut, TOHOST_WORD) != 0:
-            return
-    message = "the program never wrote tohost"
-    raise AssertionError(message)
+    await wait_for_word(dut, TOHOST_WORD, TIMEOUT_CYCLES)
 
 
 @cocotb.test()

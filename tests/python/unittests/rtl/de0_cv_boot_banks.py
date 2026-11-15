@@ -24,12 +24,11 @@ from cocotb.triggers import ClockCycles
 
 from tests.python.gen_de0_cv_images import RAM_BASE
 from tests.python.unittests.rtl.de0_cv_sim_top import (
-    CLK_MEM_NS,
-    CLK_NS,
     TOHOST_WORD,
     ram_word,
     sdram_word,
 )
+from tests.python.unittests.rtl.sdram_sim_common import CLK_MEM_NS, CLK_NS
 from tests.python.utils.checks import check
 
 IMAGES = Path(__file__).parent / "data/de0_cv_boot/images.json"

@@ -61,13 +61,21 @@ async def sdram_word(dut: Any, index: int) -> int:
     return int(dut.o_dbg_word_data.value)
 
 
-async def wait_for_tohost(dut: Any) -> None:
+async def wait_for_tohost(
+    dut: Any,
+    tohost_word: int = TOHOST_WORD,
+    timeout_cycles: int = TIMEOUT_CYCLES,
+) -> None:
     """Wait until the program writes a nonzero value to tohost.
 
     Parameters
     ----------
     dut : Any
         The device under test.
+    tohost_word : int
+        Word index of tohost in the chip.
+    timeout_cycles : int
+        Core cycles to wait before giving up.
 
     Raises
     ------
@@ -75,10 +83,10 @@ async def wait_for_tohost(dut: Any) -> None:
         If it does not happen before the timeout.
     """
     cycles = 0
-    while cycles < TIMEOUT_CYCLES:
+    while cycles < timeout_cycles:
         await ClockCycles(dut.i_clk, POLL_CYCLES)
         cycles += POLL_CYCLES
-        if await sdram_word(dut, TOHOST_WORD) != 0:
+        if await sdram_word(dut, tohost_word) != 0:
             return
     message = "the program never wrote tohost"
     raise AssertionError(message)
