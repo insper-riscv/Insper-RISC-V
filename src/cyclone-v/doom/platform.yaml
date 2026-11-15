@@ -111,6 +111,17 @@ peripherals:
   PLIC:
     base: 0xF0000000
     size: 4M
+  # The indexed VGA video (kind: video, 256 KiB window: registers in words 0 to 4, the 256-entry palette from word 256
+  # and the write-only framebuffer in the upper half) and the PS/2 keyboard on the first PS/2 channel of the board
+  # (PS2_CLK, PS2_DAT), whose interrupt takes the first free line of the PLIC (5). A mouse on the second channel (the
+  # Y cable: PS2_CLK2, PS2_DAT2) is one more entry, `MOUSE: {kind: ps2, device: mouse, base: 0x80007100}`.
+  VIDEO:
+    kind: video
+    base: 0x80100000
+  KBD:
+    kind: ps2
+    device: keyboard
+    base: 0x80007000
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
 # (76.923077 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (77 cycles per tick) and is
@@ -146,6 +157,12 @@ io:
   switches: {count: 10, need: optional}
   keys:     {count: 4,  need: optional}
   display:  {count: 6,  need: optional}
+  # The DOOM renders 320x200 with an 8-bit index and a palette of 256 colors (3 x channel_bits each, 12 bits on the
+  # DE0-CV); the default mode of the board (640x480 at 60 Hz) shows it doubled in x and in y, centered, with black bands.
+  video:
+    pixel_format: indexed
+    fb_width: 320
+    fb_height: 200
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
