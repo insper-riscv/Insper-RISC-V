@@ -2,9 +2,9 @@
 
 ## 1. O que ela é
 
-Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), instancia o [SoC](../soc/soc.md) e lhe acrescenta o relógio de três fases e os modelos de chip. O SoC monta o núcleo com quatro escolhas independentes: a ROM e a RAM dentro ou fora do chip, e a cache de instruções e a de dados presentes ou não. Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de uma cache) fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
+Um único topo de simulação, `modular_sim_top` (`src/simulation/modular/`), instancia o [SoC](../soc/soc.md) e lhe acrescenta o relógio de três fases e os modelos de chip. O SoC monta o núcleo com quatro escolhas independentes: a FLASH e a RAM direta ou no barramento, e a cache de instruções e a de dados presentes ou não. Uma memória no barramento fica num modelo de chip simulado, de tamanho configurável. Serve a qualquer variação do núcleo (os genéricos `has_*` escolhem as extensões), roda os programas dos repositórios de teste (seção 7) e é a base da simulação do ACT4 dos 60 perfis.
 
-O topo liga também, por genéricos, periféricos opcionais da placa (chaves, botões, displays e as duas UART) que as [dez plataformas](dez-plataformas.md) usam; sem eles a janela de periféricos tem só o CLINT e o controlador externo, quando as interrupções estão ligadas.
+O topo liga também, por genéricos, periféricos opcionais da placa (chaves, botões, displays e as duas UART) que as [dez plataformas](dez-plataformas.md) usam; sem eles a tabela de janelas de periféricos tem só o CLINT e o controlador externo, quando as interrupções estão ligadas.
 
 Todas as combinações têm a BOOT_MEMORY, a memória de inicialização que deixa a CPU num estado conhecido, e a ROM sempre começa logo depois dela.
 
@@ -12,28 +12,33 @@ Todas as combinações têm a BOOT_MEMORY, a memória de inicialização que dei
 
 | Escolha | Genérico | Valores |
 | :--- | :--- | :--- |
-| ROM | `rom_external` | interna (falso) ou externa (verdadeiro) |
-| RAM | `ram_external` | interna (falso) ou externa (verdadeiro) |
+| FLASH | `rom_external` | direta (falso) ou no barramento (verdadeiro) |
+| RAM | `ram_external` | direta (falso) ou no barramento (verdadeiro) |
 | Cache de instruções | `has_icache` | sem ou com |
 | Cache de dados | `has_dcache` | sem ou com |
 
-O núcleo só conhece o protocolo da porta, então uma cache só existe do lado dele. As duas condições abaixo dizem quando o núcleo alcança cada memória pela porta.
+O núcleo só conhece o protocolo do barramento nas caches, então uma cache só existe do lado dele: a cache de instruções exige `rom_external` e a cache de dados exige `ram_external`, a regra estrita do `check_isa` do `config_pkg`. Das 16 combinações de `rom_external`, `ram_external`, `has_icache` e `has_dcache`, 9 são válidas e 7 são recusadas.
 
-$$\text{rom\_via\_porta} = \text{rom\_external} \lor \text{has\_icache} \qquad \text{ram\_via\_porta} = \text{ram\_external} \lor \text{has\_dcache}$$
+| `rom_external` | `ram_external` | Combinações de caches válidas |
+| :---: | :---: | :--- |
+| falso | falso | nenhuma cache |
+| falso | verdadeiro | sem cache ou só a de dados |
+| verdadeiro | falso | sem cache ou só a de instruções |
+| verdadeiro | verdadeiro | as quatro: sem cache, só a de instruções, só a de dados ou as duas |
 
-Os genéricos `rom_external` e `ram_external` do núcleo recebem esses dois valores. A posição física (interna ou externa) não muda a simulação além disso, porque o chip simulado faz o papel da memória em qualquer das duas. As 16 combinações resultam em 9 estruturas distintas, uma por par de lados.
+Cada memória está no núcleo ou no barramento, e o chip simulado faz o papel dela quando está no barramento. As 9 combinações válidas resultam em estruturas distintas, uma por par de lados.
 
-| Lado da ROM | Busca de instrução | Dado da ROM |
+| Lado da FLASH | Busca de instrução | Dado da FLASH |
 | :--- | :--- | :--- |
-| Do núcleo (não via porta) | FLASH interna de duas portas | Segunda porta da FLASH interna |
-| Via porta, sem cache | Ponte de busca, que guarda só a linha corrente | Roteador dos dados, árbitro e chip de FLASH |
-| Via porta, com cache | Cache de instruções | Roteador dos dados, árbitro e chip de FLASH |
+| Direta | FLASH interna de duas portas | Segunda porta da FLASH interna |
+| No barramento, sem cache | Ponte de busca, que guarda só a linha corrente | Roteador dos dados, árbitro e chip de FLASH |
+| No barramento, com cache | Cache de instruções | Roteador dos dados, árbitro e chip de FLASH |
 
 | Lado da RAM | Acesso a dados |
 | :--- | :--- |
-| Do núcleo (não via porta) | RAM interna do núcleo |
-| Via porta, sem cache | Interconexão, palavra a palavra, direto ao chip de RAM |
-| Via porta, com cache | Interconexão, cache de dados e chip de RAM |
+| Direta | RAM interna do núcleo |
+| No barramento, sem cache | Interconexão, palavra a palavra, direto ao chip de RAM |
+| No barramento, com cache | Interconexão, cache de dados e chip de RAM |
 
 As quatro arquiteturas que os repositórios de teste e o ACT4 usam são as seguintes.
 
@@ -50,40 +55,40 @@ Os genéricos `has_icache` e `has_dcache` valem, quando não informados, `rom_ex
 
 ### 3.1. Dados via porta
 
-Quando a ROM ou a RAM é via porta, o núcleo tem o barramento externo de dados. A interconexão separa a janela de periféricos e entrega o pedido à cache de dados ou, sem ela, direto ao lado da memória, com os endereços do mapa e uma palavra por vez.
+Quando a FLASH ou a RAM está no barramento, o núcleo tem a porta externa de dados. A interconexão separa os periféricos da tabela de janelas, termina em erro o que não tem escravo e entrega o pedido à cache de dados ou, sem ela, direto ao lado da memória, com os endereços do mapa e uma palavra por vez.
 
-| ROM via porta | RAM via porta | Destino dos pedidos de dados |
+| FLASH no barramento | RAM no barramento | Destino dos pedidos de dados |
 | :--- | :--- | :--- |
 | não | sim | Chip de RAM |
 | sim | não | Roteador dos dados: a ROM vai ao chip de FLASH e o que cai fora dela responde zero |
 | sim | sim | Roteador dos dados: a ROM vai ao chip de FLASH e o resto ao chip de RAM |
 
-Com a ROM via porta, o roteador dos dados e o árbitro da FLASH ficam entre o núcleo e o chip, e a busca de instruções é a outra entrada do árbitro. Com as duas via porta, um segundo roteador leva a busca à FLASH ou ao chip de RAM.
+Com a FLASH no barramento, o roteador dos dados e o árbitro da FLASH ficam entre o núcleo e o chip, e a busca de instruções é a outra entrada do árbitro. Com as duas no barramento, um segundo roteador leva a busca à FLASH ou ao chip de RAM.
 
 ### 3.2. Dado lido sem cache de dados
 
 O estágio de escrita (WB) lê o dado de um load depois que o pedido termina, e o endereço do núcleo já mudou nessa hora. A cache de dados guarda o dado, mas sem ela o roteador dos dados escolheria a região pelo endereço novo e entregaria o dado errado. O roteador dos dados usa então `hold_rdata`, que faz o dado lido seguir a região do último pedido concluído (documentado no `mem_region_router` do Memory).
 
-### 3.3. Memória interna com cache e memória externa sem cache
+### 3.3. Memória no barramento com e sem cache
 
 | Combinação | Como a simulação a monta |
 | :--- | :--- |
-| Memória interna com cache | A cache fica sobre o modelo de chip, com a latência dos genéricos do chip; a cache só soma latência numa falha |
-| ROM externa sem cache de instruções | A ponte de busca lê o chip de FLASH, que atende pedido de palavra e de linha |
-| RAM externa sem cache de dados | A interconexão fala com o chip de RAM em pedidos de palavra |
+| Memória no barramento com cache | A cache fica sobre o modelo de chip, com a latência dos genéricos do chip; a cache só soma latência numa falha |
+| FLASH no barramento sem cache de instruções | A ponte de busca lê o chip de FLASH, que atende pedido de palavra e de linha |
+| RAM no barramento sem cache de dados | A interconexão fala com o chip de RAM em pedidos de palavra |
 
 Os dois chips simulados atendem pedidos de palavra sem cache. A FLASH e a SDRAM da placa DE0-CV ficam atrás das caches no topo da placa, que não muda com a escolha.
 
 ## 4. Mapa de memória
 
-O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que o topo não repassa como genéricos: o núcleo e o SoC leem a base e as extensões do `config_pkg`. Traz ainda `BOOT_MEMORY_BITS` (12) e `ROM_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP`, `HAS_ZICOND` e `HAS_SSCOFPMF` vêm do pacote, ligados pelo campo `extras` do `platform.yaml`; o último exige o Zihpm no perfil e `Interrupts` nos `extras`.
+O mapa vem de genéricos e vale para o núcleo e para o topo. O valor padrão de cada um está em `src/simulation/modular/platform.yaml`, que é a fonte do mapa, e o `riscv-tools generate-memory-map` o leva ao pacote `modular_map_pkg.vhd` que o topo usa, ao cabeçalho `memory_map.h` do runtime, ao arquivo de specs do ligador e ao script de ligação da BOOT_MEMORY (`make generate`, e `make generate-check` confere no CI). Os valores são os da simulação do ACT4. O pacote traz também os `HAS_*` da plataforma (`HAS_E` entre eles), que o topo não repassa como genéricos: o núcleo e o SoC leem a base e as extensões do `config_pkg`. Traz ainda `BOOT_MEMORY_BITS` (12) e `FLASH_STORAGE_BYTES` (1048576). A escolha padrão é a seção `memory` do `platform.yaml` (as duas memórias do núcleo, sem cache), de onde saem `FLASH_ON_BUS`, `RAM_ON_BUS`, `HAS_ICACHE` e `HAS_DCACHE`; `--memory` do `riscv-tools` a troca para uma execução, e cada teste a sobrescreve pelos parâmetros do `tests.json`. As conferências do `riscv-tools check-memory-map` (`checks` do `platform.yaml`) cobrem a cópia manuscrita da base da RAM nos testes e o cabeçalho de plataforma do repositório de teste. `HAS_ZIMOP`, `HAS_ZICOND` e `HAS_SSCOFPMF` vêm do pacote, ligados por `core.extensions` do `platform.yaml`; o último exige `Zihpm` e `Interrupts` em `core.extensions`.
 
 | Região | Início | Fim | Genéricos |
 | :--- | :--- | :--- | :--- |
 | BOOT_MEMORY | `0x00000000` | `0x00001000` | `boot_memory_size_bytes` |
-| ROM | logo depois da BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
+| FLASH | logo depois da BOOT_MEMORY, `0x00001000` | `0x00100000` | `rom_end_kib` |
 | RAM | `0x00100000` | `0x00200000` | `ram_base_kib`, `ram_end_kib` |
-| Janela externa e periféricos | `0x80000000` | | `ext_base_kib`, `periph_base_kib` |
+| Periféricos | as janelas da tabela do pacote de mapa, a partir de `0x80000000` | | `periph_count`, `periph_bases`, `periph_masks` |
 
 Os limites estão em KiB. As palavras que o hospedeiro e o programa compartilham (a saída padrão, `tohost` e `fromhost`) ficam no topo da RAM, na última página de 4 KiB, que as caches contornam. A BOOT_MEMORY zera essas palavras e salta para o início da ROM.
 
@@ -126,7 +131,7 @@ riscv-tools --profile rv32im_zicclsm_zicntr_zihpm_zifencei \
   --output tools/riscv_build/config.generated.yaml
 ```
 
-O comando escreve, no repositório de teste, o `config.generated.yaml` com os genéricos `ROM_EXTERNAL`, `RAM_EXTERNAL`, `HAS_ICACHE` e `HAS_DCACHE`, e o texto do `config_pkg` do perfil em `sim.config_pkg`, que a simulação compila no lugar do `config_pkg.vhd` da plataforma (a base e as extensões do perfil não são genéricos do topo). Um arquivo que o estenda e aponte `paths.include_dir` para o diretório de cabeçalhos da plataforma modular (`tools/riscv_build/include-modular` do repositório de teste, com o mapa da seção 4) compila e simula os programas de `c/` e `asm/` com `compile --emit hex` e `sim`.
+O comando escreve, no repositório de teste, o `config.generated.yaml` com os genéricos `FLASH_ON_BUS`, `RAM_ON_BUS`, `HAS_ICACHE` e `HAS_DCACHE`, e o texto do `config_pkg` do perfil em `sim.config_pkg`, que a simulação compila no lugar do `config_pkg.vhd` da plataforma (a base e as extensões do perfil não são genéricos do topo). Um arquivo que o estenda e aponte `paths.include_dir` para o diretório de cabeçalhos da plataforma modular (`tools/riscv_build/include-modular` do repositório de teste, com o mapa da seção 4) compila e simula os programas de `c/` e `asm/` com `compile --emit hex` e `sim`.
 
 | Item | Comportamento na plataforma modular |
 | :--- | :--- |
@@ -151,7 +156,7 @@ O comando escreve, no repositório de teste, o `config.generated.yaml` com os ge
 | `ModularBridgeDirect` | via porta, ponte de busca | via porta, direto |
 | `ModularBridgeDcache` | via porta, ponte de busca | via porta, cache de dados |
 | `ModularIcacheDirect` | via porta, cache de instruções | via porta, direto |
-| `ModularInternalCaches` | interna com cache de instruções | interna com cache de dados |
+| `ModularBridgeCaches` | via porta, cache de instruções | via porta, cache de dados |
 | `ModularInterrupts` | do núcleo, com `HAS_ZICSR` do `config_pkg` e CLINT na janela de periféricos | do núcleo |
 
 As entradas que estendem `ModularIntegrated` (`extends` no `tests.json`) herdam a lista de fontes e trocam só os parâmetros. `make check-tops` elabora o topo e `make check-generics` confere que o topo declara todo `HAS_*` do pacote gerado.

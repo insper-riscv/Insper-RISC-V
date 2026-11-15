@@ -1,5 +1,5 @@
 {
-  "name": "RV32 external project",
+  "name": "RV32 gpio example",
   "dockerComposeFile": "compose.yaml",
   "service": "rv32-app",
   "workspaceFolder": "/workspace",

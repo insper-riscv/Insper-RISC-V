@@ -128,11 +128,11 @@ def expanded_settings(root: Path, profile: str) -> dict[str, Any]:
     selected = next((p for p in expanded if p["name"] == profile), None)
     if selected is None:
         raise ValueError(f"Unknown CPU profile: {profile}")
-    switches = {"IS_BASE_E": selected["generics"]["has_e"]}
+    switches = {"IS_E": selected["generics"]["has_e"]}
     switches.update(
         {k.upper(): v for k, v in selected["generics"].items() if k != "has_e"}
     )
-    base = "E" if switches["IS_BASE_E"] else "I"
+    base = "E" if switches["IS_E"] else "I"
     return {
         "profile": profile,
         "extensions": [base, *selected["extensions"]],
@@ -180,7 +180,7 @@ def build_config(
     defaults = (exp.root / "Core/src/common/src/config_pkg.vhd").read_text()
     switches = dict(
         re.findall(
-            r"constant (HAS_\w+|IS_BASE_E|IS_64)\s*:\s*boolean"
+            r"constant (HAS_\w+|IS_E|IS_64)\s*:\s*boolean"
             r"\s*:=\s*(true|false)",
             defaults,
         )

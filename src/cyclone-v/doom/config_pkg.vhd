@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Pacote de configuração da plataforma (constantes de elaboração)
 --
--- Gerado por `riscv-tools` a partir de src/simulation/modular/platform.yaml.
+-- Gerado por `riscv-tools` a partir de src/cyclone-v/doom/platform.yaml.
 -- Não edite à mão: mude o YAML da plataforma e gere de novo.
 --
 -- A unidade tem o nome do pacote padrão do Common-Components e as mesmas
@@ -45,27 +45,27 @@ package config_pkg is
 	-- Extensão Zicsr e tratamento de exceções do modo máquina presentes.
 	constant HAS_ZICSR          : boolean := true;
 	-- Extensão Zicntr (mcycle, minstret, time) presente; exige HAS_ZICSR.
-	constant HAS_ZICNTR         : boolean := false;
+	constant HAS_ZICNTR         : boolean := true;
 	-- Extensão Zihpm (contadores de eventos) presente; exige HAS_ZICSR.
-	constant HAS_ZIHPM          : boolean := false;
+	constant HAS_ZIHPM          : boolean := true;
 	-- Extensão Zimop (mop.r.n e mop.rr.n) presente.
 	constant HAS_ZIMOP          : boolean := true;
 	-- Extensão Zicond (czero.eqz e czero.nez) presente.
 	constant HAS_ZICOND         : boolean := true;
 	-- Extensão Zihintntl (dicas ntl.*) presente.
-	constant HAS_ZIHINTNTL      : boolean := false;
+	constant HAS_ZIHINTNTL      : boolean := true;
 	-- Extensão Zihintpause (dica pause) presente.
-	constant HAS_ZIHINTPAUSE    : boolean := false;
+	constant HAS_ZIHINTPAUSE    : boolean := true;
 	-- Extensão Zifencei (fence.i) presente.
-	constant HAS_ZIFENCEI       : boolean := false;
+	constant HAS_ZIFENCEI       : boolean := true;
 	-- Acesso desalinhado à memória principal atendido em hardware (Zicclsm).
 	constant HAS_ZICCLSM        : boolean := true;
 	-- Interrupções de máquina presentes (mip e mie); exige HAS_ZICSR.
 	constant HAS_INTERRUPTS     : boolean := true;
 	-- Extensão Sscofpmf (estouro de contador de eventos) presente; exige HAS_ZIHPM e HAS_INTERRUPTS.
-	constant HAS_SSCOFPMF       : boolean := false;
+	constant HAS_SSCOFPMF       : boolean := true;
 	-- Falhas de acesso (causas 1, 5 e 7) geradas fora do mapa válido; exige HAS_ZICSR.
-	constant HAS_ACCESS_FAULTS  : boolean := false;
+	constant HAS_ACCESS_FAULTS  : boolean := true;
 
 	-- Existe cache de instruções.
 	constant HAS_ICACHE         : boolean := true;
@@ -77,13 +77,13 @@ package config_pkg is
 	-- Base da ROM em bytes, logo depois da BOOT_MEMORY.
 	constant ROM_BASE           : map_addr_t := resize(unsigned'(x"00001000"), ADDR_BITS + 1);
 	-- Fim exclusivo da ROM em bytes.
-	constant ROM_END            : map_addr_t := resize(unsigned'(x"00100000"), ADDR_BITS + 1);
+	constant ROM_END            : map_addr_t := resize(unsigned'(x"00003000"), ADDR_BITS + 1);
 	-- A ROM é alcançada pela porta do núcleo (externa ou atrás de cache) quando verdadeiro.
 	constant ROM_EXTERNAL       : boolean := true;
 	-- Base da RAM em bytes.
-	constant RAM_BASE           : map_addr_t := resize(unsigned'(x"00100000"), ADDR_BITS + 1);
+	constant RAM_BASE           : map_addr_t := resize(unsigned'(x"40000000"), ADDR_BITS + 1);
 	-- Fim exclusivo da RAM em bytes.
-	constant RAM_END            : map_addr_t := resize(unsigned'(x"00200000"), ADDR_BITS + 1);
+	constant RAM_END            : map_addr_t := resize(unsigned'(x"44000000"), ADDR_BITS + 1);
 	-- A RAM é alcançada pela porta do núcleo (externa ou atrás de cache) quando verdadeiro.
 	constant RAM_EXTERNAL       : boolean := true;
 	-- Base da janela externa em bytes: todo endereço a partir dela sai pela porta externa.
@@ -100,21 +100,21 @@ package config_pkg is
 	-- UART pelo JTAG presente.
 	constant HAS_UART_JTAG      : boolean := true;
 	-- Temporizador presente.
-	constant HAS_TIMER          : boolean := true;
+	constant HAS_TIMER          : boolean := false;
 	-- Periférico de entrada e saída de uso geral (GPIO) presente.
 	constant HAS_GPIO           : boolean := false;
 	-- Display de sete segmentos presente.
 	constant HAS_DISPLAY        : boolean := true;
 	-- Chaves da placa presentes.
-	constant HAS_SWITCHES       : boolean := true;
+	constant HAS_SWITCHES       : boolean := false;
 	-- Botões da placa presentes.
-	constant HAS_KEYS           : boolean := true;
+	constant HAS_KEYS           : boolean := false;
 	-- CLINT (mtime e mtimecmp) presente.
 	constant HAS_CLINT          : boolean := true;
 	-- PLIC (controlador de interrupções externas) presente.
 	constant HAS_PLIC           : boolean := true;
 	-- Controlador da memória FLASH presente.
-	constant HAS_FLASH_CTRL     : boolean := false;
+	constant HAS_FLASH_CTRL     : boolean := true;
 	-- Periféricos estritos: o padding de cada periférico e as janelas sem periférico geram falha de acesso
 	-- quando verdadeiro; a chave strict_periph do platform.yaml o desliga por plataforma.
 	constant STRICT_PERIPH      : boolean := true;

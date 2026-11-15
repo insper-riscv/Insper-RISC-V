@@ -22,7 +22,7 @@ from tests.python.utils.rv32_asm import X0, hex_lines, jal
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/template"
 ROOT = Path(__file__).resolve().parents[2]
 MAP = symbols(load_platform(ROOT / "src/simulation/template/platform.yaml"))
-ROM_BASE = MAP["ROM.base"]
+ROM_BASE = MAP["FLASH.base"]
 RAM_BASE = MAP["RAM.base"]
 
 

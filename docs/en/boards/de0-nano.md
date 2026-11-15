@@ -4,7 +4,7 @@ This page describes the `de0-nano` platform, the Terasic DE0-Nano (Cyclone IV E,
 
 ## 1. Profile and memory map
 
-The device has 22,320 LEs and 608 kbit of M9K. The full profile of the DE0-CV does not fit, so the platform turns on only RV32I with the Zicsr and Zifencei extensions, with no counters, multiplier or interrupts. The Zifencei is there because the boot memory executes `fence.i` at every reset, and without it the core takes the instruction as illegal and traps back to the reset forever.
+The device has 22,320 LEs and 608 kbit of M9K. The full profile of the DE0-CV does not fit, so the platform turns on only RV32I with the Zicsr and Zifencei extensions, with no counters, multiplier or interrupts. The Zifencei is there because the platform has an instruction cache and a data cache, and the `fence.i` that the BOOT executes at every reset (the one of the Zifencei fragment, which exists only with the extension) drops the lines of the previous program.
 
 | Region | Base | Size | Realization |
 | :--- | :--- | ---: | :--- |
@@ -24,7 +24,7 @@ The FLASH is 28 KiB because the block store takes the power of two that the addr
 | Console | JTAG UART, no pin |
 | Reset | `KEY[0]` |
 
-The polarity of `KEY[0]` (active low) is inferred from the Terasic button convention. Check in the board schematic that the button has a pull-up and closes to ground before relying on the reset.
+The `KEY` button gives a low level when pressed (manual, section 3.2), so `KEY[0]` is active low as the reset.
 
 The four `DIP` switches and `KEY[1]` sit on pins that the Quartus accepts only as inputs, and the GPIO cell of the SoC is bidirectional (error 169009 in the fit). The platform therefore does not ask for the `switches` and `keys` roles.
 
@@ -61,6 +61,16 @@ The bitstream comes out of `program` with the boot memory embedded, and `board_r
 | `de0-nano-sdram` | 7 | 7 pass |
 
 Left out are `code-sweep` (17 KiB, more than the 12 KiB bank A), `flash-const` (it asks for the access fault, an extra that the platform does not turn on), `monitor` and `hex-id` (they need a person), and the three UART-on-pins programs (the board has no UART). The address bus test of `sdram-memtest` stops before the end of the 32 MiB RAM, and the SDRAM test window is 8 MiB, from 8 MiB above the base.
+
+## 7. Expansion pins
+
+The `gpio` role is bidirectional and numbers the pins of `GPIO_0` (0 to 33), `GPIO_1` (34 to 67) and `GPIO_2` (68 to 80), in that order.
+
+| Role | Signals | Pins | Manual | Level |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO_0[33:0]`, `GPIO_1[33:0]`, `GPIO_2[12:0]` | 81 | 3.5 and 3.6, tables 3-6, 3-7 and 3-8 | 3.3 V |
+
+The input-only pins `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` and `GPIO_2_IN[2:0]` stay out of the `gpio` role and only in `pins.yaml`, because Quartus refuses a bidirectional cell on them. The ADC128S022 (section 3.6, table 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) and the ADXL345 accelerometer (section 3.7, table 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` and the EEPROM I2C, table 3-5) are in `pins.yaml` with no I/O role.
 
 ---
 

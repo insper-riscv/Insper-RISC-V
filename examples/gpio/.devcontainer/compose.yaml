@@ -1,14 +1,13 @@
 services:
   rv32-app:
-    # External applications use the published tool image directly.  In
-    # particular, do not build the SDK Dockerfile here: Dev Containers creates
-    # a temporary Dockerfile outside the Compose context and recent Buildx
-    # Bake versions reject that file unless an fs.read entitlement is granted.
+    # Root startup installs Rust bindgen tools before the ubuntu editor setup.
+    # Keep the published image directly: no host-side Dockerfile/Bake step.
     image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8}"
     mem_limit: 8g
     memswap_limit: 8g
     cpus: 2
-    command: sleep infinity
+    user: root
+    command: ["/bin/bash", "/opt/rv32-sdk/scripts/container-start.sh"]
     network_mode: host
     security_opt:
       - label=disable

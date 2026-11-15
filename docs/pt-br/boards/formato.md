@@ -9,7 +9,7 @@ Cada placa suportada tem uma pasta `boards/<placa>/` na raiz do repositório, co
 | `board.yaml` | O que a placa oferece: dispositivo, relógios, papéis de E/S, memórias, cadeia JTAG, capacidades | Validador de recursos, gerador de PLL e de topo, identificação pelo JTAG |
 | `pins.yaml` | Pino, padrão de E/S, direção e selo de certeza de cada sinal | Gerador de pinos |
 
-O `board.yaml` cita sinais só pelo nome. Número de pino e padrão de E/S existem apenas no `pins.yaml`, e a organização e os tempos de um chip de memória existem apenas no catálogo de chips. Nenhum dos dois repete o que o outro guarda.
+O `board.yaml` cita sinais só pelo nome. Número de pino e padrão de E/S existem apenas no `pins.yaml`, e a organização e os tempos de um chip de memória existem apenas no catálogo de chips. Nenhum dos dois repete o que o outro guarda. A temporização de cada modo de vídeo mora num catálogo único, `boards/video-modes.yaml`, comum a todas as placas (seção 4.3).
 
 ## 2. Campos do board.yaml
 
@@ -26,8 +26,9 @@ O `board.yaml` cita sinais só pelo nome. Número de pino e padrão de E/S exist
 | `jtag.samd21`, `jtag.external_pads` | Só na `samd21-usbblaster`: o sketch que expõe o cabo emulado e os pads de JTAG para cabo externo |
 | `resources` | `logic`, `block_ram`, `multipliers`, `plls`, `user_pins` (`null` quando a capacidade é desconhecida) |
 | `clocks.inputs`, `clocks.reference`, `clocks.reset` | Relógios de entrada (`name`, `signal`, `mhz`), o que alimenta o PLL e o reset do usuário com polaridade |
-| `io.<papel>` | Papéis `leds`, `switches`, `keys` e `display`, cada um com `signals` e `active` (`high` ou `low`) |
+| `io.<papel>` | Papéis `leds`, `switches`, `keys`, `display` e `leds_green`, cada um com `signals` e `active` (`high` ou `low`), os papéis de uso geral `gpio`, `ex_io`, `hsmc` e `clock_extra`, sem polaridade, com `signals` (um grupo ou uma lista de grupos, numerados na ordem da lista) e `bidirectional: true` quando os pinos são de E/S, e o papel `video`, descrito na seção 4 |
 | `memories` | `sdram`, `sram`, `nor`, `onchip_flash` e `serial_flash`, cada um com o chip do catálogo e os sinais |
+| `buses` | Papéis de pino dos periféricos externos (seção 2.3), um por papel, com o sinal de cada pino do papel |
 | `console` | `default: jtag` (JTAG UART) e `uart: {rx, tx}` só quando a placa tem UART em pinos |
 | `pins` | Caminho do `pins.yaml` |
 | `notes` | Armadilhas da placa, em prosa curta |
@@ -55,6 +56,31 @@ Em `memories.<tipo>.signals`, o valor é um prefixo (ou uma lista de prefixos) s
 
 Nenhuma unidade se converte em outra por fator fixo.
 
+### 2.3. Papéis de pino dos periféricos externos
+
+A chave `buses` liga cada periférico externo da plataforma (`kind` de `Peripherals`) aos sinais do `pins.yaml`. Cada chave é um papel, e o valor é um mapeamento de pino do papel para sinal, ou uma lista de mapeamentos quando a placa tem mais de uma cópia (os dois canais PS/2, as duas PHYs Ethernet). O sinal aceita a forma de barramento da seção 2.1 (`"SD_DAT[3:0]"`).
+
+| Papel | Pinos do papel | Chave `chip` |
+| :--- | :--- | :--- |
+| `ps2` | `clk`, `dat` | Não |
+| `sd` | `clk`, `cmd`, `dat` | Não |
+| `lcd` | `data`, `rs`, `rw`, `en`, `power`, `blon` (opcional) | Não |
+| `i2c` | `scl`, `sda` | Não |
+| `audio` | `xck`, `bclk`, `adclrck`, `adcdat`, `daclrck`, `dacdat` | Não |
+| `eth` | `rx_clk`, `rxd`, `rx_dv`, `rx_er`, `tx_clk`, `txd`, `tx_en`, `tx_er`, `mdc`, `mdio`, `int_n` (opcional), `rst_n` | Não |
+| `hdmi` | `d`, `clk`, `de`, `hs`, `vs`, `int`, `scl`, `sda` | Não |
+| `tv` | `data`, `clk27`, `reset_n` | Não |
+| `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | Não |
+| `ir` | `rxd` | Não |
+| `adc` | Depende do chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (nenhum) | Sim, obrigatória |
+| `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (opcional), `int1` (opcional) | Não |
+
+O vídeo não entra em `buses`; ele é o papel `io.video`. Uma placa que declara em `buses` um papel só com pinos do lado FPGA deixa de fora o que fica no HPS, e o papel `adxl345` da DE0-Nano usa `I2C_SCLK` e `I2C_SDAT` como `sclk` e `mosi`, porque o `G_SENSOR_CS_N` em nível baixo seleciona o modo SPI de três fios nos mesmos pinos do I2C.
+
+### 2.4. Selo dos pinos lidos só no manual
+
+O selo `manual` de um pino quer dizer que o número do pino foi lido numa tabela do manual. Os pinos da DE2-115 de PS/2, áudio, Ethernet, TV, USB e IR trazem no `note` que o banco e a tensão não foram conferidos contra o esquemático, e nenhum foi medido na placa.
+
 ## 3. Campos do pins.yaml
 
 | Campo | Significado |
@@ -72,7 +98,108 @@ Nenhuma unidade se converte em outra por fator fixo.
 
 Um mesmo pino só pode aparecer em dois sinais se estiver listado em `conflicts`. O Tools recusa construir com um pino `inferred` sem `--accept-inferred-pins`.
 
-## 4. Exemplo
+## 4. Papel video
+
+O papel `io.video` declara a saída de vídeo da placa. As placas sem saída de vídeo não o têm.
+
+### 4.1. Campos
+
+| Campo | Significado |
+| :--- | :--- |
+| `kind` | `vga` (DAC analógico, com ou sem chip) ou `hdmi` (transmissor digital com RGB paralelo) |
+| `channel_bits` | Bits por canal de cor entregues à placa, `4` ou `8` |
+| `signals` | Prefixo dos sinais de vídeo no `pins.yaml`, sem o sublinhado final |
+| `default_mode` | Modo usado quando a plataforma não pede outro; precisa constar em `modes` |
+| `modes` | Modos que o manual da placa especifica ou que o chip de saída suporta; cada nome existe em `boards/video-modes.yaml` |
+
+### 4.2. Sinais por tipo de saída
+
+O prefixo de `signals` casa todos os sinais do `pins.yaml` que começam por ele.
+
+| `kind` | Prefixo | Sinais esperados |
+| :--- | :--- | :--- |
+| `vga` com DAC de resistores | `VGA` | `VGA_R[n]`, `VGA_G[n]`, `VGA_B[n]`, `VGA_HS`, `VGA_VS` |
+| `vga` com DAC integrado (ADV7123) | `VGA` | Os acima mais `VGA_CLK`, `VGA_BLANK_N` e `VGA_SYNC_N` |
+| `hdmi` (ADV7513) | `HDMI_TX` | `HDMI_TX_D[n]` (24 bits), `HDMI_TX_DE`, `HDMI_TX_HS`, `HDMI_TX_VS`, `HDMI_TX_CLK` e `HDMI_TX_INT` |
+
+O barramento de cada cor tem `channel_bits` fios nos tipos `vga`. No `hdmi`, o transmissor recebe 24 bits e `channel_bits` diz quantos bits de cada canal o conteúdo usa. O transmissor HDMI é configurado por um barramento I2C que fica fora do prefixo (`I2C_SCL` e `I2C_SDA` na DE10-Nano) e consta no `pins.yaml` como qualquer outro sinal.
+
+### 4.3. Catálogo de modos
+
+O arquivo `boards/video-modes.yaml` guarda a temporização de cada modo, e o nome do modo tem a forma `<largura>x<altura>@<atualização em Hz>`.
+
+| Campo | Significado |
+| :--- | :--- |
+| `width`, `height`, `refresh_hz` | Área visível em pixels e taxa de atualização |
+| `aspect` | Proporção reduzida da área visível (`4:3`, `16:9` ou `5:4`) |
+| `pixel_clock_mhz` | Clock de pixel em MHz |
+| `horizontal`, `vertical` | Por eixo, `sync`, `back_porch`, `visible`, `front_porch`, `total` e `polarity` |
+| `source` | Tabela do manual ou norma de onde vieram os valores |
+
+Em cada eixo, o total é a soma dos quatro intervalos, e `polarity` vale `neg` (pulso em nível baixo) ou `pos` (pulso em nível alto). O eixo horizontal conta pixels, e o vertical conta linhas.
+
+$$
+\text{total} = \text{sync} + \text{back\_porch} + \text{visible} + \text{front\_porch}
+$$
+
+$$
+\text{refresh\_hz} \approx \frac{\text{pixel\_clock\_mhz} \cdot 10^{6}}{\text{total}_{h} \cdot \text{total}_{v}}
+$$
+
+```yaml
+modes:
+  640x480@60:
+    width: 640
+    height: 480
+    refresh_hz: 60
+    aspect: "4:3"
+    pixel_clock_mhz: 25.0
+    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: neg}
+    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: neg}
+```
+
+### 4.4. Modo padrão e sobrescrita pela plataforma
+
+O `platform.yaml` pode pedir outro modo em `io.video`, e os três campos são opcionais.
+
+| Campo | Significado |
+| :--- | :--- |
+| `width`, `height` | Resolução pedida; o modo é procurado no catálogo |
+| `aspect` | Proporção pedida, `4:3` ou `16:9` |
+
+| Pedido da plataforma | Modo escolhido |
+| :--- | :--- |
+| Sem `io.video` | O `default_mode` da placa |
+| Só `aspect` | O maior modo de `modes` com essa proporção |
+| `width` e `height` | O modo do catálogo com essa resolução |
+
+```yaml
+io:
+  video:
+    width: 1280
+    height: 720
+    aspect: 16:9
+```
+
+O modo escolhido precisa constar em `modes` da placa, e a proporção pedida precisa bater com `width` e `height`. Um modo fora de `modes` só é aceito quando a plataforma o marca de forma explícita como fora do manual. O clock de pixel precisa ser gerável pelo PLL da placa, o framebuffer precisa caber na memória livre, e `channel_bits` da placa limita os bits por canal pedidos.
+
+### 4.5. Exemplos
+
+```yaml
+# DE2-115: DAC ADV7123 de 8 bits, cinco modos
+io:
+  video: {kind: vga, channel_bits: 8, signals: VGA, default_mode: 640x480@60,
+          modes: [640x480@60, 640x480@85, 800x600@60, 1024x768@60, 1280x1024@60]}
+```
+
+```yaml
+# DE10-Nano: transmissor HDMI ADV7513, configurado por I2C
+io:
+  video: {kind: hdmi, channel_bits: 8, signals: HDMI_TX, default_mode: 640x480@60,
+          modes: [640x480@60, 1024x768@60, 1280x1024@60, 1920x1080@60]}
+```
+
+## 5. Exemplo
 
 ```yaml
 board: de0-cv

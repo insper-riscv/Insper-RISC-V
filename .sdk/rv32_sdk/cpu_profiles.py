@@ -31,11 +31,11 @@ def selected(sdk: Path, project: dict[str, Any]) -> dict[str, Any] | None:
         raise SystemExit(f"Unsupported Core profile specification: {path}")
     defaults = dict(
         re.findall(
-            r"constant (HAS_\w+|IS_BASE_E|IS_64)\s*:\s*boolean\s*:=\s*(true|false)",
+            r"constant (HAS_\w+|IS_E|IS_64)\s*:\s*boolean\s*:=\s*(true|false)",
             (sdk / "Common-Components/src/config_pkg.vhd").read_text(),
         )
     )
-    names = {key.upper() for key in SWITCHES} | {"IS_BASE_E", "IS_64"}
+    names = {key.upper() for key in SWITCHES} | {"IS_E", "IS_64"}
     flags = {
         key: value == "true" for key, value in defaults.items() if key in names
     }

@@ -11,6 +11,7 @@ NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'P
 # The platforms of this repository: the simulation-only ones and the board ones.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
+PD := src/cyclone-v/doom
 PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
@@ -63,6 +64,9 @@ check-tops:
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) doom_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. doom_sim_test
+	@echo "the simulation top of the doom platform builds"
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
 	@echo "the simulation top of the external-data platform builds"
@@ -103,6 +107,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
@@ -117,6 +122,7 @@ memory-map:
 generate:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
@@ -128,6 +134,7 @@ generate:
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
@@ -139,7 +146,7 @@ generate-check:
 # The config_pkg of the modular platform with another memory combination, for the matrix tests of tests.json (each
 # combination needs its own package, because the core reads the map from it): `make variants` writes them and
 # `make variants-check` fails when one is out of date.
-VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off internal_caches:rom=internal,ram=internal,icache=on,dcache=on
+VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off bridge_caches:rom=external,ram=external,icache=on,dcache=on
 VARIANT_DIR := src/simulation/modular/variants
 
 variants:

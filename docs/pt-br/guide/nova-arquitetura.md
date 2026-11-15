@@ -114,12 +114,12 @@ O `platform.yaml` é a única fonte do mapa. Nada do mapa se escreve à mão em 
 | Campo | O que define |
 | :--- | :--- |
 | `platform` | Nome da plataforma |
-| `profile` | Perfil do Core, no formato `rv32i` ou `rv32e` seguido das extensões (`rv32im`, `rv32im_zicsr`) |
+| `core` | Bloco do núcleo: `type`, `base` (I ou E) e `extensions` |
 | `profiles` | Caminho de `Core/profiles/matrix.yaml`, a especificação dos perfis |
-| `regions` | Cada região com `name`, `base`, `size` (inteiro com sufixo `K`, `M` ou soma, como `1M-4K`), `kind` (`rom` ou `ram`) e `exec` |
+| `memory` | O bloco `boot` (`base` e `size`) e os segmentos de `instructions` (a FLASH) e de `data` (a RAM), cada um com `type`, `base`, `size` (inteiro com sufixo `K`, `M` ou soma, como `1M-4K`) e `on_bus`, e `cache` com `size_bits` quando há cache |
 | `reserved` | As três palavras do topo da RAM, `stdout`, `tohost` e `fromhost`, que precisam caber dentro da região de RAM |
 | `boot` | `entry`, o endereço do `_start` da ROM, e `wait_restart`, o endereço fixo da rotina de espera |
-| `peripherals` | Cada periférico com `name`, `base` e `id` (bits 30:28 do endereço) |
+| `peripherals` | Mapa NOME para `base` (endereço da janela, alinhado ao tamanho dela) e `size` (bytes de registradores); a janela é a menor potência de dois de pelo menos 16 bytes que os contém, e o índice do periférico na tabela é a posição dele na lista |
 | `generate` | Os arquivos a escrever e os parâmetros do pacote VHDL |
 | `config` | O que o `config.yaml` lê do mapa |
 | `checks` | Onde moram as cópias escritas à mão que o `check-memory-map` confere |
@@ -128,15 +128,30 @@ A tabela completa, com os campos das plataformas de placa, está no capítulo 14
 
 ### 4.2. Editar
 
-Para o exemplo, a RAM passa a 64 KiB e o perfil a `rv32im`. A RAM começa em `0x8000`, então termina em `0x18000`, e as palavras reservadas descem junto.
+Para o exemplo, a RAM passa a 64 KiB e a ISA a RV32IM (`core` com a extensão `M`). A RAM começa em `0x8000`, então termina em `0x18000`, e as palavras reservadas descem junto.
 
 ```yaml
 platform: exemplo
-profile: rv32im
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 64K
+      on_bus: false
+
 reserved:
   stdout:   {base: 0x00017BE0, size: 1K+8}
   tohost:   {base: 0x00017FE8, size: 8}
@@ -266,7 +281,7 @@ riscv-tools profiles --spec Core/profiles/matrix.yaml --format names
 
 ### 5.2. Extensões fora da matriz
 
-As extensões `Zimop`, `Zicond`, `Zihintntl` e `Zihintpause` não fazem parte do nome do perfil. A plataforma as liga no campo `extras` do `platform.yaml` (`extras: [Zimop, Zicond]`), e o pacote gerado traz `HAS_ZIMOP` e `HAS_ZICOND` verdadeiros.
+As extensões `Zimop`, `Zicond`, `Zihintntl` e `Zihintpause` não fazem parte do nome do perfil. A plataforma as lista em `core.extensions` do `platform.yaml` (`- Zimop`, `- Zicond`), e o pacote gerado traz `HAS_ZIMOP` e `HAS_ZICOND` verdadeiros.
 
 ### 5.3. Como o topo passa o perfil ao `core`
 
@@ -301,11 +316,11 @@ O núcleo tem três saídas de memória: a busca de instrução (BOOT_MEMORY e R
 
 ### 6.2. Genéricos de tamanho
 
-Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_MEMORY_SIZE_BYTES`, `ROM_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
+Os tamanhos das memórias são genéricos em potência de dois, cujo valor padrão vem do pacote gerado (`BOOT_MEMORY_SIZE_BYTES`, `FLASH_STORAGE_BYTES`, `RAM_STORAGE_BYTES`). Não se escreve um tamanho no topo.
 
 ### 6.3. Perfil e mapa no `core`
 
-O núcleo não tem genérico de extensão: ele lê a base e as extensões das constantes `HAS_*` do `config_pkg` gerado da plataforma, que o topo compila no lugar do pacote padrão do Common-Components. O `generic map` do `core` leva só o que não vem do pacote (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external` e `periph_slots`). O topo que instancia o SoC mantém um genérico `has_*` por extensão, com a constante `HAS_*` do pacote do mapa como valor padrão, e o SoC confere em asserção que `has_dcache` vale o mesmo que a constante do `config_pkg`. Os limites das regiões (`rom_end_kib`, `ram_base_kib`, `ram_end_kib`, `ext_base_kib`, `periph_base_kib`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
+O núcleo não tem genérico de extensão: ele lê a base e as extensões das constantes `HAS_*` do `config_pkg` gerado da plataforma, que o topo compila no lugar do pacote padrão do Common-Components. O `generic map` do `core` leva só o que não vem do pacote (`hpm_counters`, `hpm_width`, `tick_cycles`, `time_external`). O topo que instancia o SoC mantém um genérico `has_*` por extensão, com a constante `HAS_*` do pacote do mapa como valor padrão, e o SoC confere em asserção que `has_dcache` vale o mesmo que a constante do `config_pkg`. Os limites das regiões (`flash_end_kib`, `ram_base_kib`, `ram_end_kib`) e a tabela de janelas (`periph_count`, `periph_bases`, `periph_masks`, `periph_sizes`, `strict_periph`) recebem as constantes de mesmo nome do pacote. Se o perfil do passo 4.2 liga o `M`, `has_m` já chega verdadeiro, e nada mais muda no topo.
 
 Um parâmetro de simulação que nomeia um genérico que o topo não declara falha na elaboração com `cannot find in top entity generic`; o topo que não instancia o SoC não declara os genéricos de extensão, e a extensão de um teste muda trocando o `config_pkg` da lista de fontes.
 
@@ -545,7 +560,7 @@ Este capítulo vale só se a plataforma tem uma FPGA. O projeto do Quartus de um
 
 ### 10.1. Declarar a placa no `platform.yaml`
 
-A plataforma nova parte da cópia da plataforma de placa mais próxima (`src/cyclone-v/de0-cv` para o perfil completo, `src/cyclone-iv-e/de0-nano` para um perfil reduzido). No `platform.yaml`, o campo `board` (ou a lista `boards`) escolhe a placa, os campos `clocks` e `io` dizem o que o SoC pede, e cada região externa escolhe o seu backend. O passo 6 de [adicionar-placa.md](adicionar-placa.md) descreve os campos, e o passo 7 o validador que compara o pedido com o que a placa oferece.
+A plataforma nova parte da cópia da plataforma de placa mais próxima (`src/cyclone-v/de0-cv` para o perfil completo, `src/cyclone-iv-e/de0-nano` para um perfil reduzido). No `platform.yaml`, o campo `board` (ou a lista `boards`) escolhe a placa, os campos `clocks` e `io` dizem o que o SoC pede, e cada segmento de `memory` escolhe o seu `type`. O passo 6 de [adicionar-placa.md](adicionar-placa.md) descreve os campos, e o passo 7 o validador que compara o pedido com o que a placa oferece.
 
 ### 10.2. Gerar e conferir o projeto
 
@@ -759,11 +774,11 @@ Um repositório de plataforma usa o periférico depois que o ponteiro do submód
 
 ```yaml
 peripherals:
-  - {name: UART, offset: 0x40000000, id: 4, size: 1K, padding: 0x0FFFFC00}
-  - {name: LED,  offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}
+  - {name: UART, base: 0xC0000000, size: 1K}
+  - {name: LED,  base: 0xD0000000, size: 1K}
 ```
 
-Depois de `generate-memory-map`, o pacote ganha `LED_BASE` e `LED_ID`, e o `memory_map.h`, `RV32_LED_BASE`. No topo, o seletor da janela, os enables filtrados e o dado de leitura seguem o padrão do passo 6.4, e a fonte `led_register.vhd` entra na lista `sim.vhdl_sources` do `config.yaml`, no `Makefile` da plataforma e no `.qsf`, se houver placa.
+Depois de `generate-memory-map`, o pacote ganha `LED_BASE` e `LED_INDEX`, e uma janela nas tabelas `PERIPH_BASES`, e `PERIPH_MASKS`, e o `memory_map.h`, `RV32_LED_BASE`. No topo, o seletor da janela, os enables filtrados e o dado de leitura seguem o padrão do passo 6.4, e a fonte `led_register.vhd` entra na lista `sim.vhdl_sources` do `config.yaml`, no `Makefile` da plataforma e no `.qsf`, se houver placa.
 
 ## 12. Adicionar um tipo de memória novo
 
@@ -889,7 +904,7 @@ riscv-tools --root . check-vhdl-style
 
 ### 12.4. Uso numa plataforma
 
-O topo instancia a memória nova no lugar de uma das existentes, desde que a interface seja a do bloco que ela substitui (regra 3 da seção 5 do CONTRIBUTING). Quando a região deixa de ser interna, o campo `memory` do `platform.yaml` muda (`rom: {external: true}`, `icache: {enabled: true, size_bits: 32768}`), e o pacote gerado traz `ROM_EXTERNAL`, `RAM_EXTERNAL` e os tamanhos das caches.
+O topo instancia a memória nova no lugar de uma das existentes, desde que a interface seja a do bloco que ela substitui (regra 3 da seção 5 do CONTRIBUTING). Quando a região deixa de ser interna, o segmento de `memory` do `platform.yaml` ganha `on_bus: true` e `cache: {size_bits: 32768}`, e o pacote gerado traz `FLASH_ON_BUS`, `RAM_ON_BUS` e os tamanhos das caches.
 
 ## 13. CI e pull request
 
@@ -955,14 +970,12 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | Campo | Obrigatório | Conteúdo |
 | :--- | :--- | :--- |
 | `platform` | Sim | Nome da plataforma |
-| `profile`, `profiles` | Sim | Perfil do Core e caminho da matriz de perfis, relativo ao `platform.yaml` |
-| `regions` | Sim | `name`, `base`, `size`, `kind` (`rom` ou `ram`) e `exec` de cada região; toda região termina em `0x80000000` ou antes |
+| `core`, `profiles` | Sim | Bloco do núcleo (`type`, `base` I ou E e `extensions`, a lista de todas as extensões) e caminho da matriz de perfis, relativo ao `platform.yaml` |
+| `memory` | Sim | `boot` (`base`, `size`), `instructions` e `data` (listas de segmentos com `type` `flash`, `sdram`, `sram`, `onchip` ou `emulated`, `base`, `size`, `on_bus`, `latency` e `sector_bytes` só no `emulated`, e `cache` com `size_bits`); todo segmento termina em `0x80000000` ou antes |
 | `reserved` | Sim | `stdout`, `tohost` e `fromhost`, dentro da região de RAM |
 | `boot` | Sim | `entry` numa região executável e `wait_restart` na primeira região |
-| `peripherals` | Sim | `name`, `base` e `id`, com a base igual a `0x80000000 \| id << 28` |
+| `peripherals` | Sim | Mapa NOME para `base` e `size` |
 | `flash` | Não | Região da FLASH e as bancas (`name`, `base`, `size`) que a placa grava e executa |
-| `memory` | Não | `rom` e `ram` com `external`, `icache` e `dcache` com `enabled` e `size_bits` |
-| `extras` | Não | Extensões fora da matriz que a plataforma liga (`Zimop`, `Zicond`, `Zihintntl`, `Zihintpause`) |
 | `generate` | Sim | `specs`, `bank_specs`, `boot_ld`, `runtime`, `banks_h` e `vhdl`, cada um com o `path` a escrever |
 | `config` | Sim | `rom`, `ram` e `addr_widths`, o que o `config.yaml` lê do mapa |
 | `checks` | Não | Cópias escritas à mão a conferir, cada uma com `name`, `file`, `pattern` ou `yaml`, e `expect` |

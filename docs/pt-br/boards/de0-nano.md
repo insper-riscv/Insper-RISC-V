@@ -4,7 +4,7 @@ Esta página descreve a plataforma `de0-nano`, a Terasic DE0-Nano (Cyclone IV E,
 
 ## 1. Perfil e mapa de memória
 
-O dispositivo tem 22.320 LEs e 608 kbit de M9K. O perfil completo da DE0-CV não cabe, então a plataforma liga só o RV32I com as extensões Zicsr e Zifencei, sem contadores, multiplicador nem interrupções. O Zifencei entra porque a boot memory executa `fence.i` a cada reinício, e sem ele o núcleo trata a instrução como ilegal e volta ao reinício para sempre.
+O dispositivo tem 22.320 LEs e 608 kbit de M9K. O perfil completo da DE0-CV não cabe, então a plataforma liga só o RV32I com as extensões Zicsr e Zifencei, sem contadores, multiplicador nem interrupções. O Zifencei entra porque a plataforma tem cache de instruções e de dados, e o `fence.i` que a BOOT executa a cada reinício (o do fragmento Zifencei, que só existe com a extensão) descarta as linhas do programa anterior.
 
 | Região | Base | Tamanho | Realização |
 | :--- | :--- | ---: | :--- |
@@ -24,7 +24,7 @@ A FLASH tem 28 KiB porque a loja de blocos ocupa a potência de dois que o ender
 | Console | JTAG UART, sem pino |
 | Reset | `KEY[0]` |
 
-A polaridade do `KEY[0]` (ativo em nível baixo) é inferida da convenção dos botões da Terasic. Conferir no esquemático da placa se o botão tem pull-up e fecha para o terra, antes de contar com o reset.
+O botão `KEY` dá nível baixo ao ser apertado (manual, seção 3.2), de modo que o `KEY[0]` é ativo em nível baixo como reset.
 
 Os quatro `DIP` e o `KEY[1]` ficam em pinos que o Quartus aceita só como entrada, e a célula de GPIO do SoC é bidirecional (erro 169009 no ajuste). Por isso a plataforma não pede os papéis `switches` e `keys`.
 
@@ -61,6 +61,16 @@ O bitstream sai do `program` com a boot memory embutida, e o `board_run.py --sta
 | `de0-nano-sdram` | 7 | 7 passam |
 
 Ficam fora a `code-sweep` (17 KiB, mais que o banco A de 12 KiB), a `flash-const` (pede a falha de acesso, que é um extra que a plataforma não liga), a `monitor` e a `hex-id` (pedem uma pessoa), e as três de UART em pinos (a placa não tem UART). O teste de barramento de endereços da `sdram-memtest` para antes do fim da RAM de 32 MiB, e a janela de teste da SDRAM tem 8 MiB, a partir de 8 MiB acima da base.
+
+## 7. Pinos de expansão
+
+O papel `gpio` é bidirecional e numera os pinos de `GPIO_0` (0 a 33), `GPIO_1` (34 a 67) e `GPIO_2` (68 a 80), nessa ordem.
+
+| Papel | Sinais | Pinos | Manual | Nível |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO_0[33:0]`, `GPIO_1[33:0]`, `GPIO_2[12:0]` | 81 | 3.5 e 3.6, tabelas 3-6, 3-7 e 3-8 | 3,3 V |
+
+Ficam fora do papel `gpio`, e só no `pins.yaml`, os pinos só de entrada `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` e `GPIO_2_IN[2:0]`, pois o Quartus recusa uma célula bidirecional neles. O ADC128S022 (seção 3.6, tabela 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) e o acelerômetro ADXL345 (seção 3.7, tabela 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` e o I2C da EEPROM, tabela 3-5) estão no `pins.yaml` sem papel de entrada e saída.
 
 ---
 

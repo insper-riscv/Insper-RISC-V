@@ -1,6 +1,7 @@
 """Compile vendored C drivers and exercise actual modular CPU/peripheral RTL."""
 
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -25,8 +26,11 @@ def exercise_example(name: str, expected: bytes) -> None:
         original = (root / "rv32.toml").read_text()
         for profile in ("rv32i", "rv32im", "rv32im_zicsr_irq"):
             (root / "rv32.toml").write_text(
-                original.replace(
-                    'cpu_profile = "rv32im"', f'cpu_profile = "{profile}"'
+                re.sub(
+                    r"^cpu_profile\s*=.*$",
+                    f'cpu_profile = "{profile}"',
+                    original,
+                    flags=re.MULTILINE,
                 )
             )
             result = subprocess.run(

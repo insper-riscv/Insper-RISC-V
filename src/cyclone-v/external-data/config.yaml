@@ -35,6 +35,7 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/cyclone-v/external-data/config_pkg.vhd
     - src/cyclone-v/external-data/external_data_map_pkg.vhd
+    - src/interconnect/interconnect_pkg.vhd
     - src/interconnect/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Core/src/shared/pipeline_types.vhd

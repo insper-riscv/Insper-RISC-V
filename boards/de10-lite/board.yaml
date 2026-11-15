@@ -27,6 +27,12 @@ io:
   switches: {signals: "SW[9:0]",        active: high}
   keys:     {signals: "KEY[1:0]",       active: low}
   display:  {signals: "HEX[5:0][6:0]",  active: low}
+  gpio:
+    signals: ["GPIO[35:0]", "ARDUINO_IO[15:0]"]
+    bidirectional: true
+  clock_extra:
+    signals: ["MAX10_CLK2_50", "ADC_CLK_10"]
+  video:    {kind: vga, channel_bits: 4, signals: VGA, default_mode: 640x480@60, modes: [640x480@60]}
 memories:
   sdram:
     chip: IS42S16320D-7
@@ -36,6 +42,10 @@ memories:
   onchip_flash:
     kind: ufm
     user_bytes: 753664
+# Papeis de pino dos perifericos externos (secao `buses`), um por kind de `Peripherals`. O video fica em io.video.
+buses:
+  adxl345: {cs_n: GSENSOR_CS_n, sclk: GSENSOR_SCLK, mosi: GSENSOR_SDI, miso: GSENSOR_SDO, int1: GSENSOR_INT1}
+  adc: {chip: max10}
 console:
   default: jtag
 pins: pins.yaml
@@ -44,6 +54,7 @@ notes:
   - "Sem ponte USB-UART nem FLASH externa. ARDUINO_IO[0] (RXD) e ARDUINO_IO[1] (TXD) servem a um adaptador serial externo; o console padrao e a JTAG UART."
   - "O chip da SDRAM nao e nomeado no manual (diretorio Datasheets\\SDRAM do CD); IS42S16320D-7 e a hipotese da familia IS42S16320, 32M x 16."
   - "user_bytes da flash interna e o maximo (5888 Kbit); a divisao entre UFM0, UFM1 e CFM0 a CFM2 depende do modo de configuracao e esta pendente."
-  - "A polaridade de KEY[0] e KEY[1] (ativo em baixo) e a convencao da Terasic e esta inferida; confirmar no esquematico antes de usar KEY[0] como reset."
+  - "Polaridades lidas no manual: o LED acende em nivel alto (secao 3.3), a chave da nivel alto na posicao de cima (secao 3.3) e o segmento acende em nivel baixo (secao 3.4). A de KEY[0] e KEY[1] (ativo em baixo) nao esta em texto do manual, so em figura, e segue inferida pela convencao da Terasic; confirmar no esquematico antes de usar KEY[0] como reset."
+  - "Expansao: cabecalho de 40 pinos com GPIO[35:0] (secao 3.5) e cabecalho Arduino Uno R3 com ARDUINO_IO[15:0] (secao 3.6). O papel gpio numera os GPIO de 0 a 35 e o Arduino de 36 a 51; ARDUINO_RESET_N fica fora. O ADC e interno ao MAX 10 e sem pino de sinal (secao 3.7); o acelerometro ADXL345 (secao 3.10) esta em pins.yaml como GSENSOR_* sem papel de E/S."
   - "Os multiplicadores sao contados em elementos de 9 bits (144 de 18x18). PLL1 e PLL3 sao ligados ao ADC_CLK_10."
   - "Todos os bancos usados sao 3.3 V; os pinos do GPIO e do Arduino nao sao declarados tolerantes a 5 V."

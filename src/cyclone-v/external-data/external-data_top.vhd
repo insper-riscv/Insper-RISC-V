@@ -19,6 +19,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.external_data_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.config_pkg.XLEN;
+use work.config_pkg.ADDR_BITS;
+use work.interconnect_pkg.all;
 
 entity core_fpga_external_data is
     generic (
@@ -98,20 +103,20 @@ architecture behaviour of core_fpga_external_data is
     end component sdram_platform_pll;
 
     -- Endereço de busca de instrução do núcleo.
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilita de leitura da busca de instrução.
     signal if_rden          : std_logic;
     -- Palavra lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra lida da porta A da FLASH, pelo estágio IF.
-    signal flash_data       : std_logic_vector(31 downto 0);
+    signal flash_data       : word_t;
 
     -- Endereço de byte da leitura de dado do estágio MEM na FLASH.
-    signal flash_addr2 : std_logic_vector(31 downto 0);
+    signal flash_addr2 : addr_t;
     -- Habilita da leitura de dado do estágio MEM na FLASH.
     signal flash_rden2 : std_logic;
     -- Palavra lida da porta B da FLASH, pelo estágio MEM.
-    signal flash_data2 : std_logic_vector(31 downto 0);
+    signal flash_data2 : word_t;
 
     -- Alternância de comando do carregador da FLASH, vinda do Virtual JTAG.
     signal flash_cmd_tog    : std_logic;
@@ -120,32 +125,32 @@ architecture behaviour of core_fpga_external_data is
     -- Endereço de palavra do comando do carregador.
     signal flash_cmd_addr   : std_logic_vector(23 downto 0);
     -- Dado do comando do carregador.
-    signal flash_cmd_data   : std_logic_vector(31 downto 0);
+    signal flash_cmd_data   : word_t;
     -- Alternância de conclusão do carregador.
     signal flash_done_tog   : std_logic;
     -- Endereço da resposta do carregador.
     signal flash_rsp_addr   : std_logic_vector(23 downto 0);
     -- Dado da resposta do carregador.
-    signal flash_rsp_data   : std_logic_vector(31 downto 0);
+    signal flash_rsp_data   : word_t;
     -- Status da resposta do carregador.
     signal flash_rsp_status : std_logic_vector(7 downto 0);
     -- Núcleo parado pelo carregador da FLASH.
     signal flash_halt       : std_logic;
     -- Índice de palavra da porta B da FLASH.
-    signal flash_address_b  : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+    signal flash_address_b  : std_logic_vector(log2_exact(FLASH_STORAGE_BYTES) - 3 downto 0);
     -- Habilita de leitura da porta B da FLASH.
     signal flash_rden_b     : std_logic;
     -- Habilita de escrita da porta B da FLASH.
     signal flash_wren_b     : std_logic;
     -- Dado de escrita da porta B da FLASH.
-    signal flash_data_b     : std_logic_vector(31 downto 0);
+    signal flash_data_b     : word_t;
 
     -- Porta de RAM interna do núcleo, sem uso nesta plataforma (a RAM é a SDRAM).
-    signal ram_addr    : std_logic_vector(31 downto 0);
+    signal ram_addr    : addr_t;
     -- Dado de escrita da RAM interna, sem uso.
-    signal ram_wdata   : std_logic_vector(31 downto 0);
+    signal ram_wdata   : word_t;
     -- Dado lido da RAM interna, fixo em zero.
-    signal ram_rdata   : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_rdata   : word_t := (others => '0');
     -- Habilita da RAM interna, sem uso.
     signal ram_en      : std_logic;
     -- Habilita de escrita da RAM interna, sem uso.
@@ -166,11 +171,11 @@ architecture behaviour of core_fpga_external_data is
     -- A cache de dados não guarda a última página da SDRAM, onde o hospedeiro e o programa se encontram.
     signal dc_bypass      : std_logic;
     -- Endereço do lado da memória da cache de dados.
-    signal dd_addr        : std_logic_vector(31 downto 0);
+    signal dd_addr        : addr_t;
     -- Dado de escrita do lado da memória da cache de dados.
-    signal dd_wdata       : std_logic_vector(31 downto 0);
+    signal dd_wdata       : word_t;
     -- Dado lido pelo lado da memória da cache de dados.
-    signal dd_rdata       : std_logic_vector(31 downto 0);
+    signal dd_rdata       : word_t;
     -- Máscara de bytes do lado da memória da cache de dados.
     signal dd_be          : std_logic_vector(3 downto 0);
     -- Pedido de leitura da cache de dados à SDRAM.
@@ -184,20 +189,20 @@ architecture behaviour of core_fpga_external_data is
     -- Pedido concluído pela ponte da SDRAM.
     signal dd_ready       : std_logic;
     -- Palavras 1 a 3 da linha escrita.
-    signal dd_wdx         : std_logic_vector(95 downto 0);
+    signal dd_wdx         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Palavras 1 a 3 da linha lida.
-    signal dd_rdx         : std_logic_vector(95 downto 0);
+    signal dd_rdx         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Fim da invalidação da cache de dados.
     signal dc_done        : std_logic;
     -- A cache de dados está ocupada com uma invalidação.
     signal dc_busy        : std_logic;
 
     -- Porta externa do núcleo: endereço.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Porta externa do núcleo: dado de escrita.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Porta externa do núcleo: dado lido.
-    signal sdram_rdata   : std_logic_vector(31 downto 0);
+    signal sdram_rdata   : word_t;
     -- Porta externa do núcleo: máscara de bytes.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Porta externa do núcleo: leitura.
@@ -206,15 +211,17 @@ architecture behaviour of core_fpga_external_data is
     signal sdram_wren    : std_logic;
     -- Porta externa do núcleo: pedido concluído.
     signal sdram_ready   : std_logic;
+    -- O acesso externo do núcleo terminou sem escravo que o atenda (falha de acesso), junto com o ready.
+    signal ext_error     : std_logic;
     -- O estágio MEM avança neste ciclo.
     signal mem_advance   : std_logic;
 
     -- Atrás do interconector: endereço da SDRAM.
-    signal m_addr        : std_logic_vector(31 downto 0);
+    signal m_addr        : addr_t;
     -- Atrás do interconector: dado de escrita.
-    signal m_wdata       : std_logic_vector(31 downto 0);
+    signal m_wdata       : word_t;
     -- Atrás do interconector: dado lido.
-    signal m_rdata       : std_logic_vector(31 downto 0);
+    signal m_rdata       : word_t;
     -- Atrás do interconector: máscara de bytes.
     signal m_byteena     : std_logic_vector(3 downto 0);
     -- Atrás do interconector: leitura.
@@ -226,13 +233,13 @@ architecture behaviour of core_fpga_external_data is
     -- Janela de periféricos: endereço de registrador.
     signal p_addr        : std_logic_vector(13 downto 0);
     -- Janela de periféricos: dado de escrita.
-    signal p_wdata       : std_logic_vector(31 downto 0);
+    signal p_wdata       : word_t;
     -- Janela de periféricos: máscara de bytes.
     signal p_byteena     : std_logic_vector(3 downto 0);
     -- Janela de periféricos: escrita por slot.
-    signal p_we, p_re    : std_logic_vector(7 downto 0);
+    signal p_we, p_re    : std_logic_vector(PERIPH_COUNT - 1 downto 0);
     -- Janela de periféricos: dado lido por slot.
-    signal p_rdata       : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+    signal p_rdata       : std_logic_vector(PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
     -- Segmentos dos seis displays.
     signal display_hex   : std_logic_vector(41 downto 0);
     -- Valor mostrado nos displays.
@@ -269,7 +276,7 @@ architecture behaviour of core_fpga_external_data is
     -- Mestre A: endereço de palavra do pedido.
     signal a_addr            : std_logic_vector(23 downto 0);
     -- Mestre A: dado de escrita e dado lido.
-    signal a_wdata, a_rdata  : std_logic_vector(31 downto 0);
+    signal a_wdata, a_rdata  : word_t;
     -- Mestre A: habilita de bytes da escrita.
     signal a_be              : std_logic_vector(3 downto 0);
     -- Mestre B: alternância de pedido, alternância de confirmação e escrita.
@@ -281,7 +288,7 @@ architecture behaviour of core_fpga_external_data is
     -- Mestre B: endereço de palavra do pedido.
     signal b_addr            : std_logic_vector(23 downto 0);
     -- Mestre B: dado de escrita e dado lido.
-    signal b_wdata, b_rdata  : std_logic_vector(31 downto 0);
+    signal b_wdata, b_rdata  : word_t;
     -- Mestre B: habilita de bytes da escrita.
     signal b_be              : std_logic_vector(3 downto 0);
     -- Comando do mestre de depuração vindo do Virtual JTAG.
@@ -291,20 +298,20 @@ architecture behaviour of core_fpga_external_data is
     -- Endereço de palavra do comando (d_addr) e da resposta (r_addr).
     signal d_addr,  r_addr   : std_logic_vector(23 downto 0);
     -- Dado do comando (d_data) e da resposta (r_data).
-    signal d_data,  r_data   : std_logic_vector(31 downto 0);
+    signal d_data,  r_data   : word_t;
     -- Estado da resposta do mestre de depuração.
     signal r_status          : std_logic_vector(7 downto 0);
 
     -- Linha de quatro palavras entre a ponte A e o árbitro.
     signal a_line       : std_logic;
     -- Linha larga de 96 bits entre a ponte A e o árbitro: escrita (a_wdx) e leitura (a_rdx).
-    signal a_wdx, a_rdx : std_logic_vector(95 downto 0);
+    signal a_wdx, a_rdx : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Habilita de bytes da linha larga entre a ponte A e o árbitro.
     signal a_bex        : std_logic_vector(11 downto 0);
     -- Lado do controlador da SDRAM.
     signal c_line       : std_logic;
     -- Linha larga de 96 bits do lado do controlador: escrita (c_wdx) e leitura (c_rdx).
-    signal c_wdx, c_rdx : std_logic_vector(95 downto 0);
+    signal c_wdx, c_rdx : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Habilita de bytes da linha larga do lado do controlador.
     signal c_bex        : std_logic_vector(11 downto 0);
 
@@ -325,7 +332,7 @@ architecture behaviour of core_fpga_external_data is
     -- Lado do controlador: endereço de palavra do pedido.
     signal c_addr           : std_logic_vector(23 downto 0);
     -- Lado do controlador: dado de escrita e dado lido.
-    signal c_wdata, c_rdata : std_logic_vector(31 downto 0);
+    signal c_wdata, c_rdata : word_t;
     -- Lado do controlador: habilita de bytes da escrita.
     signal c_be             : std_logic_vector(3 downto 0);
     -- Dado que o controlador põe no barramento da SDRAM (dq_out) e dado lido dele (dq_in).
@@ -416,6 +423,7 @@ begin
             o_ext_wren    => sdram_wren,
             i_ext_rdata   => sdram_rdata,
             i_ext_ready   => sdram_ready,
+            i_ext_error   => ext_error,
             o_mem_advance => mem_advance,
 
             o_trap_take => core_trap,
@@ -445,11 +453,11 @@ begin
     -- A FLASH, uma só cópia de duas portas: A para a busca, B para o dado do estágio MEM e para o carregador.
     u_flash : entity work.flash
         generic map (
-            size_bytes => ROM_STORAGE_BYTES
+            size_bytes => FLASH_STORAGE_BYTES
         )
         port map (
             i_clk_a     => pll_clk_if,
-            i_address_a => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+            i_address_a => if_addr(log2_exact(FLASH_STORAGE_BYTES) - 1 downto 2),
             i_rden_a    => if_rden,
             o_q_a       => flash_data,
             i_clk_b     => pll_clk_idexmem,
@@ -464,7 +472,7 @@ begin
     -- MEM.
     u_flash_loader : entity work.flash_loader
         generic map (
-            addr_width => log2_exact(ROM_STORAGE_BYTES) - 2
+            addr_width => log2_exact(FLASH_STORAGE_BYTES) - 2
         )
         port map (
             i_clk         => pll_clk_idexmem,
@@ -478,7 +486,7 @@ begin
             o_rsp_data    => flash_rsp_data,
             o_rsp_status  => flash_rsp_status,
             o_halt        => flash_halt,
-            i_mem_address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+            i_mem_address => flash_addr2(log2_exact(FLASH_STORAGE_BYTES) - 1 downto 2),
             i_mem_rden    => flash_rden2,
             o_address_b   => flash_address_b,
             o_rden_b      => flash_rden_b,
@@ -506,8 +514,8 @@ begin
         generic map (
             size_bits     => DCACHE_SIZE_BITS,
             write_through => true,
-            rom_base_kib  => ROM_BASE_KIB,
-            rom_end_kib   => ROM_END_KIB
+            flash_base_kib  => FLASH_BASE_KIB,
+            flash_end_kib   => FLASH_END_KIB
         )
         port map (
             i_clk         => pll_clk_idexmem,
@@ -541,6 +549,19 @@ begin
 
     -- Porta externa do núcleo: o bit 31 em '0' é a SDRAM, em '1' a janela de periféricos.
     u_interconnect : entity work.ext_interconnect
+        generic map (
+            periph_count  => PERIPH_COUNT,
+            periph_bases  => addr_array_t(PERIPH_BASES),
+            periph_masks  => addr_array_t(PERIPH_MASKS),
+            periph_sizes  => window_sizes(addr_array_t(PERIPH_MASKS)),
+            strict_periph => STRICT_PERIPH,
+            flash_on_bus  => FLASH_ON_BUS,
+            flash_base    => addr_from(to_unsigned(FLASH_BASE_KIB, ADDR_BITS) sll 10),
+            flash_last    => addr_from((to_unsigned(FLASH_END_KIB, ADDR_BITS) sll 10) - 1),
+            ram_on_bus    => RAM_ON_BUS,
+            ram_base      => addr_from(to_unsigned(RAM_BASE_KIB, ADDR_BITS) sll 10),
+            ram_last      => addr_from((to_unsigned(RAM_END_KIB, ADDR_BITS) sll 10) - 1)
+        )
         port map (
             i_clk         => pll_clk_idexmem,
             i_rst         => core_reset,
@@ -551,6 +572,7 @@ begin
             i_wren        => sdram_wren,
             i_mem_advance => mem_advance,
             o_ready       => sdram_ready,
+            o_error       => ext_error,
             o_rdata       => sdram_rdata,
             o_m_addr      => m_addr,
             o_m_wdata     => m_wdata,
@@ -574,9 +596,9 @@ begin
             i_rst   => core_reset,
             i_addr  => p_addr(7 downto 0),
             i_wdata => p_wdata,
-            i_we    => p_we(UART_ID),
-            i_re    => p_re(UART_ID),
-            o_rdata => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID)
+            i_we    => p_we(UART_INDEX),
+            i_re    => p_re(UART_INDEX),
+            o_rdata => p_rdata(XLEN * UART_INDEX + XLEN - 1 downto XLEN * UART_INDEX)
         );
 
     -- O display de sete segmentos e a porta do hospedeiro (DISPLAY_BASE).
@@ -586,8 +608,8 @@ begin
             i_rst     => core_reset,
             i_address => p_addr(7 downto 0),
             i_data_in => p_wdata,
-            i_write   => p_we(DISPLAY_ID),
-            o_rdata   => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
+            i_write   => p_we(DISPLAY_INDEX),
+            o_rdata   => p_rdata(XLEN * DISPLAY_INDEX + XLEN - 1 downto XLEN * DISPLAY_INDEX),
             o_hex     => display_hex,
             o_value   => display_value,
             o_fail    => display_fail

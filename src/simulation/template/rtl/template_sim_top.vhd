@@ -15,6 +15,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.template_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.interconnect_pkg.all;
 
 entity template_sim_top is
     generic (
@@ -27,7 +30,7 @@ entity template_sim_top is
         -- Tamanho da BOOT_MEMORY em bytes, uma potência de dois
         boot_memory_size_bytes : positive := BOOT_MEMORY_SIZE_BYTES;
         -- Tamanho do armazenamento da ROM em bytes, uma potência de dois
-        rom_size_bytes         : positive := ROM_STORAGE_BYTES;
+        rom_size_bytes         : positive := FLASH_STORAGE_BYTES;
         -- Tamanho da RAM em bytes, uma potência de dois
         ram_size_bytes         : positive := RAM_STORAGE_BYTES;
         -- Instancia a UART sobre JTAG na janela de periféricos
@@ -67,26 +70,26 @@ architecture behaviour of template_sim_top is
     signal pll_clk_wb      : std_logic;
 
     -- Endereço de byte da busca de instrução
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilitação de leitura da busca de instrução
     signal if_rden          : std_logic;
     -- Palavra lida da BOOT_MEMORY
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra de instrução lida da ROM
-    signal rom_data         : std_logic_vector(31 downto 0);
+    signal rom_data         : word_t;
     -- Endereço de byte da segunda porta da ROM (estágio MEM)
-    signal rom_addr2        : std_logic_vector(31 downto 0);
+    signal rom_addr2        : addr_t;
     -- Habilitação de leitura da segunda porta da ROM
     signal rom_rden2        : std_logic;
     -- Palavra de dado lida da segunda porta da ROM
-    signal rom_data2        : std_logic_vector(31 downto 0);
+    signal rom_data2        : word_t;
 
     -- Endereço de byte do acesso à RAM
-    signal ram_addr     : std_logic_vector(31 downto 0);
+    signal ram_addr     : addr_t;
     -- Dado de escrita na RAM
-    signal ram_wdata    : std_logic_vector(31 downto 0);
+    signal ram_wdata    : word_t;
     -- Dado lido da RAM
-    signal ram_rdata    : std_logic_vector(31 downto 0);
+    signal ram_rdata    : word_t;
     -- Habilitação geral da RAM
     signal ram_en       : std_logic;
     -- Habilitação de escrita da RAM do núcleo
@@ -101,9 +104,9 @@ architecture behaviour of template_sim_top is
     signal ram_we_gated : std_logic;
 
     -- Endereço de byte do barramento externo do núcleo
-    signal ext_addr    : std_logic_vector(31 downto 0);
+    signal ext_addr    : addr_t;
     -- Dado de escrita do barramento externo
-    signal ext_wdata   : std_logic_vector(31 downto 0);
+    signal ext_wdata   : word_t;
     -- Habilitação de bytes da escrita no barramento externo
     signal ext_byteena : std_logic_vector(3 downto 0);
     -- Habilitação de leitura do barramento externo
@@ -111,16 +114,20 @@ architecture behaviour of template_sim_top is
     -- Habilitação de escrita do barramento externo
     signal ext_wren    : std_logic;
     -- Dado entregue ao núcleo pelo barramento externo
-    signal ext_rdata   : std_logic_vector(31 downto 0) := (others => '0');
+    signal ext_rdata   : word_t := (others => '0');
+    -- O acesso externo do núcleo não cai na janela da UART (nenhum escravo o atende): falha de acesso.
+    signal ext_error   : std_logic;
 
     -- O acesso do núcleo cai na janela da UART
     signal uart_selected : std_logic;
     -- Dado lido da UART
-    signal uart_rdata    : std_logic_vector(31 downto 0);
+    signal uart_rdata    : word_t;
     -- Dado lido da UART, guardado para o ciclo seguinte ao acesso
-    signal uart_rdata_q  : std_logic_vector(31 downto 0) := (others => '0');
+    signal uart_rdata_q  : word_t := (others => '0');
 
 begin
+
+    ext_error <= (ext_rden or ext_wren) and not uart_selected;
 
     ram_re_gated <= ram_rden and ram_en;
     ram_we_gated <= ram_wren and ram_en;
@@ -135,9 +142,6 @@ begin
         );
 
     u_core : entity work.core
-        generic map (
-            periph_slots => PERIPH_SLOTS
-        )
         port map (
             o_trap             => open,
             o_retire           => open,
@@ -164,7 +168,8 @@ begin
             o_ext_byteena      => ext_byteena,
             o_ext_rden         => ext_rden,
             o_ext_wren         => ext_wren,
-            i_ext_rdata        => ext_rdata
+            i_ext_rdata        => ext_rdata,
+            i_ext_error        => ext_error
         );
 
     u_boot_memory : entity work.rom_simulation
@@ -222,7 +227,7 @@ begin
 
     gen_uart : if has_uart generate
     begin
-        uart_selected <= '1' when ext_addr(31 downto 28) = UART_BASE(31 downto 28) else '0';
+        uart_selected <= '1' when window_hit(ext_addr, UART_BASE, PERIPH_MASKS(UART_INDEX)) else '0';
 
         u_uart : entity work.jtag_uart
             port map (

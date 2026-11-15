@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Topo de simulação do interconector com a UART sobre JTAG
 --
--- O interconector com a jtag_uart no slot de periférico 4. A porta do core e o
+-- O interconector com a jtag_uart no índice 4 da tabela padrão de janelas (0xC0000000). A porta do core e o
 -- lado da memória (m_*) ficam expostos para que o testbench faça o papel do core
 -- e da memória; jtag_* representam uma instância do Virtual JTAG (veja
 -- jtag_uart).
@@ -9,6 +9,9 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.config_pkg.all;
+use work.interconnect_pkg.all;
 
 entity ext_bus_system is
     port (
@@ -18,9 +21,9 @@ entity ext_bus_system is
         i_rst : in    std_logic;
 
         -- Endereço do acesso.
-        i_addr        : in    std_logic_vector(31 downto 0);
+        i_addr        : in    addr_t;
         -- Dado de escrita.
-        i_wdata       : in    std_logic_vector(31 downto 0);
+        i_wdata       : in    word_t;
         -- Habilita de bytes da escrita, um bit por byte.
         i_byteena     : in    std_logic_vector(3 downto 0);
         -- Pedido de leitura ('1' = lê).
@@ -31,13 +34,15 @@ entity ext_bus_system is
         i_mem_advance : in    std_logic;
         -- Acesso concluído, o dado lido é válido ('1').
         o_ready       : out   std_logic;
+        -- Acesso concluído sem escravo que o atenda (falha de acesso), válido junto com o ready ('1').
+        o_error       : out   std_logic;
         -- Dado lido.
-        o_rdata       : out   std_logic_vector(31 downto 0);
+        o_rdata       : out   word_t;
 
         -- Lado da memória com ready próprio: endereço do acesso.
-        o_m_addr    : out   std_logic_vector(31 downto 0);
+        o_m_addr    : out   addr_t;
         -- Lado da memória com ready próprio: dado de escrita.
-        o_m_wdata   : out   std_logic_vector(31 downto 0);
+        o_m_wdata   : out   word_t;
         -- Lado da memória com ready próprio: habilita de bytes da escrita.
         o_m_byteena : out   std_logic_vector(3 downto 0);
         -- Lado da memória com ready próprio: pedido de leitura, retido enquanto outro escravo está selecionado.
@@ -47,7 +52,7 @@ entity ext_bus_system is
         -- Lado da memória com ready próprio: acesso concluído ('1').
         i_m_ready   : in    std_logic;
         -- Lado da memória com ready próprio: dado lido.
-        i_m_rdata   : in    std_logic_vector(31 downto 0);
+        i_m_rdata   : in    word_t;
 
         -- Clock da cadeia JTAG.
         i_jtag_tck       : in    std_logic                    := '0';
@@ -73,15 +78,15 @@ architecture rtl of ext_bus_system is
     -- Deslocamento de palavra dentro do periférico.
     signal p_addr    : std_logic_vector(13 downto 0);
     -- Dado de escrita aos periféricos.
-    signal p_wdata   : std_logic_vector(31 downto 0);
+    signal p_wdata   : word_t;
     -- Habilita de bytes da escrita aos periféricos.
     signal p_byteena : std_logic_vector(3 downto 0);
     -- Pulso de escrita, um bit por periférico.
-    signal p_we      : std_logic_vector(7 downto 0);
+    signal p_we      : std_logic_vector(DEFAULT_PERIPH_COUNT - 1 downto 0);
     -- Pulso de leitura, um bit por periférico.
-    signal p_re      : std_logic_vector(7 downto 0);
-    -- Dados lidos dos periféricos, 32 bits por slot.
-    signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+    signal p_re      : std_logic_vector(DEFAULT_PERIPH_COUNT - 1 downto 0);
+    -- Dados lidos dos periféricos, uma palavra por índice da tabela.
+    signal p_rdata   : std_logic_vector(DEFAULT_PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
 
 begin
 
@@ -96,6 +101,7 @@ begin
             i_wren        => i_wren,
             i_mem_advance => i_mem_advance,
             o_ready       => o_ready,
+            o_error       => o_error,
             o_rdata       => o_rdata,
             o_m_addr      => o_m_addr,
             o_m_wdata     => o_m_wdata,
@@ -120,7 +126,7 @@ begin
             i_wdata     => p_wdata,
             i_we        => p_we(4),
             i_re        => p_re(4),
-            o_rdata     => p_rdata(32 * 4 + 31 downto 32 * 4),
+            o_rdata     => p_rdata(XLEN * 4 + XLEN - 1 downto XLEN * 4),
             i_tck       => i_jtag_tck,
             i_tdi       => i_jtag_tdi,
             o_tdo       => o_jtag_tdo,

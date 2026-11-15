@@ -134,9 +134,9 @@ SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
 # together take much longer than the 64-place receive queue holds the
 # bytes of a console that is already sending. With UART_START_ON_ACCESS
 # the console starts at the first access of the core to the UART slot
-# (UART_SLOT), the moment the program is ready to read.
+# (UART_INDEX, its index in the table of peripheral windows), the moment the program is ready to read.
 UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
-UART_SLOT = int(os.environ.get("UART_SLOT", "4"))
+UART_INDEX = int(os.environ.get("UART_INDEX", "1"))
 # entry of the program of bank A (RV32_BANK_A_ENTRY, flash_banks.h)
 PROGRAM_ENTRY = 0x1100
 
@@ -204,7 +204,7 @@ async def wait_for_program(dut: Any, stop: list[bool]) -> None:
     clock = getattr(dut, SIM_CLOCK)
     while UART_START_ON_ACCESS and not stop[0]:
         try:
-            if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_SLOT & 1:
+            if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_INDEX & 1:
                 return
             # a program that writes first would lose that byte to the
             # console still starting: start when the boot ROM jumps in

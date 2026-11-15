@@ -2,7 +2,7 @@
 -- Topo de simulação do barramento externo AXI4
 --
 -- A contrapartida do ext_bus_system: a porta do core sobre o
--- ext_axi_interconnect, a UART sobre JTAG no slot de periférico 4 e, atrás da
+-- ext_axi_interconnect, a UART sobre JTAG no índice 4 da tabela padrão de janelas (0xC0000000) e, atrás da
 -- porta escravo da SDRAM, uma memória de palavras pequena (4096 palavras, dois
 -- clocks para responder) com o valor 0x12345678 em 0x40000100. jtag_*
 -- representam uma instância do Virtual JTAG (veja jtag_uart).
@@ -11,6 +11,8 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.config_pkg.all;
+use work.interconnect_pkg.all;
 
 entity ext_axi_bus_system is
     port (
@@ -20,9 +22,9 @@ entity ext_axi_bus_system is
         i_rst : in    std_logic;
 
         -- Endereço do acesso.
-        i_addr        : in    std_logic_vector(31 downto 0);
+        i_addr        : in    addr_t;
         -- Dado de escrita.
-        i_wdata       : in    std_logic_vector(31 downto 0);
+        i_wdata       : in    word_t;
         -- Habilita de bytes da escrita, um bit por byte.
         i_byteena     : in    std_logic_vector(3 downto 0);
         -- Pedido de leitura ('1' = lê).
@@ -33,8 +35,10 @@ entity ext_axi_bus_system is
         i_mem_advance : in    std_logic;
         -- Acesso concluído, o dado lido é válido ('1').
         o_ready       : out   std_logic;
+        -- Acesso concluído sem escravo que o atenda (falha de acesso), válido junto com o ready ('1').
+        o_error       : out   std_logic;
         -- Dado lido.
-        o_rdata       : out   std_logic_vector(31 downto 0);
+        o_rdata       : out   word_t;
 
         -- Pede a escrita de todas as linhas sujas na memória ('1').
         i_flush      : in    std_logic := '0';
@@ -46,7 +50,7 @@ entity ext_axi_bus_system is
         -- Endereço de palavra lido diretamente do modelo do chip, para depuração.
         i_dbg_word_addr : in    std_logic_vector(11 downto 0) := (others => '0');
         -- Palavra do modelo do chip no endereço de dbg_word_addr.
-        o_dbg_word_data : out   std_logic_vector(31 downto 0);
+        o_dbg_word_data : out   word_t;
 
         -- Clock da cadeia JTAG.
         i_jtag_tck       : in    std_logic                    := '0';
@@ -94,13 +98,13 @@ architecture rtl of ext_axi_bus_system is
     -- Barramento AXI4, canal de dados de leitura: último beat da rajada ('1').
     signal rlast   : std_logic;
     -- Barramento AXI4, canal de endereço de escrita: endereço do primeiro beat.
-    signal awaddr  : std_logic_vector(31 downto 0);
+    signal awaddr  : addr_t;
     -- Barramento AXI4, canal de dados de escrita: dados.
-    signal wdata_a : std_logic_vector(31 downto 0);
+    signal wdata_a : word_t;
     -- Barramento AXI4, canal de endereço de leitura: endereço do primeiro beat.
-    signal araddr  : std_logic_vector(31 downto 0);
+    signal araddr  : addr_t;
     -- Barramento AXI4, canal de dados de leitura: dados.
-    signal rdata_a : std_logic_vector(31 downto 0);
+    signal rdata_a : word_t;
     -- Barramento AXI4, canal de endereço de escrita: número de beats da rajada menos um.
     signal awlen   : std_logic_vector(7 downto 0);
     -- Barramento AXI4, canal de endereço de leitura: número de beats da rajada menos um.
@@ -123,22 +127,22 @@ architecture rtl of ext_axi_bus_system is
     -- Deslocamento de palavra dentro do periférico.
     signal p_addr    : std_logic_vector(13 downto 0);
     -- Dado de escrita aos periféricos.
-    signal p_wdata   : std_logic_vector(31 downto 0);
+    signal p_wdata   : word_t;
     -- Habilita de bytes da escrita aos periféricos.
     signal p_byteena : std_logic_vector(3 downto 0);
     -- Pulso de escrita, um bit por periférico.
-    signal p_we      : std_logic_vector(7 downto 0);
+    signal p_we      : std_logic_vector(DEFAULT_PERIPH_COUNT - 1 downto 0);
     -- Pulso de leitura, um bit por periférico.
-    signal p_re      : std_logic_vector(7 downto 0);
-    -- Dados lidos dos periféricos, 32 bits por slot.
-    signal p_rdata   : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+    signal p_re      : std_logic_vector(DEFAULT_PERIPH_COUNT - 1 downto 0);
+    -- Dados lidos dos periféricos, uma palavra por índice da tabela.
+    signal p_rdata   : std_logic_vector(DEFAULT_PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
 
     -- Lado da palavra da ponte escrava AXI4: endereço.
-    signal m_addr  : std_logic_vector(31 downto 0) := (others => '0');
+    signal m_addr  : addr_t := (others => '0');
     -- Lado da palavra da ponte escrava AXI4: dado de escrita.
-    signal m_wdata : std_logic_vector(31 downto 0) := (others => '0');
+    signal m_wdata : word_t := (others => '0');
     -- Lado da palavra da ponte escrava AXI4: dado lido.
-    signal m_rdata : std_logic_vector(31 downto 0) := (others => '0');
+    signal m_rdata : word_t := (others => '0');
     -- Lado da palavra da ponte escrava AXI4: habilita de bytes.
     signal m_be    : std_logic_vector(3 downto 0);
     -- Lado da palavra da ponte escrava AXI4: pedido de leitura.
@@ -152,14 +156,14 @@ architecture rtl of ext_axi_bus_system is
     -- Lado da palavra da ponte escrava AXI4: acesso de linha.
     signal m_line  : std_logic;
     -- Lado da palavra da ponte escrava AXI4: palavras 1 a 3 da escrita de linha.
-    signal m_wdx   : std_logic_vector(95 downto 0) := (others => '0');
+    signal m_wdx   : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
     -- Lado da palavra da ponte escrava AXI4: palavras 1 a 3 da leitura de linha.
-    signal m_rdx   : std_logic_vector(95 downto 0) := (others => '0');
+    signal m_rdx   : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
     -- Lado da palavra da ponte escrava AXI4: habilita de bytes das palavras 1 a 3.
     signal m_bex   : std_logic_vector(11 downto 0);
 
     -- Memória de 4096 palavras.
-    type mem_t is array(0 to 4095) of std_logic_vector(31 downto 0);
+    type mem_t is array(0 to 4095) of word_t;
 
     -- Conteúdo da memória atrás do escravo AXI4.
     signal mem     : mem_t                := (16#40# => x"12345678", others => (others => '0'));
@@ -181,6 +185,7 @@ begin
             i_wren        => i_wren,
             i_mem_advance => i_mem_advance,
             o_ready       => o_ready,
+            o_error       => o_error,
             o_rdata       => o_rdata,
             i_flush       => i_flush,
             o_flush_done  => o_flush_done,
@@ -335,7 +340,7 @@ begin
             i_wdata     => p_wdata,
             i_we        => p_we(4),
             i_re        => p_re(4),
-            o_rdata     => p_rdata(32 * 4 + 31 downto 32 * 4),
+            o_rdata     => p_rdata(XLEN * 4 + XLEN - 1 downto XLEN * 4),
             i_tck       => i_jtag_tck,
             i_tdi       => i_jtag_tdi,
             o_tdo       => o_jtag_tdo,
