@@ -32,10 +32,11 @@ emulator:
 
 sim:
   toplevel: rv32im_sdram_flash_sim_test
-  # The FLASH is in the SDRAM chip, so this top has no ROM_FILE generic (the chip is loaded by `sdram_file`): the
-  # parameter that internal-mem passes is off here.
+  # The FLASH is in the SDRAM chip, so this top has no ROM_FILE or rom_addr_width generic (the chip is loaded by
+  # `sdram_file`): the parameters that internal-mem passes are off here.
   parameters:
     ROM_FILE: false
+    rom_addr_width: false
   # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
   vhdl_sources:
     - Common-Components/src/utils_pkg.vhd
