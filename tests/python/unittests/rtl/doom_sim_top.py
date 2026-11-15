@@ -14,14 +14,14 @@ já carregou o programa. Dois casos usam as imagens de
 
 O topo tem as mesmas portas do da `de0-cv`, então o relógio, o reset e a
 leitura da SDRAM pela porta de depuração do chip são os de
-`de0_cv_sim_top`.
+`sdram_sim_common`.
 """
 
 from typing import Any
 
 import cocotb
 
-from tests.python.unittests.rtl.de0_cv_sim_top import (
+from tests.python.unittests.rtl.sdram_sim_common import (
     sdram_word,
     start,
     wait_for_tohost,

@@ -12,13 +12,13 @@ from typing import Any
 import cocotb
 from cocotb.triggers import ClockCycles
 
-from tests.python.unittests.rtl.de0_cv_sim_top import (
+from tests.python.unittests.rtl.doom_sim_top import MARK_WORD
+from tests.python.unittests.rtl.sdram_sim_common import (
     TIMEOUT_CYCLES,
     TOHOST_WORD,
     sdram_word,
     start,
 )
-from tests.python.unittests.rtl.doom_sim_top import MARK_WORD
 from tests.python.utils.checks import check
 
 

@@ -14,7 +14,7 @@ from typing import Any
 import cocotb
 from cocotb.triggers import Timer
 
-from tests.python.unittests.rtl.de0_cv_sim_top import (
+from tests.python.unittests.rtl.sdram_sim_common import (
     sdram_word,
     start,
     wait_for_tohost,
