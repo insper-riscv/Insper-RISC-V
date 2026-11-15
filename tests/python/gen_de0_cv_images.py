@@ -232,13 +232,13 @@ def chip_image() -> list[int]:
     ValueError
         If the main program runs into the handler.
     """
-    main = flash_program()
-    if WORD * len(main) > HANDLER_OFFSET:
+    program = flash_program()
+    if WORD * len(program) > HANDLER_OFFSET:
         message = "the main program of the FLASH is too long"
         raise ValueError(message)
     words = [0] * (FLASH_BASE // WORD)
-    words += main
-    words += [0] * ((HANDLER_OFFSET - WORD * len(main)) // WORD)
+    words += program
+    words += [0] * ((HANDLER_OFFSET - WORD * len(program)) // WORD)
     words += handler()
     words += [0] * (
         (PROTECTED_OFFSET - HANDLER_OFFSET - WORD * len(handler())) // WORD

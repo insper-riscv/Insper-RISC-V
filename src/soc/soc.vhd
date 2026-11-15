@@ -336,13 +336,13 @@ entity soc is
         -- Periféricos externos: habilitação de bytes da escrita, a mesma para todos.
         o_ext_byteena       : out   std_logic_vector(3 downto 0);
         -- Periféricos externos: pulso de escrita, um bit por periférico na ordem de ext_indices.
-        o_ext_we            : out   std_logic_vector(ext_indices'length - 1 downto 0);
+        o_ext_we            : out   std_logic_vector(count_of(ext_indices) - 1 downto 0);
         -- Periféricos externos: pulso de leitura, um bit por periférico na ordem de ext_indices.
-        o_ext_re            : out   std_logic_vector(ext_indices'length - 1 downto 0);
+        o_ext_re            : out   std_logic_vector(count_of(ext_indices) - 1 downto 0);
         -- Periféricos externos: dado lido, 32 bits por periférico na ordem de ext_indices.
-        i_ext_rdata         : in    std_logic_vector(ext_indices'length * XLEN - 1 downto 0) := (others => '0');
+        i_ext_rdata         : in    std_logic_vector(count_of(ext_indices) * XLEN - 1 downto 0) := (others => '0');
         -- Periféricos externos: linha de interrupção, um bit por periférico na ordem de ext_indices.
-        i_ext_irq           : in    std_logic_vector(ext_indices'length - 1 downto 0)        := (others => '0')
+        i_ext_irq           : in    std_logic_vector(count_of(ext_indices) - 1 downto 0)        := (others => '0')
     );
 end entity soc;
 
@@ -377,7 +377,7 @@ architecture behaviour of soc is
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
         HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
-        or TIMER_N > 0 or ext_indices'length > 0;
+        or TIMER_N > 0 or count_of(ext_indices) > 0;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -404,6 +404,7 @@ architecture behaviour of soc is
     -- Lista dos pinos do grupo na ordem natural, um campo de 8 bits por pino (o pino k vale k).
     function gpio_group_members (pins : positive) return std_logic_vector is
 
+        -- Lista dos pinos montada campo a campo, um byte por pino.
         variable result : std_logic_vector(8 * pins - 1 downto 0);
 
     begin
@@ -421,6 +422,7 @@ architecture behaviour of soc is
     -- Polaridade de todos os pinos do papel: '1' em cada bit quando o papel é ativo em nível baixo.
     function gpio_pin_lows (pins : positive; low : boolean) return std_logic_vector is
 
+        -- Polaridade de cada pino, um bit por pino.
         variable result : std_logic_vector(pins - 1 downto 0) := (others => '0');
 
     begin
@@ -620,7 +622,7 @@ architecture behaviour of soc is
     function ext_indices_valid return boolean is
     begin
 
-        for e in ext_indices'range loop
+        for e in ext_indices'low to ext_indices'low + count_of(ext_indices) - 1 loop
 
             if ext_indices(e) < 0 or ext_indices(e) >= periph_count then
                 return false;
@@ -661,7 +663,7 @@ architecture behaviour of soc is
     function ext_lines_valid return boolean is
     begin
 
-        for e in ext_irq_ids'range loop
+        for e in ext_irq_ids'low to ext_irq_ids'low + count_of(ext_irq_ids) - 1 loop
 
             if ext_irq_ids(e) < 0 or ext_irq_ids(e) > plic_n_sources then
                 return false;
@@ -1113,7 +1115,7 @@ begin
         severity failure;
 
     -- Um periférico externo por elemento de ext_indices, cada um com a sua fonte do PLIC.
-    assert ext_irq_ids'length = ext_indices'length
+    assert count_of(ext_irq_ids) = count_of(ext_indices)
         report "ext_indices e ext_irq_ids têm tamanhos diferentes: cada periférico externo tem uma fonte do PLIC"
         severity failure;
     assert ext_addr_width <= plic_addr_width
@@ -1539,7 +1541,7 @@ begin
     o_ext_wdata   <= p_wdata;
     o_ext_byteena <= p_byteena;
 
-    gen_ext : for e in 0 to ext_indices'length - 1 generate
+    gen_ext : for e in 0 to count_of(ext_indices) - 1 generate
         -- Índice da janela deste periférico na tabela de periféricos.
         constant WINDOW  : natural := ext_indices(ext_indices'low + e);
         -- Fonte do PLIC deste periférico.

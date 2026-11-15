@@ -82,9 +82,9 @@ def cases(build_dir: Path) -> list[dict[str, Any]]:
     """
     image = [0] * (max(OFFSETS.values()) // WORD + 1)
     code = program()
-    start = FLASH_BASE // WORD
-    end = start + len(code)
-    image[start:end] = code
+    first = FLASH_BASE // WORD
+    end = first + len(code)
+    image[first:end] = code
     for name, offset in OFFSETS.items():
         image[offset // WORD] = MARKS[name]
     path = build_dir / "sdram-window.hex"
