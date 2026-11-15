@@ -1,13 +1,22 @@
 -- ============================================================================
--- Topo de simulação da plataforma de0-cv (SDRAM com a FLASH atrás das caches)
+-- Topo de simulação da plataforma de0-cv (SDRAM dividida em FLASH e RAM)
 -- ============================================================================
--- O núcleo, a BOOT_MEMORY (vetor VHDL), as caches de instruções e de dados, o
--- modelo de chip da FLASH com o seu armazenamento (vetor VHDL) e a SDRAM (ponte,
--- árbitro, controlador e modelo de chip do repositório Memory) em clock próprio de
--- 143 MHz. A SDRAM é a RAM: não há outra memória de dados. A FLASH começa logo
--- depois da BOOT_MEMORY e termina em 256 KiB, e a SDRAM fica em 0x40000000; as
--- duas só são alcançadas pelas caches, cujos pedidos de linha um roteador de
--- região envia à FLASH (pelo árbitro) ou à SDRAM.
+-- O núcleo, a BOOT_MEMORY (vetor VHDL), as caches de instruções e de dados e a
+-- SDRAM (ponte, árbitro, controlador e modelo de chip do repositório Memory) em
+-- clock próprio de 100 MHz. O chip é um só e tem duas janelas do mesmo
+-- controlador. A FLASH (as instruções, de FLASH_BASE_KIB a FLASH_END_KIB do
+-- platform.yaml) ocupa o começo do chip com o endereço do SoC, sem conversão, e
+-- chega ao controlador pela porta de instruções do sdram_system. A RAM (os
+-- dados, a partir de 0x40000000) começa em ram_chip_offset_bytes dentro do
+-- chip, e chega pela porta de dados. As duas só são alcançadas pelas caches,
+-- cujos pedidos de linha um roteador de região envia à FLASH ou à RAM.
+--
+-- O núcleo só lê a FLASH: um store nela termina sem efeito no roteador (e é uma
+-- falha de acesso no núcleo com AccessFaults), e a porta de instruções do chip
+-- nunca escreve. Quem escreve a FLASH é a porta de depuração do chip, que no
+-- teste é o sdram_file lido pelo modelo no tempo zero (a imagem da FLASH a
+-- partir da palavra 0 do chip). A busca de código que roda da RAM usa a mesma
+-- porta de instruções, atrás de um segundo árbitro com a face da FLASH.
 --
 -- i_clk é o clock base do núcleo (um gerador de clock o divide por três, como na
 -- internal-mem). i_clk_mem é o clock da SDRAM, conduzido pelo testbench sem
@@ -36,16 +45,8 @@ entity rv32im_sdram_flash_sim_test is
     generic (
         -- Arquivo com a imagem da BOOT_MEMORY, uma palavra de 32 bits por linha em hexadecimal.
         boot_memory_file       : string                := "default.hex";
-        -- Arquivo com a imagem da FLASH, uma palavra de 32 bits por linha em hexadecimal.
-        rom_file               : string                := "default.hex";
         -- Largura do endereço de palavra da BOOT_MEMORY.
         boot_memory_addr_width : natural               := 9;
-        -- Largura do endereço de palavra da FLASH.
-        rom_addr_width         : natural               := 18;
-        -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
-        flash_first_latency    : natural               := 24;
-        -- Bordas de espera entre as palavras de uma linha do chip de FLASH.
-        flash_next_latency     : natural               := 4;
         -- Largura do endereço de palavra da RAM interna; com a SDRAM como RAM não dimensiona nada.
         ram_addr_width         : natural               := 9;
         -- Interrupcoes de maquina: o CLINT e o controlador externo na janela de periféricos, e as tres linhas no core.
@@ -68,17 +69,12 @@ entity rv32im_sdram_flash_sim_test is
         icache_size_bits       : positive              := work.de0_cv_map_pkg.ICACHE_SIZE_BITS;
         -- Tamanho da cache de dados, em bits (o modelo de memória do platform.yaml).
         dcache_size_bits       : positive              := work.de0_cv_map_pkg.DCACHE_SIZE_BITS;
-        -- Controlador de FLASH na janela de periferico 3 (0xB0000000), com a FLASH de duas portas e o chip de comandos
-        -- (apagar, gravar, proteger) atras dele: a atualizacao de programa em campo. Desligado, a FLASH e so de
-        -- leitura.
-        has_flash_controller   : boolean               := false;
-        -- Bordas de espera de um apagar de setor do chip de FLASH, antes da varredura do setor.
-        flash_erase_latency    : natural               := 2000;
-        -- Bordas de espera de uma gravacao de pagina do chip de FLASH, antes da varredura da pagina.
-        flash_program_latency  : natural               := 200;
         -- Imagem de programa gravada na SDRAM no tempo zero (uma palavra de 32 bits por linha, em
         -- hexadecimal, a partir de 0x40000000): o hospedeiro que carrega o chip pela porta de debug.
         sdram_file             : string                := "";
+        -- Deslocamento, em bytes, em que a RAM começa dentro do chip de SDRAM: o padrão é o fim da FLASH, que ocupa o
+        -- começo do chip com o endereço do SoC (a FLASH e a RAM empacotadas na ordem do platform.yaml).
+        ram_chip_offset_bytes  : natural               := FLASH_END_KIB * 1024;
         -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao
         -- dos tempos do chip em ciclos.
         sdram_tck_ps           : natural               := work.de0_cv_map_pkg.SDRAM_TCK_PS
@@ -118,6 +114,21 @@ entity rv32im_sdram_flash_sim_test is
 end entity rv32im_sdram_flash_sim_test;
 
 architecture behaviour of rv32im_sdram_flash_sim_test is
+
+    -- Tamanho do chip de SDRAM do modelo, em bytes (13 bits de linha, 2 de banco, 10 de coluna, 16 bits de dados).
+    constant CHIP_BYTES : natural := 4 * 2 ** work.sdram_pkg.dram_word_addr_bits(13, 2, 10, 16);
+    -- Tamanho da RAM, em bytes, do mapa do platform.yaml.
+    constant RAM_BYTES  : natural := (RAM_END_KIB - RAM_BASE_KIB) * 1024;
+
+    -- Endereço do chip de SDRAM de um endereço da RAM do SoC: o deslocamento da RAM no chip mais o endereço na RAM.
+    function ram_chip_addr (a : addr_t) return addr_t is
+        -- Base da RAM no mapa do SoC.
+        constant BASE : unsigned(ADDR_BITS - 1 downto 0) := shift_left(to_unsigned(RAM_BASE_KIB, ADDR_BITS), 10);
+    begin
+
+        return std_logic_vector(unsigned(a) - BASE + to_unsigned(ram_chip_offset_bytes, ADDR_BITS));
+
+    end function ram_chip_addr;
 
     -- Exceção sinalizada pelo core sem Zicsr (um ciclo em '1'); com Zicsr fica em '0'.
     signal core_trap       : std_logic;
@@ -294,6 +305,25 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     -- Roteador de instruções, lado da SDRAM: linha larga lida de 96 bits.
     signal si_rdx   : std_logic_vector(3 * XLEN - 1 downto 0);
 
+    -- Endereço de byte da RAM do SoC levado ao chip de SDRAM, na porta de instruções (execução a partir da RAM).
+    signal si_chip_addr : addr_t;
+    -- Endereço de byte da RAM do SoC levado ao chip de SDRAM, na porta de dados.
+    signal sd_chip_addr : addr_t;
+    -- Porta de instruções do chip: endereço (FLASH em identidade ou RAM deslocada).
+    signal ins_addr     : addr_t;
+    -- Porta de instruções do chip: habilita de leitura.
+    signal ins_rden     : std_logic;
+    -- Porta de instruções do chip: pedido de linha.
+    signal ins_line     : std_logic;
+    -- Porta de instruções do chip: avanço para a próxima palavra da linha.
+    signal ins_adv      : std_logic;
+    -- Porta de instruções do chip: acesso concluído.
+    signal ins_rdy      : std_logic;
+    -- Porta de instruções do chip: palavra lida.
+    signal ins_rdat     : word_t;
+    -- Porta de instruções do chip: palavras 1 a 3 da linha lida.
+    signal ins_rdx      : std_logic_vector(3 * XLEN - 1 downto 0);
+
     -- Cache de dados: lado da memória
     signal dc_bypass        : std_logic;
     -- Porta de memória da cache de dados: endereço, dado de escrita, dado lido.
@@ -395,44 +425,16 @@ architecture behaviour of rv32im_sdram_flash_sim_test is
     signal fb_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Roteador C, lado da FLASH: linha larga lida de 96 bits.
     signal fc_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0);
-    -- Endereço de byte do pedido do árbitro ao chip de FLASH.
-    signal flash_mem_addr : addr_t;
-    -- Dado lido do armazenamento do chip de FLASH.
-    signal flash_mem_data : word_t;
-
-    -- Controlador de FLASH e chip de comandos (so com HAS_FLASH_CONTROLLER): comando, estado, buffer de pagina,
-    -- porta B do armazenamento e invalidacao por regiao das duas caches.
-    signal fl_cmd_valid                  : std_logic                     := '0';
-    -- Controlador de FLASH: operação em andamento.
-    signal fl_busy                       : std_logic                     := '0';
-    -- Controlador de FLASH: escrita habilitada (WEL).
-    signal fl_wel                        : std_logic                     := '0';
-    -- Controlador de FLASH: comando recusado.
-    signal fl_refused                    : std_logic                     := '0';
-    -- Controlador de FLASH: operação do comando.
-    signal fl_cmd_op                     : std_logic_vector(2 downto 0);
-    -- Controlador de FLASH: endereço do comando.
-    signal fl_cmd_addr                   : addr_t;
-    -- Controlador de FLASH: índice de palavra do buffer de página.
-    signal fl_buf_idx                    : std_logic_vector(5 downto 0);
-    -- Controlador de FLASH: palavra do buffer de página.
-    signal fl_buf_data                   : word_t;
-    -- Controlador de FLASH: endereço da porta B do armazenamento, dado de escrita da porta B do armazenamento, dado
-    -- lido
-    -- da porta B do armazenamento.
-    signal fl_b_addr                     : addr_t := (others => '0');
-    -- Controlador de FLASH: dado de escrita da porta B do armazenamento.
-    signal fl_b_wdata                    : word_t := (others => '0');
-    -- Controlador de FLASH: dado lido da porta B do armazenamento.
-    signal fl_b_data                     : word_t := (others => '0');
-    -- Controlador de FLASH: escrita na porta B do armazenamento.
-    signal fl_b_we                       : std_logic                     := '0';
-    -- Invalidação por região das caches: pulso de validade.
-    signal fl_inval_valid                : std_logic                     := '0';
-    -- Invalidação por região das caches: primeiro endereço, último endereço.
-    signal fl_inval_first, fl_inval_last : addr_t := (others => '0');
 
 begin
+
+    -- A FLASH ocupa o começo do chip com o endereço do SoC, a RAM vem depois dela, e as duas cabem no chip.
+    assert ram_chip_offset_bytes >= FLASH_END_KIB * 1024
+        report "a RAM começa dentro da FLASH no chip de SDRAM"
+        severity failure;
+    assert ram_chip_offset_bytes + RAM_BYTES <= CHIP_BYTES
+        report "a FLASH e a RAM não cabem no chip de SDRAM"
+        severity failure;
 
     u_pll : entity work.clk_gen_3way
         port map (
@@ -511,9 +513,9 @@ begin
             o_data         => ic_data,
             i_invalidate   => ic_inval,
             o_miss         => ic_miss,
-            i_inval_region => fl_inval_valid,
-            i_inval_first  => fl_inval_first,
-            i_inval_last   => fl_inval_last,
+            i_inval_region => '0',
+            i_inval_first  => (others => '0'),
+            i_inval_last   => (others => '0'),
             o_d_addr       => id_addr,
             o_d_rden       => id_rden,
             o_d_advance    => id_adv,
@@ -524,6 +526,9 @@ begin
         );
 
     u_router_i : entity work.mem_region_router
+        generic map (
+            flash_window_kib => FLASH_END_KIB
+        )
         port map (
             i_clk       => pll_clk_idexmem,
             i_rst       => i_rst,
@@ -582,9 +587,9 @@ begin
             o_flush_done   => dc_done,
             o_busy         => dc_busy,
             o_miss         => dc_miss,
-            i_inval_region => fl_inval_valid,
-            i_inval_first  => fl_inval_first,
-            i_inval_last   => fl_inval_last,
+            i_inval_region => '0',
+            i_inval_first  => (others => '0'),
+            i_inval_last   => (others => '0'),
             i_bypass       => dc_bypass,
             o_d_addr       => dd_addr,
             o_d_wdata      => dd_wdata,
@@ -600,6 +605,9 @@ begin
         );
 
     u_router_d : entity work.mem_region_router
+        generic map (
+            flash_window_kib => FLASH_END_KIB
+        )
         port map (
             i_clk       => pll_clk_idexmem,
             i_rst       => i_rst,
@@ -634,7 +642,14 @@ begin
             i_f_rdata_x => fb_rdx
         );
 
+    -- Espera da FLASH para o Zihpm: um pedido da face FLASH ainda sem resposta da SDRAM.
+    flash_busy     <= fc_rden and not fc_ready;
     hpm_ext_events <= flash_busy & dc_miss & ic_miss;
+
+    -- Os endereços do núcleo para o chip: a RAM começa em ram_chip_offset_bytes dentro dele, e a FLASH ocupa o começo
+    -- do chip com o endereço do SoC (identidade), sem conversão.
+    sd_chip_addr <= ram_chip_addr(sd_addr);
+    si_chip_addr <= ram_chip_addr(si_addr);
 
     u_flash_arbiter : entity work.flash_arbiter
         port map (
@@ -663,109 +678,35 @@ begin
             i_rdata_x   => fc_rdx
         );
 
-    u_flash_chip : entity work.flash_chip
-        generic map (
-            first_latency => flash_first_latency, next_latency => flash_next_latency,
-            size_bytes    => FLASH_STORAGE_BYTES
-        )
+    -- A face da FLASH (busca e leitura de dados) e a da RAM (busca de código que roda da RAM) dividem a porta de
+    -- instruções do chip.
+
+    u_ins_arbiter : entity work.flash_arbiter
         port map (
-            i_clk      => pll_clk_idexmem,
-            i_rst      => i_rst,
-            i_addr     => fc_addr,
-            i_rden     => fc_rden,
-            i_line     => fc_line,
-            i_advance  => fc_adv,
-            o_ready    => fc_ready,
-            o_busy     => flash_busy,
-            o_rdata    => fc_rdata,
-            o_rdata_x  => fc_rdx,
-            o_mem_addr => flash_mem_addr,
-            i_mem_data => flash_mem_data
+            i_clk       => pll_clk_idexmem,
+            i_rst       => i_rst,
+            i_a_addr    => fc_addr,
+            i_a_rden    => fc_rden,
+            i_a_line    => fc_line,
+            i_a_advance => fc_adv,
+            o_a_ready   => fc_ready,
+            o_a_rdata   => fc_rdata,
+            o_a_rdata_x => fc_rdx,
+            i_b_addr    => si_chip_addr,
+            i_b_rden    => si_rden,
+            i_b_line    => si_line,
+            i_b_advance => si_adv,
+            o_b_ready   => si_ready,
+            o_b_rdata   => si_rdata,
+            o_b_rdata_x => si_rdx,
+            o_addr      => ins_addr,
+            o_rden      => ins_rden,
+            o_line      => ins_line,
+            o_advance   => ins_adv,
+            i_ready     => ins_rdy,
+            i_rdata     => ins_rdat,
+            i_rdata_x   => ins_rdx
         );
-
-    g_plain : if not has_flash_controller generate
-        -- O armazenamento atrás do chip: um vetor com leitura registrada, carregado da imagem do programa
-        u_flash_storage : entity work.rom_simulation
-            generic map (
-                rom_file => rom_file, size_bytes => 4 * 2 ** rom_addr_width
-            )
-            port map (
-                i_addr => flash_mem_addr(31 downto 2),
-                i_clk  => pll_clk_idexmem,
-                i_re   => '1',
-                o_data => flash_mem_data
-            );
-
-    end generate g_plain;
-
-    -- Com o controlador o armazenamento tem duas portas: a A é lida pelo chip atrás das caches e a B é a que a porta
-    -- de comandos do chip escreve (apagar, gravar), como na FLASH de duas portas da placa.
-
-    g_update : if has_flash_controller generate
-
-        u_flash_storage : entity work.flash_simulation
-            generic map (
-                size_bytes => 4 * 2 ** rom_addr_width, rom_file => rom_file
-            )
-            port map (
-                i_clk_a     => pll_clk_idexmem,
-                i_address_a => flash_mem_addr(rom_addr_width + 1 downto 2),
-                i_rden_a    => '1',
-                o_q_a       => flash_mem_data,
-                i_clk_b     => pll_clk_idexmem,
-                i_address_b => fl_b_addr(rom_addr_width + 1 downto 2),
-                i_rden_b    => '1',
-                i_wren_b    => fl_b_we,
-                i_data_b    => fl_b_wdata,
-                o_q_b       => fl_b_data
-            );
-
-        u_flash_cmd : entity work.flash_cmd_port
-            generic map (
-                size_bytes    => 4 * 2 ** rom_addr_width, base_addr => (others => '0'),
-                erase_latency => flash_erase_latency, program_latency => flash_program_latency
-            )
-            port map (
-                i_clk         => pll_clk_idexmem,
-                i_rst         => i_rst,
-                i_cmd_valid   => fl_cmd_valid,
-                i_cmd_op      => fl_cmd_op,
-                i_cmd_addr    => fl_cmd_addr,
-                o_busy        => fl_busy,
-                o_wel         => fl_wel,
-                o_refused     => fl_refused,
-                o_buf_idx     => fl_buf_idx,
-                i_buf_data    => fl_buf_data,
-                o_mem_addr    => fl_b_addr,
-                o_mem_we      => fl_b_we,
-                o_mem_wdata   => fl_b_wdata,
-                i_mem_data    => fl_b_data,
-                o_inval_valid => fl_inval_valid,
-                o_inval_first => fl_inval_first,
-                o_inval_last  => fl_inval_last
-            );
-
-        u_flash_ctrl : entity work.flash_controller
-            port map (
-                i_clk       => pll_clk_idexmem,
-                i_rst       => i_rst,
-                i_data_in   => p_wdata,
-                i_address   => p_addr(2 downto 0),
-                i_write     => p_we(FLASH_CTRL_INDEX),
-                i_read      => p_re(FLASH_CTRL_INDEX),
-                o_data_out  => p_rdata(XLEN * FLASH_CTRL_INDEX + XLEN - 1 downto XLEN * FLASH_CTRL_INDEX),
-                o_irq       => irq_lines(IRQ_FLASH),
-                o_cmd_valid => fl_cmd_valid,
-                o_cmd_op    => fl_cmd_op,
-                o_cmd_addr  => fl_cmd_addr,
-                i_busy      => fl_busy,
-                i_wel       => fl_wel,
-                i_refused   => fl_refused,
-                i_buf_idx   => fl_buf_idx,
-                o_buf_data  => fl_buf_data
-            );
-
-    end generate g_update;
 
     u_interconnect : entity work.ext_interconnect
         generic map (
@@ -913,7 +854,7 @@ begin
             i_clk_cpu       => pll_clk_idexmem,
             i_rst_mem       => i_rst,
             i_rst_cpu       => i_rst,
-            i_addr          => sd_addr,
+            i_addr          => sd_chip_addr,
             i_wdata         => sd_wdata,
             i_byteena       => sd_be,
             i_rden          => sd_rden,
@@ -924,13 +865,13 @@ begin
             i_line          => sd_line,
             i_wdata_x       => sd_wdx,
             o_rdata_x       => sd_rdx,
-            i_ins_addr      => si_addr,
-            i_ins_rden      => si_rden,
-            i_ins_advance   => si_adv,
-            o_ins_ready     => si_ready,
-            o_ins_rdata     => si_rdata,
-            i_ins_line      => si_line,
-            o_ins_rdata_x   => si_rdx,
+            i_ins_addr      => ins_addr,
+            i_ins_rden      => ins_rden,
+            i_ins_advance   => ins_adv,
+            o_ins_ready     => ins_rdy,
+            o_ins_rdata     => ins_rdat,
+            i_ins_line      => ins_line,
+            o_ins_rdata_x   => ins_rdx,
             o_init_done     => sdram_init,
             i_dbg_word_addr => i_dbg_word_addr,
             o_dbg_word_data => o_dbg_word_data,

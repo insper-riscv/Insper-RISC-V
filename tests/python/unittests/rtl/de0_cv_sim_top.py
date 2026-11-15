@@ -1,12 +1,13 @@
-"""O topo de simulação da DE0-CV: BOOT_MEMORY, FLASH, SDRAM e `tohost`.
+"""O topo de simulação da DE0-CV: BOOT_MEMORY, FLASH e RAM na SDRAM.
 
 O programa tem um pedaço em cada região do mapa. A BOOT_MEMORY guarda
-uma marca na SDRAM e salta para a FLASH; a FLASH guarda outra marca,
-escreve no registrador do display e salta para o código que a SDRAM já
-tem desde o tempo zero; esse guarda a terceira marca e escreve em
-`tohost`. O teste lê a SDRAM pela porta de depuração do chip e confere
-as marcas, o display e a parada. As imagens saem de
-`gen_de0_cv_images.py`.
+uma marca na RAM e salta para a FLASH; a FLASH guarda outra marca,
+escreve no registrador do display, tenta gravar nela mesma (a falha de
+acesso de causa 7 chega ao tratador, e a FLASH não muda), copia o código
+da RAM para a RAM e salta para ele; esse guarda a terceira marca e
+escreve em `tohost`. O teste lê o chip pela porta de depuração do
+modelo e confere as marcas, a falha, o display e a parada. As imagens
+saem de `gen_de0_cv_images.py`.
 """
 
 from typing import Any
@@ -15,18 +16,57 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, Timer
 
+from tests.python.gen_de0_cv_images import (
+    BOOT_MARK,
+    DISPLAY_VALUE,
+    FLASH_BASE,
+    FLASH_END,
+    FLASH_MARK,
+    MARK_WORD,
+    PROTECTED_OFFSET,
+    PROTECTED_VALUE,
+    RAM_BASE,
+    SDRAM_MARK,
+    STORE_ACCESS_FAULT,
+    TOHOST,
+    WORD,
+)
 from tests.python.utils.checks import check
 
 CLK_NS = 10  # clock base do núcleo (dividido por três dentro do topo)
 CLK_MEM_NS = 10  # clock da SDRAM, sem relação fixa com o do núcleo
 RESET_CYCLES = 5
 POLL_CYCLES = 500
-TIMEOUT_CYCLES = 400_000
-BOOT_MARK, FLASH_MARK, SDRAM_MARK = 0xB0, 0xF1, 0x5D
-DISPLAY_VALUE = 0x123
-# Índices de palavra na SDRAM: a marca de cada região e o `tohost`.
-BOOT_WORD, FLASH_WORD, SDRAM_WORD = 0, 3, 2
-TOHOST_WORD = (0x43FFFFE8 - 0x40000000) // 4
+TIMEOUT_CYCLES = 600_000
+# A RAM começa dentro do chip logo depois da FLASH (FLASH_END do mapa).
+RAM_CHIP_OFFSET = FLASH_END
+# A palavra da FLASH que o programa tenta gravar.
+PROTECTED_ADDRESS = FLASH_BASE + PROTECTED_OFFSET
+
+
+def ram_word(address: int) -> int:
+    """Return the chip word index of an address of the RAM.
+
+    Parameters
+    ----------
+    address : int
+        A byte address of the RAM in the map of the SoC.
+
+    Returns
+    -------
+    int
+        The index of the 32-bit word in the SDRAM chip.
+    """
+    return (RAM_CHIP_OFFSET + address - RAM_BASE) // WORD
+
+
+TOHOST_WORD = ram_word(TOHOST)
+BOOT_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["boot"])
+SDRAM_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["ram"])
+FLASH_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["flash"])
+READBACK_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["readback"])
+CAUSE_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["cause"])
+TVAL_WORD = ram_word(RAM_BASE + WORD * MARK_WORD["tval"])
 
 
 async def start(dut: Any) -> None:
@@ -53,7 +93,8 @@ async def sdram_word(dut: Any, index: int) -> int:
     dut : Any
         The device under test.
     index : int
-        Word index from the base of the RAM.
+        Word index from the start of the chip (the FLASH is there, the
+        RAM starts at the end of the FLASH).
 
     Returns
     -------
@@ -90,7 +131,7 @@ async def wait_for_tohost(dut: Any) -> None:
 
 
 @cocotb.test()
-async def test_boot_flash_and_sdram_code_run_and_stop_on_tohost(
+async def test_boot_flash_and_ram_code_run_and_stop_on_tohost(
     dut: Any,
 ) -> None:
     """Each region leaves its mark and the program stops on tohost."""
@@ -102,8 +143,25 @@ async def test_boot_flash_and_sdram_code_run_and_stop_on_tohost(
     tohost = await sdram_word(dut, TOHOST_WORD)
     check(boot == BOOT_MARK, f"BOOT_MEMORY mark {boot:#x}")
     check(flash == FLASH_MARK, f"FLASH mark {flash:#x}")
-    check(sdram == SDRAM_MARK, f"SDRAM mark {sdram:#x}")
+    check(sdram == SDRAM_MARK, f"RAM code mark {sdram:#x}")
     check(tohost == 1, f"tohost {tohost:#x}")
+
+
+@cocotb.test()
+async def test_a_store_to_the_flash_is_an_access_fault_and_changes_nothing(
+    dut: Any,
+) -> None:
+    """The store faults with cause 7 and the FLASH keeps its word."""
+    await start(dut)
+    await wait_for_tohost(dut)
+    cause = await sdram_word(dut, CAUSE_WORD)
+    tval = await sdram_word(dut, TVAL_WORD)
+    readback = await sdram_word(dut, READBACK_WORD)
+    in_chip = await sdram_word(dut, PROTECTED_ADDRESS // WORD)
+    check(cause == STORE_ACCESS_FAULT, f"mcause {cause:#x}, want 7")
+    check(tval == PROTECTED_ADDRESS, f"mtval {tval:#x}")
+    check(readback == PROTECTED_VALUE, f"read back {readback:#x}")
+    check(in_chip == PROTECTED_VALUE, f"the chip holds {in_chip:#x}")
 
 
 @cocotb.test()

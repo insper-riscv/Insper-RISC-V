@@ -35,7 +35,7 @@ SOURCES := riscv-tools --root . sources
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
 
-.PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
+.PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-sdram-split check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -53,7 +53,7 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: sources-check variants-check check-tops check-generics check-unique check-irq-sources
+check: sources-check variants-check check-tops check-generics check-unique check-irq-sources check-sdram-split
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -93,6 +93,11 @@ check-generics:
 # The numbers of the PLIC sources of the modular top and of every platform.yaml agree.
 check-irq-sources:
 	uv run --no-project --with pyyaml python scripts/check_irq_sources.py
+
+# The split of the SDRAM of the de0-cv in FLASH and RAM comes from its platform.yaml: other sizes that fit the chip are
+# accepted, and the ones that do not fit are refused.
+check-sdram-split:
+	uv run --no-project --with pyyaml python tests/python/check_sdram_split.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
