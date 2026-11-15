@@ -72,6 +72,9 @@ A chave `buses` liga cada periférico externo da plataforma (`kind` de `Peripher
 | `tv` | `data`, `clk27`, `reset_n` | Não |
 | `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | Não |
 | `ir` | `rxd` | Não |
+| `serial` | `rx`, `tx`, `cts` (opcional), `rts` (opcional) | Não |
+| `hdmi_audio` | `mclk`, `sclk`, `lrclk`, `i2s0` | Não |
+| `spi` | `sclk`, `mosi`, `miso`, `cs_n` | Não |
 | `adc` | Depende do chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (nenhum) | Sim, obrigatória |
 | `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (opcional), `int1` (opcional) | Não |
 
