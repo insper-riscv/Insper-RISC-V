@@ -30,6 +30,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.external_data_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.config_pkg.XLEN;
+use work.config_pkg.ADDR_BITS;
+use work.interconnect_pkg.all;
 
 entity rv32im_external_data_sim_test is
     generic (
@@ -48,9 +53,9 @@ entity rv32im_external_data_sim_test is
         -- Largura, em bits, de cada contador de eventos do Zihpm.
         hpm_width              : natural range 0 to 64 := 64;
         -- A ROM fica fora do núcleo (o modelo de memória do platform.yaml).
-        rom_external           : boolean               := work.external_data_map_pkg.ROM_EXTERNAL;
+        rom_external           : boolean               := work.external_data_map_pkg.FLASH_ON_BUS;
         -- A RAM fica fora do núcleo (o modelo de memória do platform.yaml).
-        ram_external           : boolean               := work.external_data_map_pkg.RAM_EXTERNAL;
+        ram_external           : boolean               := work.external_data_map_pkg.RAM_ON_BUS;
         -- Existe cache de instruções (o modelo de memória do platform.yaml); o topo monta só a de dados.
         has_icache             : boolean               := work.external_data_map_pkg.HAS_ICACHE;
         -- Existe cache de dados (o modelo de memória do platform.yaml).
@@ -76,7 +81,7 @@ entity rv32im_external_data_sim_test is
         -- Endereço de palavra lido direto do modelo do chip de SDRAM.
         i_dbg_word_addr   : in    std_logic_vector(23 downto 0) := (others => '0');
         -- Palavra lida direto do modelo do chip de SDRAM.
-        o_dbg_word_data   : out   std_logic_vector(31 downto 0);
+        o_dbg_word_data   : out   word_t;
         -- Clock da cadeia JTAG da UART.
         i_uart_tck        : in    std_logic                     := '0';
         -- Dado serial vindo do hospedeiro para a UART.
@@ -128,24 +133,24 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- Pulso de retirada de uma instrução em EX, contado pelo testbench para medir os ciclos por instrução.
     signal core_retire     : std_logic;
     -- Causa da exceção sinalizada, no formato do mcause.
-    signal core_trap_cause : std_logic_vector(31 downto 0);
+    signal core_trap_cause : word_t;
     -- PC da instrução que gerou a exceção sinalizada.
-    signal core_trap_pc    : std_logic_vector(31 downto 0);
+    signal core_trap_pc    : word_t;
 
     -- Endereço de busca de instrução do núcleo.
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilita de leitura da busca de instrução.
     signal if_rden          : std_logic;
     -- Palavra lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra lida da porta A da FLASH, pelo estágio IF.
-    signal flash_data       : std_logic_vector(31 downto 0);
+    signal flash_data       : word_t;
     -- Endereço de byte da leitura de dado do estágio MEM na FLASH.
-    signal flash_addr2      : std_logic_vector(31 downto 0);
+    signal flash_addr2      : addr_t;
     -- Habilita da leitura de dado do estágio MEM na FLASH.
     signal flash_rden2      : std_logic;
     -- Palavra lida da porta B da FLASH, pelo estágio MEM.
-    signal flash_data2      : std_logic_vector(31 downto 0);
+    signal flash_data2      : word_t;
     -- Índice de palavra da porta B da FLASH.
     signal flash_address_b  : std_logic_vector(rom_addr_width - 1 downto 0);
     -- Habilita de leitura da porta B da FLASH.
@@ -153,7 +158,7 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- Habilita de escrita da porta B da FLASH.
     signal flash_wren_b     : std_logic;
     -- Dado de escrita da porta B da FLASH.
-    signal flash_data_b     : std_logic_vector(31 downto 0);
+    signal flash_data_b     : word_t;
     -- Núcleo parado pelo carregador da FLASH, em '0' enquanto o hospedeiro não manda o comando de parada.
     signal flash_halt       : std_logic;
     -- Reset do núcleo e do que ele usa: o reset do topo ou a parada do carregador, como na placa.
@@ -165,22 +170,22 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- Endereço de palavra do comando da porta JTAG ao carregador de FLASH.
     signal flash_cmd_addr   : std_logic_vector(23 downto 0);
     -- Dado do comando da porta JTAG ao carregador de FLASH.
-    signal flash_cmd_data   : std_logic_vector(31 downto 0);
+    signal flash_cmd_data   : word_t;
     -- Resposta do carregador à porta JTAG.
     signal flash_done_tog   : std_logic;
     -- Endereço de palavra da resposta do carregador de FLASH.
     signal flash_rsp_addr   : std_logic_vector(23 downto 0);
     -- Dado da resposta do carregador de FLASH.
-    signal flash_rsp_data   : std_logic_vector(31 downto 0);
+    signal flash_rsp_data   : word_t;
     -- Estado da resposta do carregador de FLASH.
     signal flash_rsp_status : std_logic_vector(7 downto 0);
 
     -- Porta de RAM interna do núcleo, sem uso nesta plataforma (a RAM é a SDRAM).
-    signal ram_addr    : std_logic_vector(31 downto 0);
+    signal ram_addr    : addr_t;
     -- Dado de escrita da RAM interna, sem uso.
-    signal ram_wdata   : std_logic_vector(31 downto 0);
+    signal ram_wdata   : word_t;
     -- Dado lido da RAM interna, fixo em zero.
-    signal ram_rdata   : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_rdata   : word_t := (others => '0');
     -- Habilita da RAM interna, sem uso.
     signal ram_en      : std_logic;
     -- Habilita de escrita da RAM interna, sem uso.
@@ -191,11 +196,11 @@ architecture behaviour of rv32im_external_data_sim_test is
     signal ram_byteena : std_logic_vector(3 downto 0);
 
     -- Porta externa do núcleo: endereço.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Porta externa do núcleo: dado de escrita.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Porta externa do núcleo: dado lido.
-    signal sdram_rdata   : std_logic_vector(31 downto 0);
+    signal sdram_rdata   : word_t;
     -- Porta externa do núcleo: máscara de bytes.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Porta externa do núcleo: leitura.
@@ -204,15 +209,17 @@ architecture behaviour of rv32im_external_data_sim_test is
     signal sdram_wren    : std_logic;
     -- Porta externa do núcleo: pedido concluído.
     signal sdram_ready   : std_logic;
+    -- O acesso externo do núcleo terminou sem escravo que o atenda (falha de acesso), junto com o ready.
+    signal ext_error     : std_logic;
     -- O estágio MEM avança neste ciclo.
     signal mem_advance   : std_logic;
 
     -- Atrás do interconector: endereço da SDRAM.
-    signal m_addr     : std_logic_vector(31 downto 0);
+    signal m_addr     : addr_t;
     -- Atrás do interconector: dado de escrita.
-    signal m_wdata    : std_logic_vector(31 downto 0);
+    signal m_wdata    : word_t;
     -- Atrás do interconector: dado lido.
-    signal m_rdata    : std_logic_vector(31 downto 0);
+    signal m_rdata    : word_t;
     -- Atrás do interconector: máscara de bytes.
     signal m_byteena  : std_logic_vector(3 downto 0);
     -- Atrás do interconector: leitura.
@@ -224,13 +231,13 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- Janela de periféricos: endereço de registrador.
     signal p_addr     : std_logic_vector(13 downto 0);
     -- Janela de periféricos: dado de escrita.
-    signal p_wdata    : std_logic_vector(31 downto 0);
+    signal p_wdata    : word_t;
     -- Janela de periféricos: máscara de bytes.
     signal p_byteena  : std_logic_vector(3 downto 0);
     -- Janela de periféricos: escrita e leitura por slot.
-    signal p_we, p_re : std_logic_vector(7 downto 0);
+    signal p_we, p_re : std_logic_vector(PERIPH_COUNT - 1 downto 0);
     -- Janela de periféricos: dado lido por slot.
-    signal p_rdata    : std_logic_vector(8 * 32 - 1 downto 0) := (others => '0');
+    signal p_rdata    : std_logic_vector(PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
 
     -- Clock do estágio IF.
     signal pll_clk_if      : std_logic;
@@ -258,11 +265,11 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- A cache de dados não guarda a última página da SDRAM, onde o hospedeiro e o programa se encontram.
     signal dc_bypass        : std_logic;
     -- Lado da memória da cache de dados, ligado direto ao sdram_system.
-    signal dd_addr          : std_logic_vector(31 downto 0);
+    signal dd_addr          : addr_t;
     -- Porta de memória da cache de dados: dado de escrita.
-    signal dd_wdata         : std_logic_vector(31 downto 0);
+    signal dd_wdata         : word_t;
     -- Porta de memória da cache de dados: dado lido.
-    signal dd_rdata         : std_logic_vector(31 downto 0);
+    signal dd_rdata         : word_t;
     -- Porta de memória da cache de dados: habilita de bytes.
     signal dd_be            : std_logic_vector(3 downto 0);
     -- Porta de memória da cache de dados: habilita de leitura, habilita de escrita, pedido de linha de cache, avanço
@@ -278,7 +285,7 @@ architecture behaviour of rv32im_external_data_sim_test is
     -- Porta de memória da cache de dados: acesso concluído.
     signal dd_ready         : std_logic;
     -- Porta de memória da cache de dados: linha larga de escrita de 96 bits, linha larga lida de 96 bits.
-    signal dd_wdx,  dd_rdx  : std_logic_vector(95 downto 0);
+    signal dd_wdx,  dd_rdx  : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Fim e ocupação da invalidação da cache de dados.
     signal dc_done, dc_busy : std_logic;
 
@@ -332,6 +339,7 @@ begin
             o_ext_wren    => sdram_wren,
             i_ext_rdata   => sdram_rdata,
             i_ext_ready   => sdram_ready,
+            i_ext_error   => ext_error,
             o_mem_advance => mem_advance,
 
             i_hpm_ext_events => hpm_ext_events,
@@ -426,8 +434,8 @@ begin
 
     u_dcache : entity work.dcache
         generic map (
-            size_bits   => dcache_size_bits, write_through => true, rom_base_kib => ROM_BASE_KIB,
-            rom_end_kib => ROM_END_KIB
+            size_bits   => dcache_size_bits, write_through => true, flash_base_kib => FLASH_BASE_KIB,
+            flash_end_kib => FLASH_END_KIB
         )
         port map (
             i_clk         => pll_clk_idexmem,
@@ -460,6 +468,19 @@ begin
         );
 
     u_interconnect : entity work.ext_interconnect
+        generic map (
+            periph_count  => PERIPH_COUNT,
+            periph_bases  => addr_array_t(PERIPH_BASES),
+            periph_masks  => addr_array_t(PERIPH_MASKS),
+            periph_sizes  => window_sizes(addr_array_t(PERIPH_MASKS)),
+            strict_periph => STRICT_PERIPH,
+            flash_on_bus  => FLASH_ON_BUS,
+            flash_base    => addr_from(to_unsigned(FLASH_BASE_KIB, ADDR_BITS) sll 10),
+            flash_last    => addr_from((to_unsigned(FLASH_END_KIB, ADDR_BITS) sll 10) - 1),
+            ram_on_bus    => RAM_ON_BUS,
+            ram_base      => addr_from(to_unsigned(RAM_BASE_KIB, ADDR_BITS) sll 10),
+            ram_last      => addr_from((to_unsigned(RAM_END_KIB, ADDR_BITS) sll 10) - 1)
+        )
         port map (
             i_clk         => pll_clk_idexmem,
             i_rst         => core_reset,
@@ -470,6 +491,7 @@ begin
             i_wren        => sdram_wren,
             i_mem_advance => mem_advance,
             o_ready       => sdram_ready,
+            o_error       => ext_error,
             o_rdata       => sdram_rdata,
             o_m_addr      => m_addr,
             o_m_wdata     => m_wdata,
@@ -492,9 +514,9 @@ begin
             i_rst       => core_reset,
             i_addr      => p_addr(7 downto 0),
             i_wdata     => p_wdata,
-            i_we        => p_we(UART_ID),
-            i_re        => p_re(UART_ID),
-            o_rdata     => p_rdata(32 * UART_ID + 31 downto 32 * UART_ID),
+            i_we        => p_we(UART_INDEX),
+            i_re        => p_re(UART_INDEX),
+            o_rdata     => p_rdata(XLEN * UART_INDEX + XLEN - 1 downto XLEN * UART_INDEX),
             i_tck       => i_uart_tck,
             i_tdi       => i_uart_tdi,
             o_tdo       => o_uart_tdo,
@@ -511,8 +533,8 @@ begin
             i_rst       => core_reset,
             i_address   => p_addr(7 downto 0),
             i_data_in   => p_wdata,
-            i_write     => p_we(DISPLAY_ID),
-            o_rdata     => p_rdata(32 * DISPLAY_ID + 31 downto 32 * DISPLAY_ID),
+            i_write     => p_we(DISPLAY_INDEX),
+            o_rdata     => p_rdata(XLEN * DISPLAY_INDEX + XLEN - 1 downto XLEN * DISPLAY_INDEX),
             i_tck       => '0',
             i_tdi       => '0',
             i_ir_in     => "00",

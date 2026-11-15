@@ -4,8 +4,9 @@
 -- Sem um clock de atraso: os canais do mestre vão ao escravo selecionado e as
 -- respostas voltam pela mesma escolha.
 --
---   0x40000000 a 0x43FFFFFF   escravo 0 (a SDRAM)
---   0x80000000 a 0xFFFFFFFF   escravo 1 (a janela de periféricos)
+--   mem_base a mem_last       escravo 0 (a SDRAM)
+--   janelas de periféricos    escravo 1 (o endereço acerta periph_bases e periph_masks, a tabela
+--                             da plataforma, como no ext_interconnect)
 --   qualquer outro            nenhum escravo: o pedido é aceito, todos os seus beats
 --                             são consumidos (escrita) ou dados (leitura, zeros), e a
 --                             resposta é DECERR
@@ -22,8 +23,22 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use work.config_pkg.all;
+use work.interconnect_pkg.all;
 
 entity axi_router is
+    generic (
+        -- Primeiro endereço do escravo 0 (a SDRAM).
+        mem_base     : addr_t       := std_logic_vector(resize(unsigned'(x"40000000"), ADDR_BITS));
+        -- Último endereço do escravo 0, inclusive.
+        mem_last     : addr_t       := std_logic_vector(resize(unsigned'(x"43FFFFFF"), ADDR_BITS));
+        -- Número de janelas de periféricos do escravo 1.
+        periph_count : positive     := DEFAULT_PERIPH_COUNT;
+        -- Base de cada janela de periféricos.
+        periph_bases : addr_array_t := default_bases;
+        -- Máscara de cada janela de periféricos.
+        periph_masks : addr_array_t := default_masks
+    );
     port (
         -- Clock do módulo.
         i_clk : in    std_logic;
@@ -35,7 +50,7 @@ entity axi_router is
         -- Porta escravo AXI4, canal de endereço de escrita: destino pronto para aceitar a transferência ('1').
         o_s_awready : out   std_logic;
         -- Porta escravo AXI4, canal de endereço de escrita: endereço da transferência.
-        i_s_awaddr  : in    std_logic_vector(31 downto 0);
+        i_s_awaddr  : in    addr_t;
         -- Porta escravo AXI4, canal de endereço de escrita: número de beats da rajada menos um.
         i_s_awlen   : in    std_logic_vector(7 downto 0);
         -- Porta escravo AXI4, canal de endereço de escrita: tamanho de cada beat da rajada (log2 de bytes).
@@ -47,7 +62,7 @@ entity axi_router is
         -- Porta escravo AXI4, canal de dados de escrita: destino pronto para aceitar a transferência ('1').
         o_s_wready  : out   std_logic;
         -- Porta escravo AXI4, canal de dados de escrita: palavra de dados.
-        i_s_wdata   : in    std_logic_vector(31 downto 0);
+        i_s_wdata   : in    word_t;
         -- Porta escravo AXI4, canal de dados de escrita: habilita de bytes.
         i_s_wstrb   : in    std_logic_vector(3 downto 0);
         -- Porta escravo AXI4, canal de dados de escrita: último beat da rajada ('1').
@@ -63,7 +78,7 @@ entity axi_router is
         -- Porta escravo AXI4, canal de endereço de leitura: destino pronto para aceitar a transferência ('1').
         o_s_arready : out   std_logic;
         -- Porta escravo AXI4, canal de endereço de leitura: endereço da transferência.
-        i_s_araddr  : in    std_logic_vector(31 downto 0);
+        i_s_araddr  : in    addr_t;
         -- Porta escravo AXI4, canal de endereço de leitura: número de beats da rajada menos um.
         i_s_arlen   : in    std_logic_vector(7 downto 0);
         -- Porta escravo AXI4, canal de endereço de leitura: tamanho de cada beat da rajada (log2 de bytes).
@@ -75,7 +90,7 @@ entity axi_router is
         -- Porta escravo AXI4, canal de dados de leitura: origem pronta para aceitar o dado ('1').
         i_s_rready  : in    std_logic;
         -- Porta escravo AXI4, canal de dados de leitura: dados.
-        o_s_rdata   : out   std_logic_vector(31 downto 0);
+        o_s_rdata   : out   word_t;
         -- Porta escravo AXI4, canal de dados de leitura: código de resposta.
         o_s_rresp   : out   std_logic_vector(1 downto 0);
         -- Porta escravo AXI4, canal de dados de leitura: último beat da rajada ('1').
@@ -86,7 +101,7 @@ entity axi_router is
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_awready : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: endereço da transferência.
-        o_m0_awaddr  : out   std_logic_vector(31 downto 0);
+        o_m0_awaddr  : out   addr_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: número de beats da rajada menos um.
         o_m0_awlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: tamanho de cada beat da rajada (log2 de bytes).
@@ -98,7 +113,7 @@ entity axi_router is
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_wready  : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: palavra de dados.
-        o_m0_wdata   : out   std_logic_vector(31 downto 0);
+        o_m0_wdata   : out   word_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: habilita de bytes.
         o_m0_wstrb   : out   std_logic_vector(3 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: último beat da rajada ('1').
@@ -114,7 +129,7 @@ entity axi_router is
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: destino pronto para aceitar a transferência ('1').
         i_m0_arready : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: endereço da transferência.
-        o_m0_araddr  : out   std_logic_vector(31 downto 0);
+        o_m0_araddr  : out   addr_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: número de beats da rajada menos um.
         o_m0_arlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: tamanho de cada beat da rajada (log2 de bytes).
@@ -126,7 +141,7 @@ entity axi_router is
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: origem pronta para aceitar o dado ('1').
         o_m0_rready  : out   std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: dados.
-        i_m0_rdata   : in    std_logic_vector(31 downto 0);
+        i_m0_rdata   : in    word_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: código de resposta.
         i_m0_rresp   : in    std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: último beat da rajada ('1').
@@ -138,7 +153,7 @@ entity axi_router is
         -- ('1').
         i_m1_awready : in    std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: endereço da transferência.
-        o_m1_awaddr  : out   std_logic_vector(31 downto 0);
+        o_m1_awaddr  : out   addr_t;
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: número de beats da rajada menos um.
         o_m1_awlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de escrita: tamanho de cada beat da rajada (log2 de
@@ -152,7 +167,7 @@ entity axi_router is
         -- ('1').
         i_m1_wready  : in    std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: palavra de dados.
-        o_m1_wdata   : out   std_logic_vector(31 downto 0);
+        o_m1_wdata   : out   word_t;
         -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: habilita de bytes.
         o_m1_wstrb   : out   std_logic_vector(3 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de dados de escrita: último beat da rajada ('1').
@@ -169,7 +184,7 @@ entity axi_router is
         -- ('1').
         i_m1_arready : in    std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: endereço da transferência.
-        o_m1_araddr  : out   std_logic_vector(31 downto 0);
+        o_m1_araddr  : out   addr_t;
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: número de beats da rajada menos um.
         o_m1_arlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de endereço de leitura: tamanho de cada beat da rajada (log2 de
@@ -182,7 +197,7 @@ entity axi_router is
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: origem pronta para aceitar o dado ('1').
         o_m1_rready  : out   std_logic;
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: dados.
-        i_m1_rdata   : in    std_logic_vector(31 downto 0);
+        i_m1_rdata   : in    word_t;
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: código de resposta.
         i_m1_rresp   : in    std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 1 (periféricos), canal de dados de leitura: último beat da rajada ('1').
@@ -202,16 +217,30 @@ architecture rtl of axi_router is
     -- Nenhum escravo: a resposta é DECERR.
     constant SEL_E : sel_t := "10";
 
-    function decode (a : std_logic_vector(31 downto 0)) return sel_t is
+    -- Bases das janelas de periféricos, com a faixa normalizada.
+    constant BASES : addr_array_t(0 to periph_count - 1) := periph_bases;
+    -- Máscaras das janelas de periféricos, com a faixa normalizada.
+    constant MASKS : addr_array_t(0 to periph_count - 1) := periph_masks;
+
+    -- Escravo que atende o endereço a: o 0 na faixa da SDRAM, o 1 em alguma janela de periféricos, nenhum nos outros.
+    function decode (
+        a : addr_t
+    ) return sel_t is
     begin
 
-        if a(31 downto 26) = "010000" then
+        if unsigned(a) >= unsigned(mem_base) and unsigned(a) <= unsigned(mem_last) then
             return SEL_0;
-        elsif a(31) = '1' then
-            return SEL_1;
-        else
-            return SEL_E;
         end if;
+
+        for i in 0 to periph_count - 1 loop
+
+            if window_hit(a, BASES(i), MASKS(i)) then
+                return SEL_1;
+            end if;
+
+        end loop;
+
+        return SEL_E;
 
     end function decode;
 

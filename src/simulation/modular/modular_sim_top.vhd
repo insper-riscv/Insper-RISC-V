@@ -7,24 +7,24 @@
 --
 --   | Região        | Modelo de simulação neste topo                              |
 --   | BOOT_MEMORY   | rom_simulation                                              |
---   | ROM interna   | rom_simulation de duas portas                               |
---   | ROM externa   | flash_chip sobre um rom_simulation de armazenamento         |
---   | RAM interna   | ram_simulation                                              |
---   | RAM externa   | ram_chip                                                    |
+--   | FLASH direta  | rom_simulation de duas portas                               |
+--   | FLASH no bus  | flash_chip sobre um rom_simulation de armazenamento         |
+--   | RAM direta    | ram_simulation                                              |
+--   | RAM no bus    | ram_chip                                                    |
 --
 -- Um único topo, configurado por genéricos, monta o núcleo com quatro escolhas independentes: a ROM
 -- e a RAM dentro ou fora do chip (rom_external e ram_external) e a cache de instruções e a de dados
--- (has_icache e has_dcache). Uma memória que o núcleo alcança pela porta (externa, ou interna atrás de
--- uma cache) fica num modelo de chip simulado (flash_chip para a ROM, ram_chip para a RAM), de tamanho
+-- (has_icache e has_dcache). Uma memória que o núcleo alcança pelo barramento (com ou sem
+-- cache) fica num modelo de chip simulado (flash_chip para a ROM, ram_chip para a RAM), de tamanho
 -- configurável; a que não é alcançada pela porta é o vetor do próprio núcleo.
 --
 --   rom_via_port = rom_external ou has_icache
 --   ram_via_port = ram_external ou has_dcache
 --
 -- O mapa vem dos genéricos, cujo valor padrão é o do pacote modular_map_pkg, gerado do platform.yaml da
--- plataforma: a BOOT_MEMORY em [0, tamanho), a ROM logo depois dela até rom_end_kib, a RAM em
--- [ram_base_kib, ram_end_kib) e a janela externa a partir de ext_base_kib. O que o projeto escolhe fica
--- no platform.yaml da plataforma.
+-- plataforma: a BOOT_MEMORY em [0, tamanho), a FLASH logo depois dela até rom_end_kib e a RAM em
+-- [ram_base_kib, ram_end_kib); os periféricos ficam nas janelas da tabela do mesmo pacote (PERIPH_COUNT,
+-- PERIPH_BASES, PERIPH_MASKS e PERIPH_SIZES). O que o projeto escolhe fica no platform.yaml da plataforma.
 --
 -- Todos os tamanhos são genéricos em potência de dois (bytes para as memórias, bits para as
 -- caches). Os valores padrão são os da simulação do ACT4: ROM e RAM de 1 MB e caches de 4 kbit.
@@ -44,6 +44,11 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.modular_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.config_pkg.XLEN;
+use work.config_pkg.ADDR_BITS;
+use work.interconnect_pkg.all;
 
 entity modular_sim_top is
     generic (
@@ -53,26 +58,22 @@ entity modular_sim_top is
         rom_file               : string                   := "default.hex";
         -- Imagem inicial da RAM (interna, ou o chip de RAM externo); vazio deixa tudo em zero.
         ram_file               : string                   := "";
-        -- A ROM é externa (um chip fora do núcleo, alcançado pela porta).
-        rom_external           : boolean                  := ROM_EXTERNAL;
-        -- A RAM é externa (um chip fora do núcleo, alcançado pela porta).
-        ram_external           : boolean                  := RAM_EXTERNAL;
+        -- A ROM é externa (um chip fora do núcleo, alcançado pelo barramento).
+        rom_external           : boolean                  := FLASH_ON_BUS;
+        -- A RAM é externa (um chip fora do núcleo, alcançada pelo barramento).
+        ram_external           : boolean                  := RAM_ON_BUS;
         -- Tamanho da BOOT_MEMORY em bytes, uma potência de dois de pelo menos 1 KiB.
         boot_memory_size_bytes : positive                 := BOOT_MEMORY_SIZE_BYTES;
         -- Tamanho do armazenamento da ROM em bytes, uma potência de dois.
-        rom_size_bytes         : positive                 := ROM_STORAGE_BYTES;
+        rom_size_bytes         : positive                 := FLASH_STORAGE_BYTES;
         -- Tamanho da RAM em bytes, uma potência de dois.
         ram_size_bytes         : positive                 := RAM_STORAGE_BYTES;
-        -- Fim exclusivo, em KiB, da ROM, que começa logo depois da BOOT_MEMORY.
-        rom_end_kib            : natural                  := ROM_END_KIB;
+        -- Fim exclusivo, em KiB, da FLASH, que começa logo depois da BOOT_MEMORY.
+        rom_end_kib            : natural                  := FLASH_END_KIB;
         -- Base, em KiB, da RAM.
         ram_base_kib           : natural                  := RAM_BASE_KIB;
         -- Fim exclusivo, em KiB, da RAM.
         ram_end_kib            : natural                  := RAM_END_KIB;
-        -- Base, em KiB, da janela externa de periféricos e outros dispositivos.
-        ext_base_kib           : natural                  := EXT_BASE_KIB;
-        -- Base, em KiB, da janela de periféricos.
-        periph_base_kib        : natural                  := PERIPH_BASE_KIB;
         -- Existe cache de instruções; sem ela, a ROM via porta é lida pela ponte de busca. Por padrão, a
         -- cache existe quando a ROM é externa ou o pacote a liga.
         has_icache             : boolean                  := rom_external or HAS_ICACHE;
@@ -85,7 +86,7 @@ entity modular_sim_top is
         dcache_size_bits       : positive                 := 4096;
         -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
         -- MiB).
-        cache_window_bits      : natural range 26 to 29   := 26;
+        cache_window_bits      : natural range 26 to 29   := I_CACHE_WINDOW_BITS;
         -- Bordas até a primeira palavra do chip de FLASH e entre as palavras de uma linha.
         flash_first_latency    : natural                  := 24;
         -- Bordas entre as palavras seguintes da mesma linha do chip de FLASH.
@@ -98,52 +99,51 @@ entity modular_sim_top is
         hpm_width              : natural range 0 to 64    := 64;
         -- Ciclos de clock do núcleo por incremento do mtime do CLINT.
         clint_tick_cycles      : positive                 := 1;
-        -- Índice da janela de 256 MiB do CLINT (bits 30:28 do endereço); o do platform.yaml.
-        clint_id               : natural range 0 to 7     := 6;
-        -- Índice da janela de 256 MiB do PLIC, o controlador das interrupções externas.
-        plic_id                : natural range 0 to 7     := 7;
-        -- Número de fontes do PLIC; as linhas são as LINE_* abaixo, a partir da 1.
-        plic_n_sources         : positive range 6 to 1023 := 6;
+        -- Índice do CLINT na tabela de periféricos: o da janela de base 0xE0000000.
+        clint_index            : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"E0000000"));
+        -- Índice do PLIC na tabela de periféricos: o da janela de base 0xF0000000.
+        plic_index             : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"F0000000"));
+        -- Número de fontes do PLIC: as seis linhas fixas do SoC e as dos temporizadores do mapa (TIMER_IRQ_IDS).
+        plic_n_sources         : positive range 6 to 1023 := max_of(6, TIMER_IRQ_IDS);
         -- Largura da prioridade e do limiar do PLIC, em bits.
         plic_priority_bits     : positive range 1 to 32   := 3;
         -- Largura do endereço de palavra da janela do PLIC (a janela tem 2**(plic_addr_width + 2) bytes).
         plic_addr_width        : positive range 20 to 26  := 20;
-        -- Temporizador de uso geral, com a interrupção de overflow ligada ao PLIC.
+        -- Temporizadores de uso geral do mapa (TIMER_INDICES e TIMER_IRQ_IDS), cada um com a interrupção de overflow
+        -- na sua fonte do PLIC; falso não instancia nenhum.
         has_timer              : boolean                  := false;
-        -- Índice da janela do temporizador.
-        timer_id               : natural range 0 to 7     := 0;
         -- Chaves SW da placa, num bloco GPIO (plataformas da FPGA).
         has_switches           : boolean                  := false;
-        -- Índice da janela das chaves.
-        switches_id            : natural range 0 to 7     := 1;
+        -- Índice das chaves na tabela de periféricos: o da janela de base 0x90000000.
+        switches_index         : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"90000000"));
         -- Número de chaves; zero omite o papel.
         switches_width         : natural range 0 to 32    := 10;
         -- Chaves ativas em nível baixo no pino.
         switches_active_low    : boolean                  := false;
         -- Botões KEY da placa, num bloco GPIO (plataformas da FPGA).
         has_keys               : boolean                  := false;
-        -- Índice da janela dos botões.
-        keys_id                : natural range 0 to 7     := 2;
+        -- Índice dos botões na tabela de periféricos: o da janela de base 0xA0000000.
+        keys_index             : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"A0000000"));
         -- Número de botões; zero omite o papel.
         keys_width             : natural range 0 to 32    := 4;
         -- Botões ativos em nível baixo no pino.
         keys_active_low        : boolean                  := false;
         -- Displays de 7 segmentos (plataformas da FPGA).
         has_display            : boolean                  := false;
-        -- Índice da janela do display.
-        display_id             : natural range 0 to 7     := 5;
+        -- Índice do display na tabela de periféricos: o da janela de base 0xD0000000.
+        display_index          : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"D0000000"));
         -- Número de dígitos do display; zero omite o papel.
         display_digits         : natural range 0 to 8     := 6;
         -- Segmentos acesos em nível baixo no pino.
         display_active_low     : boolean                  := true;
         -- UART cuja outra ponta é o hospedeiro no JTAG.
         has_uart_jtag          : boolean                  := false;
-        -- Índice da janela da UART via JTAG.
-        uart_jtag_id           : natural range 0 to 7     := 4;
+        -- Índice da UART via JTAG na tabela de periféricos: o da janela de base 0xC0000000.
+        uart_jtag_index        : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"C0000000"));
         -- UART cuja outra ponta são dois pinos (TX e RX) da placa.
         has_uart_pins          : boolean                  := false;
-        -- Índice da janela da UART via pinos.
-        uart_pins_id           : natural range 0 to 7     := 3;
+        -- Índice da UART via pinos na tabela de periféricos: o da janela de base 0xB0000000.
+        uart_pins_index        : natural                  := index_of(addr_array_t(PERIPH_BASES), addr_from(x"B0000000"));
         -- Polaridade do pino de transmissão do console em pinos.
         uart_tx_invert         : boolean                  := false;
         -- Polaridade do pino de recepção do console em pinos.
@@ -157,15 +157,15 @@ entity modular_sim_top is
         -- Índice da palavra do chip de RAM externo que a porta de depuração lê.
         i_dbg_word_addr  : in    std_logic_vector(23 downto 0) := (others => '0');
         -- Palavra do chip de RAM externo no índice de i_dbg_word_addr.
-        o_dbg_word_data  : out   std_logic_vector(31 downto 0);
+        o_dbg_word_data  : out   word_t;
         -- Habilita geral da RAM interna do núcleo (estágio MEM).
         o_ram_en         : out   std_logic;
         -- Habilita de escrita da RAM interna do núcleo.
         o_ram_wren       : out   std_logic;
         -- Endereço de byte do acesso à RAM interna do núcleo.
-        o_ram_addr       : out   std_logic_vector(31 downto 0);
+        o_ram_addr       : out   addr_t;
         -- Dado de escrita da RAM interna do núcleo.
-        o_ram_wdata      : out   std_logic_vector(31 downto 0);
+        o_ram_wdata      : out   word_t;
         -- Habilita de bytes da escrita na RAM interna do núcleo.
         o_ram_byteena    : out   std_logic_vector(3 downto 0);
         -- Chaves SW (pinos do GPIO); o testbench as conduz.
@@ -214,26 +214,26 @@ architecture behaviour of modular_sim_top is
     signal pll_clk_wb      : std_logic;
 
     -- Busca de instrução: endereço de palavra e habilitação, para a BOOT_MEMORY e a FLASH interna.
-    signal if_addr          : std_logic_vector(29 downto 0);
+    signal if_addr          : std_logic_vector(ADDR_BITS - 3 downto 0);
     -- Habilitação de leitura da busca de instrução ('1' = lê).
     signal if_rden          : std_logic;
     -- Palavra de instrução lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra de instrução lida da FLASH interna.
-    signal flash_data       : std_logic_vector(31 downto 0) := (others => '0');
+    signal flash_data       : word_t := (others => '0');
     -- Endereço de palavra da segunda porta da FLASH interna (estágio MEM).
-    signal flash_addr2      : std_logic_vector(29 downto 0);
+    signal flash_addr2      : std_logic_vector(ADDR_BITS - 3 downto 0);
     -- Habilitação de leitura da segunda porta da FLASH interna ('1' = lê).
     signal flash_rden2      : std_logic;
     -- Palavra de dado lida da segunda porta da FLASH interna (estágio MEM).
-    signal flash_data2      : std_logic_vector(31 downto 0) := (others => '0');
+    signal flash_data2      : word_t := (others => '0');
 
     -- RAM interna do núcleo.
-    signal ram_addr     : std_logic_vector(31 downto 0);
+    signal ram_addr     : addr_t;
     -- Dado de escrita na RAM do núcleo.
-    signal ram_wdata    : std_logic_vector(31 downto 0);
+    signal ram_wdata    : word_t;
     -- Dado lido da RAM entregue ao núcleo.
-    signal ram_rdata    : std_logic_vector(31 downto 0) := (others => '0');
+    signal ram_rdata    : word_t := (others => '0');
     -- Habilitação geral da RAM do núcleo (estágio MEM).
     signal ram_en       : std_logic;
     -- Habilitação de escrita da RAM do núcleo ('1' = escreve).
@@ -248,7 +248,7 @@ architecture behaviour of modular_sim_top is
     signal ram_we_gated : std_logic;
 
     -- Chip de FLASH: endereço de byte do acesso.
-    signal fc_addr                        : std_logic_vector(31 downto 0);
+    signal fc_addr                        : addr_t;
     -- Chip de FLASH: habilitação de leitura ('1' = lê).
     signal fc_rden                        : std_logic;
     -- Chip de FLASH: pedido de linha inteira de cache ('1' = acesso em linha).
@@ -260,16 +260,18 @@ architecture behaviour of modular_sim_top is
     -- Chip de FLASH: ocupado com um acesso ('1' = ocupado).
     signal fc_busy                        : std_logic                     := '0';
     -- Chip de FLASH: palavra lida.
-    signal fc_rdata                       : std_logic_vector(31 downto 0) := (others => '0');
+    signal fc_rdata                       : word_t := (others => '0');
     -- Chip de FLASH: linha lida, barramento largo de 96 bits.
-    signal fc_rdx                         : std_logic_vector(95 downto 0) := (others => '0');
-    -- Endereço de byte e dado lido do armazenamento do chip de FLASH.
-    signal flash_mem_addr, flash_mem_data : std_logic_vector(31 downto 0);
+    signal fc_rdx                         : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
+    -- Endereço de byte do armazenamento do chip de FLASH.
+    signal flash_mem_addr : addr_t;
+    -- Dado lido do armazenamento do chip de FLASH.
+    signal flash_mem_data : word_t;
 
     -- Chip de RAM, porta de dados: endereço de byte do acesso.
-    signal rc_d_addr  : std_logic_vector(31 downto 0);
+    signal rc_d_addr  : addr_t;
     -- Chip de RAM, porta de dados: dado de escrita.
-    signal rc_d_wdata : std_logic_vector(31 downto 0);
+    signal rc_d_wdata : word_t;
     -- Chip de RAM, porta de dados: habilitação de bytes da escrita.
     signal rc_d_be    : std_logic_vector(3 downto 0);
     -- Chip de RAM, porta de dados: habilitação de leitura ('1' = lê).
@@ -281,15 +283,15 @@ architecture behaviour of modular_sim_top is
     -- Chip de RAM, porta de dados: avanço para a próxima palavra da linha ('1' = avança).
     signal rc_d_adv   : std_logic;
     -- Chip de RAM, porta de dados: linha a escrever, barramento largo de 96 bits.
-    signal rc_d_wdx   : std_logic_vector(95 downto 0);
+    signal rc_d_wdx   : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Chip de RAM, porta de dados: acesso concluído ('1' = pronto).
     signal rc_d_ready : std_logic                     := '0';
     -- Chip de RAM, porta de dados: palavra lida.
-    signal rc_d_rdata : std_logic_vector(31 downto 0) := (others => '0');
+    signal rc_d_rdata : word_t := (others => '0');
     -- Chip de RAM, porta de dados: linha lida, barramento largo de 96 bits.
-    signal rc_d_rdx   : std_logic_vector(95 downto 0) := (others => '0');
+    signal rc_d_rdx   : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
     -- Chip de RAM, porta de instruções: endereço de byte do acesso.
-    signal rc_i_addr  : std_logic_vector(31 downto 0);
+    signal rc_i_addr  : addr_t;
     -- Chip de RAM, porta de instruções: habilitação de leitura ('1' = lê).
     signal rc_i_rden  : std_logic;
     -- Chip de RAM, porta de instruções: pedido de linha inteira de cache ('1' = acesso em linha).
@@ -299,9 +301,9 @@ architecture behaviour of modular_sim_top is
     -- Chip de RAM, porta de instruções: acesso concluído ('1' = pronto).
     signal rc_i_ready : std_logic                     := '0';
     -- Chip de RAM, porta de instruções: palavra lida.
-    signal rc_i_rdata : std_logic_vector(31 downto 0) := (others => '0');
+    signal rc_i_rdata : word_t := (others => '0');
     -- Chip de RAM, porta de instruções: linha lida, barramento largo de 96 bits.
-    signal rc_i_rdx   : std_logic_vector(95 downto 0) := (others => '0');
+    signal rc_i_rdx   : std_logic_vector(3 * XLEN - 1 downto 0) := (others => '0');
 
 begin
 
@@ -328,41 +330,42 @@ begin
             rom_end_kib            => rom_end_kib,
             ram_base_kib           => ram_base_kib,
             ram_end_kib            => ram_end_kib,
-            ext_base_kib           => ext_base_kib,
-            periph_base_kib        => periph_base_kib,
             rom_external           => rom_external,
             ram_external           => ram_external,
+            periph_count           => PERIPH_COUNT,
+            periph_bases           => addr_array_t(PERIPH_BASES),
+            periph_masks           => addr_array_t(PERIPH_MASKS),
+            strict_periph          => STRICT_PERIPH,
             has_icache             => has_icache,
             icache_size_bits       => icache_size_bits,
             dcache_size_bits       => dcache_size_bits,
             cache_window_bits      => cache_window_bits,
             hpm_counters           => hpm_counters,
             hpm_width              => hpm_width,
-            periph_slots          => PERIPH_SLOTS,
             clint_tick_cycles      => clint_tick_cycles,
-            clint_id               => clint_id,
-            plic_id                => plic_id,
+            clint_index               => clint_index,
+            plic_index                => plic_index,
             plic_n_sources         => plic_n_sources,
             plic_priority_bits     => plic_priority_bits,
             plic_addr_width        => plic_addr_width,
-            has_timer              => has_timer,
-            timer_id               => timer_id,
+            timer_indices          => only_if(has_timer, TIMER_INDICES),
+            timer_irq_ids          => only_if(has_timer, TIMER_IRQ_IDS),
             has_switches           => has_switches,
-            switches_id            => switches_id,
+            switches_index            => switches_index,
             switches_width         => switches_width,
             switches_active_low    => switches_active_low,
             has_keys               => has_keys,
-            keys_id                => keys_id,
+            keys_index                => keys_index,
             keys_width             => keys_width,
             keys_active_low        => keys_active_low,
             has_display            => has_display,
-            display_id             => display_id,
+            display_index             => display_index,
             display_digits         => display_digits,
             display_active_low     => display_active_low,
             has_uart_jtag          => has_uart_jtag,
-            uart_jtag_id           => uart_jtag_id,
+            uart_jtag_index           => uart_jtag_index,
             has_uart_pins          => has_uart_pins,
-            uart_pins_id           => uart_pins_id,
+            uart_pins_index           => uart_pins_index,
             uart_tx_invert         => uart_tx_invert,
             uart_rx_invert         => uart_rx_invert
         )
@@ -476,7 +479,7 @@ begin
                 size_bytes => ram_size_bytes, ram_file => ram_file
             )
             port map (
-                i_addr     => ram_addr(31 downto 2),
+                i_addr     => ram_addr(ADDR_BITS - 1 downto 2),
                 i_mask     => ram_byteena,
                 i_clk      => pll_clk_idexmem,
                 i_data_in  => ram_wdata,
@@ -519,7 +522,7 @@ begin
                 rom_file => rom_file, size_bytes => rom_size_bytes
             )
             port map (
-                i_addr => flash_mem_addr(31 downto 2),
+                i_addr => flash_mem_addr(ADDR_BITS - 1 downto 2),
                 i_clk  => pll_clk_idexmem,
                 i_re   => '1',
                 o_data => flash_mem_data

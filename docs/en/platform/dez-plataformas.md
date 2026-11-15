@@ -12,7 +12,7 @@ Each combination of memory and peripherals is a platform with its own `platform.
 
 ## 2. The memory combinations
 
-The four combinations come from `rom_external` and `ram_external` of the `memory` section of the `platform.yaml`, and the caches sit on the external side.
+The four combinations come from `rom_external` and `ram_external`, derived from the `memory` section of the `platform.yaml`, and the caches exist only on the bus side.
 
 | Combination | ROM | RAM | Caches | `modular` architecture |
 | :--- | :--- | :--- | :--- | :--- |
@@ -36,7 +36,7 @@ The four combinations come from `rom_external` and `ram_external` of the `memory
 | 9 | `fpga-uart-jtag` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART over JTAG |
 | 10 | `fpga-uart-pins` | `src/cyclone-v/` | `external` | `rv32im_zicclsm_zicntr_zihpm_zifencei` | UART on the pins |
 
-All of them turn on the `Zimop` and `Zicond` extensions through the `extras` field. The platforms with an instruction cache use the profile with `Zifencei`.
+All of them turn on the `Zimop` and `Zicond` extensions in `core.extensions`. The platforms with an instruction cache also list `Zifencei`.
 
 ## 4. Memory maps
 
@@ -53,7 +53,7 @@ The words that the host and the program share (`stdout`, `tohost` and `fromhost`
 
 ## 5. Peripherals and windows
 
-Each peripheral takes a 256 MiB window of the region from `0x80000000`, whose index is in bits 30:28 of the address.
+Each peripheral takes a window of the region from `0x80000000`, whose base and size come from `platform.yaml`. The interconnect hits it through the table of the map package, and the index of each peripheral is its position in the `peripherals` list.
 
 | Peripheral | Block | Board pin | Index | Base | Platforms |
 | :--- | :--- | :--- | ---: | :--- | :--- |
@@ -69,7 +69,7 @@ On the test platforms the peripheral window has no device: a read answers zero a
 
 1. `riscv-tools generate-memory-map` writes, from each `platform.yaml`, the `modular_map_pkg.vhd` package in the folder of the platform, the `runtime/memory_map.h` header, the linker specs file and the linker script of the BOOT_MEMORY (`make generate`, and `make generate-check` verifies).
 2. The package of each platform is called `modular_map_pkg`, the name the top uses, and the source list of the platform carries the package of its own folder. The `<name>_sim_top` component of the `provides` (with the platform name in snake_case) lists the sources in the right order.
-3. The memory combination and the `HAS_*` of the profile reach the top through the package. The peripherals enter through the `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` and `has_uart_pins` generics of the top, which the `sim.parameters` of each platform `config.yaml` turns on, and the window indexes are the `switches_id`, `keys_id`, `display_id`, `uart_jtag_id` and `uart_pins_id` generics. Both UARTs enter through the same `console` entity of the Peripherals (see `Peripherals/docs/en/UART/console.md`): `has_uart_jtag` instantiates the `jtag` backend and `has_uart_pins` the `pinos` backend, and each stays wired to its PLIC source (`UART` at id 1 and `UART_JTAG` at id 2).
+3. The memory combination and the `HAS_*` of the profile reach the top through the package. The peripherals enter through the `has_switches`, `has_keys`, `has_display`, `has_uart_jtag` and `has_uart_pins` generics of the top, which the `sim.parameters` of each platform `config.yaml` turns on, and the table indices of the peripherals are the `switches_index`, `keys_index`, `display_index`, `uart_jtag_index` and `uart_pins_index` generics. Both UARTs enter through the same `console` entity of the Peripherals (see `Peripherals/docs/en/UART/console.md`): `has_uart_jtag` instantiates the `jtag` backend and `has_uart_pins` the `pinos` backend, and each stays wired to its PLIC source (`UART` at id 1 and `UART_JTAG` at id 2).
 4. The peripheral ports of the top are `io_sw` and `io_key` (the GPIO blocks), `o_display_hex` and `o_display_value`, the `i_uart_*` and `o_uart_tdo` ports of the Virtual JTAG and the `i_uart_rx` and `o_uart_tx` pins. The I/O roles take their width and polarity from generics (`switches_width`, `keys_width`, `display_digits`, `*_active_low`), with the DE0-CV values as default; width zero omits the role (see the [SoC](../soc/soc.md) document).
 
 ## 7. How to use

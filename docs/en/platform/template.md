@@ -13,7 +13,7 @@ The map is in `src/simulation/template/platform.yaml`, the source of every value
 | BOOT_MEMORY | `0x00000000` | 4 KiB | executable ROM |
 | ROM | `0x00001000` | 28 KiB | executable ROM |
 | RAM | `0x00008000` | 32 KiB | RAM |
-| UART over JTAG (optional) | `0xC0000000` | 256 MiB window | peripheral |
+| UART over JTAG (optional) | `0xC0000000` | 1 KiB window | peripheral |
 
 The 1032 bytes of `stdout`, `tohost` and `fromhost` take the top of the RAM, from `0x0000FBE0` to `0x00010000`.
 

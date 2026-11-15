@@ -5,16 +5,17 @@
 -- aqui como um mestre AXI4 com dois escravos atrás. A cache move uma linha como
 -- uma rajada de quatro beats; todo o resto é um único beat.
 --
---   bit 31 = 0   o espaço da SDRAM: pela cache de dados, em linhas de quatro
---                palavras, exceto os últimos 4 KB (0x43FFF000 a 0x43FFFFFF), que
+--   mem_base a mem_last   o espaço da SDRAM: pela cache de dados, em linhas de quatro
+--                palavras, exceto os últimos 4 KB (os da página de mem_last), que
 --                não passam pela cache: as palavras que o hospedeiro compartilha
 --                com o programa (tohost, fromhost,
 --                stdout) moram ali, e o hospedeiro as lê e escreve pela porta de
 --                debug da SDRAM
---   bit 31 = 1   uma janela de periféricos (bits 30:28 o periférico, 15:2 a
---                palavra), sem cache
+--   janelas       uma janela de periféricos da tabela (endereço and máscara = base,
+--                bits periph_addr_width+1:2 a palavra), sem cache
+--   nenhum        o roteador responde DECERR e o o_error sobe junto com o ready
 --
--- O periférico 7 é o controle da própria cache, não um externo: uma escrita na
+-- O periférico de índice cache_ctrl_index é o controle da própria cache, não um externo: uma escrita na
 -- sua primeira palavra pede à cache que escreva de volta toda linha suja (um
 -- programa faz isso antes de terminar, para o hospedeiro ler o que o programa
 -- escreveu), e uma leitura dele dá 1 enquanto isso está em andamento e 0 no
@@ -34,13 +35,34 @@
 
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use work.config_pkg.all;
+use work.interconnect_pkg.all;
 
 entity ext_axi_interconnect is
     generic (
-        -- Bits 31:26 dos endereços da SDRAM (0x40000000).
-        base          : std_logic_vector(5 downto 0) := "010000";
+        -- Bits 31:26 dos endereços da SDRAM (0x40000000), para a cache de dados.
+        base              : std_logic_vector(5 downto 0) := "010000";
         -- Verdadeiro: a cache escreve também na memória a cada store (veja a dcache).
-        write_through : boolean                      := false
+        write_through     : boolean                      := false;
+        -- Primeiro endereço da SDRAM, o escravo 0 do roteador.
+        mem_base          : addr_t                       := std_logic_vector(resize(unsigned'(x"40000000"), ADDR_BITS));
+        -- Último endereço da SDRAM, inclusive.
+        mem_last          : addr_t                       := std_logic_vector(resize(unsigned'(x"43FFFFFF"), ADDR_BITS));
+        -- Número de janelas de periféricos da tabela (PERIPH_COUNT do pacote de mapa da plataforma).
+        periph_count      : positive                     := DEFAULT_PERIPH_COUNT;
+        -- Base de cada janela (PERIPH_BASES).
+        periph_bases      : addr_array_t                 := default_bases;
+        -- Máscara de cada janela (PERIPH_MASKS).
+        periph_masks      : addr_array_t                 := default_masks;
+        -- Bytes de registradores de cada janela (PERIPH_SIZES).
+        periph_sizes      : addr_array_t                 := default_sizes;
+        -- Um acesso ao padding de uma janela é respondido com SLVERR.
+        strict_periph     : boolean                      := true;
+        -- Largura do deslocamento de palavra entregue ao periférico.
+        periph_addr_width : positive range 2 to 30       := 14;
+        -- Índice da tabela que é o controle da própria cache, e não um periférico externo.
+        cache_ctrl_index  : natural                      := DEFAULT_PERIPH_COUNT - 1
     );
     port (
         -- Clock do módulo.
@@ -49,9 +71,9 @@ entity ext_axi_interconnect is
         i_rst : in    std_logic;
 
         -- Endereço do acesso.
-        i_addr        : in    std_logic_vector(31 downto 0);
+        i_addr        : in    addr_t;
         -- Dado de escrita.
-        i_wdata       : in    std_logic_vector(31 downto 0);
+        i_wdata       : in    word_t;
         -- Habilita de bytes da escrita, um bit por byte.
         i_byteena     : in    std_logic_vector(3 downto 0);
         -- Pedido de leitura ('1' = lê).
@@ -62,8 +84,10 @@ entity ext_axi_interconnect is
         i_mem_advance : in    std_logic;
         -- Acesso concluído, o dado lido é válido ('1').
         o_ready       : out   std_logic;
+        -- Acesso concluído com resposta de erro do barramento (DECERR ou SLVERR), válida junto com o ready ('1').
+        o_error       : out   std_logic;
         -- Dado lido.
-        o_rdata       : out   std_logic_vector(31 downto 0);
+        o_rdata       : out   word_t;
 
         -- Pede a escrita de todas as linhas sujas na memória ('1').
         i_flush      : in    std_logic := '0';
@@ -77,7 +101,7 @@ entity ext_axi_interconnect is
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_awready : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: endereço da transferência.
-        o_m0_awaddr  : out   std_logic_vector(31 downto 0);
+        o_m0_awaddr  : out   addr_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: número de beats da rajada menos um.
         o_m0_awlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de escrita: tamanho de cada beat da rajada (log2 de bytes).
@@ -89,7 +113,7 @@ entity ext_axi_interconnect is
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: destino pronto para aceitar a transferência ('1').
         i_m0_wready  : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: palavra de dados.
-        o_m0_wdata   : out   std_logic_vector(31 downto 0);
+        o_m0_wdata   : out   word_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: habilita de bytes.
         o_m0_wstrb   : out   std_logic_vector(3 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de escrita: último beat da rajada ('1').
@@ -105,7 +129,7 @@ entity ext_axi_interconnect is
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: destino pronto para aceitar a transferência ('1').
         i_m0_arready : in    std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: endereço da transferência.
-        o_m0_araddr  : out   std_logic_vector(31 downto 0);
+        o_m0_araddr  : out   addr_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: número de beats da rajada menos um.
         o_m0_arlen   : out   std_logic_vector(7 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de endereço de leitura: tamanho de cada beat da rajada (log2 de bytes).
@@ -117,24 +141,24 @@ entity ext_axi_interconnect is
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: origem pronta para aceitar o dado ('1').
         o_m0_rready  : out   std_logic;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: dados.
-        i_m0_rdata   : in    std_logic_vector(31 downto 0);
+        i_m0_rdata   : in    word_t;
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: código de resposta.
         i_m0_rresp   : in    std_logic_vector(1 downto 0);
         -- Porta mestre AXI4 0 (SDRAM), canal de dados de leitura: último beat da rajada ('1').
         i_m0_rlast   : in    std_logic;
 
         -- Janela de periféricos: deslocamento de palavra dentro do periférico.
-        o_p_addr    : out   std_logic_vector(13 downto 0);
+        o_p_addr    : out   std_logic_vector(periph_addr_width - 1 downto 0);
         -- Janela de periféricos: dado de escrita.
-        o_p_wdata   : out   std_logic_vector(31 downto 0);
+        o_p_wdata   : out   word_t;
         -- Janela de periféricos: habilita de bytes da escrita.
         o_p_byteena : out   std_logic_vector(3 downto 0);
-        -- Janela de periféricos: pulso de escrita, um bit por periférico (one-hot com o id).
-        o_p_we      : out   std_logic_vector(7 downto 0);
-        -- Janela de periféricos: pulso de leitura, um bit por periférico (one-hot com o id).
-        o_p_re      : out   std_logic_vector(7 downto 0);
+        -- Janela de periféricos: pulso de escrita, um bit por periférico (one-hot com o índice da tabela).
+        o_p_we      : out   std_logic_vector(periph_count - 1 downto 0);
+        -- Janela de periféricos: pulso de leitura, um bit por periférico (one-hot com o índice da tabela).
+        o_p_re      : out   std_logic_vector(periph_count - 1 downto 0);
         -- Janela de periféricos: dados lidos, 32 bits por periférico.
-        i_p_rdata   : in    std_logic_vector(8 * 32 - 1 downto 0)
+        i_p_rdata   : in    std_logic_vector(periph_count * XLEN - 1 downto 0)
     );
 end entity ext_axi_interconnect;
 
@@ -148,16 +172,16 @@ architecture rtl of ext_axi_interconnect is
     signal own       : std_logic := '0';
     -- A cache está ocupada com um flush.
     signal c_busy    : std_logic;
-    -- Pedido de flush à cache, gerado pela escrita no periférico 7.
+    -- Pedido de flush à cache, gerado pela escrita no controle da cache.
     signal flush_i   : std_logic;
-    -- Pulsos de escrita da janela de periféricos, antes do periférico 7.
-    signal p_we_i    : std_logic_vector(7 downto 0);
-    -- Pulsos de leitura da janela de periféricos, antes do periférico 7.
-    signal p_re_i    : std_logic_vector(7 downto 0);
+    -- Pulsos de escrita da janela de periféricos, antes do controle da cache.
+    signal p_we_i    : std_logic_vector(periph_count - 1 downto 0);
+    -- Pulsos de leitura da janela de periféricos, antes do controle da cache.
+    signal p_re_i    : std_logic_vector(periph_count - 1 downto 0);
     -- Dado de escrita da janela de periféricos.
-    signal p_wdata_i : std_logic_vector(31 downto 0);
-    -- Dados lidos dos periféricos, com o do periférico 7 acrescentado.
-    signal p_rdata_i : std_logic_vector(8 * 32 - 1 downto 0);
+    signal p_wdata_i : word_t;
+    -- Dados lidos dos periféricos, com o do controle da cache acrescentado.
+    signal p_rdata_i : std_logic_vector(periph_count * XLEN - 1 downto 0);
 
     -- Pedido de leitura à cache.
     signal c_rden    : std_logic;
@@ -166,13 +190,13 @@ architecture rtl of ext_axi_interconnect is
     -- Acesso à cache concluído.
     signal c_ready   : std_logic;
     -- Dado lido da cache.
-    signal c_rdata   : std_logic_vector(31 downto 0);
+    signal c_rdata   : word_t;
     -- Lado da memória da cache: endereço.
-    signal d_addr    : std_logic_vector(31 downto 0);
+    signal d_addr    : addr_t;
     -- Lado da memória da cache: dado de escrita.
-    signal d_wdata   : std_logic_vector(31 downto 0);
+    signal d_wdata   : word_t;
     -- Lado da memória da cache: dado lido.
-    signal d_rdata   : std_logic_vector(31 downto 0);
+    signal d_rdata   : word_t;
     -- Lado da memória da cache: habilita de bytes.
     signal d_be      : std_logic_vector(3 downto 0);
     -- Lado da memória da cache: pedido de leitura.
@@ -186,16 +210,16 @@ architecture rtl of ext_axi_interconnect is
     -- Lado da memória da cache: acesso de linha.
     signal d_line    : std_logic;
     -- Lado da memória da cache: palavras 1 a 3 da escrita de linha.
-    signal d_wdata_x : std_logic_vector(95 downto 0);
+    signal d_wdata_x : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Lado da memória da cache: palavras 1 a 3 da leitura de linha.
-    signal d_rdata_x : std_logic_vector(95 downto 0);
+    signal d_rdata_x : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Entrada da ponte mestre AXI4: endereço.
-    signal b_addr    : std_logic_vector(31 downto 0);
+    signal b_addr    : addr_t;
     -- Entrada da ponte mestre AXI4: dado de escrita.
-    signal b_wdata   : std_logic_vector(31 downto 0);
+    signal b_wdata   : word_t;
     -- Saída da ponte mestre AXI4: dado lido.
-    signal b_rdata   : std_logic_vector(31 downto 0);
+    signal b_rdata   : word_t;
     -- Entrada da ponte mestre AXI4: habilita de bytes.
     signal b_be      : std_logic_vector(3 downto 0);
     -- Entrada da ponte mestre AXI4: pedido de leitura.
@@ -211,9 +235,9 @@ architecture rtl of ext_axi_interconnect is
     -- Entrada da ponte mestre AXI4: acesso de linha.
     signal b_line    : std_logic;
     -- Entrada da ponte mestre AXI4: palavras 1 a 3 da escrita de linha.
-    signal b_wdata_x : std_logic_vector(95 downto 0);
+    signal b_wdata_x : std_logic_vector(3 * XLEN - 1 downto 0);
     -- Saída da ponte mestre AXI4: palavras 1 a 3 da leitura de linha.
-    signal b_rdata_x : std_logic_vector(95 downto 0);
+    signal b_rdata_x : std_logic_vector(3 * XLEN - 1 downto 0);
 
     -- Barramento AXI4 do mestre, canal de endereço de escrita: validade da transferência ('1' = válida).
     signal awvalid : std_logic;
@@ -236,13 +260,13 @@ architecture rtl of ext_axi_interconnect is
     -- Barramento AXI4 do mestre, canal de dados de leitura: destino pronto para aceitar a transferência ('1').
     signal rready  : std_logic;
     -- Barramento AXI4 do mestre, canal de endereço de escrita: endereço do primeiro beat.
-    signal awaddr  : std_logic_vector(31 downto 0);
+    signal awaddr  : addr_t;
     -- Barramento AXI4 do mestre, canal de dados de escrita: dados.
-    signal wdata_a : std_logic_vector(31 downto 0);
+    signal wdata_a : word_t;
     -- Barramento AXI4 do mestre, canal de endereço de leitura: endereço do primeiro beat.
-    signal araddr  : std_logic_vector(31 downto 0);
+    signal araddr  : addr_t;
     -- Barramento AXI4 do mestre, canal de dados de leitura: dados.
-    signal rdata_a : std_logic_vector(31 downto 0);
+    signal rdata_a : word_t;
     -- Barramento AXI4 do mestre, canal de endereço de escrita: número de beats da rajada menos um.
     signal awlen   : std_logic_vector(7 downto 0);
     -- Barramento AXI4 do mestre, canal de endereço de leitura: número de beats da rajada menos um.
@@ -303,13 +327,13 @@ architecture rtl of ext_axi_interconnect is
     -- Barramento AXI4 do escravo 1 (periféricos), canal de dados de leitura: último beat da rajada ('1').
     signal m1_rlast   : std_logic;
     -- Barramento AXI4 do escravo 1 (periféricos), canal de endereço de escrita: endereço do primeiro beat.
-    signal m1_awaddr  : std_logic_vector(31 downto 0);
+    signal m1_awaddr  : addr_t;
     -- Barramento AXI4 do escravo 1 (periféricos), canal de dados de escrita: dados.
-    signal m1_wdata   : std_logic_vector(31 downto 0);
+    signal m1_wdata   : word_t;
     -- Barramento AXI4 do escravo 1 (periféricos), canal de endereço de leitura: endereço do primeiro beat.
-    signal m1_araddr  : std_logic_vector(31 downto 0);
+    signal m1_araddr  : addr_t;
     -- Barramento AXI4 do escravo 1 (periféricos), canal de dados de leitura: dados.
-    signal m1_rdata   : std_logic_vector(31 downto 0);
+    signal m1_rdata   : word_t;
     -- Barramento AXI4 do escravo 1 (periféricos), canal de endereço de escrita: número de beats da rajada menos um.
     signal m1_awlen   : std_logic_vector(7 downto 0);
     -- Barramento AXI4 do escravo 1 (periféricos), canal de endereço de leitura: número de beats da rajada menos um.
@@ -332,11 +356,13 @@ architecture rtl of ext_axi_interconnect is
     -- Origem do dado lido: 00 cache, 01 ponte AXI (acesso direto), outro valor: o dado guardado em hold_q.
     signal sel    : std_logic_vector(1 downto 0)  := "00";
     -- Último dado de load completado, entregue enquanto nenhum load novo completa.
-    signal hold_q : std_logic_vector(31 downto 0) := (others => '0');
+    signal hold_q : word_t := (others => '0');
 
 begin
 
-    mmio   <= '1' when i_addr(31) = '1' or i_addr(25 downto 12) = "11111111111111" else '0';
+    -- passa pela cache só o que cai na SDRAM, menos a última página de 4 KiB e o que nenhum escravo atende
+    mmio   <= '0' when unsigned(i_addr) >= unsigned(mem_base) and unsigned(i_addr) <= unsigned(mem_last)
+                          and i_addr(ADDR_BITS - 1 downto 12) /= mem_last(ADDR_BITS - 1 downto 12) else '1';
     -- o acesso do próprio core toma o mestre quando a cache não está em flush, ou quando já o tem
     direct <= mmio and (i_rden or i_wren) and (own or not c_busy);
     o_busy <= c_busy;
@@ -359,7 +385,7 @@ begin
             o_ready       => c_ready,
             o_rdata       => c_rdata,
             i_flush       => flush_i,
-            i_invalidate  => p_wdata_i(1) and p_we_i(7),
+            i_invalidate  => p_wdata_i(1) and p_we_i(cache_ctrl_index),
             o_flush_done  => o_flush_done,
             o_busy        => c_busy,
             o_d_addr      => d_addr,
@@ -391,6 +417,7 @@ begin
     d_rdata_x <= b_rdata_x;
 
     o_ready <= (b_ready and direct) when mmio = '1' else c_ready;
+    o_error <= b_err and direct;
     o_rdata <= c_rdata when sel = "00" else
                b_rdata when sel = "01" else
                hold_q;
@@ -471,6 +498,13 @@ begin
         );
 
     u_router : entity work.axi_router
+        generic map (
+            mem_base     => mem_base,
+            mem_last     => mem_last,
+            periph_count => periph_count,
+            periph_bases => periph_bases,
+            periph_masks => periph_masks
+        )
         port map (
             i_clk        => i_clk,
             i_rst        => i_rst,
@@ -552,6 +586,14 @@ begin
         );
 
     u_periph : entity work.axi_slave_periph_bank
+        generic map (
+            periph_count      => periph_count,
+            periph_bases      => periph_bases,
+            periph_masks      => periph_masks,
+            periph_sizes      => periph_sizes,
+            strict_periph     => strict_periph,
+            periph_addr_width => periph_addr_width
+        )
         port map (
             i_clk       => i_clk,
             i_rst       => i_rst,
@@ -588,13 +630,23 @@ begin
             i_p_rdata   => p_rdata_i
         );
 
-    -- o periférico 7 é o controle da cache
-    flush_i                                 <= i_flush or p_we_i(7);
-    o_p_wdata                               <= p_wdata_i;
-    o_p_we                                  <= p_we_i and "01111111";
-    o_p_re                                  <= p_re_i and "01111111";
-    p_rdata_i(7 * 32)                       <= c_busy;
-    p_rdata_i(8 * 32 - 1 downto 7 * 32 + 1) <= (others => '0');
-    p_rdata_i(7 * 32 - 1 downto 0)          <= i_p_rdata(7 * 32 - 1 downto 0);
+    -- o índice cache_ctrl_index é o controle da cache
+    flush_i   <= i_flush or p_we_i(cache_ctrl_index);
+    o_p_wdata <= p_wdata_i;
+
+    p_ctrl_mask : process (p_we_i, p_re_i, i_p_rdata, c_busy) is
+    begin
+
+        o_p_we    <= p_we_i;
+        o_p_re    <= p_re_i;
+        p_rdata_i <= i_p_rdata;
+
+        o_p_we(cache_ctrl_index) <= '0';
+        o_p_re(cache_ctrl_index) <= '0';
+
+        p_rdata_i(XLEN * cache_ctrl_index + XLEN - 1 downto XLEN * cache_ctrl_index) <= (others => '0');
+        p_rdata_i(XLEN * cache_ctrl_index)                                           <= c_busy;
+
+    end process p_ctrl_mask;
 
 end architecture rtl;

@@ -5,7 +5,16 @@
 # The source of truth of the generics of modular_sim_top and of the linker script of the programs. The
 # `memory` section is the combination of this platform; a test replaces it for one run (`--memory`).
 platform: fpga-integrated
-profile: rv32im_zicclsm_zicntr_zihpm
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zimop
+    - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
 
 regions:
@@ -22,23 +31,22 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
-# the config_pkg carries it as STRICT_PERIPH.
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
 strict_periph: true
 
-# The slots of the peripheral window (bits 30:28 of the address, base 0x80000000 | id << 28).
+# The peripheral windows (the base is where the program sees the peripheral; the window is the smallest power of
+# two, of at least 16 bytes, that holds the registers).
 peripherals:
-  - {name: SWITCHES, offset: 0x10000000, id: 1, size: 64, padding: 0x0FFFFFC0}   # the ten slide switches SW (GPIO)
-  - {name: KEYS, offset: 0x20000000, id: 2, size: 64, padding: 0x0FFFFFC0}   # the four push buttons KEY (GPIO)
-  - {name: DISPLAY, offset: 0x50000000, id: 5, size: 1K, padding: 0x0FFFFC00}   # the six seven-segment displays HEX0 to HEX5 (display)
+  - {name: SWITCHES, base: 0x90000000, size: 64}   # the ten slide switches SW (GPIO)
+  - {name: KEYS, base: 0xA0000000, size: 64}   # the four push buttons KEY (GPIO)
+  - {name: DISPLAY, base: 0xD0000000, size: 1K}   # the six seven-segment displays HEX0 to HEX5 (display)
 
 memory:
   rom:    {external: false}
   ram:    {external: false}
   icache: {enabled: false}
   dcache: {enabled: false}
-
-extras: [Zimop, Zicond]
 
 generate:
   specs: {path: src/cyclone-v/fpga-integrated/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}

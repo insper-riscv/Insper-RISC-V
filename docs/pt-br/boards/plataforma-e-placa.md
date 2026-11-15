@@ -31,7 +31,15 @@ platform: de2-115
 board: auto
 boards: [de2-115]
 top: Insper-RISC-V/de2_115_board
-profile: rv32im_zicclsm_zicntr_zihpm_zifencei
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
 regions:
   - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,    kind: rom, exec: true}
   - {name: FLASH,       base: 0x00001000, size: 1024K, kind: rom, exec: true}

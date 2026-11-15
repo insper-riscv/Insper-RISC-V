@@ -12,6 +12,9 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use work.utils_pkg.all;
 use work.internal_mem_map_pkg.all;
+use work.config_pkg.addr_t;
+use work.config_pkg.word_t;
+use work.interconnect_pkg.all;
 
 entity core_fpga_test is
     generic (
@@ -38,22 +41,22 @@ architecture behaviour of core_fpga_test is
 
     -- IF stage: barramento unico compartilhado por BOOT_MEMORY e FLASH
     -- (ver rv32im_pipeline_core.vhd is_boot_memory_if/is_boot_memory_d)
-    signal if_addr          : std_logic_vector(31 downto 0);
+    signal if_addr          : addr_t;
     -- Habilitação de leitura da busca de instrução ('1' = lê).
     signal if_rden          : std_logic;
     -- Palavra de instrução lida da BOOT_MEMORY.
-    signal boot_memory_data : std_logic_vector(31 downto 0);
+    signal boot_memory_data : word_t;
     -- Palavra de instrução lida da FLASH.
-    signal flash_data       : std_logic_vector(31 downto 0);
+    signal flash_data       : word_t;
 
     -- Estagio MEM: leitura da FLASH como dado, para o copy-loop de .data
     -- em boot_memory.S (ver rv32im_pipeline_core.vhd flash_addr2). E' a porta B
     -- da unica copia da FLASH, que o carregador JTAG assume com o core parado.
-    signal flash_addr2 : std_logic_vector(31 downto 0);
+    signal flash_addr2 : addr_t;
     -- Habilitação de leitura da segunda porta da FLASH ('1' = lê).
     signal flash_rden2 : std_logic;
     -- Palavra de dado lida da segunda porta da FLASH (estágio MEM).
-    signal flash_data2 : std_logic_vector(31 downto 0);
+    signal flash_data2 : word_t;
 
     -- Carregador da FLASH: sinais entre a porta JTAG e o carregador.
     signal flash_cmd_tog    : std_logic;
@@ -62,25 +65,25 @@ architecture behaviour of core_fpga_test is
     -- Endereço do comando enviado ao carregador da FLASH pelo JTAG.
     signal flash_cmd_addr   : std_logic_vector(23 downto 0);
     -- Dado do comando enviado ao carregador da FLASH pelo JTAG.
-    signal flash_cmd_data   : std_logic_vector(31 downto 0);
+    signal flash_cmd_data   : word_t;
     -- Toggle de conclusão do comando, do carregador para o JTAG.
     signal flash_done_tog   : std_logic;
     -- Endereço da resposta do carregador da FLASH.
     signal flash_rsp_addr   : std_logic_vector(23 downto 0);
     -- Dado da resposta do carregador da FLASH.
-    signal flash_rsp_data   : std_logic_vector(31 downto 0);
+    signal flash_rsp_data   : word_t;
     -- Status da resposta do carregador da FLASH.
     signal flash_rsp_status : std_logic_vector(7 downto 0);
     -- Core parado pelo carregador: entra no reset do core.
     signal flash_halt       : std_logic;
     -- Porta B da FLASH, ja' comutada entre o estagio MEM e o carregador.
-    signal flash_address_b  : std_logic_vector(log2_exact(ROM_STORAGE_BYTES) - 3 downto 0);
+    signal flash_address_b  : std_logic_vector(log2_exact(FLASH_STORAGE_BYTES) - 3 downto 0);
     -- Habilitação de leitura da porta B da FLASH ('1' = lê).
     signal flash_rden_b     : std_logic;
     -- Habilitação de escrita da porta B da FLASH ('1' = escreve).
     signal flash_wren_b     : std_logic;
     -- Dado de escrita da porta B da FLASH, vindo do carregador.
-    signal flash_data_b     : std_logic_vector(31 downto 0);
+    signal flash_data_b     : word_t;
 
     -- O In-System Memory Content Editor (JTAG) da RAM a endereça como um vetor
     -- iniciado em zero e relativo a memory.ram_base (ver a docstring de
@@ -104,11 +107,11 @@ architecture behaviour of core_fpga_test is
     signal   ram_word_addr : unsigned(log2_exact(RAM_STORAGE_BYTES) - 3 downto 0);
 
     -- Endereço de byte do acesso à RAM do núcleo.
-    signal ram_addr    : std_logic_vector(31 downto 0);
+    signal ram_addr    : addr_t;
     -- Dado de escrita na RAM do núcleo.
-    signal ram_wdata   : std_logic_vector(31 downto 0);
+    signal ram_wdata   : word_t;
     -- Dado lido da RAM entregue ao núcleo.
-    signal ram_rdata   : std_logic_vector(31 downto 0);
+    signal ram_rdata   : word_t;
     -- Habilitação geral da RAM do núcleo (estágio MEM).
     signal ram_en      : std_logic;
     -- Habilitação de escrita da RAM do núcleo ('1' = escreve).
@@ -143,18 +146,20 @@ architecture behaviour of core_fpga_test is
     -- Leitura da UART ('1' = lê; janela selecionada e leitura do núcleo).
     signal uart_read     : std_logic;
     -- Dado lido da UART.
-    signal uart_rdata    : std_logic_vector(31 downto 0);
+    signal uart_rdata    : word_t;
     -- Leitura da UART atrasada um ciclo, que acompanha a resposta registrada.
     signal uart_read_d   : std_logic;
     -- Dado lido da UART registrado, devolvido ao núcleo no ciclo seguinte.
-    signal uart_rdata_d  : std_logic_vector(31 downto 0);
+    signal uart_rdata_d  : word_t;
 
     -- Porta externa do core, usada pela janela de periféricos.
-    signal sdram_addr    : std_logic_vector(31 downto 0);
+    signal sdram_addr    : addr_t;
     -- Dado de escrita do barramento externo do núcleo.
-    signal sdram_wdata   : std_logic_vector(31 downto 0);
+    signal sdram_wdata   : word_t;
     -- Dado lido do barramento externo devolvido ao núcleo.
-    signal sdram_rdata   : std_logic_vector(31 downto 0);
+    signal sdram_rdata   : word_t;
+    -- O acesso externo do núcleo não cai na janela da UART (nenhum escravo o atende): falha de acesso.
+    signal ext_error     : std_logic;
     -- Habilitação de bytes da escrita no barramento externo.
     signal sdram_byteena : std_logic_vector(3 downto 0);
     -- Habilitação de leitura do barramento externo ('1' = lê).
@@ -191,9 +196,10 @@ begin
 
     -- Seleciona a janela de 256 MiB da UART (UART_BASE, do pacote gerado do platform.yaml).
     uart_selected <= '1'
-                     when sdram_addr(31 downto 28) = UART_BASE(31 downto 28) else
+                     when window_hit(sdram_addr, UART_BASE, PERIPH_MASKS(UART_INDEX)) else
                      '0';
 
+    ext_error  <= (sdram_rden or sdram_wren) and not uart_selected;
     uart_write <= sdram_wren and uart_selected;
     uart_read  <= sdram_rden and uart_selected;
 
@@ -257,6 +263,7 @@ begin
             o_ext_wren    => sdram_wren,
             i_ext_rdata   => sdram_rdata,
             i_ext_ready   => '1',
+            i_ext_error   => ext_error,
             o_mem_advance => open,
 
             o_trap_take => core_trap
@@ -323,11 +330,11 @@ begin
     -- BOOT_MEMORY continua so' de porta unica.
     u_flash : entity work.flash
         generic map (
-            size_bytes => ROM_STORAGE_BYTES
+            size_bytes => FLASH_STORAGE_BYTES
         )
         port map (
             i_clk_a     => pll_clk_if,
-            i_address_a => if_addr(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+            i_address_a => if_addr(log2_exact(FLASH_STORAGE_BYTES) - 1 downto 2),
             i_rden_a    => if_rden,
             o_q_a       => flash_data,
             i_clk_b     => pll_clk_idexmem,
@@ -341,7 +348,7 @@ begin
     -- Carregador: dono da porta B com o core parado, e quem para o core.
     u_flash_loader : entity work.flash_loader
         generic map (
-            addr_width => log2_exact(ROM_STORAGE_BYTES) - 2
+            addr_width => log2_exact(FLASH_STORAGE_BYTES) - 2
         )
         port map (
             i_clk         => pll_clk_idexmem,
@@ -355,7 +362,7 @@ begin
             o_rsp_data    => flash_rsp_data,
             o_rsp_status  => flash_rsp_status,
             o_halt        => flash_halt,
-            i_mem_address => flash_addr2(log2_exact(ROM_STORAGE_BYTES) - 1 downto 2),
+            i_mem_address => flash_addr2(log2_exact(FLASH_STORAGE_BYTES) - 1 downto 2),
             i_mem_rden    => flash_rden2,
             o_address_b   => flash_address_b,
             o_rden_b      => flash_rden_b,
