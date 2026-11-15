@@ -26,7 +26,7 @@ Each supported board has a folder `boards/<board>/` at the repository root, with
 | `jtag.samd21`, `jtag.external_pads` | Only for `samd21-usbblaster`: the sketch that exposes the emulated cable and the JTAG pads for an external cable |
 | `resources` | `logic`, `block_ram`, `multipliers`, `plls`, `user_pins` (`null` when the capacity is unknown) |
 | `clocks.inputs`, `clocks.reference`, `clocks.reset` | Input clocks (`name`, `signal`, `mhz`), the one that feeds the PLL, and the user reset with polarity |
-| `io.<role>` | Roles `leds`, `switches`, `keys` and `display`, each with `signals` and `active` (`high` or `low`) |
+| `io.<role>` | Roles `leds`, `switches`, `keys`, `display` and `leds_green`, each with `signals` and `active` (`high` or `low`), and the general-use roles `gpio`, `ex_io`, `hsmc` and `clock_extra`, with no polarity, with `signals` (one group or a list of groups, numbered in list order) and `bidirectional: true` when the pins are I/O |
 | `memories` | `sdram`, `sram`, `nor`, `onchip_flash` and `serial_flash`, each with the catalog chip and the signals |
 | `console` | `default: jtag` (JTAG UART) and `uart: {rx, tx}` only when the board has a UART on pins |
 | `pins` | Path of `pins.yaml` |

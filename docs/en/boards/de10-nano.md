@@ -80,6 +80,18 @@ A backend is justified only if the DE10-Nano must run the 1 MB profile. The reco
 | N1 | Fit and timing analysis | `quartus_fit` and `quartus_sta` over the same project |
 | N2 | Live board | Needs the USB-Blaster II cable to enumerate |
 
+## 8. Expansion pins
+
+Both boards have the same roles. The `gpio` role is bidirectional and numbers `GPIO_0` from 0 to 35, `GPIO_1` from 36 to 71 and the Arduino from 72 to 87. `FPGA_CLK3_50` shares its pin with `FPGA_CLK1_50` (table 3-5).
+
+| Role | Signals | Pins | Manual | Level |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO_0[35:0]`, `GPIO_1[35:0]` | 72 | 3.6.2, table 3-10 | 3.3 V |
+| `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6.3, table 3-11 | 3.3 V |
+| `clock_extra` | `FPGA_CLK2_50`, `FPGA_CLK3_50` | 2 | 3.5, table 3-5 | 3.3 V |
+
+Only in `pins.yaml`, with no role: `ARDUINO_RESET_N` and the LTC2308 ADC (section 3.6.4, table 3-12), plus the ADV7513 HDMI of the DE10-Nano (section 3.6.5). Everything the 3.7 sections list (Ethernet, USB, SD, UART, DDR3, G-sensor and LTC connector) belongs to the HPS and is not part of the FPGA catalog.
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../LICENSE).

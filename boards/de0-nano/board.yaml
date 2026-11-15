@@ -24,6 +24,9 @@ io:
   leds:     {signals: "LED[7:0]", active: high}
   switches: {signals: "DIP[3:0]", active: high}
   keys:     {signals: "KEY[1:0]", active: low}
+  gpio:
+    signals: ["GPIO_0[33:0]", "GPIO_1[33:0]", "GPIO_2[12:0]"]
+    bidirectional: true
 memories:
   sdram:
     chip: IS42S16160B-7
@@ -38,12 +41,14 @@ console:
   default: jtag
 pins: pins.yaml
 notes:
-  - "A polaridade ativa em nivel baixo do KEY[0] e inferida: conferir no esquematico se o botao tem pull-up e fecha para o terra."
+  - "Polaridades lidas no manual (secao 3.2): o botao KEY da nivel baixo ao ser apertado, o LED acende em nivel alto e a chave DIP da nivel alto na posicao de baixo."
   - "Sem botao de reset dedicado: o reset do SoC e o KEY[0]. Sem display, VGA, SD nem UART; o unico console e a JTAG UART."
   - "O chip da SDRAM (IS42S16160B-7) e inferido de uma porta VHDL de terceiros; o manual so da 16M x 16."
   - "A capacidade do EPCS varia por revisao da placa (EPCS4, EPCS16 ou EPCS64); 8 MiB vale para o manual v1.9 e deve ser conferido pelo ID JEDEC. O EPCS guarda tambem o bitstream (cerca de 0,75 MB)."
   - "Logica, M9K, multiplicadores e PLLs vem de fonte secundaria (listagem de distribuidor); user_pins (153) vem do manual."
   - "Os multiplicadores sao contados em elementos de 9 bits (66 de 18x18)."
-  - "Todos os bancos sao 3.3 V. DIP[3:0] leva nivel alto na posicao baixa (manual, tabela 3-3)."
+  - "Todos os bancos sao 3.3 V. DIP[3:0] leva nivel alto na posicao baixa (manual, secao 3.2, tabela 3-3)."
+  - "Expansao (secao 3.5): dois cabecalhos de 40 pinos com GPIO_0 e GPIO_1 (tabelas 3-6 e 3-7), cada um com 36 pinos do FPGA, dos quais 34 sao de E/S (GPIO_0[33:0], GPIO_1[33:0]) e 2 sao so de entrada (GPIO_0_IN[1:0], GPIO_1_IN[1:0]); mais VCC5, VCC33 e dois GND. O cabecalho 2x13 (secao 3.6, tabela 3-8) tem GPIO_2[12:0] de E/S e GPIO_2_IN[2:0] so de entrada, e liga os 8 canais do ADC. O papel gpio numera os 34 de GPIO_0, os 34 de GPIO_1 e os 13 de GPIO_2, nessa ordem; os pinos so de entrada ficam fora do papel porque o Quartus recusa uma celula bidirecional neles (erro 169009)."
+  - "ADC128S022 (secao 3.6: ADC_CS_N, ADC_SADDR, ADC_SCLK, ADC_SDAT) e acelerometro ADXL345 (secao 3.7: G_SENSOR_CS_N, G_SENSOR_INT, I2C_SCLK, I2C_SDAT, o I2C da EEPROM) estao em pins.yaml; o esquema ainda nao tem papel de E/S para eles."
   - "A identificacao da placa pelo IDCODE e inferida: 020F30DD e o do EP4CE22, e a DE0-Nano e a unica placa Terasic DE0 com esse dispositivo."
   - "DIP[3:0] e KEY[1] ficam em pinos que o Quartus aceita so como entrada (erro 169009 numa celula de GPIO bidirecional): a plataforma da placa nao pede os papeis switches e keys, e KEY[0] segue como reset."
