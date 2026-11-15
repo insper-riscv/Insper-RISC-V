@@ -31,7 +31,8 @@ WDIR := build/ghdl
 SOURCES := riscv-tools --root . sources
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
-NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
+NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*' \
+  ! -path 'Peripherals/src/ETH/rgmii/sim/*' ! -path 'Peripherals/src/MIPI/ddr/sim/*'
 
 .PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 

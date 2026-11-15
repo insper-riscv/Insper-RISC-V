@@ -85,7 +85,7 @@ package doom_map_pkg is
 	constant D_CACHE_WINDOW_BITS : natural  := 26;
 
 	-- Número de periféricos do mapa, o tamanho das tabelas abaixo.
-	constant PERIPH_COUNT : natural := 5;
+	constant PERIPH_COUNT : natural := 7;
 	-- Periféricos estritos: o interconector termina com erro o acesso ao que sobra da janela depois dos registradores.
 	constant STRICT_PERIPH : boolean := true;
 	-- Tabela de endereços, um por periférico.
@@ -116,13 +116,25 @@ package doom_map_pkg is
 	-- Índice do periférico PLIC nas tabelas PERIPH_BASES e PERIPH_MASKS.
 	constant PLIC_INDEX : natural := 4;
 
+	-- Endereço base do periférico VIDEO.
+	constant VIDEO_BASE : addr_t := std_logic_vector(resize(unsigned'(x"80100000"), ADDR_BITS));
+	-- Índice do periférico VIDEO nas tabelas PERIPH_BASES e PERIPH_MASKS.
+	constant VIDEO_INDEX : natural := 5;
+
+	-- Endereço base do periférico KBD.
+	constant KBD_BASE : addr_t := std_logic_vector(resize(unsigned'(x"80007000"), ADDR_BITS));
+	-- Índice do periférico KBD nas tabelas PERIPH_BASES e PERIPH_MASKS.
+	constant KBD_INDEX : natural := 6;
+
 	-- Base de cada periférico, na ordem de `peripherals`.
 	constant PERIPH_BASES : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
 		FLASH_CTRL_INDEX => FLASH_CTRL_BASE,
 		UART_INDEX => UART_BASE,
 		DISPLAY_INDEX => DISPLAY_BASE,
 		CLINT_INDEX => CLINT_BASE,
-		PLIC_INDEX => PLIC_BASE
+		PLIC_INDEX => PLIC_BASE,
+		VIDEO_INDEX => VIDEO_BASE,
+		KBD_INDEX => KBD_BASE
 	);
 
 	-- Máscara de cada janela: o periférico i responde quando (endereço and PERIPH_MASKS(i)) = PERIPH_BASES(i); a janela é a menor potência de dois que cobre o tamanho, com no mínimo 16 bytes.
@@ -131,7 +143,9 @@ package doom_map_pkg is
 		UART_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		DISPLAY_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		CLINT_INDEX => std_logic_vector(resize(unsigned'(x"FFFF0000"), ADDR_BITS)),
-		PLIC_INDEX => std_logic_vector(resize(unsigned'(x"FFC00000"), ADDR_BITS))
+		PLIC_INDEX => std_logic_vector(resize(unsigned'(x"FFC00000"), ADDR_BITS)),
+		VIDEO_INDEX => std_logic_vector(resize(unsigned'(x"FFFC0000"), ADDR_BITS)),
+		KBD_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFF0"), ADDR_BITS))
 	);
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
@@ -151,6 +165,8 @@ package doom_map_pkg is
 	constant IRQ_UART_JTAG : positive := 2;
 	-- Identificador da fonte FLASH no PLIC.
 	constant IRQ_FLASH : positive := 6;
+	-- Identificador da fonte KBD no PLIC.
+	constant IRQ_KBD : positive := 5;
 
 	-- Número de temporizadores de uso geral do mapa (`kind: timer`), o tamanho das tabelas abaixo.
 	constant TIMER_COUNT : natural := 0;
@@ -162,6 +178,23 @@ package doom_map_pkg is
 	constant TIMER_IRQ_IDS : integer_vector(0 to TIMER_COUNT - 1) := (
 		others => 0
 	);
+
+	-- Número de periféricos externos do mapa (`kind` de `Peripherals`), o tamanho das tabelas abaixo.
+	constant EXT_COUNT : natural := 2;
+	-- Índice de cada periférico externo nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
+	constant EXT_INDICES : integer_vector(0 to EXT_COUNT - 1) := (
+		0 => VIDEO_INDEX,
+		1 => KBD_INDEX
+	);
+	-- Fonte do PLIC de cada periférico externo, na mesma ordem (zero sem linha ou sem PLIC).
+	constant EXT_IRQ_IDS : integer_vector(0 to EXT_COUNT - 1) := (
+		0 => 0,
+		1 => IRQ_KBD
+	);
+	-- Posição de VIDEO nas tabelas EXT_*.
+	constant VIDEO_EXT_POS : natural := 0;
+	-- Posição de KBD nas tabelas EXT_*.
+	constant KBD_EXT_POS : natural := 1;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;
