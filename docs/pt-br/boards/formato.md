@@ -28,6 +28,7 @@ O `board.yaml` cita sinais só pelo nome. Número de pino e padrão de E/S exist
 | `clocks.inputs`, `clocks.reference`, `clocks.reset` | Relógios de entrada (`name`, `signal`, `mhz`), o que alimenta o PLL e o reset do usuário com polaridade |
 | `io.<papel>` | Papéis `leds`, `switches`, `keys`, `display` e `leds_green`, cada um com `signals` e `active` (`high` ou `low`), e os papéis de uso geral `gpio`, `ex_io`, `hsmc` e `clock_extra`, sem polaridade, com `signals` (um grupo ou uma lista de grupos, numerados na ordem da lista) e `bidirectional: true` quando os pinos são de E/S |
 | `memories` | `sdram`, `sram`, `nor`, `onchip_flash` e `serial_flash`, cada um com o chip do catálogo e os sinais |
+| `buses` | Papéis de pino dos periféricos externos (seção 2.3), um por papel, com o sinal de cada pino do papel |
 | `console` | `default: jtag` (JTAG UART) e `uart: {rx, tx}` só quando a placa tem UART em pinos |
 | `pins` | Caminho do `pins.yaml` |
 | `notes` | Armadilhas da placa, em prosa curta |
@@ -54,6 +55,31 @@ Em `memories.<tipo>.signals`, o valor é um prefixo (ou uma lista de prefixos) s
 | `cyclone-iv-e`, `max-10`, `cyclone-10-lp` | `le` | `dsp9x9` (elementos de 9 bits) |
 
 Nenhuma unidade se converte em outra por fator fixo.
+
+### 2.3. Papéis de pino dos periféricos externos
+
+A chave `buses` liga cada periférico externo da plataforma (`kind` de `Peripherals`) aos sinais do `pins.yaml`. Cada chave é um papel, e o valor é um mapeamento de pino do papel para sinal, ou uma lista de mapeamentos quando a placa tem mais de uma cópia (os dois canais PS/2, as duas PHYs Ethernet). O sinal aceita a forma de barramento da seção 2.1 (`"SD_DAT[3:0]"`).
+
+| Papel | Pinos do papel | Chave `chip` |
+| :--- | :--- | :--- |
+| `ps2` | `clk`, `dat` | Não |
+| `sd` | `clk`, `cmd`, `dat` | Não |
+| `lcd` | `data`, `rs`, `rw`, `en`, `power`, `blon` (opcional) | Não |
+| `i2c` | `scl`, `sda` | Não |
+| `audio` | `xck`, `bclk`, `adclrck`, `adcdat`, `daclrck`, `dacdat` | Não |
+| `eth` | `rx_clk`, `rxd`, `rx_dv`, `rx_er`, `tx_clk`, `txd`, `tx_en`, `tx_er`, `mdc`, `mdio`, `int_n` (opcional), `rst_n` | Não |
+| `hdmi` | `d`, `clk`, `de`, `hs`, `vs`, `int`, `scl`, `sda` | Não |
+| `tv` | `data`, `clk27`, `reset_n` | Não |
+| `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | Não |
+| `ir` | `rxd` | Não |
+| `adc` | Depende do chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (nenhum) | Sim, obrigatória |
+| `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (opcional), `int1` (opcional) | Não |
+
+O vídeo não entra em `buses`; ele é o papel `io.video`. Uma placa que declara em `buses` um papel só com pinos do lado FPGA deixa de fora o que fica no HPS, e o papel `adxl345` da DE0-Nano usa `I2C_SCLK` e `I2C_SDAT` como `sclk` e `mosi`, porque o `G_SENSOR_CS_N` em nível baixo seleciona o modo SPI de três fios nos mesmos pinos do I2C.
+
+### 2.4. Selo dos pinos lidos só no manual
+
+O selo `manual` de um pino quer dizer que o número do pino foi lido numa tabela do manual. Os pinos da DE2-115 de PS/2, áudio, Ethernet, TV, USB e IR trazem no `note` que o banco e a tensão não foram conferidos contra o esquemático, e nenhum foi medido na placa.
 
 ## 3. Campos do pins.yaml
 

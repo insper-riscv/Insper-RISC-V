@@ -37,6 +37,11 @@ memories:
     chip: EPCS64
     bytes: 8388608
     shared_with_config: true
+# Papeis de pino dos perifericos externos (secao `buses`), um por kind de `Peripherals`.
+buses:
+  adc: {chip: adc128s022, cs_n: ADC_CS_N, sclk: ADC_SCLK, saddr: ADC_SADDR, sdat: ADC_SDAT}
+  adxl345: {cs_n: G_SENSOR_CS_N, sclk: I2C_SCLK, mosi: I2C_SDAT, int1: G_SENSOR_INT}
+  i2c: {scl: I2C_SCLK, sda: I2C_SDAT}
 console:
   default: jtag
 pins: pins.yaml

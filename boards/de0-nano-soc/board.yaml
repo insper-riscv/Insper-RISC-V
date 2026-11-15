@@ -37,6 +37,9 @@ io:
     bidirectional: true
   clock_extra:
     signals: ["FPGA_CLK2_50", "FPGA_CLK3_50"]
+# Papeis de pino dos perifericos externos (secao `buses`), so do lado FPGA; ETH, UART, SD, USB e G-sensor ficam no HPS.
+buses:
+  adc: {chip: ltc2308, convst: ADC_CONVST, sck: ADC_SCK, sdi: ADC_SDI, sdo: ADC_SDO}
 console:
   default: jtag
 pins: pins.yaml

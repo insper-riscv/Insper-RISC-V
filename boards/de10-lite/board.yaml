@@ -41,6 +41,10 @@ memories:
   onchip_flash:
     kind: ufm
     user_bytes: 753664
+# Papeis de pino dos perifericos externos (secao `buses`), um por kind de `Peripherals`. O video fica em io.video.
+buses:
+  adxl345: {cs_n: GSENSOR_CS_n, sclk: GSENSOR_SCLK, mosi: GSENSOR_SDI, miso: GSENSOR_SDO, int1: GSENSOR_INT1}
+  adc: {chip: max10}
 console:
   default: jtag
 pins: pins.yaml
