@@ -3,7 +3,8 @@
 The testbench plays the core (one access on the port, held until ready,
 then mem_advance), the memory behind the port and the eight peripheral
 windows of the default table (0x80000000 | i << 28, 64 KiB of registers
-each). Memory addresses (the RAM, 0x40000000 to 0x43FFFFFF) pass through,
+each). Memory addresses (the RAM, 0x40000000 to 0x43FFFFFF) pass
+through,
 an address that hits a window is decoded into a one-clock pulse for the
 peripheral of that index, and any other address ends in an error.
 
@@ -206,44 +207,57 @@ async def test_a_good_access_is_not_an_error(dut: Dut):
     """Memory, a window and a silent window end with no error."""
     await start(dut, answering=(0, 1))
     port = Port(dut)
-    for addr, we in ((MEM_ADDR, False), (MEM_ADDR, True), (periph_addr(5, 0), False), (periph_addr(1, 3), True)):
+    for addr, we in (
+        (MEM_ADDR, False),
+        (MEM_ADDR, True),
+        (periph_addr(5, 0), False),
+        (periph_addr(1, 3), True),
+    ):
         await port.access(addr, we, 0x1)
         check_equal(port.error, 0, f"error at {addr:#x}")
 
 
 @cocotb.test()
 async def test_an_address_with_no_window_ends_in_error(dut: Dut):
-    """A hole of the map ends in an error, reads zero and pulses no slot."""
+    """A hole of the map is an error, reads zero and pulses no slot."""
     await start(dut)
     port = Port(dut)
     for addr in (0x20000000, 0x50000000, 0x00001000, 0x44000000):
         value = await port.access(addr, False)
         check_equal(port.error, 1, f"read error at {addr:#x}")
         check_equal(value, 0, f"read data at {addr:#x}")
-        check_equal(set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed")
+        check_equal(
+            set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed"
+        )
         check_equal(port.memory_requests, 0, "memory left alone")
         await port.access(addr, True, 0xFFFFFFFF)
         check_equal(port.error, 1, f"write error at {addr:#x}")
-        check_equal(set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed")
+        check_equal(
+            set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed"
+        )
 
 
 @cocotb.test()
 async def test_the_padding_of_a_window_ends_in_error(dut: Dut):
-    """What follows the 64 KiB of registers of a window is an error, with no pulse."""
+    """What follows the 64 KiB of registers of a window is an error."""
     await start(dut)
     port = Port(dut)
     for slot in (0, 5, 7):
         value = await port.access(PERIPHERALS | (slot << 28) | 0x10000, False)
         check_equal(port.error, 1, f"padding of slot {slot}")
         check_equal(value, 0)
-        check_equal(set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed")
+        check_equal(
+            set(port.re_pulses) | set(port.we_pulses), {0}, "no slot pulsed"
+        )
         await port.access(periph_addr(slot, 0x3FFF), False)
-        check_equal(port.error, 0, f"last word of the registers of slot {slot}")
+        check_equal(
+            port.error, 0, f"last word of the registers of slot {slot}"
+        )
 
 
 @cocotb.test()
 async def test_an_error_holds_until_the_pipeline_advances(dut: Dut):
-    """Error and ready stay up together, and fall when the access advances."""
+    """Error and ready stay up together, and fall on the advance."""
     await start(dut)
     dut.i_addr.value = 0x20000000
     dut.i_rden.value = 1

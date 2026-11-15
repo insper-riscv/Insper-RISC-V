@@ -12,6 +12,7 @@ números diferentes à mesma fonte.
 import re
 import sys
 from pathlib import Path
+from typing import Any, cast
 
 import yaml
 
@@ -26,7 +27,30 @@ LINE = re.compile(
 )
 
 
-def timer_names(data: dict[str, object]) -> set[str]:
+def _peripherals(data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Leia os periféricos de um ``platform.yaml`` como lista de mapas.
+
+    Parameters
+    ----------
+    data : dict of {str: Any}
+        O ``platform.yaml`` lido, com ``peripherals`` em lista ou em
+        mapa por nome.
+
+    Returns
+    -------
+    list of dict of {str: Any}
+        Um mapa por periférico, com a chave ``name``.
+    """
+    raw: Any = data.get("peripherals") or []
+    if isinstance(raw, dict):
+        return [
+            {"name": str(n), **(v or {})}
+            for n, v in cast("dict[str, Any]", raw).items()
+        ]
+    return list(cast("list[dict[str, Any]]", raw))
+
+
+def timer_names(data: dict[str, Any]) -> set[str]:
     """Nomeia os temporizadores de uma plataforma, em maiúsculas.
 
     Um temporizador não tem constante ``LINE_*`` no SoC: a linha vem
@@ -36,7 +60,7 @@ def timer_names(data: dict[str, object]) -> set[str]:
 
     Parameters
     ----------
-    data : dict of {str: object}
+    data : dict of {str: Any}
         O ``platform.yaml`` lido, com ``peripherals`` em lista ou em
         mapa por nome.
 
@@ -45,17 +69,74 @@ def timer_names(data: dict[str, object]) -> set[str]:
     set of str
         Os nomes dos temporizadores.
     """
-    raw = data.get("peripherals") or []
-    if isinstance(raw, dict):
-        items = [{"name": n, **(v or {})} for n, v in raw.items()]
-    else:
-        items = list(raw)
     return {
         str(p["name"]).upper()
-        for p in items
+        for p in _peripherals(data)
         if p.get("kind") == "timer"
         or (str(p["name"]).upper() == "TIMER" and "kind" not in p)
     }
+
+
+def _check_source(
+    path: Path,
+    item: dict[str, Any],
+    timers: set[str],
+    top: dict[str, int],
+) -> str | None:
+    """Confira uma fonte do PLIC de uma plataforma contra o SoC.
+
+    Parameters
+    ----------
+    path : Path
+        O ``platform.yaml`` da plataforma.
+    item : dict of {str: Any}
+        A fonte, com ``name`` e ``id``.
+    timers : set of str
+        Os nomes dos temporizadores da plataforma.
+    top : dict of {str: int}
+        As linhas ``LINE_*`` do SoC.
+
+    Returns
+    -------
+    str or None
+        O desacordo, ou ``None`` quando a fonte concorda.
+    """
+    name, ident = str(item["name"]).upper(), int(item["id"])
+    where = path.relative_to(ROOT)
+    if name in timers:
+        if ident in top.values():
+            return (
+                f"{where}: o temporizador {name} "
+                f"usa o id {ident}, linha fixa do SoC"
+            )
+        return None
+    if top.get(name) != ident:
+        return f"{where}: fonte {name} id {ident}, o SoC tem {top.get(name)}"
+    return None
+
+
+def _check_platform(path: Path, top: dict[str, int]) -> list[str]:
+    """Confira todas as fontes do PLIC de uma plataforma.
+
+    Parameters
+    ----------
+    path : Path
+        O ``platform.yaml`` da plataforma.
+    top : dict of {str: int}
+        As linhas ``LINE_*`` do SoC.
+
+    Returns
+    -------
+    list of str
+        Os desacordos encontrados.
+    """
+    data: dict[str, Any] = yaml.safe_load(path.read_text("utf-8"))
+    sources: list[dict[str, Any]] = data.get("interrupts", {}).get(
+        "sources", []
+    )
+    timers = timer_names(data)
+    found = (_check_source(path, item, timers, top) for item in sources)
+    return [message for message in found if message is not None]
 
 
 def main() -> int:
@@ -67,24 +148,7 @@ def main() -> int:
         0 quando tudo concorda, 1 com os desacordos impressos.
     """
     top = {n.upper(): int(i) for n, i in LINE.findall(TOP.read_text("utf-8"))}
-    problems: list[str] = []
-    for path in PLATFORMS:
-        data = yaml.safe_load(path.read_text("utf-8"))
-        sources = data.get("interrupts", {}).get("sources", [])
-        timers = timer_names(data)
-        for item in sources:
-            name, ident = str(item["name"]).upper(), int(item["id"])
-            if name in timers:
-                if ident in top.values():
-                    problems.append(
-                        f"{path.relative_to(ROOT)}: o temporizador {name} "
-                        f"usa o id {ident}, linha fixa do SoC"
-                    )
-            elif top.get(name) != ident:
-                problems.append(
-                    f"{path.relative_to(ROOT)}: fonte {name} id {ident}, "
-                    f"o SoC tem {top.get(name)}"
-                )
+    problems = [m for path in PLATFORMS for m in _check_platform(path, top)]
     for message in problems:
         print(message)
     if not problems:

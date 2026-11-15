@@ -134,7 +134,8 @@ SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
 # together take much longer than the 64-place receive queue holds the
 # bytes of a console that is already sending. With UART_START_ON_ACCESS
 # the console starts at the first access of the core to the UART slot
-# (UART_INDEX, its index in the table of peripheral windows), the moment the program is ready to read.
+# (UART_INDEX, its index in the table of peripheral windows), the moment
+# the program is ready to read.
 UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
 UART_INDEX = int(os.environ.get("UART_INDEX", "1"))
 # entry of the program of bank A (RV32_BANK_A_ENTRY, flash_banks.h)
