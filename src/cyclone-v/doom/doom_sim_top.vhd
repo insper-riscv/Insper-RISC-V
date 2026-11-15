@@ -1,13 +1,21 @@
 -- ============================================================================
--- Topo de simulação da plataforma de0-cv (SDRAM com a FLASH atrás das caches)
+-- Topo de simulação da plataforma doom (SDRAM com a FLASH atrás das caches, vídeo e teclado)
 -- ============================================================================
 -- O núcleo, a BOOT_MEMORY (vetor VHDL), as caches de instruções e de dados, o
 -- modelo de chip da FLASH com o seu armazenamento (vetor VHDL) e a SDRAM (ponte,
 -- árbitro, controlador e modelo de chip do repositório Memory) em clock próprio de
 -- 143 MHz. A SDRAM é a RAM: não há outra memória de dados. A FLASH começa logo
--- depois da BOOT_MEMORY e termina em 256 KiB, e a SDRAM fica em 0x40000000; as
+-- depois da BOOT_MEMORY e termina em 12 KiB, e a SDRAM fica em 0x40000000; as
 -- duas só são alcançadas pelas caches, cujos pedidos de linha um roteador de
 -- região envia à FLASH (pelo árbitro) ou à SDRAM.
+--
+-- Além dos periféricos da de0-cv, a janela de periféricos tem o vídeo VGA
+-- indexado (VIDEO, 0x80100000) e o teclado PS/2 (KBD, 0x80007000, com a
+-- interrupção na linha IRQ_KBD do PLIC), como o topo gerado da placa os liga. O
+-- vídeo recebe o clock de pixel i_pixel_clk, conduzido pelo testbench sem
+-- relação fixa com i_clk, e a geometria do quadro e do modo pelos generics
+-- video_*; as linhas do teclado são io_ps2_clk e io_ps2_dat, que o testbench
+-- conduz como o dispositivo do conector.
 --
 -- i_clk é o clock base do núcleo (um gerador de clock o divide por três, como na
 -- internal-mem). i_clk_mem é o clock da SDRAM, conduzido pelo testbench sem
@@ -81,7 +89,33 @@ entity doom_sim_test is
         sdram_file             : string                := "";
         -- Periodo, em picossegundos, do clock CLK_MEM do controlador da SDRAM (o do platform.yaml): base da conversao
         -- dos tempos do chip em ciclos.
-        sdram_tck_ps           : natural               := work.doom_map_pkg.SDRAM_TCK_PS
+        sdram_tck_ps           : natural               := work.doom_map_pkg.SDRAM_TCK_PS;
+        -- Largura do framebuffer em pixels (a do platform.yaml, io.video.fb_width).
+        video_fb_width         : positive              := 320;
+        -- Altura do framebuffer em pixels (a do platform.yaml, io.video.fb_height).
+        video_fb_height        : positive              := 200;
+        -- Ampliação de cada pixel do framebuffer (a do plano de vídeo: a maior que cabe no modo).
+        video_scale            : positive              := 2;
+        -- Pixels visíveis por linha do modo (o 640x480 a 60 Hz da DE0-CV).
+        video_h_visible        : positive              := 640;
+        -- Pixels do pórtico frontal horizontal.
+        video_h_front_porch    : natural               := 16;
+        -- Pixels do pulso de sincronismo horizontal.
+        video_h_sync           : positive              := 96;
+        -- Pixels do pórtico traseiro horizontal.
+        video_h_back_porch     : natural               := 48;
+        -- Linhas visíveis por quadro do modo.
+        video_v_visible        : positive              := 480;
+        -- Linhas do pórtico frontal vertical.
+        video_v_front_porch    : natural               := 10;
+        -- Linhas do pulso de sincronismo vertical.
+        video_v_sync           : positive              := 2;
+        -- Linhas do pórtico traseiro vertical.
+        video_v_back_porch     : natural               := 33;
+        -- Ciclos que um nível das linhas PS/2 precisa durar para passar no filtro do teclado.
+        kbd_filter_cycles      : positive              := 8;
+        -- Ciclos sem borda de clock PS/2 que abortam um quadro do teclado.
+        kbd_timeout_cycles     : positive              := 1000000
     );
     port (
         -- Clock base do núcleo; um gerador de clock o divide por três.
@@ -113,7 +147,27 @@ entity doom_sim_test is
         -- Valor do registrador do display (periférico 5, 0xD0000000), cuja porta do hospedeiro fica parada aqui
         o_display_value  : out   std_logic_vector(23 downto 0);
         -- Segmentos dos sete segmentos do display, 42 bits.
-        o_display_hex    : out   std_logic_vector(41 downto 0)
+        o_display_hex    : out   std_logic_vector(41 downto 0);
+        -- Clock de pixel do vídeo, assíncrono em relação a i_clk.
+        i_pixel_clk      : in    std_logic                     := '0';
+        -- Canal vermelho da saída VGA (4 bits, como o conversor resistivo da DE0-CV).
+        o_vga_r          : out   std_logic_vector(3 downto 0);
+        -- Canal verde da saída VGA.
+        o_vga_g          : out   std_logic_vector(3 downto 0);
+        -- Canal azul da saída VGA.
+        o_vga_b          : out   std_logic_vector(3 downto 0);
+        -- Sincronismo horizontal da saída VGA.
+        o_vga_hs         : out   std_logic;
+        -- Sincronismo vertical da saída VGA.
+        o_vga_vs         : out   std_logic;
+        -- O dispositivo PS/2 do testbench segura a linha de clock em baixo (open-drain, com pull-up no conector).
+        i_ps2_dev_clk_low : in   std_logic                     := '0';
+        -- O dispositivo PS/2 do testbench segura a linha de dados em baixo.
+        i_ps2_dev_dat_low : in   std_logic                     := '0';
+        -- Nível resolvido da linha de clock PS/2, como o dispositivo o vê.
+        o_ps2_clk        : out   std_logic;
+        -- Nível resolvido da linha de dados PS/2, como o dispositivo o vê.
+        o_ps2_dat        : out   std_logic
     );
 end entity doom_sim_test;
 
@@ -204,6 +258,10 @@ architecture behaviour of doom_sim_test is
     signal p_we, p_re     : std_logic_vector(PERIPH_COUNT - 1 downto 0);
     -- Janela de periféricos: dado lido.
     signal p_rdata        : std_logic_vector(PERIPH_COUNT * XLEN - 1 downto 0) := (others => '0');
+    -- Linha de clock PS/2 do conector, resolvida entre o teclado, o dispositivo do testbench e o pull-up.
+    signal ps2_clk        : std_logic;
+    -- Linha de dados PS/2 do conector, resolvida entre o teclado, o dispositivo do testbench e o pull-up.
+    signal ps2_dat        : std_logic;
     -- As três linhas de interrupção de máquina do núcleo
     signal irq_timer      : std_logic                                 := '0';
     -- Interrupção de software de máquina (MSIP), saída do CLINT.
@@ -898,6 +956,71 @@ begin
             o_value     => o_display_value,
             o_fail      => open,
             o_hex       => o_display_hex
+        );
+
+    -- O vídeo VGA indexado (256 KiB de janela: registradores, paleta e framebuffer) com a geometria e o modo do
+    -- topo gerado da placa; o clock de pixel é assíncrono em relação ao do núcleo.
+    u_video : entity work.video
+        generic map (
+            fb_width        => video_fb_width,
+            fb_height       => video_fb_height,
+            channel_bits    => 4,
+            pixel_format    => "indexed",
+            scale           => video_scale,
+            h_visible       => video_h_visible,
+            h_front_porch   => video_h_front_porch,
+            h_sync          => video_h_sync,
+            h_back_porch    => video_h_back_porch,
+            h_sync_positive => false,
+            v_visible       => video_v_visible,
+            v_front_porch   => video_v_front_porch,
+            v_sync          => video_v_sync,
+            v_back_porch    => video_v_back_porch,
+            v_sync_positive => false
+        )
+        port map (
+            i_clk         => pll_clk_idexmem,
+            i_pixel_clk   => i_pixel_clk,
+            i_rst         => i_rst,
+            i_data_in     => p_wdata,
+            i_address     => p_addr(15 downto 0),
+            i_byteena     => p_byteena,
+            i_write       => p_we(VIDEO_INDEX),
+            o_data_out    => p_rdata(XLEN * VIDEO_INDEX + XLEN - 1 downto XLEN * VIDEO_INDEX),
+            o_vga_r       => o_vga_r,
+            o_vga_g       => o_vga_g,
+            o_vga_b       => o_vga_b,
+            o_vga_hs      => o_vga_hs,
+            o_vga_vs      => o_vga_vs,
+            o_vga_blank_n => open,
+            o_vga_sync_n  => open
+        );
+
+    -- O teclado PS/2 no canal 0 do conector, com a interrupção na linha do PLIC. As linhas são open-drain com pull-up
+    -- no conector ('H'), e o dispositivo do testbench as segura em baixo.
+    ps2_clk <= '0' when i_ps2_dev_clk_low = '1' else 'Z';
+    ps2_dat <= '0' when i_ps2_dev_dat_low = '1' else 'Z';
+    ps2_clk <= 'H';
+    ps2_dat <= 'H';
+    o_ps2_clk <= to_x01(ps2_clk);
+    o_ps2_dat <= to_x01(ps2_dat);
+
+    u_keyboard : entity work.ps2_keyboard
+        generic map (
+            filter_cycles  => kbd_filter_cycles,
+            timeout_cycles => kbd_timeout_cycles
+        )
+        port map (
+            i_clk      => pll_clk_idexmem,
+            i_rst      => i_rst,
+            i_data_in  => p_wdata,
+            i_address  => p_addr(1 downto 0),
+            i_write    => p_we(KBD_INDEX),
+            i_read     => p_re(KBD_INDEX),
+            o_data_out => p_rdata(XLEN * KBD_INDEX + XLEN - 1 downto XLEN * KBD_INDEX),
+            o_irq      => irq_lines(IRQ_KBD),
+            io_ps2_clk => ps2_clk,
+            io_ps2_dat => ps2_dat
         );
 
     -- A SDRAM e o seu modelo de chip; as portas de depuração do modelo ficam sem uso aqui

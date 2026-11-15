@@ -150,6 +150,24 @@ sim:
     - Peripherals/src/PLIC/soc/plic_arbiter.vhd
     - Peripherals/src/PLIC/soc/plic.vhd
     - Peripherals/src/flash-controller/soc/flash_controller.vhd
+    - Peripherals/src/video/soc/video_dpram.vhd
+    - Peripherals/src/video/soc/video_consts.vhd
+    - Peripherals/src/video/soc/video_timing.vhd
+    - Peripherals/src/video/soc/video_scanout.vhd
+    - Peripherals/src/video/soc/video_vga.vhd
+    - Peripherals/src/video/soc/video_regs.vhd
+    - Peripherals/src/video/soc/video.vhd
+    - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/PS2/host/ps2_filter.vhd
+    - Peripherals/src/PS2/host/ps2_host.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartRx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTx.vhd
+    - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uartTop.vhd
+    - Peripherals/src/UART/serial/uart_fifo.vhd
+    - Peripherals/src/UART/serial/uart.vhd
+    - Peripherals/src/PS2/keyboard/ps2_keyboard.vhd
     - src/cyclone-v/doom/doom_sim_top.vhd
   test_module: testbench.test_c_program
   # The testbench of the de0-cv drives this platform too: the top has the same ports and the map comes from env.

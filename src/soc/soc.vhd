@@ -126,6 +126,14 @@ entity soc is
         -- Fonte do PLIC de cada temporizador, na mesma ordem (TIMER_IRQ_IDS do pacote de mapa); zero deixa a
         -- interrupção do temporizador sem linha.
         timer_irq_ids          : integer_vector                := NO_INTEGERS;
+        -- Índice de cada periférico externo (vídeo, PS/2 e os demais de Peripherals que o topo da placa instancia) na
+        -- tabela de periféricos (EXT_INDICES do pacote de mapa): o SoC só leva a janela deles à porta o_ext_*.
+        ext_indices            : integer_vector                := NO_INTEGERS;
+        -- Fonte do PLIC de cada periférico externo, na mesma ordem (EXT_IRQ_IDS do pacote de mapa); zero deixa a
+        -- interrupção sem linha.
+        ext_irq_ids            : integer_vector                := NO_INTEGERS;
+        -- Largura do endereço de palavra que a porta o_ext_addr leva aos periféricos externos (a maior janela entre eles).
+        ext_addr_width         : positive range 1 to 26        := 16;
         -- Papel das chaves, num bloco GPIO; omitido quando switches_width é zero.
         has_switches           : boolean                       := false;
         -- Índice das chaves na tabela de periféricos.
@@ -320,7 +328,21 @@ entity soc is
         -- Linha serial de recepção da UART via pinos.
         i_uart_rx           : in    std_logic                     := '1';
         -- Linha serial de transmissão da UART via pinos.
-        o_uart_tx           : out   std_logic
+        o_uart_tx           : out   std_logic;
+        -- Periféricos externos: endereço de palavra dentro da janela, o mesmo para todos.
+        o_ext_addr          : out   std_logic_vector(ext_addr_width - 1 downto 0);
+        -- Periféricos externos: dado de escrita, o mesmo para todos.
+        o_ext_wdata         : out   word_t;
+        -- Periféricos externos: habilitação de bytes da escrita, a mesma para todos.
+        o_ext_byteena       : out   std_logic_vector(3 downto 0);
+        -- Periféricos externos: pulso de escrita, um bit por periférico na ordem de ext_indices.
+        o_ext_we            : out   std_logic_vector(ext_indices'length - 1 downto 0);
+        -- Periféricos externos: pulso de leitura, um bit por periférico na ordem de ext_indices.
+        o_ext_re            : out   std_logic_vector(ext_indices'length - 1 downto 0);
+        -- Periféricos externos: dado lido, 32 bits por periférico na ordem de ext_indices.
+        i_ext_rdata         : in    std_logic_vector(ext_indices'length * XLEN - 1 downto 0) := (others => '0');
+        -- Periféricos externos: linha de interrupção, um bit por periférico na ordem de ext_indices.
+        i_ext_irq           : in    std_logic_vector(ext_indices'length - 1 downto 0)        := (others => '0')
     );
 end entity soc;
 
@@ -355,7 +377,7 @@ architecture behaviour of soc is
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
         HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
-        or TIMER_N > 0;
+        or TIMER_N > 0 or ext_indices'length > 0;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -540,6 +562,139 @@ architecture behaviour of soc is
         return true;
 
     end function timer_lines_valid;
+
+    -- Pinos de um bloco GPIO de um só grupo, na ordem 0 a count - 1: o campo de 8 bits do membro k guarda o pino k.
+    function identity_members (count : positive) return std_logic_vector is
+        -- Um campo de 8 bits por pino, com o índice do pino.
+        variable members : std_logic_vector(8 * count - 1 downto 0);
+    begin
+
+        for k in 0 to count - 1 loop
+
+            members(8 * k + 7 downto 8 * k) := std_logic_vector(to_unsigned(k, 8));
+
+        end loop;
+
+        return members;
+
+    end function identity_members;
+
+    -- Direção fixa de cada pino de um papel de entrada (chaves e botões): "01" é só entrada.
+    function input_pin_dirs (count : positive) return std_logic_vector is
+        -- Dois bits por pino, com a direção fixa.
+        variable dirs : std_logic_vector(2 * count - 1 downto 0);
+    begin
+
+        for k in 0 to count - 1 loop
+
+            dirs(2 * k + 1 downto 2 * k) := "01";
+
+        end loop;
+
+        return dirs;
+
+    end function input_pin_dirs;
+
+    -- Polaridade de cada pino de um papel: '1' é ativo em nível baixo.
+    function active_low_pins (count : positive; low : boolean) return std_logic_vector is
+        -- Um bit de polaridade por pino.
+        variable polarity : std_logic_vector(count - 1 downto 0);
+    begin
+
+        for k in 0 to count - 1 loop
+
+            if low then
+                polarity(k) := '1';
+            else
+                polarity(k) := '0';
+            end if;
+
+        end loop;
+
+        return polarity;
+
+    end function active_low_pins;
+
+    -- Cada periférico externo tem índice dentro da tabela, que não é o de outro periférico, o de um temporizador nem o
+    -- de outro periférico externo.
+    function ext_indices_valid return boolean is
+    begin
+
+        for e in ext_indices'range loop
+
+            if ext_indices(e) < 0 or ext_indices(e) >= periph_count then
+                return false;
+            end if;
+
+            for i in PRESENT'range loop
+
+                if PRESENT(i) and INDICES(i) = ext_indices(e) then
+                    return false;
+                end if;
+
+            end loop;
+
+            for t in timer_indices'range loop
+
+                if timer_indices(t) = ext_indices(e) then
+                    return false;
+                end if;
+
+            end loop;
+
+            for u in ext_indices'low to e - 1 loop
+
+                if ext_indices(u) = ext_indices(e) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function ext_indices_valid;
+
+    -- As linhas do PLIC dos periféricos externos: cada uma cabe no PLIC, não é linha fixa de outro periférico, não é a
+    -- de um temporizador e não repete (zero deixa o periférico sem linha).
+    function ext_lines_valid return boolean is
+    begin
+
+        for e in ext_irq_ids'range loop
+
+            if ext_irq_ids(e) < 0 or ext_irq_ids(e) > plic_n_sources then
+                return false;
+            end if;
+
+            if ext_irq_ids(e) /= 0
+               and (ext_irq_ids(e) = LINE_UART or ext_irq_ids(e) = LINE_UART_JTAG
+                    or ext_irq_ids(e) = LINE_SWITCHES or ext_irq_ids(e) = LINE_KEYS
+                    or ext_irq_ids(e) = LINE_FLASH) then
+                return false;
+            end if;
+
+            for t in timer_irq_ids'range loop
+
+                if ext_irq_ids(e) /= 0 and timer_irq_ids(t) = ext_irq_ids(e) then
+                    return false;
+                end if;
+
+            end loop;
+
+            for u in ext_irq_ids'low to e - 1 loop
+
+                if ext_irq_ids(e) /= 0 and ext_irq_ids(u) = ext_irq_ids(e) then
+                    return false;
+                end if;
+
+            end loop;
+
+        end loop;
+
+        return true;
+
+    end function ext_lines_valid;
 
     -- Primeiro endereço da FLASH, do config_pkg.
     constant FLASH_FIRST : addr_t := std_logic_vector(work.config_pkg.FLASH_BASE(ADDR_BITS - 1 downto 0));
@@ -957,6 +1112,20 @@ begin
         report "timer_irq_ids: uma fonte passa de plic_n_sources, é linha fixa de outro periférico ou se repete"
         severity failure;
 
+    -- Um periférico externo por elemento de ext_indices, cada um com a sua fonte do PLIC.
+    assert ext_irq_ids'length = ext_indices'length
+        report "ext_indices e ext_irq_ids têm tamanhos diferentes: cada periférico externo tem uma fonte do PLIC"
+        severity failure;
+    assert ext_addr_width <= plic_addr_width
+        report "ext_addr_width passa da largura do endereço da janela de periféricos"
+        severity failure;
+    assert ext_indices_valid
+        report "ext_indices: um periférico externo fica fora da tabela de periféricos ou repete o índice de outro"
+        severity failure;
+    assert ext_lines_valid
+        report "ext_irq_ids: uma fonte passa de plic_n_sources, é linha fixa de outro periférico ou se repete"
+        severity failure;
+
     o_retire      <= core_retire;
     o_if_addr     <= if_addr(ADDR_BITS - 1 downto 2);
     o_if_rden     <= if_rden;
@@ -1364,6 +1533,32 @@ begin
         end generate gen_wired;
 
     end generate gen_timer;
+
+    -- Periféricos externos: a janela vai à porta o_ext_*, e a leitura e a interrupção de cada um voltam por i_ext_*.
+    o_ext_addr    <= p_addr(ext_addr_width - 1 downto 0);
+    o_ext_wdata   <= p_wdata;
+    o_ext_byteena <= p_byteena;
+
+    gen_ext : for e in 0 to ext_indices'length - 1 generate
+        -- Índice da janela deste periférico na tabela de periféricos.
+        constant WINDOW  : natural := ext_indices(ext_indices'low + e);
+        -- Fonte do PLIC deste periférico.
+        constant IRQ_SRC : natural := ext_irq_ids(ext_irq_ids'low + e);
+    begin
+
+        o_ext_we(e) <= p_we(WINDOW);
+        o_ext_re(e) <= p_re(WINDOW);
+
+        p_rdata(XLEN * WINDOW + XLEN - 1 downto XLEN * WINDOW) <= i_ext_rdata(XLEN * e + XLEN - 1 downto XLEN * e);
+
+        gen_wired : if IRQ_SRC > 0 generate
+        begin
+
+            irq_lines(IRQ_SRC) <= i_ext_irq(e);
+
+        end generate gen_wired;
+
+    end generate gen_ext;
 
     gen_uart_pins : if has_uart_pins generate
     begin
