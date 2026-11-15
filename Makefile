@@ -11,6 +11,7 @@ NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'P
 # The platforms of this repository: the simulation-only ones and the board ones.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
+PD := src/cyclone-v/doom
 PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
@@ -63,6 +64,9 @@ check-tops:
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) doom_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. doom_sim_test
+	@echo "the simulation top of the doom platform builds"
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
 	@echo "the simulation top of the external-data platform builds"
@@ -103,6 +107,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
@@ -117,6 +122,7 @@ memory-map:
 generate:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
@@ -128,6 +134,7 @@ generate:
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
