@@ -56,4 +56,5 @@ notes:
   - "A SDRAM e o AS4C4M16SA-7BCN (U9A do esquematico): 12 bits de endereco A0 a A11 e BS0 e BS1, ou seja 4 bancos e 12 bits de linha, 16 bits de dados."
   - "O UART do SoC so existe pelo SAMD21 (repasse de firmware) ou por adaptador nos pinos D13 e D14 (inferido); o console padrao e a JTAG UART via USB-Blaster emulado."
   - "Os multiplicadores sao contados em elementos de 9 bits (56 de 18x18). Capacidades de LEs, M9K e PLLs vem do datasheet da familia (parcialmente inferido)."
+  - "A saida HDMI da Vidor e TMDS direta em oHDMI_TX[2:0] e oHDMI_CLK (LVDS), mais bHDMI_SCL, bHDMI_SDA e iHDMI_HPD, sem conversor de video. O papel hdmi do Tools descreve um conversor com barramento de pixel (d, de, hs, vs), que a placa nao tem; por isso `buses.hdmi` nao e declarado aqui e depende de um papel TMDS no Tools. Camera MIPI e ponte Wi-Fi ficam fora, sem RTL ainda."
   - "Placa em fim de vida; validacao de portabilidade, nao alvo principal."
