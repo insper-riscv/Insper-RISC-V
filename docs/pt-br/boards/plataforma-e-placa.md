@@ -9,11 +9,11 @@ O `platform.yaml` descreve o mapa de memória, o perfil do Core, as janelas dos 
 | `board` | texto | `auto` (padrão) pede a identificação pelo JTAG ([identificacao-jtag.md](identificacao-jtag.md)); um nome fixa a placa |
 | `boards` | lista de texto | Placas em que a plataforma é construída, e a lista que `auto` considera |
 | `top` | texto ou lista | Componente(s) do `paths.yaml` cujo fecho de `requires` é a lista de fontes do projeto gerado e reúne os recursos que a placa precisa oferecer |
-| `memory.<rom ou ram>.backend` | `emulado` ou `dispositivo` | Realização da região externa; obrigatório com `external: true` |
-| `memory.<rom ou ram>.device` | `nor`, `flash-interna`, `serial`, `sdram`, `sram` | Só com `dispositivo`, e do tipo da região (`nor`, `flash-interna` e `serial` para a ROM; `sdram` e `sram` para a RAM) |
-| `memory.<rom ou ram>.latency` | `{first, next}` | Ciclos de `clocks.core` da primeira palavra de uma rajada e das seguintes; só com `emulado` |
-| `memory.rom.sector_bytes` | potência de 2 | Setor da FLASH `emulado`; com `dispositivo` o setor vem do chip |
-| `memory.icache`, `memory.dcache` | `{enabled, size_bits}` | Caches |
+| `memory.instructions[].type`, `memory.data[].type` | `flash`, `sdram`, `sram`, `onchip` ou `emulated` | Realização do segmento; `emulated` imita o chip com blocos de RAM da placa, e `onchip` fica dentro do núcleo |
+| `memory.<instructions ou data>[].on_bus` | booleano | O segmento fica atrás da porta externa do núcleo |
+| `memory.<instructions ou data>[].latency` | `{first, next}` | Ciclos de `clocks.core` da primeira palavra de uma rajada e das seguintes; só com `emulated` |
+| `memory.instructions[].sector_bytes` | potência de 2 | Setor da FLASH `emulated`; com `flash` o setor vem do chip |
+| `memory.<instructions ou data>[].cache` | `{size_bits}` | Cache do segmento; sem a chave não há cache |
 | `clocks.core` | `{mhz, phase_ps}` | Relógio do núcleo; é também a fonte de `interrupts.clock_hz` |
 | `clocks.fetch` | `{mhz, phase_ps}` | Relógio das memórias de instrução, com fase relativa ao `core`; sem ele vale o do núcleo |
 | `clocks.mem` | `{mhz}` | Teto do relógio do controlador de dispositivo; o efetivo é o menor entre ele e o limite do chip |
@@ -40,20 +40,30 @@ core:
     - Zicntr
     - Zihpm
     - Zifencei
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,    kind: rom, exec: true}
-  - {name: FLASH,       base: 0x00001000, size: 1024K, kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 64M,   kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: flash
+      base: 0x00001000
+      size: 1024K
+      on_bus: true
+      cache:
+        size_bits: 32768
+  data:
+    - type: sdram
+      base: 0x40000000
+      size: 64M
+      on_bus: true
+      cache:
+        size_bits: 32768
+
 flash:
   region: FLASH
   banks:
     - {name: A, base: 0x00001000, size: 512K}
     - {name: B, base: 0x00081000, size: 512K}
-memory:
-  rom:    {external: true, backend: dispositivo, device: nor}
-  ram:    {external: true, backend: dispositivo, device: sdram}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 clocks:
   core:  {mhz: 50, phase_ps: 8250}
   fetch: {mhz: 50, phase_ps: 0}
@@ -68,12 +78,12 @@ A FLASH começa em `0x00001000`, o deslocamento 0 do chip. Com o setor de 64 KiB
 
 ## 2. Derivação de requires e provides
 
-Dois conjuntos são calculados e nunca escritos. O `requires` da plataforma reúne o que ela pede (`regions`, `memory`, `clocks`, `io`, `console`) e a união das chaves `needs` dos componentes do fecho do topo. O `provides` da placa vem do `board.yaml`, do chip do catálogo e do `pins.yaml`. A inclusão do primeiro no segundo é a verificação.
+Dois conjuntos são calculados e nunca escritos. O `requires` da plataforma reúne o que ela pede (`memory`, `clocks`, `io`, `console`) e a união das chaves `needs` dos componentes do fecho do topo. O `provides` da placa vem do `board.yaml`, do chip do catálogo e do `pins.yaml`. A inclusão do primeiro no segundo é a verificação.
 
 | Recurso exigido | Origem em `requires` | Origem em `provides` |
 | :--- | :--- | :--- |
 | Tipo de dispositivo (`sdram`, `sram`, `nor`, `onchip_flash`, `serial_flash`, `vjtag`, `block_ram`) | União dos `needs` do fecho do topo | Chave presente em `memories` e `jtag.chain` |
-| Capacidade e largura | `regions` e `memory.<região>` | Chip do catálogo e `chips` ou `bus_width` |
+| Capacidade e largura | `memory` (`base`, `size` e `type` de cada segmento) | Chip do catálogo e `chips` ou `bus_width` |
 | Blocos de RAM | Memórias `emulado`, caches e banco de registradores | `resources.block_ram` |
 | Lógica e multiplicadores | Estimativa de [cabimento.md](cabimento.md) | `resources.logic` e `resources.multipliers` |
 | PLLs | Relógios distintos de `clocks` | `resources.plls` |
@@ -115,7 +125,7 @@ As regras rodam no `check-memory-map`, no `board generate` e antes de compilar. 
 | :--- | :--- | :--- |
 | V1 | E | A placa, a família e os chips existem e os arquivos seguem o esquema |
 | V2 | E | Todo tipo de `needs` está na placa, e a soma das regiões de um dispositivo cabe nele |
-| V3 | E | O dispositivo de um backend `dispositivo` existe na placa |
+| V3 | E | O dispositivo de um segmento de tipo `flash`, `sdram` ou `sram` existe na placa |
 | V4 | E | O console `pinos` exige `console.uart` |
 | V5 | E | Papel `required` ausente ou com menos unidades |
 | V6 | W | Papel `optional` ausente ou com menos unidades; o periférico é omitido |
@@ -137,7 +147,7 @@ Exemplos de mensagem.
 
 ```text
 E platform 'de0-cv' requires sdram (64M) but board 'de0-nano' provides sdram of 32M
-E memory.rom.device nor is not provided by board 'de0-cv' (provides: none); use backend emulado
+E memory.instructions[0].type flash is not provided by board 'de0-cv' (provides: none); use type emulated
 E flash bank B base 0x7F000 is not a multiple of the NOR sector 0x10000 of chip S29GL064N90
 E pin M16 for SPI_FLASH_CS is inferred, not confirmed; pass --accept-inferred-pins
 ```

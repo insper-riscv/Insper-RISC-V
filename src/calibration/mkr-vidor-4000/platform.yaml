@@ -23,10 +23,27 @@ core:
     - Interrupts
     - Sscofpmf
 profiles: ../../../Core/profiles/matrix.yaml
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,   kind: rom, exec: true}
-  - {name: FLASH,       base: 0x00001000, size: 12K,  kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 8K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: emulated
+      base: 0x00001000
+      size: 12K
+      on_bus: true
+      latency: {first: 24, next: 4}
+      sector_bytes: 4096
+      cache:
+        size_bits: 32768
+  data:
+    - type: emulated
+      base: 0x40000000
+      size: 8K
+      on_bus: true
+      cache:
+        size_bits: 32768
+
 reserved:
   stdout:   {base: 0x40001BE0, size: 1K+8}
   tohost:   {base: 0x40001FE8, size: 8}
@@ -34,11 +51,6 @@ reserved:
 boot:
   entry: 0x00001000
   wait_restart: 0x00000100
-memory:
-  rom:    {external: true, backend: emulado, latency: {first: 24, next: 4}, sector_bytes: 4096}
-  ram:    {external: true, backend: emulado}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 clocks:
   core: {mhz: 50, phase_ps: 8250}
   mem:  {mhz: 100}
@@ -54,11 +66,22 @@ generate:
 strict_periph: true
 
 peripherals:
-  - {name: FLASH_CTRL, base: 0xB0000000, size: 32}
-  - {name: UART, base: 0xC0000000, size: 1K}
-  - {name: DISPLAY, base: 0xD0000000, size: 1K}
-  - {name: CLINT, base: 0xE0000000, size: 64K}
-  - {name: PLIC, base: 0xF0000000, size: 4M}
+  FLASH_CTRL:
+    base: 0xB0000000
+    size: 32
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
+
 interrupts:
   clock_hz: 50000000
   mtime_hz: 1000000

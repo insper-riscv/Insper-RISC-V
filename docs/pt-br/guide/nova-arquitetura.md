@@ -114,12 +114,12 @@ O `platform.yaml` é a única fonte do mapa. Nada do mapa se escreve à mão em 
 | Campo | O que define |
 | :--- | :--- |
 | `platform` | Nome da plataforma |
-| `profile` | Perfil do Core, no formato `rv32i` ou `rv32e` seguido das extensões (`rv32im`, `rv32im_zicsr`) |
+| `core` | Bloco do núcleo: `type`, `base` (I ou E) e `extensions` |
 | `profiles` | Caminho de `Core/profiles/matrix.yaml`, a especificação dos perfis |
-| `regions` | Cada região com `name`, `base`, `size` (inteiro com sufixo `K`, `M` ou soma, como `1M-4K`), `kind` (`rom` ou `ram`) e `exec` |
+| `memory` | O bloco `boot` (`base` e `size`) e os segmentos de `instructions` (a FLASH) e de `data` (a RAM), cada um com `type`, `base`, `size` (inteiro com sufixo `K`, `M` ou soma, como `1M-4K`) e `on_bus`, e `cache` com `size_bits` quando há cache |
 | `reserved` | As três palavras do topo da RAM, `stdout`, `tohost` e `fromhost`, que precisam caber dentro da região de RAM |
 | `boot` | `entry`, o endereço do `_start` da ROM, e `wait_restart`, o endereço fixo da rotina de espera |
-| `peripherals` | Cada periférico com `name`, `base` (endereço da janela, alinhado ao tamanho dela) e `size` (bytes de registradores); a janela é a menor potência de dois de pelo menos 16 bytes que os contém, e o índice do periférico na tabela é a posição dele na lista |
+| `peripherals` | Mapa NOME para `base` (endereço da janela, alinhado ao tamanho dela) e `size` (bytes de registradores); a janela é a menor potência de dois de pelo menos 16 bytes que os contém, e o índice do periférico na tabela é a posição dele na lista |
 | `generate` | Os arquivos a escrever e os parâmetros do pacote VHDL |
 | `config` | O que o `config.yaml` lê do mapa |
 | `checks` | Onde moram as cópias escritas à mão que o `check-memory-map` confere |
@@ -137,10 +137,21 @@ core:
   base: I
   extensions:
     - M
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 64K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+      on_bus: false
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 64K
+      on_bus: false
+
 reserved:
   stdout:   {base: 0x00017BE0, size: 1K+8}
   tohost:   {base: 0x00017FE8, size: 8}
@@ -549,7 +560,7 @@ Este capítulo vale só se a plataforma tem uma FPGA. O projeto do Quartus de um
 
 ### 10.1. Declarar a placa no `platform.yaml`
 
-A plataforma nova parte da cópia da plataforma de placa mais próxima (`src/cyclone-v/de0-cv` para o perfil completo, `src/cyclone-iv-e/de0-nano` para um perfil reduzido). No `platform.yaml`, o campo `board` (ou a lista `boards`) escolhe a placa, os campos `clocks` e `io` dizem o que o SoC pede, e cada região externa escolhe o seu backend. O passo 6 de [adicionar-placa.md](adicionar-placa.md) descreve os campos, e o passo 7 o validador que compara o pedido com o que a placa oferece.
+A plataforma nova parte da cópia da plataforma de placa mais próxima (`src/cyclone-v/de0-cv` para o perfil completo, `src/cyclone-iv-e/de0-nano` para um perfil reduzido). No `platform.yaml`, o campo `board` (ou a lista `boards`) escolhe a placa, os campos `clocks` e `io` dizem o que o SoC pede, e cada segmento de `memory` escolhe o seu `type`. O passo 6 de [adicionar-placa.md](adicionar-placa.md) descreve os campos, e o passo 7 o validador que compara o pedido com o que a placa oferece.
 
 ### 10.2. Gerar e conferir o projeto
 
@@ -893,7 +904,7 @@ riscv-tools --root . check-vhdl-style
 
 ### 12.4. Uso numa plataforma
 
-O topo instancia a memória nova no lugar de uma das existentes, desde que a interface seja a do bloco que ela substitui (regra 3 da seção 5 do CONTRIBUTING). Quando a região deixa de ser interna, o campo `memory` do `platform.yaml` muda (`rom: {external: true}`, `icache: {enabled: true, size_bits: 32768}`), e o pacote gerado traz `ROM_EXTERNAL`, `RAM_EXTERNAL` e os tamanhos das caches.
+O topo instancia a memória nova no lugar de uma das existentes, desde que a interface seja a do bloco que ela substitui (regra 3 da seção 5 do CONTRIBUTING). Quando a região deixa de ser interna, o segmento de `memory` do `platform.yaml` ganha `on_bus: true` e `cache: {size_bits: 32768}`, e o pacote gerado traz `FLASH_ON_BUS`, `RAM_ON_BUS` e os tamanhos das caches.
 
 ## 13. CI e pull request
 
@@ -960,12 +971,11 @@ Num pull request de alguém de fora do projeto, o CI só começa depois que um m
 | :--- | :--- | :--- |
 | `platform` | Sim | Nome da plataforma |
 | `core`, `profiles` | Sim | Bloco do núcleo (`type`, `base` I ou E e `extensions`, a lista de todas as extensões) e caminho da matriz de perfis, relativo ao `platform.yaml` |
-| `regions` | Sim | `name`, `base`, `size`, `kind` (`rom` ou `ram`) e `exec` de cada região; toda região termina em `0x80000000` ou antes |
+| `memory` | Sim | `boot` (`base`, `size`), `instructions` e `data` (listas de segmentos com `type` `flash`, `sdram`, `sram`, `onchip` ou `emulated`, `base`, `size`, `on_bus`, `latency` e `sector_bytes` só no `emulated`, e `cache` com `size_bits`); todo segmento termina em `0x80000000` ou antes |
 | `reserved` | Sim | `stdout`, `tohost` e `fromhost`, dentro da região de RAM |
 | `boot` | Sim | `entry` numa região executável e `wait_restart` na primeira região |
-| `peripherals` | Sim | `name`, `base` e `size` |
+| `peripherals` | Sim | Mapa NOME para `base` e `size` |
 | `flash` | Não | Região da FLASH e as bancas (`name`, `base`, `size`) que a placa grava e executa |
-| `memory` | Não | `rom` e `ram` com `external`, `icache` e `dcache` com `enabled` e `size_bits` |
 | `generate` | Sim | `specs`, `bank_specs`, `boot_ld`, `runtime`, `banks_h` e `vhdl`, cada um com o `path` a escrever |
 | `config` | Sim | `rom`, `ram` e `addr_widths`, o que o `config.yaml` lê do mapa |
 | `checks` | Não | Cópias escritas à mão a conferir, cada uma com `name`, `file`, `pattern` ou `yaml`, e `expect` |

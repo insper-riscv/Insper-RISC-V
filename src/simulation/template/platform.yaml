@@ -12,10 +12,18 @@ core:
   extensions: []
 profiles: ../../../Core/profiles/matrix.yaml
 
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,  kind: rom, exec: true}
-  - {name: ROM,      base: 0x00001000, size: 28K, kind: rom, exec: true}
-  - {name: RAM,      base: 0x00008000, size: 32K, kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: onchip
+      base: 0x00001000
+      size: 28K
+  data:
+    - type: onchip
+      base: 0x00008000
+      size: 32K
 
 # Palavras no topo da RAM: o contrato entre a BOOT_MEMORY, o programa e o hospedeiro (a BOOT_MEMORY as zera
 # a cada reset).
@@ -34,16 +42,18 @@ strict_periph: true
 
 # A UART sobre JTAG é opcional: o topo a instancia quando o genérico has_uart é verdadeiro.
 peripherals:
-  - {name: UART, base: 0xC0000000, size: 1K}
+  UART:
+    base: 0xC0000000
+    size: 1K
 
 generate:
-  specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: ROM, ram: RAM, ram_limit: stdout}
+  specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/template/runtime/boot_memory.ld}
   runtime: {path: src/simulation/template/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/template/rtl/template_map_pkg.vhd
     package: template_map_pkg
-    rom: ROM
+    rom: FLASH
     ram: RAM
     rom_external: false
     ram_external: false
@@ -55,7 +65,7 @@ generate:
 # das memórias, tohost e fromhost. Os tamanhos das memórias de simulação são os genéricos do topo, cujo
 # padrão vem de template_map_pkg.
 config:
-  rom: ROM
+  rom: FLASH
   ram: RAM
 
 checks: []

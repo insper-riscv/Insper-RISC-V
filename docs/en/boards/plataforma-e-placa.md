@@ -9,11 +9,11 @@ The `platform.yaml` describes the memory map, the Core profile, the peripheral w
 | `board` | text | `auto` (default) asks for identification by JTAG ([identificacao-jtag.md](identificacao-jtag.md)); a name fixes the board |
 | `boards` | list of text | Boards the platform is built on, and the list `auto` considers |
 | `top` | text or list | Component(s) of `paths.yaml` whose closure of `requires` is the source list of the generated project and gathers the resources the board must offer |
-| `memory.<rom or ram>.backend` | `emulado` or `dispositivo` | Realization of the external region; required with `external: true` |
-| `memory.<rom or ram>.device` | `nor`, `flash-interna`, `serial`, `sdram`, `sram` | Only with `dispositivo`, and of the type of the region (`nor`, `flash-interna` and `serial` for the ROM; `sdram` and `sram` for the RAM) |
-| `memory.<rom or ram>.latency` | `{first, next}` | `clocks.core` cycles of the first word of a burst and of the following ones; only with `emulado` |
-| `memory.rom.sector_bytes` | power of 2 | Sector of the `emulado` FLASH; with `dispositivo` the sector comes from the chip |
-| `memory.icache`, `memory.dcache` | `{enabled, size_bits}` | Caches |
+| `memory.instructions[].type`, `memory.data[].type` | `flash`, `sdram`, `sram`, `onchip` or `emulated` | Realization of the segment; `emulated` imitates the chip with RAM blocks of the board, and `onchip` stays inside the core |
+| `memory.<instructions or data>[].on_bus` | boolean | The segment sits behind the external port of the core |
+| `memory.<instructions or data>[].latency` | `{first, next}` | `clocks.core` cycles of the first word of a burst and of the following ones; only with `emulated` |
+| `memory.instructions[].sector_bytes` | power of 2 | Sector of the `emulated` FLASH; with `flash` the sector comes from the chip |
+| `memory.<instructions or data>[].cache` | `{size_bits}` | Cache of the segment; without the key there is no cache |
 | `clocks.core` | `{mhz, phase_ps}` | Core clock; also the source of `interrupts.clock_hz` |
 | `clocks.fetch` | `{mhz, phase_ps}` | Clock of the instruction memories, with phase relative to `core`; without it the core clock applies |
 | `clocks.mem` | `{mhz}` | Ceiling of the device controller clock; the effective one is the smaller of it and the chip limit |
@@ -40,20 +40,30 @@ core:
     - Zicntr
     - Zihpm
     - Zifencei
-regions:
-  - {name: BOOT_MEMORY, base: 0x00000000, size: 4K,    kind: rom, exec: true}
-  - {name: FLASH,       base: 0x00001000, size: 1024K, kind: rom, exec: true}
-  - {name: RAM,         base: 0x40000000, size: 64M,   kind: ram}
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: flash
+      base: 0x00001000
+      size: 1024K
+      on_bus: true
+      cache:
+        size_bits: 32768
+  data:
+    - type: sdram
+      base: 0x40000000
+      size: 64M
+      on_bus: true
+      cache:
+        size_bits: 32768
+
 flash:
   region: FLASH
   banks:
     - {name: A, base: 0x00001000, size: 512K}
     - {name: B, base: 0x00081000, size: 512K}
-memory:
-  rom:    {external: true, backend: dispositivo, device: nor}
-  ram:    {external: true, backend: dispositivo, device: sdram}
-  icache: {enabled: true, size_bits: 32768}
-  dcache: {enabled: true, size_bits: 32768}
 clocks:
   core:  {mhz: 50, phase_ps: 8250}
   fetch: {mhz: 50, phase_ps: 0}
@@ -68,12 +78,12 @@ The FLASH starts at `0x00001000`, offset 0 of the chip. With the 64 KiB sector, 
 
 ## 2. Derivation of requires and provides
 
-Two sets are computed and never written. The `requires` of the platform gathers what it asks for (`regions`, `memory`, `clocks`, `io`, `console`) and the union of the `needs` keys of the components in the closure of the top. The `provides` of the board comes from the `board.yaml`, the catalog chip and the `pins.yaml`. The inclusion of the first in the second is the check.
+Two sets are computed and never written. The `requires` of the platform gathers what it asks for (`memory`, `clocks`, `io`, `console`) and the union of the `needs` keys of the components in the closure of the top. The `provides` of the board comes from the `board.yaml`, the catalog chip and the `pins.yaml`. The inclusion of the first in the second is the check.
 
 | Required resource | Origin in `requires` | Origin in `provides` |
 | :--- | :--- | :--- |
 | Device type (`sdram`, `sram`, `nor`, `onchip_flash`, `serial_flash`, `vjtag`, `block_ram`) | Union of the `needs` in the closure of the top | Key present in `memories` and `jtag.chain` |
-| Capacity and width | `regions` and `memory.<region>` | Catalog chip and `chips` or `bus_width` |
+| Capacity and width | `memory` (`base`, `size` and `type` of each segment) | Catalog chip and `chips` or `bus_width` |
 | RAM blocks | `emulado` memories, caches and register file | `resources.block_ram` |
 | Logic and multipliers | Estimate of [cabimento.md](cabimento.md) | `resources.logic` and `resources.multipliers` |
 | PLLs | Distinct clocks of `clocks` | `resources.plls` |
@@ -115,7 +125,7 @@ The rules run in `check-memory-map`, in `board generate` and before compiling. E
 | :--- | :--- | :--- |
 | V1 | E | The board, the family and the chips exist and the files follow the schema |
 | V2 | E | Every `needs` type is on the board, and the sum of the regions of a device fits in it |
-| V3 | E | The device of a `dispositivo` backend exists on the board |
+| V3 | E | The device of a segment of type `flash`, `sdram` or `sram` exists on the board |
 | V4 | E | The `pinos` console requires `console.uart` |
 | V5 | E | `required` role missing or with fewer units |
 | V6 | W | `optional` role missing or with fewer units; the peripheral is omitted |
@@ -137,7 +147,7 @@ Message examples.
 
 ```text
 E platform 'de0-cv' requires sdram (64M) but board 'de0-nano' provides sdram of 32M
-E memory.rom.device nor is not provided by board 'de0-cv' (provides: none); use backend emulado
+E memory.instructions[0].type flash is not provided by board 'de0-cv' (provides: none); use type emulated
 E flash bank B base 0x7F000 is not a multiple of the NOR sector 0x10000 of chip S29GL064N90
 E pin M16 for SPI_FLASH_CS is inferred, not confirmed; pass --accept-inferred-pins
 ```
