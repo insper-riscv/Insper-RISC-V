@@ -4,7 +4,7 @@ Esta página descreve a plataforma `de10-lite`, a Terasic DE10-Lite (MAX 10, 10M
 
 ## 1. Perfil e mapa de memória
 
-O dispositivo tem 49.760 LEs e 182 blocos M9K (1.677.312 bits), o bastante para o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` com os extras da DE0-CV (Zimop, Zicond, Zihintntl, Zihintpause, interrupções e Sscofpmf).
+O dispositivo tem 49.760 LEs e 182 blocos M9K (1.677.312 bits), o bastante para o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` com as extensões extras da DE0-CV (Zimop, Zicond, Zihintntl, Zihintpause, interrupções e Sscofpmf).
 
 | Região | Base | Tamanho | Realização |
 | :--- | :--- | ---: | :--- |
