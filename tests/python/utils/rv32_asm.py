@@ -6,6 +6,7 @@ T1 = 6
 T2 = 7
 T3 = 28
 T4 = 29
+A0 = 10
 
 
 def lui(rd: int, imm20: int) -> int:

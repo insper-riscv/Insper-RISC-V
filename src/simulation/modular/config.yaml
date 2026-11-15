@@ -130,8 +130,10 @@ sim:
     - Peripherals/src/TIMER/soc/timer_operation_decoder.vhd
     - Peripherals/src/TIMER/soc/timer.vhd
     - Common-Components/src/synchronizer.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
     - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
     - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
     - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
