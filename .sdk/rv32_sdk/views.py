@@ -11,6 +11,29 @@ from pathlib import Path
 import yaml
 
 
+def relink_boot_core(runtime: Path) -> None:
+    """Point the copied boot memory at the shared loader in `src/boot`.
+
+    The upstream file includes the loader relative to its own folder, which
+    stops resolving once the runtime is copied under `.sdk/platforms`.
+
+    Parameters
+    ----------
+    runtime : Path
+        The copied `runtime` folder of an SDK view.
+    """
+    source = runtime / "boot_memory.S"
+    old = '#include "../../../boot/boot_core.S"'
+    text = source.read_text()
+    if text.count(old) != 1:
+        raise SystemExit(
+            "Boot memory integration changed; refresh the SDK view"
+        )
+    source.write_text(
+        text.replace(old, '#include "../../../../src/boot/boot_core.S"')
+    )
+
+
 def ensure_internal_mem(sdk: Path) -> Path:
     """Build the pinned runtime view once, preserving upstream stdio and tests."""
     home = sdk / ".sdk"
@@ -37,6 +60,7 @@ def ensure_internal_mem(sdk: Path) -> Path:
         ) as temporary:
             stage = Path(temporary) / "internal-mem"
             shutil.copytree(base / "runtime", stage / "runtime")
+            relink_boot_core(stage / "runtime")
             shutil.copytree(
                 base / "testbench",
                 stage / "testbench",
@@ -163,6 +187,7 @@ def ensure_modular(sdk: Path) -> Path:
         ) as temporary:
             stage = Path(temporary) / "modular"
             shutil.copytree(base / "runtime", stage / "runtime")
+            relink_boot_core(stage / "runtime")
             shutil.copytree(
                 base / "testbench",
                 stage / "testbench",

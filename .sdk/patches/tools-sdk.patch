@@ -11,10 +11,10 @@ index e0238c1..0d9b5bb 100644
              crt0=optional_path(cfg, root, "crt0"),
              linker=optional_path(cfg, root, "linker_script"),
 diff --git a/src/riscv_tools/compiler/__config__.py b/src/riscv_tools/compiler/__config__.py
-index 2096053..18bdaee 100644
+index 8a71a1a..649704c 100644
 --- a/src/riscv_tools/compiler/__config__.py
 +++ b/src/riscv_tools/compiler/__config__.py
-@@ -35,6 +35,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
+@@ -45,6 +45,7 @@ DEFAULTS: dict[str, dict[str, Any]] = {
          # All project-specific (paths inside the CONSUMING repo, not
          # this package), no sane generic default.
          "include_dir": None,
@@ -23,10 +23,10 @@ index 2096053..18bdaee 100644
          # Leave both unset with toolchain.specs, which selects the
          # toolchain's.
 diff --git a/src/riscv_tools/compiler/build.py b/src/riscv_tools/compiler/build.py
-index fd8b5f9..78a3622 100644
+index 0eae3bd..0fecf6b 100644
 --- a/src/riscv_tools/compiler/build.py
 +++ b/src/riscv_tools/compiler/build.py
-@@ -131,6 +131,7 @@ class BuildSetup:
+@@ -141,6 +141,7 @@ class BuildSetup:
      default_timeout_s: float
      include_dir: Path
      link: LinkSetup = field(default_factory=LinkSetup)
@@ -34,14 +34,14 @@ index fd8b5f9..78a3622 100644
  
  
  def abi_for(march: str) -> str:
-@@ -295,6 +296,7 @@ def compile_test(
+@@ -301,6 +302,7 @@ def compile_test(
              # Own startup file: the toolchain's are turned off.
              *(["-nostartfiles"] if crt0 is not None else []),
              f"-I{setup.include_dir}",
 +            *[f"-I{directory}" for directory in setup.include_dirs],
              *_linker_script_flags(setup.link.linker),
-             *keep_results,
-             *setup.link.link_flags,
+             # A memory test is checked through its `results` array,
+             # which it may only declare (a test that just checks .bss
 diff --git a/src/riscv_tools/jtag/link.py b/src/riscv_tools/jtag/link.py
 index ef63f03..633ba96 100644
 --- a/src/riscv_tools/jtag/link.py

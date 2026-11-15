@@ -148,9 +148,9 @@ class DriversTest(unittest.TestCase):
                 ).read_text()
             )
             platform["profiles"] = str(ROOT / "Core/profiles/matrix.yaml")
-            platform["peripherals"] = [
-                {"name": "GPIO", "base": 0xA0000000, "id": 2, "size": 64}
-            ]
+            platform["peripherals"] = {
+                "GPIO": {"base": 0xA0000000, "size": 64}
+            }
             path = Path(temp) / "platform.yaml"
             path.write_text(yaml.safe_dump(platform))
             files, _ = drivers.plan(ROOT, {}, path)
@@ -305,10 +305,7 @@ class DriversTest(unittest.TestCase):
                 (ROOT / "src/simulation/modular/platform.yaml").read_text()
             )
             platform["profiles"] = str(ROOT / "Core/profiles/matrix.yaml")
-            switches = platform["peripherals"][1]
-            switches.pop("offset")
-            switches["base"] = 0x90000100
-            switches["padding"] -= 0x100
+            platform["peripherals"]["SWITCHES"]["base"] = 0x90000100
             path = Path(temp) / "platform.yaml"
             path.write_text(yaml.safe_dump(platform))
             files, _ = drivers.plan(ROOT, {}, path)
@@ -327,9 +324,9 @@ class DriversTest(unittest.TestCase):
                 ).read_text()
             )
             platform["profiles"] = str(ROOT / "Core/profiles/matrix.yaml")
-            platform["peripherals"] = [
-                {"name": "GPIO", "base": 0xA0000000, "id": 2, "size": 32}
-            ]
+            platform["peripherals"] = {
+                "GPIO": {"base": 0xA0000000, "size": 32}
+            }
             path = root / "platform.yaml"
             path.write_text(yaml.safe_dump(platform))
             with self.assertRaisesRegex(SystemExit, "too small"):

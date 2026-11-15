@@ -89,7 +89,7 @@ def context(
         width = (
             number(role + "_width", io=role)
             if role
-            else number("data_width", periph / "GPIO/soc/gpio.vhd")
+            else number("pin_count", periph / "GPIO/soc/gpio.vhd")
         )
         values["PIN_COUNT"] = str(width)
     elif name == "DISPLAY":
@@ -125,7 +125,7 @@ def context(
                 "UART/jtag/jtag_uart.vhd" if jtag else "UART/serial/uart.vhd"
             )
         else:
-            jtag = instance.get("id") == number("uart_jtag_id")
+            jtag = instance.get("index") == number("uart_jtag_index")
         values["BACKEND"] = "RV32_UART_JTAG" if jtag else "RV32_UART_SERIAL"
         values["TX_CAPACITY"] = str(
             1 << generic(console, "log2_depth")
