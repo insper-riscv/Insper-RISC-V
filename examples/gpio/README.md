@@ -1,5 +1,10 @@
-# GPIO C driver example
+# RV32 gpio example
 
-Register the matching SDK and open this folder in VS Code. Run Prepare Project, then Simulate. The default modular map provides SWITCHES at 0x90000000 and KEYS at 0xA0000000. The generator resolves these from the YAML; they are not embedded in the application.
+Open this directory directly in VS Code and use **Dev Containers: Reopen in
+Container**. The SDK must be registered on the Docker host with
+`scripts/install-user.sh`. Then run **RV32: Prepare Project** and **RV32: Simulate**.
 
-Expected output is `GPIO set/clear/toggle, pins, IRQ read-clear and two instances: PASS`. Inspect `vendor/GPIO` after preparation. This SDK example is simulation-only; Program FPGA refuses the modular platform. The default internal-mem and DE0-CV SDK maps do not expose GPIO.
+This project uses the modular simulation platform; FPGA actions are rejected.
+Select `cpu_profile` in `rv32.toml`. CLINT/PLIC require `rv32im_zicsr_irq`.
+Generated per-driver projects appear under `vendor/<DRIVER>/example/` after
+preparation. Open or copy one of those folders as its own project.

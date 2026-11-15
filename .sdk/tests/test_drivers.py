@@ -1,6 +1,7 @@
 """Peripheral generation must follow maps and preserve project-owned files."""
 
 import json
+import tomllib
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -33,6 +34,101 @@ class DriversTest(unittest.TestCase):
             b"RV32_GPIO_SWITCHES_BASE", files["GPIO/rv32_gpio_config.h"]
         )
         self.assertIn(b"RV32_GPIO_KEYS_IRQ", files["GPIO/rv32_gpio_config.h"])
+
+    def test_gpio_platform_factory_hides_addresses_and_resolves_widths(self):
+        files, _ = drivers.plan(
+            ROOT,
+            {"platform": "modular", "cpu_profile": "rv32im"},
+            ROOT / "src/simulation/modular/platform.yaml",
+        )
+        config = files["GPIO/rv32_gpio_platform.h"].decode()
+        self.assertIn("RV32_GPIO_SWITCHES_PIN_COUNT 10", config)
+        self.assertIn("RV32_GPIO_KEYS_PIN_COUNT 4", config)
+        self.assertIn("RV32_PERIPH_SWITCHES_BASE", config)
+        self.assertIn("RV32_PERIPH_KEYS_BASE", config)
+        example = files["GPIO/example/src/main.c"].decode()
+        self.assertIn("rv32_gpio_platform_new", example)
+        self.assertNotIn("_BASE", example)
+
+    def test_each_enabled_driver_has_an_independent_example(self):
+        project = {"platform": "modular", "cpu_profile": "rv32im_zicsr_irq"}
+        platform = ROOT / "src/simulation/modular/platform.yaml"
+        files, metadata = drivers.plan(ROOT, project, platform)
+        self.assertEqual(len(metadata["example_projects"]), 6)
+        for example in metadata["example_projects"]:
+            prefix = example.removeprefix("vendor/")
+            for name in (
+                "rv32.toml",
+                "src/main.c",
+                ".devcontainer/devcontainer.json",
+                ".devcontainer/compose.yaml",
+                ".vscode/tasks.json",
+                ".clang-format",
+            ):
+                self.assertIn(prefix + "/" + name, files)
+            config = tomllib.loads(files[prefix + "/rv32.toml"].decode())[
+                "project"
+            ]
+            self.assertEqual(config["platform"], "modular")
+            self.assertEqual(config["cpu_profile"], "rv32im_zicsr_irq")
+            self.assertFalse(config["generate_driver_examples"])
+            child, child_meta = drivers.plan(ROOT, config, platform)
+            self.assertEqual(child_meta["example_projects"], [])
+            self.assertFalse(any("/example/" in name for name in child))
+            self.assertNotIn(b"@", files[prefix + "/src/main.c"])
+        self.assertFalse(
+            any("/example/" in name for name in metadata["sources"])
+        )
+
+    def test_example_generation_can_be_disabled_and_edits_survive(self):
+        platform = ROOT / "src/simulation/modular/platform.yaml"
+        files, metadata = drivers.plan(
+            ROOT, {"generate_driver_examples": False}, platform
+        )
+        self.assertEqual(metadata["example_projects"], [])
+        self.assertFalse(any("/example/" in name for name in files))
+        with self.assertRaisesRegex(SystemExit, "generate_driver_examples"):
+            drivers.plan(ROOT, {"generate_driver_examples": "yes"}, platform)
+        with TemporaryDirectory() as temp:
+            files, metadata = drivers.plan(ROOT, {}, platform)
+            root = Path(temp)
+            drivers.install(root, files, metadata)
+            example = root / "vendor/GPIO/example/src/main.c"
+            example.write_text("// user example\n")
+            with self.assertRaisesRegex(SystemExit, "was edited"):
+                drivers.install(root, files, metadata)
+            self.assertEqual(example.read_text(), "// user example\n")
+
+    def test_legacy_slot_four_is_serial_not_jtag(self):
+        files, metadata = drivers.plan(
+            ROOT, {}, ROOT / "src/simulation/internal-mem/platform.yaml"
+        )
+        self.assertEqual(metadata["example_projects"], ["vendor/UART/example"])
+        self.assertIn(
+            b"RV32_UART_DEFAULT_BACKEND RV32_UART_SERIAL",
+            files["UART/rv32_uart_platform.h"],
+        )
+
+    def test_jtag_and_flash_examples_use_the_actual_backend_and_no_erase(self):
+        files, metadata = drivers.plan(
+            ROOT,
+            {"platform": "de0-cv"},
+            ROOT / "src/cyclone-v/de0-cv/platform.yaml",
+        )
+        self.assertIn("vendor/FLASH/example", metadata["example_projects"])
+        uart = files["UART/example/src/main.c"]
+        self.assertIn(b"rv32_uart_platform_new", uart)
+        self.assertIn(
+            b"RV32_UART_DEFAULT_BACKEND RV32_UART_JTAG",
+            files["UART/rv32_uart_platform.h"],
+        )
+        self.assertIn(
+            b"RV32_UART_DEFAULT_TX_CAPACITY 64",
+            files["UART/rv32_uart_platform.h"],
+        )
+        flash = files["FLASH/example/src/main.c"]
+        self.assertIn(b"rv32_flash_busy", flash)
+        self.assertNotIn(b"rv32_flash_submit", flash)
 
     def test_uart_only_platform_does_not_invent_gpio(self):
         files, metadata = drivers.plan(

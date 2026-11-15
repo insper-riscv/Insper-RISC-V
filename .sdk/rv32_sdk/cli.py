@@ -207,15 +207,12 @@ def write_config(
         raise SystemExit("project.generate_drivers must be true or false")
     generated_sources = []
     if enabled:
-        if project["language"] != "c":
-            raise SystemExit(
-                "Automatic peripheral driver linking currently supports C projects"
-            )
         generated = drivers.generate(
             SDK, root, project, platform_dir(project) / "platform.yaml"
         )
         include_paths.extend(root / p for p in generated["include_dirs"])
-        generated_sources = [root / p for p in generated["sources"]]
+        if project["language"] == "c":
+            generated_sources = [root / p for p in generated["sources"]]
     uart_stdio = project.get("simulation_uart_stdio", False)
     if not isinstance(uart_stdio, bool):
         raise SystemExit("project.simulation_uart_stdio must be true or false")
@@ -446,8 +443,25 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
     manifest = (root / str(project.get("manifest", "Cargo.toml"))).resolve()
     if not manifest.is_file():
         raise SystemExit(f"Rust manifest does not exist: {manifest}")
+    if project.get("generate_drivers", False):
+        run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
     env = dict(os.environ)
     env.update(compile_runtime(root, config))
+    if project.get("generate_drivers", False):
+        for name in (
+            "GPIO",
+            "TIMER",
+            "CLINT",
+            "PLIC",
+            "UART",
+            "DISPLAY",
+            "FLASH",
+        ):
+            key = f"RV32_{name}_CONFIG_DIR"
+            env.pop(key, None)
+            directory = root / "vendor" / name
+            if (directory / f"rv32_{name.lower()}_platform.h").is_file():
+                env[key] = str(directory.resolve())
     env["RV32_GCC"] = (
         shutil.which("riscv32-unknown-elf-gcc") or "riscv32-unknown-elf-gcc"
     )
@@ -686,6 +700,8 @@ def setup(root: Path, project: dict[str, Any]) -> None:
     run(["uv", "sync", "--project", str(SDK / ".sdk")], cwd=SDK)
     if project["language"] == "rust":
         require_commands(["rustup"])
+        if project.get("generate_drivers", False):
+            run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
         run(["rustup", "target", "add", rust_target(project)], cwd=root)
     config = write_config(root, project)
     if project["language"] == "c":

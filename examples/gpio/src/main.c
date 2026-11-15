@@ -36,8 +36,8 @@ static bool wait_irq(rv32_gpio_t gpio, size_t pin)
 int main(void)
 {
     /* These widths match the modular simulation top, not its MMIO slot size. */
-    rv32_gpio_t gpio = rv32_gpio_new(RV32_GPIO_SWITCHES_BASE, 10);
-    rv32_gpio_t keys = rv32_gpio_new(RV32_GPIO_KEYS_BASE, 4);
+    rv32_gpio_t gpio = rv32_gpio_platform_new(RV32_GPIO_SWITCHES_INSTANCE);
+    rv32_gpio_t keys = rv32_gpio_platform_new(RV32_GPIO_KEYS_INSTANCE);
 
     if (!rv32_gpio_valid(gpio) || !rv32_gpio_valid(keys)) {
         return 1;

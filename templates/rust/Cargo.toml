@@ -1,7 +1,7 @@
 [package]
 name = "rv32-app"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [profile.dev]
 panic = "abort"
@@ -19,3 +19,9 @@ name = "rv32-app"
 path = "src/main.rs"
 test = false
 bench = false
+
+# Firmware projects remain independent when created inside another Cargo tree.
+[workspace]
+
+[dependencies]
+rv32-runtime = { path = "vendor/rv32-runtime" }
