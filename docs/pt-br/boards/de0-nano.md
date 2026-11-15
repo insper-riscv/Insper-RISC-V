@@ -70,7 +70,7 @@ O papel `gpio` é bidirecional e numera os pinos de `GPIO_0` (0 a 33), `GPIO_1` 
 | :--- | :--- | ---: | :--- | :--- |
 | `gpio` | `GPIO_0[33:0]`, `GPIO_1[33:0]`, `GPIO_2[12:0]` | 81 | 3.5 e 3.6, tabelas 3-6, 3-7 e 3-8 | 3,3 V |
 
-Ficam fora do papel `gpio`, e só no `pins.yaml`, os pinos só de entrada `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` e `GPIO_2_IN[2:0]`, pois o Quartus recusa uma célula bidirecional neles. O ADC128S022 (seção 3.6, tabela 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) e o acelerômetro ADXL345 (seção 3.7, tabela 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` e o I2C da EEPROM, tabela 3-5) estão no `pins.yaml` sem papel de entrada e saída.
+Ficam fora do papel `gpio`, e só no `pins.yaml`, os pinos só de entrada `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` e `GPIO_2_IN[2:0]`, pois o Quartus recusa uma célula bidirecional neles. O ADC128S022 (seção 3.6, tabela 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) e o acelerômetro ADXL345 (seção 3.7, tabela 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` e o I2C da EEPROM, tabela 3-5) são os papéis `adc` e `adxl345` de `buses`, e o par `I2C_SCLK` e `I2C_SDAT` também é o papel `i2c`; a seção 6.1 de [perifericos-por-placa.md](perifericos-por-placa.md) diz quem é dono desse par.
 
 ---
 

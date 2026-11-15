@@ -4,13 +4,13 @@
 repository: Insper-RISC-V
 references:
   - {name: submodules and entry points, paths: [Common-Components, Core, Memory, Peripherals, scripts/kpi_report.py, scripts/compare_kpis.py, scripts/generate_sources.py, typings/yaml/__init__.pyi]}
-  - {name: board packages, paths: [boards/de0-cv/board.yaml, boards/de0-cv/pins.yaml, boards/de2-115/board.yaml, boards/de2-115/pins.yaml, boards/de0-nano/board.yaml, boards/de0-nano/pins.yaml, boards/de10-lite/board.yaml, boards/de10-lite/pins.yaml, boards/de10-nano/board.yaml, boards/de10-nano/pins.yaml, boards/de0-nano-soc/board.yaml, boards/de0-nano-soc/pins.yaml, boards/mkr-vidor-4000/board.yaml, boards/mkr-vidor-4000/pins.yaml, docs/pt-br/boards/formato.md, docs/pt-br/boards/placas.md, docs/pt-br/boards/de10-nano.md, docs/pt-br/boards/de2-115.md, docs/pt-br/boards/resultados-de2-115.md, docs/pt-br/boards/mkr-vidor-4000.md, docs/pt-br/boards/equivalencia-de0-cv.md, docs/en/boards/formato.md, docs/en/boards/placas.md, docs/en/boards/de10-nano.md, docs/en/boards/de2-115.md, docs/en/boards/resultados-de2-115.md, docs/en/boards/mkr-vidor-4000.md, docs/en/boards/equivalencia-de0-cv.md]}
+  - {name: board packages, paths: [boards/de0-cv/board.yaml, boards/de0-cv/pins.yaml, boards/de2-115/board.yaml, boards/de2-115/pins.yaml, boards/de0-nano/board.yaml, boards/de0-nano/pins.yaml, boards/de10-lite/board.yaml, boards/de10-lite/pins.yaml, boards/de10-nano/board.yaml, boards/de10-nano/pins.yaml, boards/de0-nano-soc/board.yaml, boards/de0-nano-soc/pins.yaml, boards/mkr-vidor-4000/board.yaml, boards/mkr-vidor-4000/pins.yaml, docs/pt-br/boards/formato.md, docs/pt-br/boards/perifericos-por-placa.md, docs/pt-br/boards/placas.md, docs/pt-br/boards/de10-nano.md, docs/pt-br/boards/de2-115.md, docs/pt-br/boards/resultados-de2-115.md, docs/pt-br/boards/mkr-vidor-4000.md, docs/pt-br/boards/equivalencia-de0-cv.md, docs/en/boards/formato.md, docs/en/boards/perifericos-por-placa.md, docs/en/boards/placas.md, docs/en/boards/de10-nano.md, docs/en/boards/de2-115.md, docs/en/boards/resultados-de2-115.md, docs/en/boards/mkr-vidor-4000.md, docs/en/boards/equivalencia-de0-cv.md]}
   - {name: de0-nano platform, paths: [src/cyclone-iv-e/de0-nano/platform.yaml, src/cyclone-iv-e/de0-nano/config.yaml, src/cyclone-iv-e/de0-nano/de0_nano_map_pkg.vhd, src/cyclone-iv-e/de0-nano/config_pkg.vhd, src/cyclone-iv-e/de0-nano/runtime/boot_memory.S, src/cyclone-iv-e/de0-nano/runtime/boot_memory.ld, src/cyclone-iv-e/de0-nano/runtime/_exit.c, src/cyclone-iv-e/de0-nano/runtime/stdio.c, src/cyclone-iv-e/de0-nano/runtime/spike_exit.S, src/cyclone-iv-e/de0-nano/runtime/memory_map.h, src/cyclone-iv-e/de0-nano/runtime/flash_banks.h, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga.specs, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-a.specs, src/cyclone-iv-e/de0-nano/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/boards/de0-nano.md, docs/en/boards/de0-nano.md]}
   - {name: de10-lite platform, paths: [src/max-10/de10-lite/platform.yaml, src/max-10/de10-lite/config.yaml, src/max-10/de10-lite/de10_lite_map_pkg.vhd, src/max-10/de10-lite/config_pkg.vhd, src/max-10/de10-lite/runtime/boot_memory.S, src/max-10/de10-lite/runtime/boot_memory.ld, src/max-10/de10-lite/runtime/_exit.c, src/max-10/de10-lite/runtime/stdio.c, src/max-10/de10-lite/runtime/spike_exit.S, src/max-10/de10-lite/runtime/memory_map.h, src/max-10/de10-lite/runtime/flash_banks.h, src/max-10/de10-lite/runtime/rv32im-fpga.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-a.specs, src/max-10/de10-lite/runtime/rv32im-fpga-bank-b.specs, docs/pt-br/boards/de10-lite.md, docs/en/boards/de10-lite.md]}
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: common boot memory, paths: [src/boot/boot_core.S, tests/python/check_boot_contract.py, tests/python/gen_real_boot_images.py, tests/python/unittests/rtl/data/template/boot_memory_real.hex, tests/python/unittests/rtl/data/modular/boot_memory_real.hex, docs/pt-br/platform/boot.md, docs/en/platform/boot.md]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
-  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/doom/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml]}
+  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/doom/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml, src/periph-examples/de0-cv/platform.yaml, src/periph-examples/de2-115/platform.yaml, src/periph-examples/de0-nano/platform.yaml, src/periph-examples/de10-lite/platform.yaml, src/periph-examples/de10-nano/platform.yaml, src/periph-examples/de0-nano-soc/platform.yaml, src/periph-examples/mkr-vidor-4000/platform.yaml]}
   # The platform configs are written relative to the root of this repository, `base: .`.
   - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: hardware-top sim sources, file: src/simulation/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: .}
@@ -287,6 +287,64 @@ provides:
     sources: []
   cal_de10_nano_board:
     requires: [soc, cal_de10_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  # The platforms of examples of the external peripherals (docs/pt-br/boards/perifericos-por-placa.md): one directory per board with the
+  # map package and the config_pkg of its platform.yaml; the board component of each is the closure of the calibration one of the same board with the package of its own map.
+  periph_de0_cv_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de0-cv/config_pkg.vhd
+      - src/periph-examples/de0-cv/de0_cv_periph_map_pkg.vhd
+  periph_de0_cv_board:
+    requires: [soc, periph_de0_cv_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
+  periph_de2_115_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de2-115/config_pkg.vhd
+      - src/periph-examples/de2-115/de2_115_periph_map_pkg.vhd
+  periph_de2_115_board:
+    requires: [soc, periph_de2_115_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  periph_de0_nano_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de0-nano/config_pkg.vhd
+      - src/periph-examples/de0-nano/de0_nano_periph_map_pkg.vhd
+  periph_de0_nano_board:
+    requires: [soc, periph_de0_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  periph_de10_lite_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de10-lite/config_pkg.vhd
+      - src/periph-examples/de10-lite/de10_lite_periph_map_pkg.vhd
+  periph_de10_lite_board:
+    requires: [soc, periph_de10_lite_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    sources: []
+  periph_de10_nano_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de10-nano/config_pkg.vhd
+      - src/periph-examples/de10-nano/de10_nano_periph_map_pkg.vhd
+  periph_de10_nano_board:
+    requires: [soc, periph_de10_nano_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  periph_de0_nano_soc_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/de0-nano-soc/config_pkg.vhd
+      - src/periph-examples/de0-nano-soc/de0_nano_soc_periph_map_pkg.vhd
+  periph_de0_nano_soc_board:
+    requires: [soc, periph_de0_nano_soc_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
+    sources: []
+  periph_mkr_vidor_4000_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/periph-examples/mkr-vidor-4000/config_pkg.vhd
+      - src/periph-examples/mkr-vidor-4000/mkr_vidor_4000_periph_map_pkg.vhd
+  periph_mkr_vidor_4000_board:
+    requires: [soc, periph_mkr_vidor_4000_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
     sources: []
   de0_cv_sim_top:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]

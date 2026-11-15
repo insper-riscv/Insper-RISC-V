@@ -66,7 +66,7 @@ The `gpio` role is bidirectional and numbers `GPIO` from 0 to 35 and the Arduino
 | `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6, table 3-8 | 3.3 V |
 | `clock_extra` | `MAX10_CLK2_50`, `ADC_CLK_10` | 2 | 3.2, table 3-2 | 3.3 V |
 
-Only in `pins.yaml`, with no role: `ARDUINO_RESET_N` (table 3-8), the ADXL345 accelerometer (section 3.10, table 3-13, `GSENSOR_*`) and the VGA video (section 3.8, table 3-11). The ADC is internal to the MAX 10 and has no signal pin (section 3.7).
+Only in `pins.yaml`, with no `io` role: `ARDUINO_RESET_N` (table 3-8) and the decimal point `HEX0[7]` to `HEX5[7]` (section 3.4, table 3-6), because the `display` role has seven segments per digit. The ADXL345 accelerometer (section 3.10, table 3-13, `GSENSOR_*`) is the `adxl345` role and the ADC internal to the MAX 10 (section 3.7, no signal pin) is the `adc` role with `chip: max10`, both in `buses`, and the VGA video (section 3.8, table 3-11) is the `video` role (see [perifericos-por-placa.md](perifericos-por-placa.md)).
 
 ---
 

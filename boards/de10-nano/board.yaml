@@ -41,6 +41,7 @@ io:
 # Papeis de pino dos perifericos externos (secao `buses`), so do lado FPGA; ETH, UART, SD, USB e G-sensor ficam no HPS.
 buses:
   hdmi: {d: "HDMI_TX_D[23:0]", clk: HDMI_TX_CLK, de: HDMI_TX_DE, hs: HDMI_TX_HS, vs: HDMI_TX_VS, int: HDMI_TX_INT, scl: I2C_SCL, sda: I2C_SDA}
+  hdmi_audio: {mclk: HDMI_MCLK, sclk: HDMI_SCLK, lrclk: HDMI_LRCLK, i2s0: HDMI_I2S0}
   adc: {chip: ltc2308, convst: ADC_CONVST, sck: ADC_SCK, sdi: ADC_SDI, sdo: ADC_SDO}
 console:
   default: jtag
@@ -57,3 +58,4 @@ notes:
   - "Polaridades lidas no manual (secao 3.6.1): o botao da nivel baixo ao ser apertado, o LED acende em nivel alto e a chave da nivel alto na posicao de cima."
   - "Expansao (secoes 3.6.2 e 3.6.3): dois cabecalhos de 40 pinos, GPIO_0 e GPIO_1, com 36 pinos de E/S cada (mais VCC5, VCC3P3 e dois GND), e o cabecalho Arduino Uno R3 com ARDUINO_IO[15:0]. O papel gpio numera GPIO_0 de 0 a 35, GPIO_1 de 36 a 71 e o Arduino de 72 a 87. ARDUINO_RESET_N fica fora do papel. O ADC LTC2308 (secao 3.6.4) e o HDMI ADV7513 (secao 3.6.5) estao em pins.yaml sem papel de E/S."
   - "O video sai pelo ADV7513 (HDMI), que recebe RGB de 24 bits em HDMI_TX_D, DE, HS, VS e CLK. A configuracao do chip e feita por I2C_SCL e I2C_SDA (pins.yaml), que nao fazem parte do prefixo HDMI_TX. O manual so diz que o chip aceita ate 165 MHz de clock de pixel, sem tabela de modos."
+  - "O papel hdmi_audio liga HDMI_MCLK, HDMI_SCLK, HDMI_LRCLK e HDMI_I2S0 (secao 3.6.5, tabela 3-13) do ADV7513, que leva o audio I2S de um canal junto do video; o papel hdmi usa I2C_SCL e I2C_SDA para configurar os registradores de video e de audio do chip."

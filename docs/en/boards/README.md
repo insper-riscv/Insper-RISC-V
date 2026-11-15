@@ -15,6 +15,7 @@ Boards are data: one package per board, one family per device and a chip catalog
 | [cabimento.md](cabimento.md) | Estimator, fit policy and confirmation by the fit |
 | [calibracao.md](calibracao.md) | Measured calibration tables of each family |
 | [equivalencia-de0-cv.md](equivalencia-de0-cv.md) | Equivalence of the generated DE0-CV with the hand-written one |
+| [perifericos-por-placa.md](perifericos-por-placa.md) | Pin roles of the external peripherals of each board, example platforms and shared pins |
 
 ## 2. Boards
 

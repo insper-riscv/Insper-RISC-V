@@ -24,6 +24,8 @@ TEN := test-integrated test-external-data test-external-instruction test-externa
   fpga-integrated fpga-external-data fpga-external-instruction fpga-external fpga-uart-jtag fpga-uart-pins
 # The directory of platform $$n of TEN, for a shell loop of a recipe.
 TEN_DIR = $$(case $$n in test-*) echo src/simulation;; *) echo src/cyclone-v;; esac)/$$n
+# The example platforms of the external peripherals, one per board in src/periph-examples (docs/pt-br/boards/perifericos-por-placa.md).
+PERIPH := de0-cv de2-115 de0-nano de10-lite de10-nano de0-nano-soc mkr-vidor-4000
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
@@ -114,6 +116,7 @@ memory-map:
 	riscv-tools --root . check-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . check-memory-map --platform src/periph-examples/$$b/platform.yaml || exit 1; done
 	$(MAKE) generate-check variants-check sources-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot memory and
@@ -129,6 +132,7 @@ generate:
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . generate-memory-map --platform src/periph-examples/$$b/platform.yaml || exit 1; done
 	$(MAKE) variants
 
 generate-check:
@@ -141,6 +145,7 @@ generate-check:
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml --check
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml --check || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . generate-memory-map --platform src/periph-examples/$$b/platform.yaml --check || exit 1; done
 	$(MAKE) variants-check
 
 # The config_pkg of the modular platform with another memory combination, for the matrix tests of tests.json (each
