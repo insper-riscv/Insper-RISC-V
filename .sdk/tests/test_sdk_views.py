@@ -70,13 +70,13 @@ class SdkViewsTest(unittest.TestCase):
     def test_fixed_isa_feature_must_be_enabled_in_config_package(self):
         original = Path.read_text
 
-        def disabled_m(path, *args, **kwargs):
+        def disabled_flag(path, *args, **kwargs):
             text = original(path, *args, **kwargs)
             if path.name == "config_pkg.vhd":
                 import re
 
                 text = re.sub(
-                    r"(constant\s+HAS_M\s*:\s*boolean\s*:=\s*)true",
+                    r"(constant\s+HAS_ZICOND\s*:\s*boolean\s*:=\s*)true",
                     r"\1false",
                     text,
                     flags=re.I,
@@ -85,7 +85,11 @@ class SdkViewsTest(unittest.TestCase):
 
         with TemporaryDirectory() as directory:
             root = Path(directory)
-            sdk.write_config(root, {"language": "c"})
-            with patch.object(Path, "read_text", disabled_m):
-                with self.assertRaisesRegex(SystemExit, "HAS_M"):
-                    sdk.write_config(root, {"language": "c"})
+            sdk.write_config(
+                root, {"language": "c", "cpu_profile": "rv32im_zicond"}
+            )
+            with patch.object(Path, "read_text", disabled_flag):
+                with self.assertRaisesRegex(SystemExit, "HAS_ZICOND"):
+                    sdk.write_config(
+                        root, {"language": "c", "cpu_profile": "rv32im_zicond"}
+                    )
