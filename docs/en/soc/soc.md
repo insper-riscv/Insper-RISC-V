@@ -48,7 +48,7 @@ The I/O roles have their width set by a generic, and a role of width zero is omi
 | Keys | `has_keys` | `keys_width` | `keys_active_low` | `io_keys` |
 | Display | `has_display` | `display_digits` | `display_active_low` | `o_display_hex`, `o_display_value` |
 
-The switches and keys are GPIO blocks, and the display is the `seg_display` register. Both peripherals accept width zero and have the polarity generic, described in the documents of the Peripherals repository. The console in pins mode takes the polarity of its two lines from `uart_tx_invert` and `uart_rx_invert`. The JTAG console and the pins console have the ports `i_uart_*`, `o_uart_tdo`, `i_uart_rx` and `o_uart_tx`, and the timer, the CLINT and the PLIC have no board port.
+The switches and keys are GPIO blocks, and the display is the `seg_display` register. Each GPIO role is a single group with the pins in natural order and the role polarity replicated on every pin (`pin_active_low`), and the SoC wires the whole read word to the peripheral window, with the bits above the width at zero. Both peripherals accept width zero (the role is omitted) and have the polarity generic, described in the documents of the Peripherals repository. The console in pins mode takes the polarity of its two lines from `uart_tx_invert` and `uart_rx_invert`. The JTAG console and the pins console have the ports `i_uart_*`, `o_uart_tdo`, `i_uart_rx` and `o_uart_tx`, and the timer, the CLINT and the PLIC have no board port.
 
 ## 5. Map and generics
 

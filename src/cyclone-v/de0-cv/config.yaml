@@ -131,6 +131,11 @@ sim:
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
     - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
