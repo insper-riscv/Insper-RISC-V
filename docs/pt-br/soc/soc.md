@@ -48,7 +48,7 @@ Os papéis de E/S têm a largura por generic, e um papel de largura zero é omit
 | Botões | `has_keys` | `keys_width` | `keys_active_low` | `io_keys` |
 | Display | `has_display` | `display_digits` | `display_active_low` | `o_display_hex`, `o_display_value` |
 
-As chaves e os botões são blocos GPIO, e o display é o registrador `seg_display`. Os dois periféricos aceitam largura zero e têm o generic de polaridade, descritos nos documentos do repositório Peripherals. O console em pinos recebe a polaridade das suas duas linhas de `uart_tx_invert` e `uart_rx_invert`. O console sobre JTAG e o console em pinos têm as portas `i_uart_*`, `o_uart_tdo`, `i_uart_rx` e `o_uart_tx`, e o temporizador, o CLINT e o PLIC não têm porta de placa.
+As chaves e os botões são blocos GPIO, e o display é o registrador `seg_display`. Cada papel de GPIO é um único grupo com os pinos em ordem natural e a polaridade do papel replicada em todos os pinos (`pin_active_low`), e o SoC liga a palavra de leitura inteira à janela do periférico, com os bits acima da largura em zero. Os dois periféricos aceitam largura zero (o papel é omitido) e têm o generic de polaridade, descritos nos documentos do repositório Peripherals. O console em pinos recebe a polaridade das suas duas linhas de `uart_tx_invert` e `uart_rx_invert`. O console sobre JTAG e o console em pinos têm as portas `i_uart_*`, `o_uart_tdo`, `i_uart_rx` e `o_uart_tx`, e o temporizador, o CLINT e o PLIC não têm porta de placa.
 
 ## 5. Mapa e generics
 

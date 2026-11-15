@@ -371,6 +371,46 @@ architecture behaviour of soc is
     -- Controlador de FLASH (só a plataforma de0-cv tem o chip).
     constant LINE_FLASH     : positive := 6;
 
+    -- Pinos do papel GPIO como um único grupo: o campo de 8 bits do grupo vale o número de pinos.
+    function gpio_group_sizes (pins : positive) return std_logic_vector is
+    begin
+
+        return std_logic_vector(to_unsigned(pins, 8));
+
+    end function gpio_group_sizes;
+
+    -- Lista dos pinos do grupo na ordem natural, um campo de 8 bits por pino (o pino k vale k).
+    function gpio_group_members (pins : positive) return std_logic_vector is
+
+        variable result : std_logic_vector(8 * pins - 1 downto 0);
+
+    begin
+
+        for k in 0 to pins - 1 loop
+
+            result(8 * k + 7 downto 8 * k) := std_logic_vector(to_unsigned(k, 8));
+
+        end loop;
+
+        return result;
+
+    end function gpio_group_members;
+
+    -- Polaridade de todos os pinos do papel: '1' em cada bit quando o papel é ativo em nível baixo.
+    function gpio_pin_lows (pins : positive; low : boolean) return std_logic_vector is
+
+        variable result : std_logic_vector(pins - 1 downto 0) := (others => '0');
+
+    begin
+
+        if low then
+            result := (others => '1');
+        end if;
+
+        return result;
+
+    end function gpio_pin_lows;
+
     -- Início, em KiB, da seleção pelo endereço registrado da cache de instruções; -1 usa a porta de seleção.
 
     function ic_select_from (fast : boolean; start_kib : natural) return integer is
@@ -1146,16 +1186,22 @@ begin
 
         u_switches : entity work.gpio
             generic map (
-                data_width => switches_width, active_low => switches_active_low
+                pin_count      => switches_width,
+                group_count    => 1,
+                member_count   => switches_width,
+                group_sizes    => gpio_group_sizes(switches_width),
+                group_members  => gpio_group_members(switches_width),
+                pin_dirs       => (others => '0'),
+                pin_active_low => gpio_pin_lows(switches_width, switches_active_low)
             )
             port map (
                 i_clk        => i_clk_core,
                 i_rst        => i_rst,
-                i_data_in    => p_wdata(switches_width - 1 downto 0),
+                i_data_in    => p_wdata,
                 i_address    => p_addr(3 downto 0),
                 i_write      => p_we(switches_index),
                 i_read       => p_re(switches_index),
-                o_data_out   => p_rdata(XLEN * switches_index + switches_width - 1 downto XLEN * switches_index),
+                o_data_out   => p_rdata(XLEN * switches_index + XLEN - 1 downto XLEN * switches_index),
                 o_irq        => irq_lines(LINE_SWITCHES),
                 io_gpio_pins => io_switches
             );
@@ -1167,16 +1213,22 @@ begin
 
         u_keys : entity work.gpio
             generic map (
-                data_width => keys_width, active_low => keys_active_low
+                pin_count      => keys_width,
+                group_count    => 1,
+                member_count   => keys_width,
+                group_sizes    => gpio_group_sizes(keys_width),
+                group_members  => gpio_group_members(keys_width),
+                pin_dirs       => (others => '0'),
+                pin_active_low => gpio_pin_lows(keys_width, keys_active_low)
             )
             port map (
                 i_clk        => i_clk_core,
                 i_rst        => i_rst,
-                i_data_in    => p_wdata(keys_width - 1 downto 0),
+                i_data_in    => p_wdata,
                 i_address    => p_addr(3 downto 0),
                 i_write      => p_we(keys_index),
                 i_read       => p_re(keys_index),
-                o_data_out   => p_rdata(XLEN * keys_index + keys_width - 1 downto XLEN * keys_index),
+                o_data_out   => p_rdata(XLEN * keys_index + XLEN - 1 downto XLEN * keys_index),
                 o_irq        => irq_lines(LINE_KEYS),
                 io_gpio_pins => io_keys
             );
