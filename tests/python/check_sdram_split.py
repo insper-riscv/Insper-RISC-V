@@ -59,8 +59,8 @@ def variant(flash_end: int, ram_size: int) -> dict[str, Any]:
     memory = data["memory"]
     memory["instructions"][0]["size"] = flash_end - FLASH_BASE
     memory["data"][0]["size"] = ram_size
-    # A FLASH e a RAM dividem o chip, então cada uma diz onde começa nele:
-    # a FLASH no próprio endereço do SoC e a RAM logo depois dela.
+    # A FLASH e a RAM dividem o chip, e cada uma diz onde começa nele:
+    # a FLASH no endereço do SoC e a RAM logo depois dela.
     memory["instructions"][0]["offset"] = FLASH_BASE
     memory["data"][0]["offset"] = flash_end
     ram_end = RAM_BASE + ram_size
