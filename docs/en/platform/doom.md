@@ -65,35 +65,14 @@ The linker script `loader.ld`, written by the user, puts the `.text` section at 
 
 ### 4.2. Write the SDRAM and ring the doorbell
 
-`riscv-tools` has no subcommand yet that loads an image into the SDRAM. The `sdram_debug` module has the function, which `certify-board` already uses, and the script below runs in the Python of the `dev_tools` image, with Quartus visible and the JTAG cable of the board.
+The `load-ram` subcommand does steps 2 to 4 in one call: it clears `launch`, writes the binary and the WAD through the debug port, reads each back to verify it and only then writes the magic to `launch`. A difference in the read-back aborts the load without touching the doorbell.
 
-```python
-from pathlib import Path
-import struct
-
-from riscv_tools import sdram_debug
-from riscv_tools.jtag import JtagLink
-
-LAUNCH_WORD = (0x43FFFFF8 - 0x40000000) // 4
-MAGIC = 0x4D4F4F44
-
-link = JtagLink(
-    hardware_name="<cable>", device_name="<chip>", sdram_instance=3
-)
-data = Path("doom.bin").read_bytes()
-words = [
-    w
-    for (w,) in struct.iter_unpack(
-        "<I", data.ljust(-(-len(data) // 4) * 4, b"\0")
-    )
-]
-
-sdram_debug.write_word(link, LAUNCH_WORD, 0, 0xF)
-sdram_debug.load_words(link, 0, words)
-sdram_debug.write_word(link, LAUNCH_WORD, MAGIC, 0xF)
+```bash
+riscv-tools --root . --config src/cyclone-v/doom/config.yaml load-ram doom.bin \
+  --wad doom1.wad --wad-address 0x40100000
 ```
 
-A core reset without a new load leaves the loader waiting, because the doorbell was consumed.
+The binary address is the SDRAM base, and the WAD address is the one the game port defines. `launch` comes from the `reserved` section of the `platform.yaml` (`memory.launch_addr`). A core reset without a new load leaves the loader waiting, because the doorbell was consumed. The full description of the subcommand is in the documentation of the `ram_load` module of the Tools repository.
 
 ## 5. M10K block budget
 
@@ -108,7 +87,38 @@ The Quartus Prime Lite 25.1 compilation of the generated project (`build/doom-de
 
 The FLASH storage is $2^{14}$ bytes (the smallest power of two that covers the end of the FLASH, 12 KiB). The remaining M10K blocks are free for the framebuffer of the video controller.
 
-## 6. Simulation top test
+## 6. Game clock
+
+The `doomgeneric` port asks for the time in milliseconds through `DG_GetTicksMs`, which the platform runtime (`runtime/doom_clock.c`) provides from the `time` CSR of Zicntr.
+
+| Item | Value |
+| :--- | :--- |
+| Source of `time` | `mtime` of the CLINT, mirrored by the core |
+| Core cycles per tick | 77 (`CLINT_TICK_CYCLES`) |
+| Core clock | 76.923077 MHz |
+| Real ticks per second | $76.923077 \cdot 10^{6} / 77 \approx 999{,}001$ |
+| Nominal ticks per second (`mtime_hz`) | 1,000,000 |
+
+The clock converts with the nominal value, so it runs 0.1 % slower than real time, a difference the game, at 35 tics per second, does not notice.
+
+The conversion avoids the `div` instruction (CPI of about 11) and 64-bit division. On each read, the clock adds to the total the advance of the low 32 bits of `time`, computed by unsigned subtraction (correct even when the counter goes from $2^{32}$ to 0), and divides by 1000 with a multiplication:
+
+$$\left\lfloor \frac{x}{1000} \right\rfloor = \left\lfloor \frac{x \cdot \mathtt{0x10624DD3}}{2^{38}} \right\rfloor \quad \forall\, x < 2^{32}$$
+
+The compiler does it with one `mulhu`, and the generated object has no `div`, `rem` or call. The remainder of fewer than 1000 ticks carries from one read to the next, so no tick is lost. The clock returns the milliseconds since the first call, which returns zero. It loses time only if two calls are more than $2^{32}$ ticks (71.6 minutes) apart, which a game that reads the time every tic does not do. If the `mtime_hz` of the platform changes, the inverse no longer holds and the build fails on a static assertion.
+
+The `tests/c/doom_clock/src.c` test checks the conversion against the 64-bit computation in 4000 advances of varied size (including the counter passing through 0 and the maximum 32-bit advance) and that the real `time` never goes backwards.
+
+```bash
+riscv-tools --root . --config tests/c/config.yaml compile --emit mif
+riscv-tools --root . --config tests/c/config.yaml spike-run
+riscv-tools --root . --config tests/c/config.yaml compile --emit hex
+riscv-tools --root . --config tests/c/config.yaml sim
+```
+
+The Spike of `spike-run` runs without a CLINT, and in it `time` stays at zero; the advance of the real `time` is checked in the platform simulation (`sim`), where `time` mirrors the `mtime` of the CLINT.
+
+## 7. Simulation top test
 
 The `tests/python/tests.json` catalog has the entries `DoomSimTop` and `DoomSimWait`, which run the `doom_sim_test` top with the real BOOT_MEMORY (`boot_memory.S`) and the real `doom_loader.S`, packed as bank A by `flash_image.pack`.
 
@@ -119,12 +129,11 @@ The `tests/python/tests.json` catalog has the entries `DoomSimTop` and `DoomSimW
 
 The simulator loads the SDRAM linearly from the base, and the last page is 64 MiB above it, so the test puts the doorbell at `0x40000800` (`-DDOOM_LAUNCH_ADDR`). That address is the only difference from the board, and the `check-memory-map` check compares the default value in `doom_loader.S` with the `platform.yaml`. The images come from `tests/python/gen_doom_images.py`, and `--check` verifies they are up to date.
 
-## 7. What the platform does not have
+## 8. What the platform does not have
 
 | Item | State |
 | :--- | :--- |
 | PS/2 and VGA | Not wired in the top; the `platform.yaml` has only the peripherals of the `de0-cv` |
-| SDRAM load from the command line | Only through the `sdram_debug.load_words` function (section 4.2) |
 | Bank B | Free; a new loader enters it with a higher version |
 | DOOM linker script and `crt0` | Belong to the game port, which links the binary at `0x40000000` |
 

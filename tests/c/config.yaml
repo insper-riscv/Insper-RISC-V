@@ -1,0 +1,19 @@
+# Os programas C da plataforma doom que rodam no Spike: o relógio da porta (runtime/doom_clock.c).
+#
+#   riscv-tools --root . --config tests/c/config.yaml compile --emit mif
+#   riscv-tools --root . --config tests/c/config.yaml spike-run
+#
+# É a configuração da plataforma doom com o relógio no lugar das fontes do runtime e a pasta dos testes.
+extends: ../../src/cyclone-v/doom/config.yaml
+
+memory_map: ../../src/cyclone-v/doom/platform.yaml
+
+paths:
+  sources:
+    - src/cyclone-v/doom/runtime/_exit.c
+    - src/cyclone-v/doom/runtime/stdio.c
+    - src/cyclone-v/doom/runtime/doom_clock.c
+  include_dir: src/cyclone-v/doom/runtime
+  c_dir: tests/c
+  asm_dir: tests/c/asm
+  build_dir: build/tests-c
