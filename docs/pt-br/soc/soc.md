@@ -66,7 +66,7 @@ O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_byte
 | Janela das caches | `cache_window_bits`, de 26 a 29 (26 é 64 MiB, 27 é 128 MiB, a janela de endereços que a tag cobre) | 26 |
 | Contadores do Zihpm | `hpm_counters`, de 0 a 29, e `hpm_width`, de 0 a 64 bits | 29 e 64 |
 | Interrupções | `clint_tick_cycles`, `clint_index`, `plic_index`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | 1 ciclo, CLINT no índice 6 e PLIC no 7, 6 fontes, 3 bits, 20 bits |
-| Temporizadores | `timer_indices` (o índice de cada um na tabela de janelas) e `timer_irq_ids` (a fonte de cada um no PLIC, 0 sem linha); um temporizador por elemento, sem teto | vazios, nenhum temporizador |
+| Temporizadores | `timer_indices` (o índice de cada um na tabela de janelas) e `timer_irq_ids` (a fonte de cada um no PLIC, 0 sem linha); um temporizador por elemento, sem teto | `NO_INTEGERS`, um marcador de tabela vazia, e nenhum temporizador |
 | Índices dos periféricos | `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 1, 2, 3, 4, 5 e 3 |
 | Presença dos periféricos | `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Largura dos papéis | `switches_width`, `keys_width`, `display_digits` | 10, 4 e 6 |

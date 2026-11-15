@@ -66,7 +66,7 @@ The memory map arrives by generics with no default: `boot_memory_size_bytes`, `r
 | Cache window | `cache_window_bits`, from 26 to 29 (26 is 64 MiB, 27 is 128 MiB, the address window the tag covers) | 26 |
 | Zihpm counters | `hpm_counters`, from 0 to 29, and `hpm_width`, from 0 to 64 bits | 29 and 64 |
 | Interrupts | `clint_tick_cycles`, `clint_index`, `plic_index`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | 1 cycle, CLINT at index 6 and PLIC at 7, 6 sources, 3 bits, 20 bits |
-| Timers | `timer_indices` (the index of each one in the window table) and `timer_irq_ids` (the PLIC source of each one, 0 for no line); one timer per element, no ceiling | empty, no timer |
+| Timers | `timer_indices` (the index of each one in the window table) and `timer_irq_ids` (the PLIC source of each one, 0 for no line); one timer per element, no ceiling | `NO_INTEGERS`, an empty-table marker, and no timer |
 | Peripheral indices | `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 1, 2, 3, 4, 5 and 3 |
 | Peripheral presence | `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Role widths | `switches_width`, `keys_width`, `display_digits` | 10, 4 and 6 |

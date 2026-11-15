@@ -26,8 +26,10 @@ package interconnect_pkg is
     -- Quantidade de janelas da tabela padrão.
     constant DEFAULT_PERIPH_COUNT : positive := 8;
 
-    -- Tabela vazia de inteiros, o valor padrão das tabelas de periféricos que podem não ter nenhum elemento.
-    constant NO_INTEGERS : integer_vector(1 to 0) := (others => 0);
+    -- Marcador de tabela vazia, o valor padrão das tabelas de inteiros de periféricos que podem não ter nenhum
+    -- elemento: um único elemento negativo, que count_of conta como zero elementos (o Quartus Lite não elabora um
+    -- generic de faixa nula como valor padrão).
+    constant NO_INTEGERS : integer_vector(0 to 0) := (0 => -1);
 
     -- Bases da tabela padrão: 0x80000000 | i << 28, as janelas de 256 MiB do mapa antigo.
     function default_bases return addr_array_t;
@@ -75,10 +77,21 @@ package interconnect_pkg is
         v   : integer_vector
     ) return integer_vector;
 
+    -- Número de elementos de v, e zero quando v é o marcador NO_INTEGERS (um único elemento negativo) ou está vazio.
+    function count_of (
+        v : integer_vector
+    ) return natural;
+
     -- O maior entre piso e os elementos de v: o número de fontes do PLIC que cobre a tabela de linhas v.
     function max_of (
         floor : natural;
         v     : integer_vector
+    ) return natural;
+
+    -- Último índice de uma tabela de count elementos, e zero quando ela está vazia: o limite superior da faixa de um
+    -- índice que existe mesmo sem janela (o Quartus Lite não tem a função maximum).
+    function last_index (
+        count : natural
     ) return natural;
 
     -- Tamanho de cada janela de uma tabela de máscaras, em bytes (a janela inteira, sem padding).
@@ -303,6 +316,32 @@ package body interconnect_pkg is
         return v(v'low to v'low - 1);
 
     end function only_if;
+
+    function last_index (
+        count : natural
+    ) return natural is
+    begin
+
+        if count > 0 then
+            return count - 1;
+        end if;
+
+        return 0;
+
+    end function last_index;
+
+    function count_of (
+        v : integer_vector
+    ) return natural is
+    begin
+
+        if v'length = 1 and v(v'left) < 0 then
+            return 0;
+        end if;
+
+        return v'length;
+
+    end function count_of;
 
     function max_of (
         floor : natural;

@@ -132,8 +132,10 @@ architecture rtl of ext_interconnect is
     signal hit       : std_logic_vector(periph_count - 1 downto 0);
     -- O endereço cai nos registradores de cada janela, e não no padding.
     signal in_reg    : std_logic_vector(periph_count - 1 downto 0);
+    -- Alguma janela foi acertada.
+    signal any_hit   : std_logic;
     -- Índice da janela acertada.
-    signal idx       : natural range 0 to maximum(periph_count - 1, 0);
+    signal idx       : natural range 0 to last_index(periph_count);
     -- O endereço acerta um periférico e, com strict_periph, cai nos registradores dele.
     signal is_periph : std_logic;
     -- O endereço cai numa memória alcançada pelo barramento.
@@ -184,26 +186,31 @@ begin
     p_index : process (hit) is
 
         -- Índice da janela acertada, zero sem janela acertada.
-        variable v_idx : natural range 0 to maximum(periph_count - 1, 0);
+        variable v_idx : natural range 0 to last_index(periph_count);
+        -- Alguma janela acertada.
+        variable v_any : std_logic;
 
     begin
 
         v_idx := 0;
+        v_any := '0';
 
         for i in 0 to periph_count - 1 loop
 
             if hit(i) = '1' then
                 v_idx := i;
+                v_any := '1';
             end if;
 
         end loop;
 
-        idx <= v_idx;
+        idx     <= v_idx;
+        any_hit <= v_any;
 
     end process p_index;
 
     active    <= i_rden or i_wren;
-    is_periph <= '1' when (or hit) = '1' and (not strict_periph or in_reg(idx) = '1') else '0';
+    is_periph <= '1' when any_hit = '1' and (not strict_periph or in_reg(idx) = '1') else '0';
     is_mem    <= '1' when (flash_on_bus and in_range(i_addr, flash_base, flash_last)) or
                           (ram_on_bus and in_range(i_addr, ram_base, ram_last)) else '0';
 
