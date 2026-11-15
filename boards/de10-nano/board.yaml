@@ -37,6 +37,7 @@ io:
     bidirectional: true
   clock_extra:
     signals: ["FPGA_CLK2_50", "FPGA_CLK3_50"]
+  video:    {kind: hdmi, channel_bits: 8, signals: HDMI_TX, default_mode: 640x480@60, modes: [640x480@60, 1024x768@60, 1280x1024@60, 1920x1080@60]}
 console:
   default: jtag
 pins: pins.yaml
@@ -51,3 +52,4 @@ notes:
   - "A configuracao persistente usa o EPCS64 (modo AS, MSEL = 10010; secoes 2.1, 2.2 e 3.2 do manual, e o historico V1.7 registra a troca de EPCS128 por EPCS64); ele nao e memoria de usuario neste pacote."
   - "Polaridades lidas no manual (secao 3.6.1): o botao da nivel baixo ao ser apertado, o LED acende em nivel alto e a chave da nivel alto na posicao de cima."
   - "Expansao (secoes 3.6.2 e 3.6.3): dois cabecalhos de 40 pinos, GPIO_0 e GPIO_1, com 36 pinos de E/S cada (mais VCC5, VCC3P3 e dois GND), e o cabecalho Arduino Uno R3 com ARDUINO_IO[15:0]. O papel gpio numera GPIO_0 de 0 a 35, GPIO_1 de 36 a 71 e o Arduino de 72 a 87. ARDUINO_RESET_N fica fora do papel. O ADC LTC2308 (secao 3.6.4) e o HDMI ADV7513 (secao 3.6.5) estao em pins.yaml sem papel de E/S."
+  - "O video sai pelo ADV7513 (HDMI), que recebe RGB de 24 bits em HDMI_TX_D, DE, HS, VS e CLK. A configuracao do chip e feita por I2C_SCL e I2C_SDA (pins.yaml), que nao fazem parte do prefixo HDMI_TX. O manual so diz que o chip aceita ate 165 MHz de clock de pixel, sem tabela de modos."

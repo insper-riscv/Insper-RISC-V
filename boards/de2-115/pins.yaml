@@ -409,3 +409,36 @@ signals:
   - {name: "HSMC_TX_D_P[16]", pin: "U22", io_standard: "2.5 V", direction: "inout", source: "Table 4-9, p.42-46", confirmed: "manual", note: "LVDS TX ou E/S CMOS; nivel depende do jumper JP7 (padrao de fabrica 2,5 V)"}
   - {name: "ENETCLK_25", pin: "A14", io_standard: "3.3-V LVTTL", direction: "in", source: "Table 4-23, p.60", confirmed: "manual", note: "25 MHz, fonte de relogio da Ethernet"}
   - {name: "TD_CLK27", pin: "B14", io_standard: "3.3-V LVTTL", direction: "in", source: "Table 4-24, p.61", confirmed: "manual", note: "27 MHz, entrada de relogio do decodificador de TV"}
+  - {name: "VGA_R[0]", pin: "E12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[1]", pin: "E11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[2]", pin: "D10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[3]", pin: "F12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[4]", pin: "G10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[5]", pin: "J12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[6]", pin: "H8", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_R[7]", pin: "H10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[0]", pin: "G8", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[1]", pin: "G11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[2]", pin: "F8", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[3]", pin: "H12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[4]", pin: "C8", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[5]", pin: "B8", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[6]", pin: "F10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_G[7]", pin: "C9", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[0]", pin: "B10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[1]", pin: "A10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[2]", pin: "C11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[3]", pin: "B11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[4]", pin: "A11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[5]", pin: "C12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[6]", pin: "D11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_B[7]", pin: "D12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_CLK", pin: "A12", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_BLANK_N", pin: "F11", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_HS", pin: "G13", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_VS", pin: "C13", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "VGA_SYNC_N", pin: "C10", io_standard: "3.3-V LVTTL", direction: "out", source: "Table 4-16, p.54", confirmed: "manual"}
+  - {name: "PS2_CLK", pin: "G6", io_standard: "3.3-V LVTTL", direction: "inout", source: "Table 4-19, p.57", confirmed: "manual"}
+  - {name: "PS2_DAT", pin: "H5", io_standard: "3.3-V LVTTL", direction: "inout", source: "Table 4-19, p.57", confirmed: "manual"}
+  - {name: "PS2_CLK2", pin: "G5", io_standard: "3.3-V LVTTL", direction: "inout", source: "Table 4-19, p.57", confirmed: "manual"}
+  - {name: "PS2_DAT2", pin: "F5", io_standard: "3.3-V LVTTL", direction: "inout", source: "Table 4-19, p.57", confirmed: "manual"}
