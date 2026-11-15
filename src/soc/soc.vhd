@@ -395,6 +395,14 @@ architecture behaviour of soc is
     -- Fim exclusivo da região da ROM, em KiB, nos endereços que o roteador dos dados vê.
     constant D_ROM_END_KIB  : natural := pick(HAS_DCACHE, FLASH_ALIAS_END_KIB, rom_end_kib);
 
+    -- Janela, em KiB, que o chip da FLASH atende a partir da base que o roteador dos dados vê: da base da região até o
+    -- fim da FLASH. Com a cache de dados o endereço chega no alias e conserva os 26 bits baixos, então a janela conta
+    -- desde o endereço zero (rom_end_kib); sem ela conta desde a BOOT_MEMORY.
+    constant D_ROM_WINDOW_KIB : natural := pick(HAS_DCACHE, rom_end_kib, rom_end_kib - BOOT_KIB);
+    -- Janela, em KiB, que o chip da FLASH atende a partir da base do alias da
+    -- cache de instruções.
+    constant I_ROM_WINDOW_KIB : natural := rom_end_kib;
+
     -- Periféricos de instância única que o SoC liga, na ordem em que as asserções os conferem: CLINT, PLIC, chaves,
     -- botões, display, UART via JTAG, UART via pinos e controlador de FLASH.
     constant PRESENT : boolean_vector(0 to 7) :=
@@ -813,6 +821,11 @@ begin
         severity failure;
     assert ram_end_kib > ram_base_kib
         report "ram_end_kib deve ser maior que ram_base_kib, a RAM precisa de ao menos 1 KiB"
+        severity failure;
+    -- A janela do chip da FLASH nos roteadores cobre a FLASH inteira, senão a leitura acima dela devolveria zero.
+    assert (not ROM_PORT) or
+        (D_ROM_WINDOW_KIB >= rom_end_kib - BOOT_KIB and I_ROM_WINDOW_KIB >= rom_end_kib - BOOT_KIB)
+        report "a janela da FLASH dos roteadores não cobre a FLASH inteira"
         severity failure;
 
     -- O núcleo lê o mapa do config_pkg da plataforma, e os genéricos do SoC (que o topo lê do pacote do mapa)
@@ -1513,6 +1526,7 @@ begin
             generic map (
                 flash_base_kib => D_ROM_BASE_KIB,
                 flash_end_kib  => D_ROM_END_KIB,
+                flash_window_kib => D_ROM_WINDOW_KIB,
                 hold_rdata   => not HAS_DCACHE
             )
             port map (
@@ -1585,6 +1599,9 @@ begin
     begin
 
         u_router_i : entity work.mem_region_router
+            generic map (
+                flash_window_kib => I_ROM_WINDOW_KIB
+            )
             port map (
                 i_clk       => i_clk_core,
                 i_rst       => i_rst,

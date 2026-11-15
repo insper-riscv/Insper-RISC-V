@@ -33,6 +33,7 @@ from pathlib import Path
 from typing import Any
 
 from riscv_tools import boot_memory, flash_image
+from riscv_tools.memory_map import banks as bank_map
 from riscv_tools.memory_map import load_platform, symbols
 
 from tests.python import check_boot_contract, gen_real_boot_images
@@ -43,12 +44,14 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/de0_cv_boot"
 IMAGES = DATA / "images.json"
 PLATFORM = ROOT / "src/cyclone-v/de0-cv/platform.yaml"
-MAP = symbols(load_platform(PLATFORM))
+MAP = symbols(load_platform(PLATFORM)) | bank_map.symbols(
+    load_platform(PLATFORM)
+)
 RAM_BASE = MAP["RAM.base"]
 TOHOST = MAP["tohost.base"]
 BANK = {
-    "A": (0x00001000, 124 * 1024),
-    "B": (0x00020000, 128 * 1024),
+    "A": (MAP["BANK_A.base"], MAP["BANK_A.size"]),
+    "B": (MAP["BANK_B.base"], MAP["BANK_B.size"]),
 }
 WORD = 4
 A0, A1 = 10, 11

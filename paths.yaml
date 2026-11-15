@@ -31,7 +31,7 @@ references:
   - {name: de0-cv boot memory linker script, file: src/cyclone-v/de0-cv/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
   - {name: de0-cv toolchain specs, file: src/cyclone-v/de0-cv/config.yaml, yaml: toolchain.specs, base: .}
   - {name: de0-cv Spike stand-in, file: src/cyclone-v/de0-cv/config.yaml, yaml: emulator.sources, base: .}
-  - {name: de0-cv sim top test and its images, paths: [tests/python/gen_de0_cv_images.py, tests/python/unittests/rtl/data/de0_cv/boot_memory.hex, tests/python/unittests/rtl/data/de0_cv/flash.hex, tests/python/unittests/rtl/data/de0_cv/sdram.hex, tests/python/unittests/rtl/de0_cv_sim_top.py, tests/python/gen_de0_cv_boot_images.py, tests/python/unittests/rtl/data/de0_cv_boot/images.json, tests/python/unittests/rtl/de0_cv_boot_banks.py, tests/python/unittests/integration/ext_interconnect.py, tests/python/unittests/integration/axi_slave_periph_bank.py]}
+  - {name: de0-cv sim top test and its images, paths: [tests/python/gen_de0_cv_images.py, tests/python/unittests/rtl/data/de0_cv/boot_memory.hex, tests/python/unittests/rtl/data/de0_cv/sdram.hex, tests/python/unittests/rtl/de0_cv_sim_top.py, tests/python/unittests/rtl/de0_cv_flash_window.py, tests/python/check_sdram_split.py, tests/python/gen_de0_cv_boot_images.py, tests/python/unittests/rtl/data/de0_cv_boot/images.json, tests/python/unittests/rtl/de0_cv_boot_banks.py, tests/python/unittests/integration/ext_interconnect.py, tests/python/unittests/integration/axi_slave_periph_bank.py]}
   - {name: doom sim sources, file: src/cyclone-v/doom/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: doom sim python_path, file: src/cyclone-v/doom/config.yaml, yaml: sim.python_path, base: .}
   - {name: doom runtime sources, file: src/cyclone-v/doom/config.yaml, yaml: paths.sources, base: .}
@@ -347,7 +347,7 @@ provides:
     requires: [soc, periph_mkr_vidor_4000_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Memory/onchip_ram_port, Memory/ram_cyclone_v]
     sources: []
   de0_cv_sim_top:
-    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
+    requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   doom_sim_top:
@@ -361,7 +361,7 @@ provides:
     requires: [soc, Memory/sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
     sources: []
   de0_cv_board:
-    requires: [sdram_board, de0_cv_map]
+    requires: [soc, de0_cv_map, Memory/sdram_jtag_shell, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash_arbiter]
     sources: []
   doom_board:
     requires: [sdram_board, doom_map]
