@@ -90,7 +90,7 @@ As duas placas têm os mesmos papéis. O papel `gpio` é bidirecional e numera `
 | `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6.3, tabela 3-11 | 3,3 V |
 | `clock_extra` | `FPGA_CLK2_50`, `FPGA_CLK3_50` | 2 | 3.5, tabela 3-5 | 3,3 V |
 
-Ficam só no `pins.yaml`, sem papel: `ARDUINO_RESET_N` e o ADC LTC2308 (seção 3.6.4, tabela 3-12), mais o HDMI ADV7513 da DE10-Nano (seção 3.6.5). Tudo o que as seções 3.7 listam (Ethernet, USB, SD, UART, DDR3, G-sensor e conector LTC) é do HPS e não faz parte do catálogo do FPGA.
+Ficam só no `pins.yaml`, sem papel de `io`: `ARDUINO_RESET_N`. O ADC LTC2308 (seção 3.6.4, tabela 3-12) é o papel `adc`, e o HDMI ADV7513 da DE10-Nano (seção 3.6.5) são os papéis `hdmi` e `hdmi_audio`, em `buses` (ver [perifericos-por-placa.md](perifericos-por-placa.md)). Tudo o que as seções 3.7 listam (Ethernet, USB, SD, UART, DDR3, G-sensor e conector LTC) é do HPS e não faz parte do catálogo do FPGA.
 
 ---
 

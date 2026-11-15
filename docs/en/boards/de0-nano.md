@@ -70,7 +70,7 @@ The `gpio` role is bidirectional and numbers the pins of `GPIO_0` (0 to 33), `GP
 | :--- | :--- | ---: | :--- | :--- |
 | `gpio` | `GPIO_0[33:0]`, `GPIO_1[33:0]`, `GPIO_2[12:0]` | 81 | 3.5 and 3.6, tables 3-6, 3-7 and 3-8 | 3.3 V |
 
-The input-only pins `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` and `GPIO_2_IN[2:0]` stay out of the `gpio` role and only in `pins.yaml`, because Quartus refuses a bidirectional cell on them. The ADC128S022 (section 3.6, table 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) and the ADXL345 accelerometer (section 3.7, table 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` and the EEPROM I2C, table 3-5) are in `pins.yaml` with no I/O role.
+The input-only pins `GPIO_0_IN[1:0]`, `GPIO_1_IN[1:0]` and `GPIO_2_IN[2:0]` stay out of the `gpio` role and only in `pins.yaml`, because Quartus refuses a bidirectional cell on them. The ADC128S022 (section 3.6, table 3-9: `ADC_CS_N`, `ADC_SADDR`, `ADC_SCLK`, `ADC_SDAT`) and the ADXL345 accelerometer (section 3.7, table 3-10: `G_SENSOR_CS_N`, `G_SENSOR_INT` and the EEPROM I2C, table 3-5) are the `adc` and `adxl345` roles of `buses`, and the pair `I2C_SCLK` and `I2C_SDAT` is also the `i2c` role; section 6.1 of [perifericos-por-placa.md](perifericos-por-placa.md) says who owns that pair.
 
 ---
 

@@ -83,6 +83,10 @@ O nome exato do exemplo na IDE deve ser conferido na primeira carga. O `.sof` ca
 | N1 | Ajuste e análise de tempo | Alvo do pacote |
 | N2 | Placa viva | Exige o cabo emulado ou externo funcionando |
 
+## 7. Papéis de entrada e saída e de periféricos
+
+O pacote declara o papel `gpio` (cabeçalhos MKR e Mini PCI Express) e os papéis `i2c`, `spi` e `serial` em `buses`, lidos no `ABX00022-pinout.pdf` e no esquemático, que dão a bola do FPGA e o SERCOM do SAMD21 de cada pino de cabeçalho. O TMDS direto da saída HDMI, a câmera MIPI e a ponte Wi-Fi ficam só no `pins.yaml`, sem papel. A tabela completa e a plataforma de exemplo estão em [perifericos-por-placa.md](perifericos-por-placa.md).
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

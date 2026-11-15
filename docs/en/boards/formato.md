@@ -72,6 +72,9 @@ The `buses` key ties each external peripheral of the platform (a `kind` of `Peri
 | `tv` | `data`, `clk27`, `reset_n` | No |
 | `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | No |
 | `ir` | `rxd` | No |
+| `serial` | `rx`, `tx`, `cts` (optional), `rts` (optional) | No |
+| `hdmi_audio` | `mclk`, `sclk`, `lrclk`, `i2s0` | No |
+| `spi` | `sclk`, `mosi`, `miso`, `cs_n` | No |
 | `adc` | Depends on the chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (none) | Yes, required |
 | `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (optional), `int1` (optional) | No |
 

@@ -1,0 +1,92 @@
+# Plataforma de exemplo dos perifericos externos da placa mkr-vidor-4000: cada kind que o board.yaml oferece, com base e size absolutos e sem sobreposicao. Esquema: docs/pt-br/boards/formato.md e docs/pt-br/boards/perifericos-por-placa.md.
+platform: mkr-vidor-4000-periph
+board: auto
+boards: [mkr-vidor-4000]
+# O componente do paths.yaml cujo fecho de `requires` é a lista de fontes do projeto gerado.
+top: Insper-RISC-V/periph_mkr_vidor_4000_board
+core:
+  type: 32
+  base: I
+  extensions:
+    - M
+    - Zicclsm
+    - Zicntr
+    - Zihpm
+    - Zifencei
+    - Zimop
+    - Zicond
+    - Zihintntl
+    - Zihintpause
+    - Interrupts
+    - Sscofpmf
+profiles: ../../../Core/profiles/matrix.yaml
+memory:
+  boot:
+    base: 0x00000000
+    size: 4K
+  instructions:
+    - type: emulated
+      base: 0x00001000
+      size: 12K
+      on_bus: true
+      latency: {first: 24, next: 4}
+      sector_bytes: 4096
+      cache:
+        size_bits: 32768
+  data:
+    - type: emulated
+      base: 0x40000000
+      size: 8K
+      on_bus: true
+      cache:
+        size_bits: 32768
+
+reserved:
+  stdout:   {base: 0x40001BE0, size: 1K+8}
+  tohost:   {base: 0x40001FE8, size: 8}
+  fromhost: {base: 0x40001FF0, size: 8}
+boot:
+  entry: 0x00001000
+  wait_restart: 0x00000100
+clocks:
+  core: {mhz: 50, phase_ps: 8250}
+  mem:  {mhz: 100}
+console: jtag
+io: {}
+generate:
+  vhdl: {path: src/periph-examples/mkr-vidor-4000/mkr_vidor_4000_periph_map_pkg.vhd, package: mkr_vidor_4000_periph_map_pkg, rom: FLASH, ram: RAM}
+  # The constants of the platform for the whole design (ISA, address width, memory map in bytes, peripherals):
+  # this file takes the place of the default config_pkg of the Common-Components in the source lists.
+  config_pkg: {path: src/periph-examples/mkr-vidor-4000/config_pkg.vhd}
+# An access to the padding of a peripheral window (what its registers do not take) is an access fault when true;
+# the map package of the platform carries it as STRICT_PERIPH.
+strict_periph: true
+
+peripherals:
+  FLASH_CTRL:
+    base: 0xB0000000
+    size: 32
+  UART:
+    base: 0xC0000000
+    size: 1K
+  DISPLAY:
+    base: 0xD0000000
+    size: 1K
+  CLINT:
+    base: 0xE0000000
+    size: 64K
+  PLIC:
+    base: 0xF0000000
+    size: 4M
+  GPIO:   {kind: gpio, role: gpio, base: 0x80001000, groups: [[0, 1, 2, 3, 4, 5, 6], [15, 16, 17, 18, 19, 20, 21], [22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46]]}
+  I2C0:   {kind: i2c, base: 0x8000C000}
+  SPI0:   {kind: spi, base: 0x80011000, cs_count: 1}
+  SERIAL: {kind: uart, base: 0x80220000}
+
+interrupts:
+  clock_hz: 50000000
+  mtime_hz: 1000000
+  plic: {priority_bits: 3}
+  sources:
+    - {name: UART_JTAG, id: 2}
+    - {name: FLASH,     id: 6}

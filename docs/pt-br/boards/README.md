@@ -15,6 +15,7 @@ As placas são dados: um pacote por placa, uma família por dispositivo e um cat
 | [cabimento.md](cabimento.md) | Estimador, política de cabimento e confirmação pelo ajuste |
 | [calibracao.md](calibracao.md) | Tabelas de calibração medidas de cada família |
 | [equivalencia-de0-cv.md](equivalencia-de0-cv.md) | Equivalência da DE0-CV gerada com a escrita à mão |
+| [perifericos-por-placa.md](perifericos-por-placa.md) | Papéis de pino dos periféricos externos de cada placa, plataformas de exemplo e pinos compartilhados |
 
 ## 2. Placas
 

@@ -58,3 +58,4 @@ notes:
   - "Expansao: cabecalho de 40 pinos com GPIO[35:0] (secao 3.5) e cabecalho Arduino Uno R3 com ARDUINO_IO[15:0] (secao 3.6). O papel gpio numera os GPIO de 0 a 35 e o Arduino de 36 a 51; ARDUINO_RESET_N fica fora. O ADC e interno ao MAX 10 e sem pino de sinal (secao 3.7); o acelerometro ADXL345 (secao 3.10) esta em pins.yaml como GSENSOR_* sem papel de E/S."
   - "Os multiplicadores sao contados em elementos de 9 bits (144 de 18x18). PLL1 e PLL3 sao ligados ao ADC_CLK_10."
   - "Todos os bancos usados sao 3.3 V; os pinos do GPIO e do Arduino nao sao declarados tolerantes a 5 V."
+  - "Ponto decimal (secao 3.4, tabela 3-6): HEX0[7] a HEX5[7] estao em pins.yaml com selo manual, ativos em nivel baixo como os outros segmentos, e ficam fora do papel display, que no Tools tem sete segmentos por digito; expor o oitavo bit depende de um papel de display de oito segmentos no Tools e do generic has_dp do seg_display do Peripherals."
