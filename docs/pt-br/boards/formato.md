@@ -26,7 +26,7 @@ O `board.yaml` cita sinais só pelo nome. Número de pino e padrão de E/S exist
 | `jtag.samd21`, `jtag.external_pads` | Só na `samd21-usbblaster`: o sketch que expõe o cabo emulado e os pads de JTAG para cabo externo |
 | `resources` | `logic`, `block_ram`, `multipliers`, `plls`, `user_pins` (`null` quando a capacidade é desconhecida) |
 | `clocks.inputs`, `clocks.reference`, `clocks.reset` | Relógios de entrada (`name`, `signal`, `mhz`), o que alimenta o PLL e o reset do usuário com polaridade |
-| `io.<papel>` | Papéis `leds`, `switches`, `keys` e `display`, cada um com `signals` e `active` (`high` ou `low`) |
+| `io.<papel>` | Papéis `leds`, `switches`, `keys`, `display` e `leds_green`, cada um com `signals` e `active` (`high` ou `low`), e os papéis de uso geral `gpio`, `ex_io`, `hsmc` e `clock_extra`, sem polaridade, com `signals` (um grupo ou uma lista de grupos, numerados na ordem da lista) e `bidirectional: true` quando os pinos são de E/S |
 | `memories` | `sdram`, `sram`, `nor`, `onchip_flash` e `serial_flash`, cada um com o chip do catálogo e os sinais |
 | `console` | `default: jtag` (JTAG UART) e `uart: {rx, tx}` só quando a placa tem UART em pinos |
 | `pins` | Caminho do `pins.yaml` |

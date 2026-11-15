@@ -28,6 +28,11 @@ io:
   switches: {signals: "SW[9:0]",        active: high}
   keys:     {signals: "KEY[3:0]",       active: low}
   display:  {signals: "HEX[5:0][6:0]",  active: low}
+  gpio:
+    signals: ["GPIO_0[35:0]", "GPIO_1[35:0]"]
+    bidirectional: true
+  clock_extra:
+    signals: ["CLOCK2_50", "CLOCK3_50", "CLOCK4_50"]
 memories:
   sdram:
     chip: IS42S16320D-7
@@ -40,7 +45,11 @@ pins: pins.yaml
 notes:
   - "Sem UART nem ponte USB-UART; o console e a JTAG UART (Virtual JTAG), sem pino."
   - "Sem FLASH de usuario: o EPCS64 e so de configuracao (AS). A FLASH do SoC e emulada em M10K e carregada pela JTAG."
-  - "Os pinos CLOCK2_50 a CLOCK4_50 sao inferidos (amaranth-boards); o Tools recusa construir com eles sem --accept-inferred-pins."
-  - "Polaridade de LEDR e dos displays HEX vem do amaranth-boards (inferido); a de KEY e FPGA_RESET_N tambem. Nenhuma foi lida no manual."
+  - "Os pinos CLOCK_50 e CLOCK2_50 a CLOCK4_50 foram conferidos no manual (tabela 3-6)."
+  - "Polaridades lidas no manual: o LED acende em nivel alto, a chave em cima da alto e os botoes KEY e RESET_N dao nivel baixo ao serem apertados (secao 3.2); o segmento do display acende em nivel baixo (secao 3.3)."
+  - "O manual chama o botao de reset de RESET_N (tabela 3-2, ligado ao DEV_CLRN do FPGA); o catalogo o chama FPGA_RESET_N, o nome do .qsf, no mesmo pino P22."
+  - "O chip da SDRAM nao e nomeado no manual, que diz so 64 MB, um chip 32M x 16 (secao 3.9); IS42S16320D-7 e a hipotese da familia IS42S16320."
   - "Todos os bancos usados sao 3.3-V LVTTL; os pinos 11, 12, 29 e 30 do GPIO_0 sao alimentacao (5 V, GND, 3.3 V, GND)."
+  - "Expansao (secao 3.5): dois cabecalhos 2x20, GPIO_0 e GPIO_1, cada um com 36 pinos de E/S ligados direto ao FPGA (tabela 3-7, conferidos um a um) e os mesmos 4 pinos de alimentacao e terra. O papel gpio numera os GPIO_0 de 0 a 35 e os GPIO_1 de 36 a 71."
+  - "O PS/2 (tabela 3-11) usa PS2_CLK e PS2_DAT no canal do teclado e PS2_CLK2 e PS2_DAT2 no segundo canal, que o manual marca como reservado a um segundo dispositivo."
   - "A fase do DRAM_CLK (4000 ps) e o tempo de E/S da SDRAM (setup 1.5 ns, hold 0.8 ns, acesso 5.4 ns, hold de saida 2.5 ns) valem para 100 MHz e vem de platform.yaml e de de0-cv.sdc."
