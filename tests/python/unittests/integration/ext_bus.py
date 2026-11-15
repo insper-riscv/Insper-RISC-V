@@ -79,12 +79,45 @@ def drive_memory(dut: Dut, addr: int, cycles: int, mem_latency: int):
         )
 
 
+MEM_LATENCY = 2
+
+
+async def _wait_ready(dut: Dut, addr: int, error: list[int] | None) -> int:
+    """Hold the port until ready; return the cycles it took."""
+    cycles = 0
+    while True:
+        await post_edge(dut)
+        cycles += 1
+        drive_memory(dut, addr, cycles, MEM_LATENCY)
+        if int(dut.o_ready.value):
+            if error is not None:
+                error.append(int(dut.o_error.value))
+            return cycles
+        check_true(cycles < TIMEOUT, "the access never completed")
+
+
+async def _advance(dut: Dut, hold: int):
+    """Hold `hold` more cycles, then advance and release the port."""
+    for _ in range(hold):
+        check_true(
+            int(dut.o_ready.value),
+            "ready dropped before the pipeline advanced",
+        )
+        await post_edge(dut)
+    dut.i_mem_advance.value = 1
+    await post_edge(dut)
+    dut.i_mem_advance.value = 0
+    if own_memory(dut):
+        dut.i_m_ready.value = 0
+    dut.i_rden.value = 0
+    dut.i_wren.value = 0
+
+
 async def access(
     dut: Dut,
     addr: int,
     write: int | None = None,
     hold: int = 0,
-    mem_latency: int = 2,
     error: list[int] | None = None,
 ):
     """One core access; returns (read data, cycles until ready).
@@ -101,29 +134,8 @@ async def access(
     dut.i_byteena.value = 0xF
     dut.i_wren.value = 0 if write is None else 1
     dut.i_rden.value = 1 if write is None else 0
-    cycles = 0
-    while True:
-        await post_edge(dut)
-        cycles += 1
-        drive_memory(dut, addr, cycles, mem_latency)
-        if int(dut.o_ready.value):
-            if error is not None:
-                error.append(int(dut.o_error.value))
-            break
-        check_true(cycles < TIMEOUT, "the access never completed")
-    for _ in range(hold):
-        check_true(
-            int(dut.o_ready.value),
-            "ready dropped before the pipeline advanced",
-        )
-        await post_edge(dut)
-    dut.i_mem_advance.value = 1
-    await post_edge(dut)
-    dut.i_mem_advance.value = 0
-    if own_memory(dut):
-        dut.i_m_ready.value = 0
-    dut.i_rden.value = 0
-    dut.i_wren.value = 0
+    cycles = await _wait_ready(dut, addr, error)
+    await _advance(dut, hold)
     return int(dut.o_rdata.value), cycles
 
 
@@ -372,7 +384,7 @@ async def test_status_tells_whether_a_host_has_scanned(dut: Dut):
 
 
 async def _error_of(dut: Dut, addr: int, write: int | None = None):
-    """Make one access and return (read data, the error seen with the ready)."""
+    """Make one access; return (read data, error seen with ready)."""
     seen: list[int] = []
     value, _c = await access(dut, addr, write=write, error=seen)
     return value, seen[0]
@@ -380,7 +392,7 @@ async def _error_of(dut: Dut, addr: int, write: int | None = None):
 
 @cocotb.test()
 async def test_an_address_with_no_window_ends_in_error(dut: Dut):
-    """A hole of the map, not memory and not a window, ends in an error."""
+    """A hole of the map (no memory, no window) ends in an error."""
     await start(dut)
     for addr in (0x20000000, 0x50000000, 0x00000100):
         value, error = await _error_of(dut, addr)
@@ -392,7 +404,7 @@ async def test_an_address_with_no_window_ends_in_error(dut: Dut):
 
 @cocotb.test()
 async def test_the_padding_of_a_window_ends_in_error(dut: Dut):
-    """What follows the registers of a window (64 KiB here) is an error."""
+    """What follows the registers of a window (64 KiB) is an error."""
     await start(dut)
     value, error = await _error_of(dut, PERIPHERALS + 0x10000)
     check_equal(error, 1, "read of the padding")

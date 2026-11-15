@@ -26,4 +26,8 @@ Each board has its package in `boards/<board>/` and, in `pins.yaml`, the source 
 
 ## 3. Console
 
-Every board declares `console.default: jtag`: the console is the JTAG UART over the programming cable. A UART on pins exists only on the `de2-115`.
+Every board declares `console.default: jtag`: the console is the JTAG UART over the programming cable. A dedicated UART on pins (RS-232) exists only on the `de2-115`, and the `serial` role of `buses` exists on it and on the `mkr-vidor-4000`, the latter on header pins `D13` and `D14`.
+
+## 4. External peripherals
+
+[perifericos-por-placa.md](perifericos-por-placa.md) lists the I/O and peripheral roles of each board, the example platforms in `src/periph-examples/` and the shared pins.

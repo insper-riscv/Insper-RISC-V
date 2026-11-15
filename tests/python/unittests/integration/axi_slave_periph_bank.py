@@ -1,11 +1,11 @@
 """The AXI4 slave in front of the peripheral window.
 
-The testbench plays the AXI4 master and the eight peripheral windows of the
-default table (0x80000000 | i << 28, 64 KiB of registers each). A single
-4-byte aligned INCR beat inside the registers of a window becomes a
-one-clock pulse for the peripheral of that window; anything else is
-answered SLVERR (a malformed beat, or the padding of a window) or DECERR
-(no window) and touches no peripheral.
+The testbench plays the AXI4 master and the eight peripheral windows
+of the default table (0x80000000 | i << 28, 64 KiB of registers each).
+A single 4-byte aligned INCR beat inside the registers of a window
+becomes a one-clock pulse for the peripheral of that window; anything
+else is answered SLVERR (a malformed beat, or the padding of a window)
+or DECERR (no window) and touches no peripheral.
 
 """
 
@@ -184,7 +184,7 @@ async def test_an_address_with_no_window_is_a_decode_error(dut: Dut):
 
 @cocotb.test()
 async def test_the_padding_of_a_window_is_a_slave_error(dut: Dut):
-    """After the 64 KiB of registers of a window: SLVERR, no peripheral touched."""
+    """After the 64 KiB of registers of a window: SLVERR, no touch."""
     periph = await setup(dut)
     check_equal(await read(dut, periph_addr(3, 0) + 0x10000), (0, SLVERR))
     check_equal(await write(dut, periph_addr(3, 0) + 0x20000, 0x1), SLVERR)

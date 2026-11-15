@@ -90,7 +90,7 @@ Both boards have the same roles. The `gpio` role is bidirectional and numbers `G
 | `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6.3, table 3-11 | 3.3 V |
 | `clock_extra` | `FPGA_CLK2_50`, `FPGA_CLK3_50` | 2 | 3.5, table 3-5 | 3.3 V |
 
-Only in `pins.yaml`, with no role: `ARDUINO_RESET_N` and the LTC2308 ADC (section 3.6.4, table 3-12), plus the ADV7513 HDMI of the DE10-Nano (section 3.6.5). Everything the 3.7 sections list (Ethernet, USB, SD, UART, DDR3, G-sensor and LTC connector) belongs to the HPS and is not part of the FPGA catalog.
+Only in `pins.yaml`, with no `io` role: `ARDUINO_RESET_N`. The LTC2308 ADC (section 3.6.4, table 3-12) is the `adc` role, and the ADV7513 HDMI of the DE10-Nano (section 3.6.5) is the `hdmi` and `hdmi_audio` roles, in `buses` (see [perifericos-por-placa.md](perifericos-por-placa.md)). Everything the 3.7 sections list (Ethernet, USB, SD, UART, DDR3, G-sensor and LTC connector) belongs to the HPS and is not part of the FPGA catalog.
 
 ---
 

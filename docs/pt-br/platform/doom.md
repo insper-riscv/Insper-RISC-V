@@ -129,11 +129,63 @@ O catálogo `tests/python/tests.json` traz as entradas `DoomSimTop` e `DoomSimWa
 
 O simulador carrega a SDRAM linearmente a partir da base, e a última página fica 64 MiB acima dela, então o teste põe a campainha em `0x40000800` (`-DDOOM_LAUNCH_ADDR`). A única diferença para a placa é esse endereço, e a verificação `check-memory-map` confere o valor padrão do `doom_loader.S` contra o `platform.yaml`. As imagens saem de `tests/python/gen_doom_images.py`, e `--check` confere que estão em dia.
 
-## 8. O que a plataforma não tem
+As entradas `DoomSimVideo` e `DoomSimKeyboard` rodam o mesmo topo com os programas das seções 8.4 e 8.5.
+
+## 8. Vídeo e teclado
+
+### 8.1. Periféricos e endereços
+
+O `platform.yaml` lista dois periféricos externos, que o topo gerado da placa instancia ao lado do SoC e o topo de simulação `doom_sim_test` instancia nas mesmas janelas.
+
+| Periférico | `kind` | Base | Janela | Interrupção | Pinos da DE0-CV |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `VIDEO` | `video` | `0x80100000` | 256 KiB | nenhuma | `VGA_R[3:0]`, `VGA_G[3:0]`, `VGA_B[3:0]`, `VGA_HS`, `VGA_VS` |
+| `KBD` | `ps2` (`device: keyboard`) | `0x80007000` | 16 bytes | linha 5 do PLIC (`IRQ_KBD`) | `PS2_CLK` (D3), `PS2_DAT` (G2) |
+
+O segundo canal do cabo Y (`PS2_CLK2` em E2 e `PS2_DAT2` em G1) pertence a um mouse, que entra como mais uma entrada de `peripherals` (`MOUSE: {kind: ps2, device: mouse, base: 0x80007100}`). O mapa gerado (`memory_map.h` e `doom_map_pkg.vhd`) traz `RV32_VIDEO_BASE`, `RV32_KBD_BASE` e `RV32_IRQ_KBD`.
+
+### 8.2. Vídeo indexado
+
+O `io.video` do `platform.yaml` pede um framebuffer indexado de 320x200 (8 bits por pixel e uma paleta de 256 entradas de 12 bits, a largura do conversor da DE0-CV). O modo é o padrão da placa, 640x480 a 60 Hz com clock de pixel de 25 MHz, e a imagem sai ampliada duas vezes e centralizada, com faixas pretas de 40 linhas em cima e embaixo.
+
+| Região da janela do vídeo | Deslocamento | Conteúdo |
+| :--- | :--- | :--- |
+| Registradores | `0x00000` a `0x00010` | Controle, estado, contador de quadros, geometria e formato |
+| Paleta | `0x00400` | 256 palavras, a cor nos 12 bits baixos (vermelho nos bits 11:8) |
+| Framebuffer | `0x20000` | 16000 palavras, quatro pixels por palavra, o de menor coluna nos bits baixos |
+
+O framebuffer e a paleta só aceitam escrita, e o núcleo os atualiza com `sw`, `sh` ou `sb`. A exibição liga com o bit 0 do registrador de controle. O pacote `Peripherals` documenta o periférico em `docs/pt-br/video/video.md`.
+
+O clock de pixel é uma saída a mais do PLL do topo gerado, e o `.sdc` gerado declara falsos os caminhos entre o domínio do núcleo e o do pixel, porque o vídeo os atravessa só por sincronizadores de dois flip-flops e por memórias com um clock em cada porta.
+
+### 8.3. Recursos
+
+O vídeo sozinho, com estes generics, compilado no Quartus Prime Lite 25.1 para a DE0-CV, ocupa 137 ALMs, 65 blocos M10K (21 %) e 527.360 bits de memória (17 %). O Tools estima 51 blocos para o mesmo framebuffer e a paleta, porque conta bits e não a organização em blocos de 32 bits de largura.
+
+### 8.4. Teste do vídeo na simulação
+
+O programa `sdram_video.hex` lê a geometria e o formato, escreve a paleta e um quadro de 16x8 pixels de uma diagonal de quatro cores, liga a exibição e escreve `tohost`. O testbench (`doom_video.py`) usa um modo pequeno de 40x20 com a estrutura do 640x480, captura um quadro inteiro da saída `VGA_*` a partir da borda do sincronismo vertical e compara cada pixel e os dois sincronismos com o modelo de `tests/python/utils/doom_frame.py`. Confere também o que o núcleo leu dos registradores.
+
+### 8.5. Teste do teclado na simulação
+
+O programa `sdram_kbd.hex` liga a linha 5 do PLIC e a interrupção de recepção do teclado, avisa que está pronto, espera cada byte na fila, lê o claim do PLIC com o primeiro e guarda os 20 bytes. O testbench (`doom_keyboard.py`) é o teclado: pelas linhas open drain do conector injeta o make e o break das quatro setas em scancodes do conjunto 2 (`E0 75`, `E0 F0 75`, `E0 6B`, `E0 74` e `E0 72` com os `E0 F0`), e confere os bytes que o núcleo guardou e o claim.
+
+### 8.6. Testes C para a primeira execução na placa
+
+Os programas `tests/c/doom_video/src.c` e `tests/c/doom_keyboard/src.c` são ligados na banca A e compilados com os demais testes C da plataforma (seção 6).
+
+| Programa | O que faz | Código de retorno |
+| :--- | :--- | :--- |
+| `doom_video` | Lê a geometria e o formato, escreve a paleta e as barras (oito barras de cor e uma rampa de 16 cinzas), liga a exibição e espera três quadros | 1 geometria, 2 formato, 3 o contador de quadros não avançou |
+| `doom_keyboard` | Liga a interrupção do teclado e espera uma seta apertada e solta, imprimindo os bytes em hexadecimal | 1 transmissor, 2 erro de estado, 3 tempo esgotado (30 s), 4 sem linha no PLIC, 5 bytes que não são de seta |
+
+No Spike os dois devolvem zero sem tocar nos dispositivos. Na placa, o `doom_video` deixa as barras no monitor depois de terminar, e o `doom_keyboard` precisa de uma pessoa que aperte e solte uma seta.
+
+## 9. O que a plataforma não tem
 
 | Item | Estado |
 | :--- | :--- |
-| PS/2 e VGA | Não estão ligados no topo; o `platform.yaml` traz só os periféricos da `de0-cv` |
+| Mouse | Fora do `platform.yaml`, por depender do cabo Y |
 | Banca B | Livre; um carregador novo entra nela com versão maior |
 | Linker script e `crt0` do DOOM | Pertencem à porta do jogo, que liga o binário em `0x40000000` |
 

@@ -72,6 +72,9 @@ The `buses` key ties each external peripheral of the platform (a `kind` of `Peri
 | `tv` | `data`, `clk27`, `reset_n` | No |
 | `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | No |
 | `ir` | `rxd` | No |
+| `serial` | `rx`, `tx`, `cts` (optional), `rts` (optional) | No |
+| `hdmi_audio` | `mclk`, `sclk`, `lrclk`, `i2s0` | No |
+| `spi` | `sclk`, `mosi`, `miso`, `cs_n` | No |
 | `adc` | Depends on the chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (none) | Yes, required |
 | `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (optional), `int1` (optional) | No |
 
@@ -130,13 +133,11 @@ The file `boards/video-modes.yaml` holds the timing of each mode, and a mode nam
 
 | Field | Meaning |
 | :--- | :--- |
-| `width`, `height`, `refresh_hz` | Visible area in pixels and refresh rate |
-| `aspect` | Reduced aspect ratio of the visible area (`4:3`, `16:9` or `5:4`) |
 | `pixel_clock_mhz` | Pixel clock in MHz |
 | `horizontal`, `vertical` | Per axis, `sync`, `back_porch`, `visible`, `front_porch`, `total` and `polarity` |
 | `source` | Manual table or standard the values come from |
 
-On each axis the total is the sum of the four intervals, and `polarity` is `neg` (active-low pulse) or `pos` (active-high pulse). The horizontal axis counts pixels and the vertical axis counts lines.
+On each axis the total is the sum of the four intervals, and `polarity` is `negative` (active-low pulse) or `positive` (active-high pulse); the visible area, the rate and the aspect ratio come from the mode name and the intervals, and the reader refuses a name that disagrees with the visible area. The horizontal axis counts pixels and the vertical axis counts lines.
 
 $$
 \text{total} = \text{sync} + \text{back\_porch} + \text{visible} + \text{front\_porch}
@@ -149,13 +150,9 @@ $$
 ```yaml
 modes:
   640x480@60:
-    width: 640
-    height: 480
-    refresh_hz: 60
-    aspect: "4:3"
     pixel_clock_mhz: 25.0
-    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: neg}
-    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: neg}
+    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: negative}
+    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: negative}
 ```
 
 ### 4.4. Default mode and platform override

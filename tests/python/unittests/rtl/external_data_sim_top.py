@@ -14,7 +14,7 @@ from typing import Any
 
 import cocotb
 
-from tests.python.unittests.rtl.de0_cv_sim_top import (
+from tests.python.unittests.rtl.sdram_sim_common import (
     BOOT_MARK,
     BOOT_WORD,
     DISPLAY_VALUE,

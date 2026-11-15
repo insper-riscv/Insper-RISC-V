@@ -1,7 +1,7 @@
 # SDK 0.6.0 CPU profile acceptance — 2026-11-12
 
 Processor baseline: dfdf585e87355a739916cd3140adc40e21982aa3.
-Tools: pinned 1.13.0 plus SDK patch, unchanged.
+Tools: pinned 1.36.0 (`d77ef3e`) plus SDK patch.
 
 - 36 SDK unit tests passed, including all eleven named profile configurations, preservation of memory/UART, reduced HPM limits in both tops, unsupported source extensions, SOF invalidation and fast-update profile guard.
 - Real GCC16.1/GHDL6 execution of the division/printf probe passed for all eleven named profiles, with exact stdout.

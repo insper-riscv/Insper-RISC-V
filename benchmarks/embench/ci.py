@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from benchmarks.embench import report, run
+from benchmarks.embench import report, run, score
 from benchmarks.embench.provenance import cache_key, capture, metadata
 
 FULL_BATCH = 3
@@ -80,6 +80,11 @@ def plan(args: argparse.Namespace) -> None:
         json.dumps(
             {
                 "profiles": names,
+                "pull_request_number": (
+                    int(os.environ["PR_NUMBER"])
+                    if os.environ.get("PR_NUMBER")
+                    else None
+                ),
                 "batches": batches,
                 "revisions": revisions,
                 "available": available,
@@ -127,7 +132,7 @@ def keys(args: argparse.Namespace) -> None:
         payload = [cache_key(identity, profile) for profile in names]
         payload.append(args.programs)
         key = hashlib.sha256(json.dumps(payload).encode()).hexdigest()
-        emit(side, "embench-v1-" + key)
+        emit(side, "embench-v2-" + key)
 
 
 def unavailable(
@@ -296,6 +301,57 @@ def profile_summary(name: str, args: argparse.Namespace) -> tuple[str, bool]:
     return text, failed
 
 
+def measurement_pairs(
+    args: argparse.Namespace, expected: dict[str, Any], compare: bool
+) -> dict[str, tuple[dict[str, Any], dict[str, Any]]]:
+    """Load validated pairs, or main paired with itself."""
+    paired: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    for name in expected["profiles"]:
+        pair = measurement_pair(args.input, name, expected, compare)
+        if pair is not None:
+            paired[name] = pair
+    return paired
+
+
+def measurement_pair(
+    root: Path, name: str, expected: dict[str, Any], compare: bool
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Require both sides before combining and validating a profile."""
+    head_paths = list((root / "candidate" / name).rglob("results.json"))
+    base_paths = list((root / "base" / name).rglob("results.json"))
+    if not head_paths or (compare and not base_paths):
+        return None
+    head = combine(head_paths)
+    validate_simulation(head, name, "candidate", expected)
+    if not compare:
+        return head, head
+    before = combine(base_paths)
+    validate_simulation(before, name, "base", expected)
+    return before, head
+
+
+def overall_score(args: argparse.Namespace, expected: dict[str, Any]) -> str:
+    """Validate complete inputs and write the overall score artifact."""
+    score_expected = expected
+    paired: dict[str, tuple[dict[str, Any], dict[str, Any]]] = {}
+    if args.compare:
+        paired = measurement_pairs(args, expected, compare=True)
+    elif os.environ.get("GITHUB_REF") == "refs/heads/main":
+        # Cache warming compares the measured main snapshot to itself.
+        score_expected = dict(
+            expected,
+            revisions=dict(
+                expected["revisions"], base=expected["revisions"]["candidate"]
+            ),
+        )
+        paired = measurement_pairs(args, expected, compare=False)
+    overall = score.calculate(score_expected, paired)
+    args.output.with_name("embench-score.json").write_text(
+        json.dumps(overall, indent=2) + "\n"
+    )
+    return score.markdown(overall)
+
+
 def aggregate(args: argparse.Namespace) -> None:
     """Require expected artifacts and publish tables."""
     expected: dict[str, Any] = json.loads(args.plan.read_text())
@@ -310,6 +366,7 @@ def aggregate(args: argparse.Namespace) -> None:
         "attached to this run.",
         "",
     ]
+    sections.append(overall_score(args, expected))
     failed = False
     for name in expected["profiles"]:
         section, bad = profile_summary(name, args)

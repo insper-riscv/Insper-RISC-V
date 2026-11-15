@@ -66,7 +66,7 @@ O papel `gpio` é bidirecional e numera `GPIO` de 0 a 35 e o Arduino de 36 a 51.
 | `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6, tabela 3-8 | 3,3 V |
 | `clock_extra` | `MAX10_CLK2_50`, `ADC_CLK_10` | 2 | 3.2, tabela 3-2 | 3,3 V |
 
-Ficam só no `pins.yaml`, sem papel: `ARDUINO_RESET_N` (tabela 3-8), o acelerômetro ADXL345 (seção 3.10, tabela 3-13, `GSENSOR_*`) e o vídeo VGA (seção 3.8, tabela 3-11). O ADC é interno ao MAX 10 e não tem pino de sinal (seção 3.7).
+Ficam só no `pins.yaml`, sem papel de `io`: `ARDUINO_RESET_N` (tabela 3-8) e o ponto decimal `HEX0[7]` a `HEX5[7]` (seção 3.4, tabela 3-6), pois o papel `display` tem sete segmentos por dígito. O acelerômetro ADXL345 (seção 3.10, tabela 3-13, `GSENSOR_*`) é o papel `adxl345` e o ADC interno ao MAX 10 (seção 3.7, sem pino de sinal) é o papel `adc` com `chip: max10`, ambos em `buses`, e o vídeo VGA (seção 3.8, tabela 3-11) é o papel `video` (ver [perifericos-por-placa.md](perifericos-por-placa.md)).
 
 ---
 

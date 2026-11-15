@@ -67,8 +67,9 @@ def main() -> None:
             "PASS standalone simulation internal-memory serial UART",
             flush=True,
         )
+        # A DE0-CV sem controlador de FLASH tem UART, DISPLAY, CLINT e PLIC.
         physical = generate(folder / "de0-cv", "de0-cv", "auto")
-        assert len(physical) == 5
+        assert len(physical) == 4
         for root in physical:
             invoke(root, "build")
             print("PASS standalone build", root.parent.name, flush=True)

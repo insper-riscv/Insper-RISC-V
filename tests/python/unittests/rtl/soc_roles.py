@@ -14,11 +14,16 @@ from typing import Any
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
 
+from tests.python.unittests.rtl.soc_clock import (
+    NOP,
+    PHASE_NS,
+    boot_memory,
+    high,
+    three_phase_clock,
+)
 from tests.python.utils.checks import check
 
-PHASE_NS = 10
 RAM_BASE = 0x100000
-NOP = 0x00000013
 # lui x1,0x90000; lw x2,0x24(x1); lui x3,0x100; sw x2,0(x3); jal x0,0
 PROGRAM = [NOP] * 24 + [
     0x900000B7,
@@ -32,40 +37,11 @@ SWITCHES_SEEN = 0b1010
 TIMEOUT_CYCLES = 600
 
 
-def high(signal: Any) -> bool:
-    """Say whether a signal is resolved and high."""
-    return signal.value.is_resolvable and int(signal.value) == 1
-
-
-async def three_phase_clock(dut: Any) -> None:
-    """Drive the fetch and core clocks, one third of the period each."""
-    dut.i_clk_fetch.value = 0
-    dut.i_clk_core.value = 0
-    while True:
-        dut.i_clk_fetch.value = 1
-        await Timer(PHASE_NS, unit="ns")
-        dut.i_clk_fetch.value = 0
-        dut.i_clk_core.value = 1
-        await Timer(PHASE_NS, unit="ns")
-        dut.i_clk_core.value = 0
-        await Timer(PHASE_NS, unit="ns")
-
-
-async def boot_memory(dut: Any) -> None:
-    """Answer the instruction fetch like a synchronous ROM."""
-    while True:
-        await RisingEdge(dut.i_clk_fetch)
-        if high(dut.o_if_rden):
-            index = int(dut.o_if_addr.value)
-            word = PROGRAM[index] if index < len(PROGRAM) else NOP
-            dut.i_boot_data.value = word
-
-
 async def start(dut: Any) -> dict[int, int]:
     """Start the clocks, the ROM and the watcher; release the reset."""
     writes: dict[int, int] = {}
     cocotb.start_soon(three_phase_clock(dut))
-    cocotb.start_soon(boot_memory(dut))
+    cocotb.start_soon(boot_memory(dut, PROGRAM))
 
     async def watch() -> None:
         while True:

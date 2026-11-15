@@ -134,7 +134,7 @@ A warning from GHDL, Yosys or SymbiYosys points to code outside the standard or 
 | `ghdl -a` and `ghdl --synth` | Standard error of GHDL, read by `ghdl_run` | The command fails and prints each warning with the VHDL file and line |
 | `sby` of each proof and each mutant | Whole log of the proof, read by `prove` | The verdict becomes `error`, even when the exit code was 0 or 2, and the message points to `<log>:<line>` |
 
-A warning is a line with the word `warning` or `warnings`, in any case, as a whole word. Names that only contain the word (`no_warnings.sv`) and the Yosys summary with a count of zero (`Warnings: 0 unique messages, 0 total`) do not count. The only exception is three ABC messages, accepted only in the log of the `abc-bmc3` engine (the undriven clock of the property module, the count of undriven bits and the outputs read as constraints), because the way ABC reads the netlist produces them. Yices, Bitwuzla and Boolector have no exception, and any other ABC message is still an error.
+A warning is a line with the word `warning` or `warnings`, in any case, as a whole word. Names that only contain the word (`no_warnings.sv`) and the Yosys summary with a count of zero (`Warnings: 0 unique messages, 0 total`) do not count. The only exception is three ABC messages, accepted only in the log of the `abc-bmc3` engine (the undriven clock of the property module, the count of undriven bits and the outputs read as constraints), because the way ABC reads the netlist produces them. Yices and Bitwuzla have no exception, and any other ABC message is still an error.
 
 Two rules keep the netlists free of warnings.
 

@@ -82,6 +82,7 @@ buses:
   tv: {data: "TD_DATA[7:0]", clk27: TD_CLK27, reset_n: TD_RESET_N}
   usb: {addr: "OTG_ADDR[1:0]", data: "OTG_DATA[15:0]", cs_n: OTG_CS_N, rd_n: OTG_RD_N, wr_n: OTG_WR_N, rst_n: OTG_RST_N, int: OTG_INT}
   ir: {rxd: IRDA_RXD}
+  serial: {rx: UART_RXD, tx: UART_TXD, cts: UART_CTS, rts: UART_RTS}
 console:
   default: jtag
   uart: {rx: UART_RXD, tx: UART_TXD}
@@ -99,3 +100,6 @@ notes:
   - "A fase do DRAM_CLK (6000 ps a 100 MHz) foi medida na placa: o teste de preenchimento e de pontos esparsos das 2^25 palavras pela porta de depuracao passa com 4000, 6000, 8000 e 0 ps e falha com 2000 ps; 6000 ps fica no meio da janela que passa."
   - "O mapa da plataforma usa os 128 MB da SDRAM: o gerador deriva a janela da tag das caches (27 bits) da regiao RAM, e a porta de depuracao alcanca as 2^25 palavras."
   - "O video e um ADV7123 de 10 bits por canal com so os 8 bits altos ligados; VGA_CLK, VGA_BLANK_N e VGA_SYNC_N ficam sob controle do fabric. O manual cita ate 1280x1024 com banda de 100 MHz, e a tabela de modos do manual vai ate 108 MHz."
+  - "O papel serial (UART RS-232 pelo ZT3232, secao 4.12, tabela 4-18) liga UART_RXD, UART_TXD, UART_CTS e UART_RTS; console.uart segue com so RX e TX para o console em pinos."
+  - "Os pinos de USB (secao 4.17, tabela 4-25) sao os da interface HPI do CY7C67200: OTG_ADDR[1:0], OTG_DATA[15:0], OTG_CS_N, OTG_RD_N, OTG_WR_N, OTG_RST_N e OTG_INT. A tabela nao lista pinos de DMA (DREQ e DACK) nem de velocidade, entao nao ha sinal desses nomes em pins.yaml; a HPI faz o acesso de DMA a memoria interna do chip pelo proprio barramento de dados."
+  - "I2C_SCLK e I2C_SDAT (WM8731, secao 4.11, e ADV7180, secao 4.15) sao o mesmo par de fios (segunda copia do papel i2c); uma plataforma que configura os dois chips usa um unico periferico i2c nesse par, e EEP_I2C_SCLK e EEP_I2C_SDAT (EEPROM, secao 4.19) sao um par a parte."

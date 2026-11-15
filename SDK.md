@@ -8,7 +8,7 @@ for VS Code, Dev Containers and Remote - SSH setup.
 ## Source baseline
 
 - Processor: `dfdf585e87355a739916cd3140adc40e21982aa3` (main 0.5.0).
-- Tools: `0340eefe0e95c674d68f7516c392b5c8f17cf7f3` (1.13.0).
+- Tools: `d77ef3e65742f37dba16358f7079670bedfe2eb5` (1.36.0).
 - Processor submodules follow this checkout's gitlinks; clone with `--recurse-submodules`.
 - `.sdk/dependencies.json` pins Tools. `.sdk/patches/tools-sdk.patch` adds
   application include directories, packed JTAG memory decoding and bounded STP calls.
@@ -17,6 +17,22 @@ The managed dependency is downloaded into ignored `.sdk/tools`, with its own
 `.sdk/.venv`. It does not modify a sibling Tools checkout. Setup refuses to
 replace an existing mismatched dependency. Move that dependency aside to allow
 recreation after an intentional SDK update. The lockfile pins Python packages.
+
+## Peripherals pointer
+
+The SDK reads the driver sources and examples of the Peripherals submodule
+(`Peripherals/src/*/soc/driver`), and `.sdk/rv32_sdk/source_check.py` fails when
+`GPIO/soc/driver/c/examples/main.c.in` is missing. That file, the GPIO with
+pin groups and the Rust drivers of every peripheral exist from Peripherals
+`2b711e9`, so the Peripherals pointer of this repository must be at that commit
+or later (main is `db93792`) for the SDK checks and the Rust job to pass; the
+pinned `0b44c0b` lacks them. The shared boot loader includes the `boot.inc`
+fragments of the Core extensions, which exist from Core `bb095c7` (main), so the
+Core pointer must advance as well.
+
+The `peripherals` section of a `platform.yaml` is a mapping by name, in the order
+of the indexes. The SDK reads it through `riscv_tools.memory_map.core.peripheral_list`,
+which gives each peripheral its `index`, `base`, `size` and `window`.
 
 ## Installation and project creation
 

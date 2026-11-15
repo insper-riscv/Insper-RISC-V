@@ -48,7 +48,7 @@ Os papéis de E/S têm a largura por generic, e um papel de largura zero é omit
 | Botões | `has_keys` | `keys_width` | `keys_active_low` | `io_keys` |
 | Display | `has_display` | `display_digits` | `display_active_low` | `o_display_hex`, `o_display_value` |
 
-As chaves e os botões são blocos GPIO, e o display é o registrador `seg_display`. Os dois periféricos aceitam largura zero e têm o generic de polaridade, descritos nos documentos do repositório Peripherals. O console em pinos recebe a polaridade das suas duas linhas de `uart_tx_invert` e `uart_rx_invert`. O console sobre JTAG e o console em pinos têm as portas `i_uart_*`, `o_uart_tdo`, `i_uart_rx` e `o_uart_tx`, e o temporizador, o CLINT e o PLIC não têm porta de placa.
+As chaves e os botões são blocos GPIO, e o display é o registrador `seg_display`. Cada papel de GPIO é um único grupo com os pinos em ordem natural e a polaridade do papel replicada em todos os pinos (`pin_active_low`), e o SoC liga a palavra de leitura inteira à janela do periférico, com os bits acima da largura em zero. Os dois periféricos aceitam largura zero (o papel é omitido) e têm o generic de polaridade, descritos nos documentos do repositório Peripherals. O console em pinos recebe a polaridade das suas duas linhas de `uart_tx_invert` e `uart_rx_invert`. O console sobre JTAG e o console em pinos têm as portas `i_uart_*`, `o_uart_tdo`, `i_uart_rx` e `o_uart_tx`, e o temporizador, o CLINT e o PLIC não têm porta de placa.
 
 ## 5. Mapa e generics
 
@@ -66,7 +66,7 @@ O mapa de memória chega por generics, sem valor padrão: `boot_memory_size_byte
 | Janela das caches | `cache_window_bits`, de 26 a 29 (26 é 64 MiB, 27 é 128 MiB, a janela de endereços que a tag cobre) | 26 |
 | Contadores do Zihpm | `hpm_counters`, de 0 a 29, e `hpm_width`, de 0 a 64 bits | 29 e 64 |
 | Interrupções | `clint_tick_cycles`, `clint_index`, `plic_index`, `plic_n_sources`, `plic_priority_bits`, `plic_addr_width` | 1 ciclo, CLINT no índice 6 e PLIC no 7, 6 fontes, 3 bits, 20 bits |
-| Temporizadores | `timer_indices` (o índice de cada um na tabela de janelas) e `timer_irq_ids` (a fonte de cada um no PLIC, 0 sem linha); um temporizador por elemento, sem teto | vazios, nenhum temporizador |
+| Temporizadores | `timer_indices` (o índice de cada um na tabela de janelas) e `timer_irq_ids` (a fonte de cada um no PLIC, 0 sem linha); um temporizador por elemento, sem teto | `NO_INTEGERS`, um marcador de tabela vazia, e nenhum temporizador |
 | Índices dos periféricos | `switches_index`, `keys_index`, `uart_pins_index`, `uart_jtag_index`, `display_index`, `flash_ctrl_index` | 1, 2, 3, 4, 5 e 3 |
 | Presença dos periféricos | `has_switches`, `has_keys`, `has_display`, `has_uart_jtag`, `has_uart_pins` | `false` |
 | Largura dos papéis | `switches_width`, `keys_width`, `display_digits` | 10, 4 e 6 |

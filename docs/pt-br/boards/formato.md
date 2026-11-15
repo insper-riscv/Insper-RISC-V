@@ -72,6 +72,9 @@ A chave `buses` liga cada periférico externo da plataforma (`kind` de `Peripher
 | `tv` | `data`, `clk27`, `reset_n` | Não |
 | `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | Não |
 | `ir` | `rxd` | Não |
+| `serial` | `rx`, `tx`, `cts` (opcional), `rts` (opcional) | Não |
+| `hdmi_audio` | `mclk`, `sclk`, `lrclk`, `i2s0` | Não |
+| `spi` | `sclk`, `mosi`, `miso`, `cs_n` | Não |
 | `adc` | Depende do chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (nenhum) | Sim, obrigatória |
 | `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (opcional), `int1` (opcional) | Não |
 
@@ -130,13 +133,11 @@ O arquivo `boards/video-modes.yaml` guarda a temporização de cada modo, e o no
 
 | Campo | Significado |
 | :--- | :--- |
-| `width`, `height`, `refresh_hz` | Área visível em pixels e taxa de atualização |
-| `aspect` | Proporção reduzida da área visível (`4:3`, `16:9` ou `5:4`) |
 | `pixel_clock_mhz` | Clock de pixel em MHz |
 | `horizontal`, `vertical` | Por eixo, `sync`, `back_porch`, `visible`, `front_porch`, `total` e `polarity` |
 | `source` | Tabela do manual ou norma de onde vieram os valores |
 
-Em cada eixo, o total é a soma dos quatro intervalos, e `polarity` vale `neg` (pulso em nível baixo) ou `pos` (pulso em nível alto). O eixo horizontal conta pixels, e o vertical conta linhas.
+Em cada eixo, o total é a soma dos quatro intervalos, e `polarity` vale `negative` (pulso em nível baixo) ou `positive` (pulso em nível alto); a área visível, a taxa e a proporção vêm do nome do modo e dos intervalos, e o leitor recusa um nome que discorda da área visível. O eixo horizontal conta pixels, e o vertical conta linhas.
 
 $$
 \text{total} = \text{sync} + \text{back\_porch} + \text{visible} + \text{front\_porch}
@@ -149,13 +150,9 @@ $$
 ```yaml
 modes:
   640x480@60:
-    width: 640
-    height: 480
-    refresh_hz: 60
-    aspect: "4:3"
     pixel_clock_mhz: 25.0
-    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: neg}
-    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: neg}
+    horizontal: {total: 800, sync: 96, back_porch: 48, visible: 640, front_porch: 16, polarity: negative}
+    vertical:   {total: 525, sync: 2, back_porch: 33, visible: 480, front_porch: 10, polarity: negative}
 ```
 
 ### 4.4. Modo padrão e sobrescrita pela plataforma

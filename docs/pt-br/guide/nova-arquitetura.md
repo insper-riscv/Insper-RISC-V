@@ -935,7 +935,7 @@ O CI roda a cada push, em nove jobs, dentro da imagem `ci-vhdl` do Infra.
 | `reuse` | Reaproveita o resultado de um pull request aprovado da mesma árvore; na dúvida, roda tudo |
 | `vhdl-syntax` | `make paths`, `check-vhdl-style` e `make check` |
 | `unit-tests` | `make unit-tests` |
-| `formal - yices`, `formal - bitwuzla`, `formal - boolector`, `formal - abc-bmc3` | A prova formal, uma vez por engine |
+| `formal - yices`, `formal - bitwuzla`, `formal - abc-bmc3` | A prova formal, uma vez por engine |
 | `formal` | Agrega os engines; é o check que o ruleset da branch exige |
 | `python-static-analysis` | `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python |
 

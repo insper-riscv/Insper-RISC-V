@@ -2,8 +2,9 @@
 
 O topo `soc_timers_top` liga `timers` temporizadores nas janelas de
 índice 0, 1 e 2 da tabela padrão (0x80000000, 0x90000000 e
-0xA0000000), nas fontes 5, 7 e 8 do PLIC. O programa roda sempre igual: grava um valor de
-topo diferente em cada uma das três janelas e o lê de volta, liga os
+0xA0000000), nas fontes 5, 7 e 8 do PLIC. O programa roda sempre
+igual: grava um valor de topo diferente em cada uma das três janelas
+e o lê de volta, liga os
 temporizadores 0 e 2 com a interrupção habilitada, espera e lê o
 registrador de pendências do PLIC.
 """
@@ -13,6 +14,13 @@ from typing import Any
 import cocotb
 from cocotb.triggers import RisingEdge, Timer
 
+from tests.python.unittests.rtl.soc_clock import (
+    NOP,
+    PHASE_NS,
+    boot_memory,
+    high,
+    three_phase_clock,
+)
 from tests.python.utils.checks import check
 from tests.python.utils.rv32_asm import (
     T0,
@@ -28,9 +36,7 @@ from tests.python.utils.rv32_asm import (
     sw,
 )
 
-PHASE_NS = 10
 RAM_BASE = 0x100000
-NOP = addi(X0, X0, 0)
 WINDOWS = (0x80000, 0x90000, 0xA0000)
 LINES = (5, 7, 8)
 TOP_OFFSET = 0x0C
@@ -66,34 +72,6 @@ def program() -> list[int]:
     words += [lui(T3, PLIC_PENDING_HI20), lw(T2, T3, 0), sw(T2, T4, 12)]
     words += [addi(T1, X0, MARK), sw(T1, T4, 16), jal(X0, 0)]
     return words
-
-
-def high(signal: Any) -> bool:
-    """Say whether a signal is resolved and high."""
-    return signal.value.is_resolvable and int(signal.value) == 1
-
-
-async def three_phase_clock(dut: Any) -> None:
-    """Drive the fetch and core clocks, one third of the period each."""
-    dut.i_clk_fetch.value = 0
-    dut.i_clk_core.value = 0
-    while True:
-        dut.i_clk_fetch.value = 1
-        await Timer(PHASE_NS, unit="ns")
-        dut.i_clk_fetch.value = 0
-        dut.i_clk_core.value = 1
-        await Timer(PHASE_NS, unit="ns")
-        dut.i_clk_core.value = 0
-        await Timer(PHASE_NS, unit="ns")
-
-
-async def boot_memory(dut: Any, words: list[int]) -> None:
-    """Answer the instruction fetch like a synchronous ROM."""
-    while True:
-        await RisingEdge(dut.i_clk_fetch)
-        if high(dut.o_if_rden):
-            index = int(dut.o_if_addr.value)
-            dut.i_boot_data.value = words[index] if index < len(words) else NOP
 
 
 async def run(dut: Any) -> dict[int, int]:

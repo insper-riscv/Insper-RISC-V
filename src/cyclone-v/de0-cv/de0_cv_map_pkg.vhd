@@ -52,23 +52,23 @@ package de0_cv_map_pkg is
 	-- Base da FLASH, em KiB, logo depois da BOOT_MEMORY.
 	constant FLASH_BASE_KIB      : natural  := 4;
 	-- Fim exclusivo da FLASH, em KiB.
-	constant FLASH_END_KIB       : natural  := 256;
+	constant FLASH_END_KIB       : natural  := 32768;
 	-- Armazenamento da FLASH, em bytes: a menor potência de dois que cobre
 	-- [0, fim da FLASH).
-	constant FLASH_STORAGE_BYTES : positive := 262144;
+	constant FLASH_STORAGE_BYTES : positive := 33554432;
 	-- A FLASH é alcançada pelo barramento (verdadeiro) ou pela porta direta (falso).
 	constant FLASH_ON_BUS        : boolean  := true;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1114112;
+	constant RAM_END_KIB         : natural  := 1081344;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
-	constant RAM_STORAGE_BYTES   : positive := 67108864;
+	constant RAM_STORAGE_BYTES   : positive := 33554432;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"43FFF";
+		x"41FFF";
 	-- A RAM é alcançada pelo barramento (verdadeiro) ou pela porta direta (falso).
 	constant RAM_ON_BUS          : boolean  := true;
 	-- Existe cache de instruções.
@@ -85,40 +85,34 @@ package de0_cv_map_pkg is
 	constant D_CACHE_WINDOW_BITS : natural  := 26;
 
 	-- Número de periféricos do mapa, o tamanho das tabelas abaixo.
-	constant PERIPH_COUNT : natural := 5;
+	constant PERIPH_COUNT : natural := 4;
 	-- Periféricos estritos: o interconector termina com erro o acesso ao que sobra da janela depois dos registradores.
 	constant STRICT_PERIPH : boolean := true;
 	-- Tabela de endereços, um por periférico.
 	type periph_addr_array_t is array (natural range <>) of addr_t;
 
-	-- Endereço base do periférico FLASH_CTRL.
-	constant FLASH_CTRL_BASE : addr_t := std_logic_vector(resize(unsigned'(x"B0000000"), ADDR_BITS));
-	-- Índice do periférico FLASH_CTRL nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant FLASH_CTRL_INDEX : natural := 0;
-
 	-- Endereço base do periférico UART.
 	constant UART_BASE : addr_t := std_logic_vector(resize(unsigned'(x"C0000000"), ADDR_BITS));
 	-- Índice do periférico UART nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant UART_INDEX : natural := 1;
+	constant UART_INDEX : natural := 0;
 
 	-- Endereço base do periférico DISPLAY.
 	constant DISPLAY_BASE : addr_t := std_logic_vector(resize(unsigned'(x"D0000000"), ADDR_BITS));
 	-- Índice do periférico DISPLAY nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant DISPLAY_INDEX : natural := 2;
+	constant DISPLAY_INDEX : natural := 1;
 
 	-- Endereço base do periférico CLINT.
 	constant CLINT_BASE : addr_t := std_logic_vector(resize(unsigned'(x"E0000000"), ADDR_BITS));
 	-- Índice do periférico CLINT nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant CLINT_INDEX : natural := 3;
+	constant CLINT_INDEX : natural := 2;
 
 	-- Endereço base do periférico PLIC.
 	constant PLIC_BASE : addr_t := std_logic_vector(resize(unsigned'(x"F0000000"), ADDR_BITS));
 	-- Índice do periférico PLIC nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant PLIC_INDEX : natural := 4;
+	constant PLIC_INDEX : natural := 3;
 
 	-- Base de cada periférico, na ordem de `peripherals`.
 	constant PERIPH_BASES : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
-		FLASH_CTRL_INDEX => FLASH_CTRL_BASE,
 		UART_INDEX => UART_BASE,
 		DISPLAY_INDEX => DISPLAY_BASE,
 		CLINT_INDEX => CLINT_BASE,
@@ -127,7 +121,6 @@ package de0_cv_map_pkg is
 
 	-- Máscara de cada janela: o periférico i responde quando (endereço and PERIPH_MASKS(i)) = PERIPH_BASES(i); a janela é a menor potência de dois que cobre o tamanho, com no mínimo 16 bytes.
 	constant PERIPH_MASKS : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
-		FLASH_CTRL_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFE0"), ADDR_BITS)),
 		UART_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		DISPLAY_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		CLINT_INDEX => std_logic_vector(resize(unsigned'(x"FFFF0000"), ADDR_BITS)),
@@ -142,15 +135,13 @@ package de0_cv_map_pkg is
 	constant CLINT_TICK_CYCLES : positive := 77;
 
 	-- Número de fontes do PLIC (o maior identificador de fonte).
-	constant PLIC_N_SOURCES     : positive := 6;
+	constant PLIC_N_SOURCES     : positive := 2;
 	-- Largura da prioridade e do limiar do PLIC, em bits.
 	constant PLIC_PRIORITY_BITS : positive := 3;
 	-- Largura do endereço de palavra da janela do PLIC.
 	constant PLIC_ADDR_WIDTH    : positive := 20;
 	-- Identificador da fonte UART_JTAG no PLIC.
 	constant IRQ_UART_JTAG : positive := 2;
-	-- Identificador da fonte FLASH no PLIC.
-	constant IRQ_FLASH : positive := 6;
 
 	-- Número de temporizadores de uso geral do mapa (`kind: timer`), o tamanho das tabelas abaixo.
 	constant TIMER_COUNT : natural := 0;

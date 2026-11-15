@@ -5,6 +5,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest.mock import patch
 
+import yaml
+
 from rv32_sdk import cli, cpu_profiles, sof_cache
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -31,7 +33,16 @@ class CpuProfilesTest(unittest.TestCase):
                         if Path(p).name == "config_pkg.vhd"
                     )
                     self.assertRegex(
-                        package, r"constant HAS_UART\s*: boolean := true"
+                        package, r"constant FLASH_BASE\s*:\s*map_addr_t"
+                    )
+                    self.assertIn(
+                        "UART",
+                        yaml.safe_load(
+                            (
+                                ROOT
+                                / ".sdk/platforms/internal-mem/platform.yaml"
+                            ).read_text()
+                        )["peripherals"],
                     )
                     expected = cpu_profiles.selected(
                         ROOT, {"cpu_profile": path.stem}
