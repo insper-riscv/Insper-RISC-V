@@ -120,7 +120,8 @@ entity soc is
         -- Índice do controlador de FLASH na tabela de periféricos.
         flash_ctrl_index       : natural                       := 3;
         -- Índice de cada temporizador de uso geral na tabela de periféricos (TIMER_INDICES do pacote de mapa): uma
-        -- instância por elemento, sem teto; vazio não instancia nenhum.
+        -- instância por elemento, sem teto; o valor padrão (NO_INTEGERS)
+        -- não instancia nenhum.
         timer_indices          : integer_vector                := NO_INTEGERS;
         -- Fonte do PLIC de cada temporizador, na mesma ordem (TIMER_IRQ_IDS do pacote de mapa); zero deixa a
         -- interrupção do temporizador sem linha.
@@ -346,10 +347,15 @@ architecture behaviour of soc is
     -- O papel do display existe: pedido pelo generic e com pelo menos um dígito.
     constant HAS_DISPLAY_ROLE  : boolean := has_display and display_digits > 0;
 
+    -- Número de temporizadores de uso geral: os elementos de timer_indices, ou zero com o valor padrão NO_INTEGERS.
+    constant TIMER_N : natural := count_of(timer_indices);
+    -- Número de fontes do PLIC dos temporizadores: os elementos de timer_irq_ids, ou zero com o valor padrão.
+    constant TIMER_IRQ_N : natural := count_of(timer_irq_ids);
+
     -- Há algum periférico na janela de periféricos: o CLINT e o PLIC, ou os do topo da placa.
     constant HAS_PERIPHERALS : boolean :=
         HAS_INTERRUPTS or HAS_SWITCHES_ROLE or HAS_KEYS_ROLE or HAS_DISPLAY_ROLE or has_uart_jtag or has_uart_pins
-        or timer_indices'length > 0;
+        or TIMER_N > 0;
 
     -- Linhas do PLIC: o identificador da fonte de cada periférico, o mesmo em toda plataforma (as listas
     -- `interrupts.sources` dos platform.yaml repetem estes números, e `make check-irq-sources` os confere).
@@ -427,7 +433,7 @@ architecture behaviour of soc is
     function timer_indices_valid return boolean is
     begin
 
-        for t in timer_indices'range loop
+        for t in timer_indices'low to timer_indices'low + TIMER_N - 1 loop
 
             if timer_indices(t) < 0 or timer_indices(t) >= periph_count then
                 return false;
@@ -460,7 +466,7 @@ architecture behaviour of soc is
     function timer_lines_valid return boolean is
     begin
 
-        for t in timer_irq_ids'range loop
+        for t in timer_irq_ids'low to timer_irq_ids'low + TIMER_IRQ_N - 1 loop
 
             if timer_irq_ids(t) < 0 or timer_irq_ids(t) > plic_n_sources then
                 return false;
@@ -540,7 +546,8 @@ architecture behaviour of soc is
     -- Linhas de interrupção dos periféricos para o PLIC; uma ausente fica em zero.
     signal irq_lines      : std_logic_vector(plic_n_sources downto 1) := (others => '0');
     -- Interrupção de overflow de cada temporizador, na ordem de timer_indices.
-    signal timer_irq      : std_logic_vector(timer_indices'range)     := (others => '0');
+    signal timer_irq      : std_logic_vector(timer_indices'low to timer_indices'low + last_index(TIMER_N)) :=
+        (others => '0');
 
     -- Janela de periféricos: deslocamento de palavra dentro do periférico (a janela do PLIC é a maior).
     signal p_addr    : std_logic_vector(plic_addr_width - 1 downto 0);
@@ -887,7 +894,7 @@ begin
         severity failure;
 
     -- Um temporizador por elemento de timer_indices, cada um com a sua linha do PLIC.
-    assert timer_irq_ids'length = timer_indices'length
+    assert TIMER_IRQ_N = TIMER_N
         report "timer_indices e timer_irq_ids têm tamanhos diferentes: cada temporizador tem uma fonte do PLIC"
         severity failure;
     assert timer_indices_valid
@@ -1264,7 +1271,7 @@ begin
 
     -- Um temporizador por linha da tabela: cada um na sua janela (p_we, p_re e a fatia de p_rdata do índice dele) e,
     -- com fonte diferente de zero, na sua linha do PLIC.
-    gen_timer : for t in timer_indices'range generate
+    gen_timer : for t in timer_indices'low to timer_indices'low + TIMER_N - 1 generate
         -- Posição da fonte do PLIC deste temporizador em timer_irq_ids.
         constant IRQ_POS : natural := timer_irq_ids'low + (t - timer_indices'low);
         -- Índice da janela deste temporizador na tabela de periféricos.
