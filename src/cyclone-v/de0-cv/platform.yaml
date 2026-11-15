@@ -49,6 +49,7 @@ memory:
     - type: sdram
       base: 0x00001000
       size: 0x1FFF000
+      offset: 0x1000
       on_bus: true
       cache:
         size_bits: 32768
@@ -56,6 +57,7 @@ memory:
     - type: sdram
       base: 0x40000000
       size: 32M
+      offset: 32M
       on_bus: true
       cache:
         size_bits: 32768

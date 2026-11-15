@@ -34,7 +34,7 @@ SOURCES := riscv-tools --root . sources
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
 NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*' \
-  ! -path 'Peripherals/src/ETH/rgmii/sim/*' ! -path 'Peripherals/src/MIPI/ddr/sim/*'
+  ! -path 'Peripherals/src/ETH/rgmii/sim/*' ! -path 'Peripherals/src/MIPI/ddr/sim/*' ! -path 'Peripherals/src/HDMI/tmds/sim/*'
 
 .PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-sdram-split check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
@@ -192,7 +192,7 @@ test:
 unit-tests: sync memory-map test
 
 # The formal proofs of this repository only: the external interconnect (src/interconnect), with the engine
-# FORMAL_ENGINE (yices, bitwuzla, boolector or abc-bmc3; bitwuzla by default). The proofs of the submodules
+# FORMAL_ENGINE (yices, bitwuzla or abc-bmc3; bitwuzla by default). The proofs of the submodules
 # run in the CI of each one. FORMAL_JOBS is empty by construction and stays as the list of the proofs
 # of the submodules that this repository does not run. Each proof works in its own folder, -k lets the
 # others finish when one fails and -O keeps the output of each target together.
