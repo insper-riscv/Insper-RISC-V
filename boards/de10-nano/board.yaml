@@ -38,6 +38,10 @@ io:
   clock_extra:
     signals: ["FPGA_CLK2_50", "FPGA_CLK3_50"]
   video:    {kind: hdmi, channel_bits: 8, signals: HDMI_TX, default_mode: 640x480@60, modes: [640x480@60, 1024x768@60, 1280x1024@60, 1920x1080@60]}
+# Papeis de pino dos perifericos externos (secao `buses`), so do lado FPGA; ETH, UART, SD, USB e G-sensor ficam no HPS.
+buses:
+  hdmi: {d: "HDMI_TX_D[23:0]", clk: HDMI_TX_CLK, de: HDMI_TX_DE, hs: HDMI_TX_HS, vs: HDMI_TX_VS, int: HDMI_TX_INT, scl: I2C_SCL, sda: I2C_SDA}
+  adc: {chip: ltc2308, convst: ADC_CONVST, sck: ADC_SCK, sdi: ADC_SDI, sdo: ADC_SDO}
 console:
   default: jtag
 pins: pins.yaml

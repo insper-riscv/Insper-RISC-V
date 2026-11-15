@@ -40,6 +40,12 @@ memories:
     chips: 1
     signals: DRAM
     clk_phase_ps: 4000
+# Papeis de pino dos perifericos externos (secao `buses`), um por kind de `Peripherals`. O video fica em io.video.
+buses:
+  ps2:
+    - {clk: PS2_CLK,  dat: PS2_DAT}
+    - {clk: PS2_CLK2, dat: PS2_DAT2}
+  sd: {clk: SD_CLK, cmd: SD_CMD, dat: "SD_DATA[3:0]"}
 console:
   default: jtag
 pins: pins.yaml

@@ -28,6 +28,7 @@ Each supported board has a folder `boards/<board>/` at the repository root, with
 | `clocks.inputs`, `clocks.reference`, `clocks.reset` | Input clocks (`name`, `signal`, `mhz`), the one that feeds the PLL, and the user reset with polarity |
 | `io.<role>` | Roles `leds`, `switches`, `keys`, `display` and `leds_green`, each with `signals` and `active` (`high` or `low`), the general-use roles `gpio`, `ex_io`, `hsmc` and `clock_extra`, with no polarity, with `signals` (one group or a list of groups, numbered in list order) and `bidirectional: true` when the pins are I/O, and the `video` role, described in section 4 |
 | `memories` | `sdram`, `sram`, `nor`, `onchip_flash` and `serial_flash`, each with the catalog chip and the signals |
+| `buses` | Pin roles of the external peripherals (section 2.3), one per role, with the signal of each role pin |
 | `console` | `default: jtag` (JTAG UART) and `uart: {rx, tx}` only when the board has a UART on pins |
 | `pins` | Path of `pins.yaml` |
 | `notes` | Board pitfalls, in short prose |
@@ -54,6 +55,31 @@ In `memories.<type>.signals` the value is a prefix (or a list of prefixes) witho
 | `cyclone-iv-e`, `max-10`, `cyclone-10-lp` | `le` | `dsp9x9` (9-bit elements) |
 
 No unit converts into another by a fixed factor.
+
+### 2.3. Pin roles of the external peripherals
+
+The `buses` key ties each external peripheral of the platform (a `kind` of `Peripherals`) to the signals of `pins.yaml`. Each key is a role, and the value is a mapping from role pin to signal, or a list of mappings when the board has more than one copy (the two PS/2 channels, the two Ethernet PHYs). The signal accepts the bus form of section 2.1 (`"SD_DAT[3:0]"`).
+
+| Role | Role pins | `chip` key |
+| :--- | :--- | :--- |
+| `ps2` | `clk`, `dat` | No |
+| `sd` | `clk`, `cmd`, `dat` | No |
+| `lcd` | `data`, `rs`, `rw`, `en`, `power`, `blon` (optional) | No |
+| `i2c` | `scl`, `sda` | No |
+| `audio` | `xck`, `bclk`, `adclrck`, `adcdat`, `daclrck`, `dacdat` | No |
+| `eth` | `rx_clk`, `rxd`, `rx_dv`, `rx_er`, `tx_clk`, `txd`, `tx_en`, `tx_er`, `mdc`, `mdio`, `int_n` (optional), `rst_n` | No |
+| `hdmi` | `d`, `clk`, `de`, `hs`, `vs`, `int`, `scl`, `sda` | No |
+| `tv` | `data`, `clk27`, `reset_n` | No |
+| `usb` | `addr`, `data`, `cs_n`, `rd_n`, `wr_n`, `rst_n`, `int` | No |
+| `ir` | `rxd` | No |
+| `adc` | Depends on the chip: `adc128s022` (`cs_n`, `sclk`, `saddr`, `sdat`), `ltc2308` (`convst`, `sck`, `sdi`, `sdo`), `max10` (none) | Yes, required |
+| `adxl345` | `cs_n`, `sclk`, `mosi`, `miso` (optional), `int1` (optional) | No |
+
+Video is not in `buses`; it is the `io.video` role. A board that declares in `buses` a role with FPGA-side pins only leaves out what sits on the HPS, and the `adxl345` role of the DE0-Nano uses `I2C_SCLK` and `I2C_SDAT` as `sclk` and `mosi`, because `G_SENSOR_CS_N` low selects the three-wire SPI mode on the same pins as the I2C.
+
+### 2.4. Seal of the pins read only from the manual
+
+The `manual` seal of a pin means the pin number was read from a manual table. The DE2-115 pins of PS/2, audio, Ethernet, TV, USB and IR carry in `note` that the bank and the voltage were not checked against the schematic, and none was measured on the board.
 
 ## 3. pins.yaml fields
 
