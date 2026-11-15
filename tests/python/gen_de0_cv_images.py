@@ -23,11 +23,23 @@ FLASH, e o programa roda assim:
 As imagens ficam em tests/python/unittests/rtl/data/de0_cv/.
 """
 
+import sys
 from pathlib import Path
 
-from riscv_tools.memory_map import load_platform, symbols
+# O riscv-tools vem da imagem do CI, fora do ambiente do projeto, e os
+# testes cocotb importam este módulo no ambiente do uv.
+IMAGE_PACKAGES = Path(
+    "/opt/riscv-tools/riscv-tools/lib/python3.14/site-packages"
+)
+if IMAGE_PACKAGES.is_dir() and str(IMAGE_PACKAGES) not in sys.path:
+    sys.path.append(str(IMAGE_PACKAGES))
 
-from tests.python.utils.rv32_asm import (
+from riscv_tools.memory_map import (  # noqa: E402  # pylint: disable=C0413
+    load_platform,
+    symbols,
+)
+
+from tests.python.utils.rv32_asm import (  # noqa: E402  # pylint: disable=C0413
     T0,
     T1,
     T2,
