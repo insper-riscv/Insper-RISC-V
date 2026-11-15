@@ -106,6 +106,7 @@ interrupts:
 generate:
   specs: {path: src/simulation/modular/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/modular/runtime/boot_memory.ld}
+  boot_config_h: {path: src/simulation/modular/runtime/boot_config.h}
   runtime: {path: src/simulation/modular/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/modular/modular_map_pkg.vhd

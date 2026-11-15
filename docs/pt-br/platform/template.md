@@ -25,7 +25,7 @@ Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0
 | `config.yaml` | Configuração do `riscv-tools` para compilar e simular: toolchain, runtime, fontes VHDL e módulo de teste |
 | `rtl/template_map_pkg.vhd` | Pacote de constantes gerado do `platform.yaml` (não se edita à mão) |
 | `rtl/template_sim_top.vhd` | Topo de simulação, que só liga o gerador de clock, o núcleo, as memórias e a UART |
-| `runtime/boot_memory.S` | Carregador fixo da BOOT_MEMORY e rotina `rv32_wait_restart` |
+| `runtime/boot_memory.S` | Invólucro da BOOT_MEMORY: inclui os cabeçalhos gerados e o `src/boot/boot_core.S` comum, que traz o `rv32_wait_restart` |
 | `runtime/_exit.c` | Fim do programa, que informa o resultado em `tohost` |
 | `runtime/stdio.c` | Saída padrão num buffer da RAM |
 | `runtime/spike_exit.S` | Substituto de `rv32_wait_restart` para o ELF do Spike |

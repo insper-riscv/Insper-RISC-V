@@ -49,6 +49,7 @@ peripherals:
 generate:
   specs: {path: src/simulation/template/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
   boot_ld: {path: src/simulation/template/runtime/boot_memory.ld}
+  boot_config_h: {path: src/simulation/template/runtime/boot_config.h}
   runtime: {path: src/simulation/template/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/simulation/template/rtl/template_map_pkg.vhd

@@ -125,6 +125,7 @@ generate:
     - {path: src/cyclone-iv-e/de2-115-n2/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
   banks_h: {path: src/cyclone-iv-e/de2-115-n2/runtime/flash_banks.h}
   boot_ld: {path: src/cyclone-iv-e/de2-115-n2/runtime/boot_memory.ld}
+  boot_config_h: {path: src/cyclone-iv-e/de2-115-n2/runtime/boot_config.h}
   runtime: {path: src/cyclone-iv-e/de2-115-n2/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/cyclone-iv-e/de2-115-n2/de2_115_n2_map_pkg.vhd

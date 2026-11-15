@@ -121,6 +121,7 @@ generate:
     - {path: src/max-10/de10-lite/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
   banks_h: {path: src/max-10/de10-lite/runtime/flash_banks.h}
   boot_ld: {path: src/max-10/de10-lite/runtime/boot_memory.ld}
+  boot_config_h: {path: src/max-10/de10-lite/runtime/boot_config.h}
   runtime: {path: src/max-10/de10-lite/runtime/memory_map.h, ram: RAM}
   vhdl:
     path: src/max-10/de10-lite/de10_lite_map_pkg.vhd
