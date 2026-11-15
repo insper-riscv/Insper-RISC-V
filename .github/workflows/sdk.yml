@@ -11,11 +11,11 @@ permissions:
   contents: read
 jobs:
   sdk:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 30
     container:
       options: --memory=8g --memory-swap=8g --cpus=2
-      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
+      image: ghcr.io/insper-riscv/ci-elf:latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -51,11 +51,11 @@ jobs:
           include-hidden-files: true
   rust:
     name: Rust runtime and peripheral drivers
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 40
     container:
       options: --memory=8g --memory-swap=8g --cpus=2
-      image: ghcr.io/insper-riscv/ci-elf@sha256:909e494925f1f4c5d9996b5050cb6182a8a34e16be086dcdfddea82e62c9ca9f
+      image: ghcr.io/insper-riscv/ci-elf:latest
     env:
       CARGO_BUILD_JOBS: 2
       RUSTUP_HOME: /tmp/rv32-rustup
