@@ -935,7 +935,7 @@ The CI runs on every push, in nine jobs, inside the `ci-vhdl` image of Infra.
 | `reuse` | Reuses the result of an approved pull request of the same tree; when in doubt, runs everything |
 | `vhdl-syntax` | `make paths`, `check-vhdl-style` and `make check` |
 | `unit-tests` | `make unit-tests` |
-| `formal - yices`, `formal - bitwuzla`, `formal - boolector`, `formal - abc-bmc3` | The formal proof, once per engine |
+| `formal - yices`, `formal - bitwuzla`, `formal - abc-bmc3` | The formal proof, once per engine |
 | `formal` | Aggregates the engines; it is the check the branch ruleset requires |
 | `python-static-analysis` | `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` and `uv audit` over the Python files |
 

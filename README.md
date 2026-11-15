@@ -74,7 +74,7 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 | `make check` | A construção do topo de simulação de cada plataforma com os submódulos fixados e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
 | `make memory-map` | Concordância de cada cópia do mapa de memória com o `platform.yaml` da plataforma |
 | `make unit-tests` | Testes cocotb das plataformas deste repositório, mais o `memory-map` |
-| `make formal` | Provas formais (SymbiYosys) do interconector deste repositório, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla`, `boolector` e `abc-bmc3`) |
+| `make formal` | Provas formais (SymbiYosys) do interconector deste repositório, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla` e `abc-bmc3`) |
 
 Cada repositório roda só as próprias verificações, testes e provas; as dos submódulos rodam no CI de cada um.
 
