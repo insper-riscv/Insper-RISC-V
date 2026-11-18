@@ -17,6 +17,53 @@ from benchmarks.embench import ci, report, run
 from benchmarks.embench.provenance import cache_key, hash_files, source_key
 
 
+class BootProfileTests(unittest.TestCase):
+    """Do not boot a core with unsupported extension fragments."""
+
+    def test_boot_flags_follow_elaborated_profile(self) -> None:
+        """Preserve boot addresses and select supported fragments."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            runtime = root / "runtime"
+            runtime.mkdir()
+            original = (
+                "#ifndef RV32_BOOT_CONFIG_H\n#define RV32_BOOT_CONFIG_H\n"
+                "#define RV32_HAS_ZICSR 1\n#define RV32_HAS_M 1\n"
+                "#define RV32_IS_E 0\n#define RV32_TEST_WAIT 1\n#endif\n"
+            )
+            header = runtime / "boot_config.h"
+            header.write_text(original)
+            exp = run.Experiment(root, root, root, {"platform": "."}, {})
+            for csr in (False, True):
+                with self.subTest(csr=csr):
+                    flag = str(csr).lower()
+                    (root / "config_pkg.vhd").write_text(
+                        "constant HAS_M : boolean := false;\n"
+                        f"constant HAS_ZICSR : boolean := {flag};\n"
+                        "constant IS_E : boolean := true;\n"
+                    )
+                    options = run.boot_defines(exp, root)
+                    self.assertEqual(
+                        options, ["-include", str(root / "boot_config.h")]
+                    )
+                    generated = (root / "boot_config.h").read_text()
+                    self.assertIn(
+                        f"#define RV32_HAS_ZICSR {int(csr)}", generated
+                    )
+                    self.assertIn("#define RV32_HAS_M 0", generated)
+                    self.assertIn("#define RV32_IS_E 1", generated)
+                    self.assertIn("#define RV32_TEST_WAIT 1", generated)
+                    self.assertIn("#define RV32_BOOT_CONFIG_H", generated)
+                    self.assertEqual(header.read_text(), original)
+
+    def test_legacy_boot_needs_no_generated_header(self) -> None:
+        """Keep pre-fragment boot sources usable on older revisions."""
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            exp = run.Experiment(root, root, root, {"platform": "."}, {})
+            self.assertEqual(run.boot_defines(exp, root), [])
+
+
 class ReportingTests(unittest.TestCase):
     """Reject misleading and incompatible measurements."""
 

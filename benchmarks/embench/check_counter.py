@@ -14,6 +14,7 @@ from benchmarks.embench.run import (
     build_simulator,
     command,
     hex_image,
+    memory_bases,
     path_parser,
     prepare_paths,
     read_yaml,
@@ -22,8 +23,7 @@ from benchmarks.embench.run import (
 
 def run_kernel(exp: Experiment, folder: Path, boot: Path, code: int) -> None:
     """Run eight instructions, then check the original exit protocol."""
-    platform = read_yaml(exp.platform / "platform.yaml")
-    regions = {r["name"]: r for r in platform["regions"]}
+    rom_base, ram_base = memory_bases(exp)
     elf = folder / "counter.elf"
     runtime = exp.platform / "runtime"
     log = folder / f"counter-{code}.log"
@@ -36,7 +36,7 @@ def run_kernel(exp: Experiment, folder: Path, boot: Path, code: int) -> None:
             "--specs=" + str(runtime / "rv32im-fpga.specs"),
             "-I",
             str(exp.upstream / "support"),
-            "-DTEST_RAM_BASE=" + str(regions["RAM"]["base"]),
+            "-DTEST_RAM_BASE=" + str(ram_base),
             "-DRETURN_CODE=" + str(code),
             str(HERE / "counter.S"),
             str(HERE / "board.c"),
@@ -56,9 +56,7 @@ def run_kernel(exp: Experiment, folder: Path, boot: Path, code: int) -> None:
     (folder / "markers.txt").write_text(
         f"{addresses['start_trigger']}\n{addresses['stop_trigger']}\n"
     )
-    image = hex_image(
-        elf, folder / "counter.hex", log, int(regions["ROM"]["base"])
-    )
+    image = hex_image(elf, folder / "counter.hex", log, rom_base)
     command(
         [
             "ghdl",
@@ -91,7 +89,7 @@ def main() -> None:
         metadata(args.root.resolve()),
     )
     folder, _ = build_simulator(exp, "rv32im")
-    boot = build_boot(exp)
+    boot = build_boot(exp, folder)
     run_kernel(exp, folder, boot, 0)
     try:
         run_kernel(exp, folder, boot, 1)
