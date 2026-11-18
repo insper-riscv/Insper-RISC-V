@@ -44,6 +44,7 @@ A BOOT não prepara `sp`, `gp`, `tp`, `.data` nem `.bss`, que são do `crt0` do 
 | :--- | :--- |
 | Em cada uma das plataformas, a BOOT monta, só tem `fence.i` com Zifencei e só exporta `rv32_wait_restart` com `RV32_TEST_WAIT`. Também monta no núcleo mínimo sem nenhuma instrução de CSR, no núcleo completo, no RV32E e na versão de aplicação | `tests/python/check_boot_contract.py` |
 | As imagens da BOOT real que os testes de simulação carregam estão em dia com os fontes | `tests/python/gen_de0_cv_boot_images.py --check` e `tests/python/gen_real_boot_images.py --check` |
+| O `boot_memory_init.mif` versionado de cada plataforma de placa (`de0-cv`, `doom`, `external-data` e `internal-mem`), que o `board generate` copia para o projeto do Quartus, é o que a `boot_memory.S` e o linker script atuais montam | `tests/python/gen_boot_memory_mifs.py --check`, rodado pelo `--check` do `gen_de0_cv_boot_images.py` |
 | A BOOT real inicia o programa no núcleo mínimo (`rv32i`), num núcleo com Zicsr e interrupções e no completo, e escolhe a banca certa em 13 casos | Os testes `TemplateRealBoot`, `ModularRealBoot`, `De0CvBootBanks` e `ExternalDataFlashUpdate` do `tests.json` |
 
 

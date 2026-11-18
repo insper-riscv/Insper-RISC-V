@@ -84,6 +84,12 @@ entity soc is
         icache_size_bits       : positive                      := 4096;
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
         dcache_size_bits       : positive                      := 4096;
+        -- Palavras da fila de escrita da cache de dados (0 não tem fila); exige a escrita direta, que o SoC sempre usa.
+        dcache_write_buffer    : natural                       := 0;
+        -- Tamanho em KiB da memória interna da cache de dados, uma potência de dois (0 não tem).
+        dcache_scratch_kib     : natural range 0 to 256        := 0;
+        -- Base em KiB da memória interna da cache de dados, um múltiplo do tamanho dela.
+        dcache_scratch_base_kib : natural                      := 0;
         -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
         -- MiB); I_CACHE_WINDOW_BITS e D_CACHE_WINDOW_BITS do pacote de mapa têm o mesmo valor.
         cache_window_bits      : natural range 26 to 29        := 26;
@@ -777,6 +783,8 @@ architecture behaviour of soc is
     signal sdram_rden    : std_logic;
     -- Habilitação de escrita do barramento externo ('1' = escreve).
     signal sdram_wren    : std_logic;
+    -- O acesso externo do núcleo cai numa memória do barramento (a FLASH ou a RAM), classificado e registrado pelo núcleo.
+    signal sdram_is_mem  : std_logic;
     -- Dado lido do barramento externo devolvido ao núcleo.
     signal sdram_rdata   : word_t := (others => '0');
     -- Resposta do barramento externo pronta ('1' = pronta).
@@ -1227,6 +1235,7 @@ begin
             o_ext_byteena      => sdram_byteena,
             o_ext_rden         => sdram_rden,
             o_ext_wren         => sdram_wren,
+            o_ext_is_mem       => sdram_is_mem,
             i_ext_rdata        => sdram_rdata,
             i_ext_ready        => sdram_ready,
             i_ext_error        => ext_error,
@@ -1264,7 +1273,8 @@ begin
                 flash_last        => FLASH_LAST,
                 ram_on_bus        => RAM_PORT,
                 ram_base          => RAM_FIRST,
-                ram_last          => RAM_LAST
+                ram_last          => RAM_LAST,
+                mem_flag          => true
             )
             port map (
                 i_clk         => i_clk_core,
@@ -1275,6 +1285,7 @@ begin
                 i_rden        => sdram_rden,
                 i_wren        => sdram_wren,
                 i_mem_advance => mem_advance,
+                i_is_mem      => sdram_is_mem,
                 o_ready       => sdram_ready,
                 o_error       => ext_error,
                 o_rdata       => sdram_rdata,
@@ -1362,7 +1373,6 @@ begin
                 member_count   => switches_width,
                 group_sizes    => gpio_group_sizes(switches_width),
                 group_members  => gpio_group_members(switches_width),
-                pin_dirs       => (others => '0'),
                 pin_active_low => gpio_pin_lows(switches_width, switches_active_low)
             )
             port map (
@@ -1389,7 +1399,6 @@ begin
                 member_count   => keys_width,
                 group_sizes    => gpio_group_sizes(keys_width),
                 group_members  => gpio_group_members(keys_width),
-                pin_dirs       => (others => '0'),
                 pin_active_low => gpio_pin_lows(keys_width, keys_active_low)
             )
             port map (
@@ -1599,6 +1608,9 @@ begin
                 size_bits     => dcache_size_bits,
                 window_bits   => cache_window_bits,
                 write_through => true,
+                write_buffer  => dcache_write_buffer,
+                scratch_kib   => dcache_scratch_kib,
+                scratch_base_kib => dcache_scratch_base_kib,
                 flash_base_kib  => BOOT_KIB,
                 flash_end_kib   => rom_end_kib
             )
