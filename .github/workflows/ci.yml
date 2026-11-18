@@ -109,7 +109,9 @@ jobs:
           submodules: recursive
 
       - name: Per-entity cocotb tests of each repository and the memory map check
-        run: make unit-tests
+        run: |
+          /opt/riscv-tools/riscv-tools/bin/python -m unittest benchmarks.embench.test_platform -v
+          make unit-tests
 
       - name: Record the pass of these inputs
         # Only reached when every step above passed: a later run with the same key skips this gate.
