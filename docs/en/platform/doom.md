@@ -14,6 +14,7 @@ The project comes from `riscv-tools new-project doom --board de0-cv --profile rv
 | FLASH, bank A | `0x00001000` | 4 KiB | Fetch and read through the caches, read-only |
 | FLASH, bank B | `0x00002000` | 4 KiB | Fetch and read through the caches, read-only |
 | SDRAM (`RAM`, `exec: true`) | `0x40000000` | 64 MB | Fetch, read and write through the caches |
+| Internal memory of the data cache | `0x43FE8000` | 32 KiB | Read and write in two cycles, inside the SDRAM range, without going through the SDRAM |
 | Peripherals | `0x80000000` | 256 MB windows | Read and write, no cache |
 
 The top 4 KiB of the SDRAM (`0x43FFF000` to `0x43FFFFFF`), which the data cache ignores, hold the words shared with the host.
@@ -94,12 +95,12 @@ The `doomgeneric` port asks for the time in milliseconds through `DG_GetTicksMs`
 | Item | Value |
 | :--- | :--- |
 | Source of `time` | `mtime` of the CLINT, mirrored by the core |
-| Core cycles per tick | 77 (`CLINT_TICK_CYCLES`) |
-| Core clock | 76.923077 MHz |
-| Real ticks per second | $76.923077 \cdot 10^{6} / 77 \approx 999{,}001$ |
+| Core cycles per tick | 100 (`CLINT_TICK_CYCLES`) |
+| Core clock | 100 MHz |
+| Real ticks per second | $100 \cdot 10^{6} / 100 = 1{,}000{,}000$ |
 | Nominal ticks per second (`mtime_hz`) | 1,000,000 |
 
-The clock converts with the nominal value, so it runs 0.1 % slower than real time, a difference the game, at 35 tics per second, does not notice.
+The clock converts with the nominal value, which matches the real rate of the counter.
 
 The conversion avoids the `div` instruction (CPI of about 11) and 64-bit division. On each read, the clock adds to the total the advance of the low 32 bits of `time`, computed by unsigned subtraction (correct even when the counter goes from $2^{32}$ to 0), and divides by 1000 with a multiplication:
 
@@ -180,6 +181,19 @@ The programs `tests/c/doom_video/src.c` and `tests/c/doom_keyboard/src.c` are li
 | `doom_keyboard` | Enables the keyboard interrupt and waits for an arrow pressed and released, printing the bytes in hexadecimal | 1 transmitter, 2 state error, 3 timeout (30 s), 4 no line in the PLIC, 5 bytes that are not an arrow |
 
 In Spike both return zero without touching the devices. On the board, `doom_video` leaves the bars on the monitor after it ends, and `doom_keyboard` needs a person to press and release an arrow.
+
+## 9. Caches, write queue and internal memory
+
+The `platform.yaml` sizes the three parts that cut the memory time of the game, and none is fixed in the code.
+
+| Part | Key | Value | Effect |
+| :--- | :--- | :--- | :--- |
+| Instruction cache | `memory.instructions[].cache.size_bits` | 262144 (32 KiB) | The rendering loop and the hot code fit in the cache |
+| Data cache | `memory.data[].cache.size_bits` | 32768 (4 KiB) | No change |
+| Write queue | `memory.data[].cache.write_buffer` | 4 words | A store completes without waiting for the SDRAM; a read leaves only with the queue empty, so program order holds |
+| Internal memory | `memory.data[].cache.scratch_kib` and `scratch_base` | 32 KiB at `0x43FE8000` | The data cache serves the window in two cycles, without the SDRAM |
+
+The internal memory sits inside the SDRAM range and holds only what the program writes after the reset, because the host loads the SDRAM behind the cache. DOOM puts the stack and the bss of the drawing loop in it (`SCRATCH=1` in the build of the DOOM repository), and the RAM of the linker ends where it starts (`0x43FE8000`).
 
 ## 9. What the platform does not have
 
