@@ -57,7 +57,10 @@ entity ext_interconnect is
         -- Primeiro endereço da RAM.
         ram_base          : addr_t                     := std_logic_vector(resize(unsigned'(x"40000000"), ADDR_BITS));
         -- Último endereço da RAM, inclusive.
-        ram_last          : addr_t                     := std_logic_vector(resize(unsigned'(x"43FFFFFF"), ADDR_BITS))
+        ram_last          : addr_t                     := std_logic_vector(resize(unsigned'(x"43FFFFFF"), ADDR_BITS));
+        -- Verdadeiro: a classificação do endereço como memória do barramento vem do pino i_is_mem, decidida pelo núcleo
+        -- em EX e registrada, e não da comparação do endereço com a FLASH e a RAM; vale o mesmo mapa.
+        mem_flag          : boolean                    := false
     );
     port (
         -- Clock do módulo.
@@ -77,6 +80,9 @@ entity ext_interconnect is
         i_wren        : in    std_logic;
         -- O pipeline avançou neste ciclo, o acesso em andamento pode ser concluído.
         i_mem_advance : in    std_logic;
+        -- O acesso cai numa memória do barramento (a FLASH ou a RAM no barramento), registrado pelo núcleo; só é lido com
+        -- mem_flag verdadeiro.
+        i_is_mem      : in    std_logic := '0';
         -- Acesso concluído, o dado lido é válido ('1').
         o_ready       : out   std_logic;
         -- Acesso concluído sem escravo que o atenda: falha de acesso, válida junto com o ready ('1').
@@ -140,6 +146,8 @@ architecture rtl of ext_interconnect is
     signal is_periph : std_logic;
     -- O endereço cai numa memória alcançada pelo barramento.
     signal is_mem    : std_logic;
+    -- O endereço cai numa memória do barramento, pela comparação com a FLASH e a RAM.
+    signal is_dec    : std_logic;
     -- Há um acesso em andamento.
     signal active    : std_logic;
     -- '1': o último load veio de um periférico (ou terminou em error).
@@ -211,8 +219,26 @@ begin
 
     active    <= i_rden or i_wren;
     is_periph <= '1' when any_hit = '1' and (not strict_periph or in_reg(idx) = '1') else '0';
-    is_mem    <= '1' when (flash_on_bus and in_range(i_addr, flash_base, flash_last)) or
-                          (ram_on_bus and in_range(i_addr, ram_base, ram_last)) else '0';
+    is_dec <= '1' when (flash_on_bus and in_range(i_addr, flash_base, flash_last)) or
+                         (ram_on_bus and in_range(i_addr, ram_base, ram_last)) else '0';
+    is_mem <= i_is_mem when mem_flag else is_dec;
+
+    -- Com a classificação vinda do núcleo, a simulação confere a cada acesso que ela é a da comparação do endereço.
+    gen_flag_check : if mem_flag generate
+    begin
+
+        p_flag_check : process (i_clk) is
+        begin
+
+            if rising_edge(i_clk) then
+                assert i_rst = '1' or active = '0' or i_is_mem = is_dec
+                    report "ext_interconnect: i_is_mem difere da classificação do endereço"
+                    severity failure;
+            end if;
+
+        end process p_flag_check;
+
+    end generate gen_flag_check;
 
     o_m_addr    <= i_addr;
     o_m_wdata   <= i_wdata;
