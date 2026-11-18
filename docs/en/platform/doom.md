@@ -94,12 +94,12 @@ The `doomgeneric` port asks for the time in milliseconds through `DG_GetTicksMs`
 | Item | Value |
 | :--- | :--- |
 | Source of `time` | `mtime` of the CLINT, mirrored by the core |
-| Core cycles per tick | 77 (`CLINT_TICK_CYCLES`) |
-| Core clock | 76.923077 MHz |
-| Real ticks per second | $76.923077 \cdot 10^{6} / 77 \approx 999{,}001$ |
+| Core cycles per tick | 100 (`CLINT_TICK_CYCLES`) |
+| Core clock | 100 MHz |
+| Real ticks per second | $100 \cdot 10^{6} / 100 = 1{,}000{,}000$ |
 | Nominal ticks per second (`mtime_hz`) | 1,000,000 |
 
-The clock converts with the nominal value, so it runs 0.1 % slower than real time, a difference the game, at 35 tics per second, does not notice.
+The clock converts with the nominal value, which matches the real rate of the counter.
 
 The conversion avoids the `div` instruction (CPI of about 11) and 64-bit division. On each read, the clock adds to the total the advance of the low 32 bits of `time`, computed by unsigned subtraction (correct even when the counter goes from $2^{32}$ to 0), and divides by 1000 with a multiplication:
 

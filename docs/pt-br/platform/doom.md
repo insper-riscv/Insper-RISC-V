@@ -94,12 +94,12 @@ A porta `doomgeneric` pede o tempo em milissegundos por `DG_GetTicksMs`, que o r
 | Item | Valor |
 | :--- | :--- |
 | Origem do `time` | `mtime` do CLINT, espelhado pelo núcleo |
-| Ciclos do núcleo por tick | 77 (`CLINT_TICK_CYCLES`) |
-| Clock do núcleo | 76,923077 MHz |
-| Ticks por segundo reais | $76{,}923077 \cdot 10^{6} / 77 \approx 999\,001$ |
+| Ciclos do núcleo por tick | 100 (`CLINT_TICK_CYCLES`) |
+| Clock do núcleo | 100 MHz |
+| Ticks por segundo reais | $100 \cdot 10^{6} / 100 = 1\,000\,000$ |
 | Ticks por segundo nominais (`mtime_hz`) | 1.000.000 |
 
-O relógio converte com o valor nominal, então anda 0,1 % mais devagar que o tempo real, diferença que o jogo, a 35 tics por segundo, não percebe.
+O relógio converte com o valor nominal, que coincide com a taxa real do contador.
 
 A conversão evita a instrução `div` (CPI de cerca de 11) e a divisão de 64 bits. A cada leitura, o relógio soma ao total o avanço dos 32 bits baixos do `time`, calculado por subtração sem sinal (certa mesmo quando o contador passa de $2^{32}$ para 0), e divide por 1000 por uma multiplicação:
 
