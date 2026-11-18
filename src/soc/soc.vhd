@@ -777,6 +777,8 @@ architecture behaviour of soc is
     signal sdram_rden    : std_logic;
     -- Habilitação de escrita do barramento externo ('1' = escreve).
     signal sdram_wren    : std_logic;
+    -- O acesso externo do núcleo cai numa memória do barramento (a FLASH ou a RAM), classificado e registrado pelo núcleo.
+    signal sdram_is_mem  : std_logic;
     -- Dado lido do barramento externo devolvido ao núcleo.
     signal sdram_rdata   : word_t := (others => '0');
     -- Resposta do barramento externo pronta ('1' = pronta).
@@ -1227,6 +1229,7 @@ begin
             o_ext_byteena      => sdram_byteena,
             o_ext_rden         => sdram_rden,
             o_ext_wren         => sdram_wren,
+            o_ext_is_mem       => sdram_is_mem,
             i_ext_rdata        => sdram_rdata,
             i_ext_ready        => sdram_ready,
             i_ext_error        => ext_error,
@@ -1264,7 +1267,8 @@ begin
                 flash_last        => FLASH_LAST,
                 ram_on_bus        => RAM_PORT,
                 ram_base          => RAM_FIRST,
-                ram_last          => RAM_LAST
+                ram_last          => RAM_LAST,
+                mem_flag          => true
             )
             port map (
                 i_clk         => i_clk_core,
@@ -1275,6 +1279,7 @@ begin
                 i_rden        => sdram_rden,
                 i_wren        => sdram_wren,
                 i_mem_advance => mem_advance,
+                i_is_mem      => sdram_is_mem,
                 o_ready       => sdram_ready,
                 o_error       => ext_error,
                 o_rdata       => sdram_rdata,
