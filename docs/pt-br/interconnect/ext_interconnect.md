@@ -2,7 +2,7 @@
 
 ## 1. O que é
 
-O núcleo conhece só a BOOT_MEMORY, a FLASH e a RAM. Todo acesso de dados fora delas, e todo acesso a uma região que a plataforma liga ao barramento, sai por uma porta externa com handshake de `ready` e de `error`. O interconector atrás dessa porta decide para onde o acesso vai: a memória do barramento, um periférico ou nenhum escravo. Ele decodifica a tabela de janelas da plataforma, e por isso mora neste repositório (`src/interconnect/`) e não no Memory nem no Peripherals, que ele liga sem que um dependa do outro.
+O núcleo conhece só a BOOT_MEMORY, a FLASH e a RAM. Todo acesso de dados fora delas, e todo acesso a uma região que a plataforma liga ao barramento, sai por uma porta externa com handshake de `ready` e de `error`. O interconector atrás dessa porta decide para onde o acesso vai: a memória do barramento, um periférico ou nenhum escravo. Ele decodifica a tabela de janelas da plataforma, e por isso mora neste repositório (`base/src/interconnect/`) e não no Memory nem no Peripherals, que ele liga sem que um dependa do outro.
 
 | Bloco | Papel |
 | :--- | :--- |
