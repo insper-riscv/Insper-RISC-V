@@ -326,7 +326,7 @@ Um parâmetro de simulação que nomeia um genérico que o topo não declara fal
 
 ### 6.4. Janela de cada periférico
 
-O barramento externo do núcleo entrega ao topo o endereço, o dado de escrita e os enables de leitura e escrita. A UART responde quando os quatro bits mais altos do endereço são os de `UART_BASE`, que vem do pacote, e o dado lido volta ao núcleo no ciclo seguinte ao pedido. Para um periférico novo, repita o padrão: um seletor pelo endereço, os enables filtrados pelo seletor, o dado de leitura registrado. Para vários periféricos numa plataforma de placa, use a interconexão `ext_interconnect` do `src/interconnect/`, que separa a SDRAM da janela de periféricos e entrega o deslocamento de palavra a cada um (`de0-cv_top.vhd` mostra o uso).
+O barramento externo do núcleo entrega ao topo o endereço, o dado de escrita e os enables de leitura e escrita. A UART responde quando os quatro bits mais altos do endereço são os de `UART_BASE`, que vem do pacote, e o dado lido volta ao núcleo no ciclo seguinte ao pedido. Para um periférico novo, repita o padrão: um seletor pelo endereço, os enables filtrados pelo seletor, o dado de leitura registrado. Para vários periféricos numa plataforma de placa, use a interconexão `ext_interconnect` do `base/src/interconnect/`, que separa a SDRAM da janela de periféricos e entrega o deslocamento de palavra a cada um (`de0-cv_top.vhd` mostra o uso).
 
 ### 6.5. Interrupções
 

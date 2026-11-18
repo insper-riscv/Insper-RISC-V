@@ -146,13 +146,13 @@ EOS
 netlist() {
   local work="$out/work_$2"; mkdir -p "$work"
   ghdl_run -a --std=08 --workdir="$work" "$root/Common-Components/src/utils_pkg.vhd" "$root/Common-Components/src/config_pkg.vhd" \
-    "$root/src/interconnect/interconnect_pkg.vhd" "$1"
+    "$root/base/src/interconnect/interconnect_pkg.vhd" "$1"
   ghdl_run --synth --std=08 --workdir="$work" --out=verilog ext_interconnect > "$2.v"
   expose "$2.v" st sel_wb p_rdata_q:31 pending:31 err_q
   grep -q dbg_st "$2.v" || { echo "the netlist has no register named st: the exposure did not apply"; exit 1; }
 }
 
-ic="$root/src/interconnect/ext_interconnect.vhd"; props="$root/formal/ext_interconnect_props.sv"
+ic="$root/base/src/interconnect/ext_interconnect.vhd"; props="$root/formal/ext_interconnect_props.sv"
 
 echo "ext_interconnect"
 netlist "$ic" ext

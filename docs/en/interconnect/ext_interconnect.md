@@ -2,7 +2,7 @@
 
 ## 1. What it is
 
-The core knows only the BOOT_MEMORY, the FLASH and the RAM. Every data access outside them, and every access to a region that the platform puts on the bus, leaves through one external port with a `ready` and an `error` handshake. The interconnect behind that port decides where the access goes: to the bus memory, to a peripheral or to no slave. It decodes the window table of the platform, which is why it lives in this repository (`src/interconnect/`) and not in Memory or Peripherals, which it connects without either depending on the other.
+The core knows only the BOOT_MEMORY, the FLASH and the RAM. Every data access outside them, and every access to a region that the platform puts on the bus, leaves through one external port with a `ready` and an `error` handshake. The interconnect behind that port decides where the access goes: to the bus memory, to a peripheral or to no slave. It decodes the window table of the platform, which is why it lives in this repository (`base/src/interconnect/`) and not in Memory or Peripherals, which it connects without either depending on the other.
 
 | Block | Role |
 | :--- | :--- |

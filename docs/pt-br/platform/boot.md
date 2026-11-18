@@ -1,13 +1,13 @@
 # O estado de boot de referência deste RISC-V bare-metal
 
-O boot neste core passa por dois lados: a BOOT_MEMORY (`src/boot/boot_core.S`, incluído pelo `boot_memory.S` de cada plataforma), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [runtime.md](runtime.md) pra de onde vêm e como usar. Ver [atualizacao-de-programa.md](atualizacao-de-programa.md) pro como o controle passa de um lado pro outro a cada troca de teste.
+O boot neste core passa por dois lados: a BOOT_MEMORY (`base/src/boot/boot_core.S`, incluído pelo `boot_memory.S` de cada plataforma), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [runtime.md](runtime.md) pra de onde vêm e como usar. Ver [atualizacao-de-programa.md](atualizacao-de-programa.md) pro como o controle passa de um lado pro outro a cada troca de teste.
 
 Este documento descreve, registrador por registrador e seção por seção, exatamente que estado existe no instante em que `main()` é chamado, e, tão importante quanto, o que **não** é feito. O estado segue a ABI oficial do RISC-V
 ([riscv-elf-psabi-doc](https://github.com/riscv-non-isa/riscv-elf-psabi-doc)).
 
 ## 1. A BOOT_MEMORY comum
 
-Toda plataforma monta a mesma BOOT, o `boot_core.S` comum (`src/boot/boot_core.S`). O `boot_memory.S` de cada plataforma é só um invólucro que inclui os cabeçalhos que `riscv-tools generate-memory-map` escreve do `platform.yaml` e, por último, o `boot_core.S`.
+Toda plataforma monta a mesma BOOT, o `boot_core.S` comum (`base/src/boot/boot_core.S`). O `boot_memory.S` de cada plataforma é só um invólucro que inclui os cabeçalhos que `riscv-tools generate-memory-map` escreve do `platform.yaml` e, por último, o `boot_core.S`.
 
 | Peça | Papel |
 | :--- | :--- |

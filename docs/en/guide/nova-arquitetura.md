@@ -326,7 +326,7 @@ A simulation parameter that names a generic the top does not declare fails at el
 
 ### 6.4. Window of each peripheral
 
-The external bus of the core delivers to the top the address, the write data and the read and write enables. The UART answers when the four highest address bits are those of `UART_BASE`, which comes from the package, and the read data returns to the core in the cycle after the request. For a new peripheral, repeat the pattern: a selector by address, the enables filtered by the selector, the read data registered. For several peripherals on a board platform, use the `ext_interconnect` interconnect of `src/interconnect/`, which separates the SDRAM from the peripheral window and hands the word offset to each one (`de0-cv_top.vhd` shows the usage).
+The external bus of the core delivers to the top the address, the write data and the read and write enables. The UART answers when the four highest address bits are those of `UART_BASE`, which comes from the package, and the read data returns to the core in the cycle after the request. For a new peripheral, repeat the pattern: a selector by address, the enables filtered by the selector, the read data registered. For several peripherals on a board platform, use the `ext_interconnect` interconnect of `base/src/interconnect/`, which separates the SDRAM from the peripheral window and hands the word offset to each one (`de0-cv_top.vhd` shows the usage).
 
 ### 6.5. Interrupts
 
