@@ -63,7 +63,7 @@ package config_pkg is
     -- Acesso desalinhado à memória principal atendido em hardware (Zicclsm).
     constant HAS_ZICCLSM  : boolean := true;
     -- Extensão Zifencei (fence.i) presente.
-    constant HAS_ZIFENCEI : boolean := false;
+    constant HAS_ZIFENCEI : boolean := true;
 
     -- Extensões do conjunto de instruções I
 

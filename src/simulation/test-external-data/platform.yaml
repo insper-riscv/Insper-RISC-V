@@ -11,6 +11,7 @@ core:
   extensions:
     - M
     - Zicclsm
+    - Zifencei
     - Zimop
     - Zicond
 profiles: ../../../Core/profiles/matrix.yaml
