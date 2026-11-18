@@ -149,11 +149,11 @@ package doom_map_pkg is
 	);
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
-	constant CLOCK_HZ          : positive := 77000000;
+	constant CLOCK_HZ          : positive := 100000000;
 	-- Frequência com que o mtime do CLINT conta, em Hz; é independente do CSR time.
 	constant MTIME_HZ          : positive := 1000000;
 	-- Ciclos de clock por incremento do mtime (tick_cycles do CLINT).
-	constant CLINT_TICK_CYCLES : positive := 77;
+	constant CLINT_TICK_CYCLES : positive := 100;
 
 	-- Número de fontes do PLIC (o maior identificador de fonte).
 	constant PLIC_N_SOURCES     : positive := 6;

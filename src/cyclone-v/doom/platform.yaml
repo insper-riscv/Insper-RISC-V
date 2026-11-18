@@ -61,6 +61,7 @@ memory:
       base: 0x40000000
       size: 64M
       on_bus: true
+      fetch: true
       cache:
         size_bits: 32768
 
@@ -124,11 +125,11 @@ peripherals:
     base: 0x80007000
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
-# (76.923077 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (77 cycles per tick) and is
+# (100 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (100 cycles per tick) and is
 # mirrored by the CSR time of Zicntr, which the core serves (o_mtime of the CLINT into i_mtime of the core).
 interrupts:
-  # `clock_hz` is left out: it is `clocks.core` (76.923077 MHz) rounded to a whole number of cycles per tick, 77 MHz, so the
-  # mtime counts 0.1 % slower than mtime_hz.
+  # `clock_hz` is left out: it is `clocks.core` (100 MHz) taken as is, a whole number of cycles per tick (100), so the
+  # mtime counts exactly at mtime_hz.
   mtime_hz: 1000000
   # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
   # FLASH controller (board and simulation).
@@ -139,23 +140,20 @@ interrupts:
 
 # The clocks of the PLL, the single source of the generated PLL (`riscv-tools board generate`) and of the periods the
 # generated files convert with. `mem` is the clock of the SDRAM controller (the DRAM_CLK pin has the same frequency, its
-# phase comes from the board), at 100 MHz against the core, a 1.3 to 1 ratio, so its pin paths have 10 ns instead of 7 ns.
-# `core` and `fetch` run at 76.923077 MHz (1000 MHz / 13): the highest frequency whose five seeds close the setup at 85 C and
-# the hold at 0 C in every domain (docs/pt-br/platform/timing/FRENTE-F-ONDA2.md); `interrupts.clock_hz` rounds it to a
-# whole number of cycles per tick. The phase of the core (7500 ps) against the fetch clock was measured by the Quartus timing
-# of the 5 seeds: it splits the 20 ns of the loop through the instruction cache between its two crossings
-# (docs/pt-br/platform/timing/MARCOS.md).
+# phase comes from the board), at 100 MHz as the core and the fetch, so its pin paths have the same 10 ns as the loop of the core.
+# `core` and `fetch` run at 100 MHz (1000 MHz / 10), the target of the platform: the five seeds of the Quartus timing close the
+# setup at 85 C and at 0 C and the hold in every domain. The phase of the core (3125 ps) against the fetch clock splits the
+# 10 ns of the loop through the instruction cache between its two crossings; `interrupts.clock_hz` is `clocks.core`.
 clocks:
-  core:  {mhz: 76.923077, phase_ps: 7500}
-  fetch: {mhz: 76.923077, phase_ps: 0}
+  core:  {mhz: 100, phase_ps: 3125}
+  fetch: {mhz: 100, phase_ps: 0}
   mem:   {mhz: 100}
 
 # The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
 console: jtag
+# The switches and the keys are not declared: a role of the SoC needs its window in `peripherals`, and this platform has none.
 io:
   leds:     {count: 10, need: required}
-  switches: {count: 10, need: optional}
-  keys:     {count: 4,  need: optional}
   display:  {count: 6,  need: optional}
   # The DOOM renders 320x200 with an 8-bit index and a palette of 256 colors (3 x channel_bits each, 12 bits on the
   # DE0-CV); the default mode of the board (640x480 at 60 Hz) shows it doubled in x and in y, centered, with black bands.

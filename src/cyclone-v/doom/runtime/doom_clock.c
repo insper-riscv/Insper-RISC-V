@@ -1,9 +1,8 @@
 /* doom_clock.c -- DG_GetTicksMs pelo CSR `time` do Zicntr.
  *
- * O `time` da plataforma doom é o mtime do CLINT, que soma 1 a cada 77 ciclos do núcleo (76,923077 MHz), ou seja,
- * 999.001 ticks por segundo. O platform.yaml nomeia 1 MHz (`interrupts.mtime_hz`, RV32_MTIME_HZ em memory_map.h), e é
- * esse o valor que a conversão usa: um tick vale 1 microssegundo e o relógio anda 0,1 % mais devagar que o tempo real,
- * o que o jogo (35 tics por segundo) não percebe.
+ * O `time` da plataforma doom é o mtime do CLINT, que soma 1 a cada 100 ciclos do núcleo (100 MHz), ou seja,
+ * 1.000.000 ticks por segundo. O platform.yaml nomeia 1 MHz (`interrupts.mtime_hz`, RV32_MTIME_HZ em memory_map.h), e é
+ * esse o valor que a conversão usa: um tick vale 1 microssegundo e o relógio anda no ritmo do tempo real.
  *
  * A conversão em milissegundos divide por 1000 sem a instrução `div` (CPI de cerca de 11 neste núcleo): uma multiplicação
  * pelo inverso, que a `mulhu` faz em um passo. O relógio soma o avanço do contador a cada leitura, em 32 bits, em vez de
