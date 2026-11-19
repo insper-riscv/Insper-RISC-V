@@ -6,8 +6,30 @@ import json
 import subprocess
 import tempfile
 from pathlib import Path
+from typing import TextIO
 
 ROOT = Path(__file__).resolve().parent
+
+
+def activate(staging: Path, target: Path, output: TextIO) -> None:
+    """Keep the old checkout until its replacement is ready, then preserve it."""
+    previous = None
+    if target.exists() or target.is_symlink():
+        backup = Path(tempfile.mkdtemp(prefix=".tools-backup-", dir=ROOT))
+        previous = backup / "tools"
+        target.rename(previous)
+        print(
+            f"Previous Tools preserved at {previous}", file=output, flush=True
+        )
+    try:
+        staging.rename(target)
+    except OSError:
+        if previous is not None:
+            previous.rename(target)
+            print(
+                "Restored previous Tools after activation failure", file=output
+            )
+        raise
 
 
 def main() -> None:
@@ -22,12 +44,12 @@ def main() -> None:
     with (ROOT / ".tools-prepare.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         marker = target / ".rv32-sdk.json"
-        if marker.exists() and json.loads(marker.read_text()) == expected:
-            return
-        if target.exists():
-            raise SystemExit(
-                "SDK Tools dependency changed. Move .sdk/tools aside and rerun; it will not be overwritten."
-            )
+        try:
+            if json.loads(marker.read_text()) == expected:
+                return
+        except OSError, ValueError:
+            # An incomplete/old cache is replaced only after a successful build.
+            pass
         log = ROOT / ".tools-bootstrap.log"
         try:
             with (
@@ -66,8 +88,10 @@ def main() -> None:
                 (staging / ".rv32-sdk.json").write_text(
                     json.dumps(expected, sort_keys=True) + "\n"
                 )
-                staging.rename(target)
+                activate(staging, target, output)
         except (subprocess.SubprocessError, OSError) as error:
+            with log.open("a") as output:
+                print(f"Tools preparation failed: {error}", file=output)
             raise SystemExit(f"SDK Tools setup failed; see {log}") from error
 
 

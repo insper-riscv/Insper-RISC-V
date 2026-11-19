@@ -5,6 +5,18 @@ Live 0.10.0 extension. Clone recursively, or run
 `git submodule update --init --recursive` before installing/registering the SDK.
 No upstream main platform RTL is rewritten by driver generation.
 
+Existing SDK installations update the managed Tools dependency automatically.
+The replacement is fetched and patched before the old directory is moved to
+`.sdk/.tools-backup-*/tools`. Local edits and untracked files remain in that
+backup. A fetch/patch failure leaves the current checkout untouched; an
+activation failure restores it. Details are kept in `.sdk/.tools-bootstrap.log`
+without adding setup messages to program output.
+
+After pulling SDK changes, align processor dependencies with
+`git submodule update --init --recursive` from the SDK root. The SDK requires
+the recorded revisions, including the Core boot fragments; independently
+updating each submodule to its main branch can produce incompatible layouts.
+
 Create a C or Rust project using the extension and select a platform, or use:
 
 ```sh

@@ -33,6 +33,11 @@ class SourceCheckTest(unittest.TestCase):
                 path.touch()
             for name in (
                 "Core/src/common/src/config_pkg.vhd",
+                "Core/src/Zicsr/boot.inc",
+                "Core/src/Zicntr/boot.inc",
+                "Core/src/Zihpm/boot.inc",
+                "Core/src/Sscofpmf/boot.inc",
+                "Core/src/Zifencei/boot.inc",
                 "Peripherals/src/GPIO/soc/driver/c/driver.yaml",
                 "Peripherals/src/GPIO/soc/driver/c/examples/main.c.in",
             ):
