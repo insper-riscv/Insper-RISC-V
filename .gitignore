@@ -54,3 +54,5 @@ src/*/*/quartus/*.smsg
 .sdk/.views.lock
 
 .sdk/.modular-*/
+
+.sdk/.board-views.lock
