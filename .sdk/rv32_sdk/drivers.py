@@ -14,7 +14,12 @@ from riscv_tools.memory_map.interrupts import sources_of
 from riscv_tools.memory_map.problems import platform_problems
 from riscv_tools.memory_map.profile import resolve
 
-from rv32_sdk import cpu_profiles, driver_examples, rust_support
+from rv32_sdk import (
+    cpu_profiles,
+    driver_examples,
+    driver_metadata,
+    rust_support,
+)
 
 IDENTIFIER = re.compile(r"[A-Z][A-Z0-9_]*")
 
@@ -62,6 +67,23 @@ def descriptors(sdk: Path) -> list[tuple[Path, dict[str, Any]]]:
             raise SystemExit(f"Driver descriptor needs instance names: {path}")
         for alias in aliases:
             safe_name(alias)
+        for key in ("kinds", "devices"):
+            values = spec.get(key, [])
+            if not isinstance(values, list) or any(
+                not isinstance(value, str)
+                or not re.fullmatch(r"[a-z][a-z0-9_]*", value)
+                for value in values
+            ):
+                raise SystemExit(f"Invalid driver {key}: {path}")
+        if not isinstance(spec.get("instance_api", False), bool):
+            raise SystemExit(f"Invalid instance API flag: {path}")
+        fields = spec.get("platform_fields", {})
+        if not isinstance(fields, dict):
+            raise SystemExit(f"Invalid platform fields: {path}")
+        for key, value in fields.items():
+            safe_name(key)
+            if type(value) is not int or not 0 <= value <= 0xFFFFFFFF:
+                raise SystemExit(f"Invalid platform field {key}: {path}")
         requirements = spec.get("requires_cpu_flags", [])
         if not isinstance(requirements, list):
             raise SystemExit(f"Invalid CPU requirements: {path}")
@@ -209,7 +231,9 @@ def plan(
             for flag in spec.get("requires_cpu_flags", [])
         ):
             continue
-        instances = [p for p in peripherals if p["name"] in spec["instances"]]
+        instances = [
+            p for p in peripherals if driver_metadata.matches(spec, p)
+        ]
         if not instances:
             continue
         definitions = ['#include "../rv32_platform.h"']
@@ -264,11 +288,43 @@ def plan(
                         f"#define RV32_GPIO_{alias}_PIN_COUNT {width}",
                     ]
                 )
+            groups = []
+            for item in instances:
+                widths = [len(group) for group in item.get("groups", [])]
+                if not widths:
+                    widths = [
+                        int(
+                            driver_examples.context(
+                                sdk, platform_file, platform, name, item
+                            )["PIN_COUNT"]
+                        )
+                    ]
+                for group, width in enumerate(widths):
+                    if not 1 <= width <= 32:
+                        raise SystemExit("GPIO group width must be 1..32")
+                    groups.append((item["name"], group, width))
+            bases = ", ".join(
+                f"((uintptr_t)RV32_PERIPH_{alias}_BASE + {group * 64}u)"
+                for alias, group, _ in groups
+            )
+            widths = ", ".join(str(width) for _, _, width in groups)
+            gpio_definitions.extend(
+                [
+                    f"#define RV32_GPIO_GROUP_COUNT {len(groups)}",
+                    f"#define RV32_GPIO_GROUP_BASES {{{bases}}}",
+                    f"#define RV32_GPIO_GROUP_WIDTHS {{{widths}}}",
+                ]
+            )
             files["GPIO/rv32_gpio_platform.h"] = header(
                 ['#include "../rv32_platform.h"', *gpio_definitions],
                 "RV32_GPIO_PLATFORM_H",
             )
-        if name != "GPIO":
+        if spec.get("instance_api"):
+            files[f"{name}/rv32_{name.lower()}_platform.h"] = header(
+                driver_metadata.platform_definitions(sdk, spec, instances),
+                f"RV32_{name}_PLATFORM_H",
+            )
+        elif name != "GPIO":
             fields = {
                 "TIMER": {},
                 "CLINT": {},
@@ -323,7 +379,7 @@ def plan(
             rust_support.vendor_driver(files, descriptor, name)
         if examples_enabled and "example" in spec:
             rendered = (
-                rust_support.example_files(sdk, project, name)
+                rust_support.example_files(sdk, project, name, descriptor)
                 if project.get("language") == "rust"
                 else driver_examples.project_files(
                     sdk,

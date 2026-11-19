@@ -34,7 +34,14 @@ from riscv_tools.memory_map.expressions import evaluate
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
-from rv32_sdk import cpu_profiles, drivers, sof_cache, source_check, views
+from rv32_sdk import (
+    cpu_profiles,
+    drivers,
+    platforms,
+    sof_cache,
+    source_check,
+    views,
+)
 
 RUST_TARGET = "riscv32im-unknown-none-elf"
 HARDWARE_TOOLS = ["quartus_sh", "quartus_pgm", "quartus_stp", "jtagconfig"]
@@ -92,6 +99,8 @@ def rust_target(project: dict[str, Any]) -> str:
 
 def platform_dir(project: dict[str, Any]) -> Path:
     selected = project.get("platform", "internal-mem")
+    if selected in platforms.board_choices(SDK):
+        return platforms.ensure_board(SDK, selected)
     if selected == "internal-mem":
         views.ensure_internal_mem(SDK)
     elif selected == "modular":
@@ -103,7 +112,7 @@ def platform_dir(project: dict[str, Any]) -> Path:
     }
     if selected not in choices:
         raise SystemExit(
-            "project.platform must be internal-mem, modular or de0-cv"
+            "Unknown project.platform; use internal-mem, modular, de0-cv or a periph-<board> platform"
         )
     return choices[selected]
 
@@ -448,15 +457,8 @@ def cargo_elf(root: Path, project: dict[str, Any], config: Path) -> Path:
     env = dict(os.environ)
     env.update(compile_runtime(root, config))
     if project.get("generate_drivers", False):
-        for name in (
-            "GPIO",
-            "TIMER",
-            "CLINT",
-            "PLIC",
-            "UART",
-            "DISPLAY",
-            "FLASH",
-        ):
+        for _, spec in drivers.descriptors(SDK):
+            name = spec["name"]
             key = f"RV32_{name}_CONFIG_DIR"
             env.pop(key, None)
             directory = root / "vendor" / name
@@ -679,7 +681,10 @@ def doctor(
     print(f"Project: {root}")
     print(f"Language: {project['language']}")
     print(
-        "Simulation:", "available" if shutil.which("ghdl") else "unavailable"
+        "Simulation:",
+        "unavailable (physical peripheral platform)"
+        if project.get("platform") in platforms.board_choices(SDK)
+        else ("available" if shutil.which("ghdl") else "unavailable"),
     )
     missing_hardware = [
         tool_name
@@ -710,6 +715,11 @@ def setup(root: Path, project: dict[str, Any]) -> None:
 
 
 def simulate(root: Path, project: dict[str, Any]) -> None:
+    if project.get("platform") in platforms.board_choices(SDK):
+        raise SystemExit(
+            "This physical peripheral platform has no complete SoC/device simulation model. "
+            "Use its C/Rust driver tests or a simulation-capable platform; FPGA actions use the real board map."
+        )
     doctor(root, project)
     require_commands(["ghdl"])
     output = generated_paths(root)["state"] / "sim-stdout.bin"
@@ -747,6 +757,7 @@ def fpga(root: Path, project: dict[str, Any], mode: str) -> None:
 
 
 def fpga_locked(root: Path, project: dict[str, Any], mode: str) -> None:
+    platforms.prepare_hardware(SDK, project)
     doctor(root, project, require_hardware=True)
     build(root, project, "mif")
     config = generated_paths(root)["config"]

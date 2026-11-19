@@ -61,7 +61,7 @@ if available; then
 fi
 cat >&2 <<'MESSAGE'
 Rust peripheral bindings need Clang and libclang in the build environment.
-Rebuild the Dev Container using the matching SDK 0.9.1 infrastructure.
+Rebuild the Dev Container using the matching SDK 0.10.0 infrastructure.
 For a native host, install Clang/libclang or set CLANG_PATH and LIBCLANG_PATH.
 MESSAGE
 exit 1

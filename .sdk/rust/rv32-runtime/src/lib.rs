@@ -2,7 +2,8 @@
 //! Allocation and printing are for foreground code: libc/stdout are not IRQ locks.
 #![no_std]
 
-extern crate alloc;
+/// Standard allocation APIs, also available as `alloc` through the prelude.
+pub extern crate alloc;
 
 pub mod allocator;
 
@@ -17,10 +18,32 @@ unsafe extern "C" {
 #[global_allocator]
 static ALLOCATOR: allocator::LibcAllocator = allocator::LibcAllocator::new();
 
-/// Common owned containers and output macros.
+/// Common allocation APIs, conversion traits and formatting helpers.
+///
+/// ```
+/// use rv32_runtime::prelude::*;
+///
+/// let current_val: usize = 42;
+/// let text = current_val.to_string();
+/// assert_eq!(text, "42");
+///
+/// let mut owned = "value=".to_owned();
+/// write!(&mut owned, "{}", current_val).unwrap();
+/// assert_eq!(owned, "value=42");
+/// ```
 pub mod prelude {
-    pub use crate::{print, println};
-    pub use alloc::{boxed::Box, format, string::String, vec, vec::Vec};
+    pub use crate::{alloc, print, println};
+    pub use alloc::{
+        borrow::{Cow, ToOwned},
+        boxed::Box,
+        collections::{BTreeMap, BTreeSet, VecDeque},
+        format,
+        rc::Rc,
+        string::{String, ToString},
+        vec,
+        vec::Vec,
+    };
+    pub use core::{fmt::Write as FmtWrite, write, writeln};
 }
 
 struct Console;

@@ -182,7 +182,7 @@ wheels = [
 
 [[package]]
 name = "riscv-tools"
-version = "1.38.0"
+version = "1.40.0"
 source = { editable = "tools" }
 dependencies = [
     { name = "cocotb" },
@@ -237,7 +237,7 @@ wheels = [
 
 [[package]]
 name = "rv32-sdk"
-version = "0.9.1"
+version = "0.10.0"
 source = { editable = "." }
 dependencies = [
     { name = "cocotb" },
