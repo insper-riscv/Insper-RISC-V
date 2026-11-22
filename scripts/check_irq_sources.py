@@ -17,7 +17,7 @@ from typing import Any, cast
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
-TOP = ROOT / "src/soc/soc.vhd"
+TOP = ROOT / "base/src/soc/soc.vhd"
 PLATFORMS = [
     ROOT / "src/simulation/modular/platform.yaml",
     ROOT / "src/cyclone-v/de0-cv/platform.yaml",

@@ -4,7 +4,7 @@
 
 ## 1. O que é
 
-A entidade `soc` (`src/soc/soc.vhd`) é o sistema em chip independente de placa. Ela contém o núcleo, as caches, as pontes e os roteadores de memória, a interconexão, o CLINT, o PLIC e os periféricos de E/S, e liga tudo por contratos de interface. Não tem pino de placa, nome de família nem modelo de chip. Quem a instancia fornece os dois relógios, o reset e os backends das regiões de memória.
+A entidade `soc` (`base/src/soc/soc.vhd`) é o sistema em chip independente de placa. Ela contém o núcleo, as caches, as pontes e os roteadores de memória, a interconexão, o CLINT, o PLIC e os periféricos de E/S, e liga tudo por contratos de interface. Não tem pino de placa, nome de família nem modelo de chip. Quem a instancia fornece os dois relógios, o reset e os backends das regiões de memória.
 
 O topo de simulação `modular_sim_top` a instancia e acrescenta o gerador de relógio de três fases e os modelos de chip. Um topo de placa instancia o mesmo `soc` e acrescenta o PLL, o anel de pinos e os controladores dos chips reais. Toda a lógica do SoC existe uma só vez, e a escolha entre simulação e placa fica fora dele.
 

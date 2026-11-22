@@ -122,7 +122,7 @@ def build(platform: Path, header: str, ld_text: str, base: str) -> Built:
         tree = Path(directory)
         runtime = tree / relative / "runtime"
         shutil.copytree(platform / "runtime", runtime)
-        shutil.copytree(ROOT / "src/boot", tree / "src/boot")
+        shutil.copytree(ROOT / "base/src/boot", tree / "base/src/boot")
         for name in FRAGMENTS:
             shutil.copytree(ROOT / "Core/src" / name, tree / "Core/src" / name)
         (runtime / "boot_config.h").write_text(header)
