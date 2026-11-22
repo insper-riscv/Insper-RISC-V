@@ -40,7 +40,9 @@ profiles: ../../../Core/profiles/matrix.yaml
 # The memory model: the BOOT_MEMORY inside the core, a minimal 8 KiB FLASH (right after the BOOT_MEMORY) emulated in the
 # M10K blocks with the latency of a serial chip (24 cycles for the first word of a burst, 4 for each following) that holds
 # only the loader of the SDRAM, and the SDRAM of the board (the RAM), both outside the core behind the instruction and the
-# data caches (32768 bits, 4 KiB, the size of the cache entities). The DOOM image (code, constants and data, about 400 KiB)
+# data caches: the instruction cache has 262144 bits (32 KiB) and the data cache 32768 bits (4 KiB), with a write buffer of
+# four words and an internal memory of 32 KiB (`scratch_kib` at `scratch_base`, inside the RAM) that the data cache serves
+# in the time of a hit and that never reaches the SDRAM. The DOOM image (code, constants and data, about 400 KiB)
 # does not fit the FLASH, so the host loads it at the base of the RAM through the debug port and the loader of the FLASH
 # jumps to it.
 memory:
@@ -55,7 +57,7 @@ memory:
       latency: {first: 24, next: 4}
       sector_bytes: 4096
       cache:
-        size_bits: 32768
+        size_bits: 262144
   data:
     - type: sdram
       base: 0x40000000
@@ -64,6 +66,9 @@ memory:
       fetch: true
       cache:
         size_bits: 32768
+        write_buffer: 4
+        scratch_kib: 32
+        scratch_base: 0x43FE8000
 
 # Words at the top of RAM: the contract between the boot memory, the program and
 # the host (platform/boot_memory.S clears them at every reset). `launch` is the doorbell of the loader of the FLASH

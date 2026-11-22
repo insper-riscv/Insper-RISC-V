@@ -76,7 +76,7 @@ package doom_map_pkg is
 	-- Existe cache de dados.
 	constant HAS_DCACHE          : boolean  := true;
 	-- Tamanho da cache de instruções, em bits (256 se não existe).
-	constant ICACHE_SIZE_BITS    : positive := 32768;
+	constant ICACHE_SIZE_BITS    : positive := 262144;
 	-- Tamanho da cache de dados, em bits (256 se não existe).
 	constant DCACHE_SIZE_BITS    : positive := 32768;
 	-- Largura da janela de endereços da cache de instruções, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).

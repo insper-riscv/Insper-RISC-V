@@ -84,6 +84,12 @@ entity soc is
         icache_size_bits       : positive                      := 4096;
         -- Tamanho da cache de dados em bits, uma potência de dois (4096 é 4 kbit).
         dcache_size_bits       : positive                      := 4096;
+        -- Palavras da fila de escrita da cache de dados (0 não tem fila); exige a escrita direta, que o SoC sempre usa.
+        dcache_write_buffer    : natural                       := 0;
+        -- Tamanho em KiB da memória interna da cache de dados, uma potência de dois (0 não tem).
+        dcache_scratch_kib     : natural range 0 to 256        := 0;
+        -- Base em KiB da memória interna da cache de dados, um múltiplo do tamanho dela.
+        dcache_scratch_base_kib : natural                      := 0;
         -- Largura da janela de endereços das caches, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128
         -- MiB); I_CACHE_WINDOW_BITS e D_CACHE_WINDOW_BITS do pacote de mapa têm o mesmo valor.
         cache_window_bits      : natural range 26 to 29        := 26;
@@ -1367,7 +1373,6 @@ begin
                 member_count   => switches_width,
                 group_sizes    => gpio_group_sizes(switches_width),
                 group_members  => gpio_group_members(switches_width),
-                pin_dirs       => (others => '0'),
                 pin_active_low => gpio_pin_lows(switches_width, switches_active_low)
             )
             port map (
@@ -1394,7 +1399,6 @@ begin
                 member_count   => keys_width,
                 group_sizes    => gpio_group_sizes(keys_width),
                 group_members  => gpio_group_members(keys_width),
-                pin_dirs       => (others => '0'),
                 pin_active_low => gpio_pin_lows(keys_width, keys_active_low)
             )
             port map (
@@ -1604,6 +1608,9 @@ begin
                 size_bits     => dcache_size_bits,
                 window_bits   => cache_window_bits,
                 write_through => true,
+                write_buffer  => dcache_write_buffer,
+                scratch_kib   => dcache_scratch_kib,
+                scratch_base_kib => dcache_scratch_base_kib,
                 flash_base_kib  => BOOT_KIB,
                 flash_end_kib   => rom_end_kib
             )
