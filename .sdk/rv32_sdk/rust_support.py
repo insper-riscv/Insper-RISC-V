@@ -30,7 +30,8 @@ def vendor_driver(
 ) -> None:
     """Keep each safe crate, sys crate and C implementation together."""
     source = descriptor.parent.parent / "rust"
-    if not (source / f"insper-riscv-{name.lower()}/Cargo.toml").is_file():
+    crate = name.lower().replace("_", "-")
+    if not (source / f"insper-riscv-{crate}/Cargo.toml").is_file():
         raise SystemExit(f"Rust driver missing: {source}")
     tree(files, source, f"{name}/rust")
 
@@ -202,7 +203,10 @@ EXAMPLES = {
 
 
 def example_files(
-    sdk: Path, project: dict[str, Any], name: str
+    sdk: Path,
+    project: dict[str, Any],
+    name: str,
+    descriptor: Path | None = None,
 ) -> dict[str, bytes]:
     """Generate independent Rust projects without recursively generating examples."""
     files = {}
@@ -226,16 +230,22 @@ def example_files(
         )
         + "\n"
     ).encode()
-    imports, body = EXAMPLES[name]
-    files["src/main.rs"] = (
-        "#![no_std]\n#![no_main]\n\nuse rv32_runtime::{entry, println};\n"
-        + imports
-        + "\n\nentry!(main);\n\nfn main() -> Result<(), Error> {\n    "
-        + body
-        + f'\n    println!("{name} Rust example: PASS");\n    Ok(())\n}}\n'
-    ).encode()
+    source = descriptor.parent / "examples/main.rs.in" if descriptor else None
+    if source is not None and source.is_symlink():
+        raise SystemExit("Refusing a symlink in a Rust driver example")
+    if source is not None and source.is_file():
+        files["src/main.rs"] = source.read_bytes()
+    else:
+        imports, body = EXAMPLES[name]
+        files["src/main.rs"] = (
+            "#![no_std]\n#![no_main]\n\nuse rv32_runtime::{entry, println};\n"
+            + imports
+            + "\n\nentry!(main);\n\nfn main() -> Result<(), Error> {\n    "
+            + body
+            + f'\n    println!("{name} Rust example: PASS");\n    Ok(())\n}}\n'
+        ).encode()
     files["README.md"] = (
-        f"# {name} Rust driver project\n\nOpen in its Dev Container, prepare, and simulate.\n"
+        f"# {name} Rust driver project\n\nOpen in its Dev Container, prepare, then build. Simulate requires a supported SoC model; physical peripheral board maps use FPGA actions.\n"
         "Drivers/runtime and path dependencies are generated from rv32.toml.\n"
         "Copy this managed project elsewhere before editing. FLASH is read-only.\n"
     ).encode()

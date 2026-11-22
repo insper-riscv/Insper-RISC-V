@@ -90,3 +90,8 @@ jobs:
         run: |
           source scripts/env.sh
           uv run --project .sdk python .sdk/tests/rust_addons_integration.py
+      - name: Cross-compile new peripheral examples and every board map
+        shell: bash
+        run: |
+          source scripts/env.sh
+          PYTHONPATH=.sdk uv run --project .sdk python .sdk/tests/new_peripherals_integration.py

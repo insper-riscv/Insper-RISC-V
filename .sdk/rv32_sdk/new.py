@@ -14,6 +14,15 @@ def parser() -> argparse.ArgumentParser:
     result = argparse.ArgumentParser(description=__doc__)
     result.add_argument("language", choices=["c", "rust"])
     result.add_argument("destination", type=Path)
+    boards = sorted(
+        "periph-" + path.parent.name
+        for path in (SDK_ROOT / "src/periph-examples").glob("*/platform.yaml")
+    )
+    result.add_argument(
+        "--platform",
+        choices=["internal-mem", "modular", "de0-cv", *boards],
+        default="internal-mem",
+    )
     return result
 
 
@@ -27,6 +36,12 @@ def main() -> None:
     destination.mkdir(parents=True, exist_ok=True)
     shutil.copytree(common, destination, dirs_exist_ok=True)
     shutil.copytree(template, destination, dirs_exist_ok=True)
+    manifest = destination / "rv32.toml"
+    manifest.write_text(
+        manifest.read_text().replace(
+            "[project]", f'[project]\nplatform = "{args.platform}"', 1
+        )
+    )
     print(f"Created {args.language.upper()} project at {destination}")
     print("Open the directory in VS Code and reopen it in the Dev Container.")
 

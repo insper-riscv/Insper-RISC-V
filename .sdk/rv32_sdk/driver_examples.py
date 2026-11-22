@@ -87,9 +87,13 @@ def context(
     if name == "GPIO":
         role = {"SWITCHES": "switches", "KEYS": "keys"}.get(alias)
         width = (
-            number(role + "_width", io=role)
-            if role
-            else number("pin_count", periph / "GPIO/soc/gpio.vhd")
+            len(instance["groups"][0])
+            if instance.get("groups")
+            else (
+                number(role + "_width", io=role)
+                if role
+                else number("pin_count", periph / "GPIO/soc/gpio.vhd")
+            )
         )
         values["PIN_COUNT"] = str(width)
     elif name == "DISPLAY":
@@ -115,7 +119,10 @@ def context(
     elif name == "UART":
         console = periph / "UART/console/console.vhd"
         direct = direct_uart(sdk, platform_file)
-        if alias == "UART_JTAG" or platform.get("console") == "jtag":
+        if instance.get("kind") == "uart":
+            jtag = False
+            console = periph / "UART/serial/uart.vhd"
+        elif alias == "UART_JTAG" or platform.get("console") == "jtag":
             jtag = True
         elif alias == "UART_PINS" or platform.get("console") == "pins":
             jtag = False
@@ -147,8 +154,6 @@ def project_files(
     """Create an independent child project with recursion explicitly disabled."""
     name = spec["name"]
     selected_platform = project.get("platform", str(platform["platform"]))
-    if selected_platform not in {"internal-mem", "modular", "de0-cv"}:
-        return {}
     values = context(sdk, platform_file, platform, name, instance)
     source = (descriptor.parent / spec["example"]).read_text()
     missing = set(TOKEN.findall(source)) - values.keys()
@@ -188,8 +193,8 @@ def project_files(
         f"Instance: `{instance['name']}`; platform: `{config['platform']}`; "
         f"CPU: `{config['cpu_profile']}`.\n\n"
         "Open this directory in VS Code, reopen in its Dev Container, then run "
-        "RV32: Prepare Project and RV32: Simulate. FPGA actions require a physical "
-        "platform; modular is simulation-only. The host must have the SDK registered.\n\n"
+        "RV32: Prepare Project, then Build. Simulate requires a supported SoC model. "
+        "FPGA actions require a physical platform; modular is simulation-only. The host must have the SDK registered.\n\n"
         "This managed example has its own TOML, editor tasks and container. "
         "Copy the complete folder elsewhere before customizing it. Parent driver "
         "refresh refuses to overwrite edited managed files. Child projects disable "

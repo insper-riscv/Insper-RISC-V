@@ -42,6 +42,9 @@ def main() -> None:
         runtime = root / "runtime"
         for folder in (SDK / "templates/common", SDK / "templates/rust"):
             shutil.copytree(folder, runtime, dirs_exist_ok=True)
+        (runtime / "src/main.rs").write_bytes(
+            (SDK / ".sdk/tests/fixtures/rust_prelude.rs").read_bytes()
+        )
         for profile in ("rv32i", "rv32im"):
             (runtime / "rv32.toml").write_text(
                 '[project]\nname="runtime"\nlanguage="rust"\nplatform="modular"\n'

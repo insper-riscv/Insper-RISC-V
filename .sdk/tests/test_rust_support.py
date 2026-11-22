@@ -54,6 +54,27 @@ class RustSupportTest(unittest.TestCase):
         self.assertIn("RV32_UART_SERIAL_BACKEND RV32_UART_SERIAL", uart)
         self.assertIn("RV32_UART_JTAG_BACKEND RV32_UART_JTAG", uart)
 
+    def test_runtime_refresh_upgrades_managed_files_preserving_application(
+        self,
+    ):
+        with TemporaryDirectory() as temp:
+            root = Path(temp)
+            project = self.project(root)
+            application = root / "src/main.rs"
+            application.write_text("// application stays unchanged\n")
+            files, metadata = drivers.plan(SDK, project, PLATFORM)
+            old = dict(files)
+            old["rv32-runtime/src/lib.rs"] = b"// previous runtime\n"
+            drivers.install(root, old, metadata)
+            drivers.generate(SDK, root, project, PLATFORM)
+            self.assertEqual(
+                (root / "vendor/rv32-runtime/src/lib.rs").read_bytes(),
+                files["rv32-runtime/src/lib.rs"],
+            )
+            self.assertEqual(
+                application.read_text(), "// application stays unchanged\n"
+            )
+
     def test_profile_switch_updates_only_managed_dependencies(self):
         with TemporaryDirectory() as temp:
             root = Path(temp)
