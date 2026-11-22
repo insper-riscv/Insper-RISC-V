@@ -130,6 +130,8 @@ jobs:
         with:
           ref: ${{ needs.plan.outputs.driver }}
           path: driver
+          # Platform tests load Core/profiles/matrix.yaml from this checkout.
+          submodules: recursive
           persist-credentials: false
       - uses: actions/checkout@v7
         with:
