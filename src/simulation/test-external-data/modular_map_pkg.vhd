@@ -36,7 +36,7 @@ package modular_map_pkg is
 	-- A extensão Zihintpause está no perfil.
 	constant HAS_ZIHINTPAUSE     : boolean  := false;
 	-- A extensão Zifencei está no perfil.
-	constant HAS_ZIFENCEI        : boolean  := false;
+	constant HAS_ZIFENCEI        : boolean  := true;
 	-- A extensão Zicclsm está no perfil.
 	constant HAS_ZICCLSM         : boolean  := true;
 	-- A extensão Interrupts está no perfil.
