@@ -1373,6 +1373,7 @@ begin
                 member_count   => switches_width,
                 group_sizes    => gpio_group_sizes(switches_width),
                 group_members  => gpio_group_members(switches_width),
+                pin_dirs       => (2 * switches_width - 1 downto 0 => '0'),
                 pin_active_low => gpio_pin_lows(switches_width, switches_active_low)
             )
             port map (
@@ -1399,6 +1400,7 @@ begin
                 member_count   => keys_width,
                 group_sizes    => gpio_group_sizes(keys_width),
                 group_members  => gpio_group_members(keys_width),
+                pin_dirs       => (2 * keys_width - 1 downto 0 => '0'),
                 pin_active_low => gpio_pin_lows(keys_width, keys_active_low)
             )
             port map (
