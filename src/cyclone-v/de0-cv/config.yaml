@@ -166,6 +166,8 @@ sim:
     SIM_TIMEOUT_CYCLES: "12000000"
     UART_START_ON_ACCESS: "1"
     UART_INDEX: "1"
+    # The RAM starts 32 MiB into the chip, after the FLASH (RAM.offset of platform.yaml).
+    RAM_CHIP_OFFSET: "0x2000000"
 
 quartus:
   # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`
