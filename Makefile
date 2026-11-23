@@ -67,6 +67,9 @@ check-tops:
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_emulated_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_emulated_sim_test
+	@echo "the simulation top of the de0-cv-emulated platform builds"
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) doom_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. doom_sim_test
 	@echo "the simulation top of the doom platform builds"
@@ -115,6 +118,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PF)-emulated/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
