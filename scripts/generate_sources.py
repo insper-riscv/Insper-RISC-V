@@ -118,6 +118,7 @@ YAMLS = (
         ("fpga_uart_pins_map", "modular_sim_top"),
     ),
     Saida("src/cyclone-v/de0-cv/config.yaml", ("de0_cv_sim_top",)),
+    Saida("src/cyclone-v/de0-cv-emulated/config.yaml", ("de0_cv_emulated_sim_top",)),
     Saida("src/cyclone-v/doom/config.yaml", ("doom_sim_top",)),
     Saida(
         "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)

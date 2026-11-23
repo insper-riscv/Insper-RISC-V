@@ -11,7 +11,7 @@ references:
   - {name: standard files, paths: [README.md, README.en.md, CONTRIBUTING.md, CONTRIBUTING.en.md, AUTHORS.md, AUTHORS.en.md, CITATION.cff, LICENSE]}
   - {name: common boot memory, paths: [base/src/boot/boot_core.S, tests/python/check_boot_contract.py, tests/python/gen_real_boot_images.py, tests/python/gen_boot_memory_mifs.py, tests/python/unittests/rtl/data/template/boot_memory_real.hex, tests/python/unittests/rtl/data/modular/boot_memory_real.hex, docs/pt-br/platform/boot.md, docs/en/platform/boot.md]}
   - {name: formal proofs, paths: [formal/run.sh, formal/interconnect.sh, formal/aggregate.sh, formal/aggregate_test.sh, formal/common.sh, formal/ext_interconnect_props.sv]}
-  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/doom/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml, src/periph-examples/de0-cv/platform.yaml, src/periph-examples/de2-115/platform.yaml, src/periph-examples/de0-nano/platform.yaml, src/periph-examples/de10-lite/platform.yaml, src/periph-examples/de10-nano/platform.yaml, src/periph-examples/de0-nano-soc/platform.yaml, src/periph-examples/mkr-vidor-4000/platform.yaml]}
+  - {name: platforms, paths: [src/simulation/internal-mem/platform.yaml, src/cyclone-v/de0-cv/platform.yaml, src/cyclone-v/de0-cv-emulated/platform.yaml, src/cyclone-v/doom/platform.yaml, src/cyclone-iv-e/de2-115-n2/platform.yaml, src/cyclone-iv-e/de2-115/platform.yaml, src/cyclone-v/external-data/platform.yaml, src/simulation/modular/platform.yaml, src/simulation/template/platform.yaml, src/periph-examples/de0-cv/platform.yaml, src/periph-examples/de2-115/platform.yaml, src/periph-examples/de0-nano/platform.yaml, src/periph-examples/de10-lite/platform.yaml, src/periph-examples/de10-nano/platform.yaml, src/periph-examples/de0-nano-soc/platform.yaml, src/periph-examples/mkr-vidor-4000/platform.yaml]}
   # The platform configs are written relative to the root of this repository, `base: .`.
   - {name: sim sources, file: src/simulation/internal-mem/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: hardware-top sim sources, file: src/simulation/internal-mem/config.fpga-sim.yaml, yaml: sim.vhdl_sources, base: .}
@@ -32,6 +32,13 @@ references:
   - {name: de0-cv boot memory linker script, file: src/cyclone-v/de0-cv/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
   - {name: de0-cv toolchain specs, file: src/cyclone-v/de0-cv/config.yaml, yaml: toolchain.specs, base: .}
   - {name: de0-cv Spike stand-in, file: src/cyclone-v/de0-cv/config.yaml, yaml: emulator.sources, base: .}
+  - {name: de0-cv-emulated sim sources, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: sim.vhdl_sources, base: .}
+  - {name: de0-cv-emulated sim python_path, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: sim.python_path, base: .}
+  - {name: de0-cv-emulated runtime sources, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: paths.sources, base: .}
+  - {name: de0-cv-emulated boot memory, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: paths.boot_memory, base: .}
+  - {name: de0-cv-emulated boot memory linker script, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: paths.boot_memory_linker_script, base: .}
+  - {name: de0-cv-emulated toolchain specs, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: toolchain.specs, base: .}
+  - {name: de0-cv-emulated Spike stand-in, file: src/cyclone-v/de0-cv-emulated/config.yaml, yaml: emulator.sources, base: .}
   - {name: de0-cv sim top test and its images, paths: [tests/python/gen_de0_cv_images.py, tests/python/unittests/rtl/data/de0_cv/boot_memory.hex, tests/python/unittests/rtl/data/de0_cv/sdram.hex, tests/python/unittests/rtl/de0_cv_sim_top.py, tests/python/unittests/rtl/de0_cv_flash_window.py, tests/python/check_sdram_split.py, tests/python/gen_de0_cv_boot_images.py, tests/python/unittests/rtl/data/de0_cv_boot/images.json, tests/python/unittests/rtl/de0_cv_boot_banks.py, tests/python/unittests/integration/ext_interconnect.py, tests/python/unittests/integration/axi_slave_periph_bank.py]}
   - {name: doom sim sources, file: src/cyclone-v/doom/config.yaml, yaml: sim.vhdl_sources, base: .}
   - {name: doom sim python_path, file: src/cyclone-v/doom/config.yaml, yaml: sim.python_path, base: .}
@@ -225,6 +232,11 @@ provides:
     sources:
       - src/cyclone-v/de0-cv/config_pkg.vhd
       - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
+  de0_cv_emulated_map:
+    requires: [Common-Components/utils]
+    sources:
+      - src/cyclone-v/de0-cv-emulated/config_pkg.vhd
+      - src/cyclone-v/de0-cv-emulated/de0_cv_emulated_map_pkg.vhd
   doom_map:
     requires: [Common-Components/utils]
     sources:
@@ -351,6 +363,10 @@ provides:
     requires: [de0_cv_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC]
     sources:
       - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
+  de0_cv_emulated_sim_top:
+    requires: [de0_cv_emulated_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller]
+    sources:
+      - src/cyclone-v/de0-cv-emulated/de0-cv-emulated_sim_top.vhd
   doom_sim_top:
     requires: [doom_map, ext_interconnect, clk_gen_3way, Core/core, Memory/rom_simulation, Memory/flash_simulation, Memory/flash_cmd_port, Memory/sdram_system, Memory/dcache, Memory/icache, Memory/flash_chip, Memory/flash_arbiter, Memory/mem_region_router, Peripherals/jtag_uart, Peripherals/display, Peripherals/CLINT, Peripherals/PLIC, Peripherals/flash-controller, Peripherals/video, Peripherals/ps2_keyboard]
     sources:
