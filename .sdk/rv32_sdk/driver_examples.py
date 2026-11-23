@@ -66,7 +66,7 @@ def context(
 ) -> dict[str, str]:
     """Resolve constructor arguments from the platform and instantiated RTL."""
     overrides = parameters(platform_file)
-    soc = sdk / "src/soc/soc.vhd"
+    soc = sdk / "base/src/soc/soc.vhd"
     periph = sdk / "Peripherals/src"
     alias = instance["name"]
     values = {"BASE": f"RV32_{name}_{alias}_BASE"}

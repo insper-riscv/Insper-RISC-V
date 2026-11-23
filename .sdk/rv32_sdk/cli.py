@@ -639,6 +639,7 @@ def doctor(
 ) -> None:
     required = [
         SDK / "Core",
+        SDK / "base",
         SDK / "src",
         SDK / ".sdk" / "tools",
         SDK / "Common-Components",

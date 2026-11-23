@@ -32,8 +32,8 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/simulation/test-external/config_pkg.vhd
     - src/simulation/test-external/modular_map_pkg.vhd
-    - src/interconnect/interconnect_pkg.vhd
-    - src/interconnect/ext_interconnect.vhd
+    - base/src/interconnect/interconnect_pkg.vhd
+    - base/src/interconnect/ext_interconnect.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
     - Core/src/shared/opcode_consts.vhd
@@ -144,7 +144,7 @@ sim:
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/UART/console/console.vhd
     - Peripherals/src/flash-controller/soc/flash_controller.vhd
-    - src/soc/soc.vhd
+    - base/src/soc/soc.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/RAM/SoC/ram_pkg.vhd

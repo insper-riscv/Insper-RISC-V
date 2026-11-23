@@ -19,8 +19,9 @@ O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot
 memory e, por caso, as palavras de cada banca a partir do índice de
 palavra dela na FLASH. O teste escreve a FLASH de cada caso com elas.
 Com `--check` o script confere se o arquivo está em dia com a
-`boot_memory.S` e o `pack`, e roda `check_boot_contract.py`, o contrato
-da BOOT em cada plataforma.
+`boot_memory.S` e o `pack`, confere o `boot_memory_init.mif` de cada
+plataforma de placa (`gen_boot_memory_mifs.py`) e roda
+`check_boot_contract.py`, o contrato da BOOT em cada plataforma.
 """
 
 import argparse
@@ -36,7 +37,11 @@ from riscv_tools import boot_memory, flash_image
 from riscv_tools.memory_map import banks as bank_map
 from riscv_tools.memory_map import load_platform, symbols
 
-from tests.python import check_boot_contract, gen_real_boot_images
+from tests.python import (
+    check_boot_contract,
+    gen_boot_memory_mifs,
+    gen_real_boot_images,
+)
 from tests.python.gen_de0_cv_images import load_address
 from tests.python.utils.rv32_asm import T0, T1, T2, X0, addi, jal, sw
 
@@ -372,6 +377,7 @@ def main() -> None:
             sys.exit(1)
         print("images.json is up to date")
         gen_real_boot_images.check()
+        gen_boot_memory_mifs.check()
         check_boot_contract.main()
         return
     DATA.mkdir(parents=True, exist_ok=True)

@@ -100,6 +100,7 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
         "Memory",
         "Peripherals",
         "Common-Components",
+        "base",
         "src",
         ".sdk/platforms",
     ):
