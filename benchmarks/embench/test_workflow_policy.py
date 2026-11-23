@@ -20,11 +20,13 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("pull_request", events)
         self.assertEqual(events["push"]["branches"], ["main"])
         self.assertEqual(
-            workflow["concurrency"]["group"], "embench-${{ github.ref }}"
+            workflow["concurrency"]["group"],
+            "embench-${{ github.repository }}",
         )
         self.assertEqual(
             workflow["jobs"]["eligible"]["if"],
-            "github.ref == 'refs/heads/main'",
+            "github.event_name == 'workflow_dispatch' "
+            "|| github.ref == 'refs/heads/main'",
         )
         self.assertFalse(workflow["concurrency"]["cancel-in-progress"])
         self.assertLessEqual(

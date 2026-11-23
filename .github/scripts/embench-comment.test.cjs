@@ -113,13 +113,13 @@ test("direct pushes and PR activity do not schedule a benchmark", async () => {
   }
 });
 
-test("manual benchmarks are allowed only for main", async () => {
+test("manual benchmarks allow branch validation without a merge", async () => {
   for (const ref of ["refs/heads/main", "refs/heads/feature"]) {
     const state = setup(), outputs = {};
     state.context.eventName = "workflow_dispatch";
     state.context.ref = ref;
     state.core.setOutput = (key, value) => outputs[key] = value;
     await eligibleMainUpdate(state);
-    assert.equal(outputs.run, ref.endsWith("/main") ? "true" : "false");
+    assert.equal(outputs.run, "true");
   }
 });
