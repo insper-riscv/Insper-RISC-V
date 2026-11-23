@@ -103,11 +103,7 @@ for language in ("c", "rust"):
     )
     manifest = yaml.safe_load((project / "project.yaml").read_text())
     print("manifest", manifest, flush=True)
-    platform = next(
-        p
-        for p in (hardware / "src").glob("*/*/platform.yaml")
-        if "created by `riscv-tools new-project`" in p.read_text()
-    )
+    platform = hardware / manifest["platform"] / "platform.yaml"
     data = yaml.safe_load(platform.read_text())
     data["peripherals"] = {
         "CLINT": {"base": 0xE0000000, "size": "64K"},

@@ -51,7 +51,8 @@ uv run --project .sdk python .sdk/tests/integration_platformapp.py \
 ```
 
 The opt-in integration test requires a new output directory. It creates real
-DE2-115 hardware projects with CLINT, PLIC and two GPIO instances, exports C and
+DE2-115 hardware projects with two GPIO instances (and CLINT/PLIC entries,
+selected only when the CPU enables their interrupt fabric), exports C and
 Rust projects, cross-compiles each, moves each directory and rebuilds, then
 compiles its generated GPIO example. It leaves the projects and `result.json`
 for inspection. The test launches no FPGA operation and no simulation. Run it
