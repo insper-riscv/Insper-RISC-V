@@ -61,7 +61,7 @@ FULL_WORD = 0xF
 
 SDRAM_BASE = 0x40000000
 RAM_BASE = int(os.environ.get("RAM_BASE", str(SDRAM_BASE)))
-# Byte of the chip where the RAM starts: the FLASH takes the bytes before it.
+# Byte of the chip where the RAM starts, after the FLASH.
 RAM_CHIP_OFFSET = int(os.environ.get("RAM_CHIP_OFFSET", "0"), 0)
 _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
