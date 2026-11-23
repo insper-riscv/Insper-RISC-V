@@ -138,11 +138,11 @@ boot_start:
      * instrução de extensão sai num núcleo que não a tem. */
     .option push
     .option arch, +zicsr, +zifencei
-#include "../../Core/src/Zicsr/boot.inc"
-#include "../../Core/src/Zicntr/boot.inc"
-#include "../../Core/src/Zihpm/boot.inc"
-#include "../../Core/src/Sscofpmf/boot.inc"
-#include "../../Core/src/Zifencei/boot.inc"
+#include "../../../Core/src/Zicsr/boot.inc"
+#include "../../../Core/src/Zicntr/boot.inc"
+#include "../../../Core/src/Zihpm/boot.inc"
+#include "../../../Core/src/Sscofpmf/boot.inc"
+#include "../../../Core/src/Zifencei/boot.inc"
     .option pop
 
 #ifdef RV32_BOOT_RAM_MAGIC

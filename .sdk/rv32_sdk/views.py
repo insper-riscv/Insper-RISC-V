@@ -12,7 +12,7 @@ import yaml
 
 
 def relink_boot_core(runtime: Path) -> None:
-    """Point the copied boot memory at the shared loader in `src/boot`.
+    """Point the copied boot memory at the shared loader in `base/src/boot`.
 
     The upstream file includes the loader relative to its own folder, which
     stops resolving once the runtime is copied under `.sdk/platforms`.
@@ -23,14 +23,14 @@ def relink_boot_core(runtime: Path) -> None:
         The copied `runtime` folder of an SDK view.
     """
     source = runtime / "boot_memory.S"
-    old = '#include "../../../boot/boot_core.S"'
+    old = '#include "../../../../base/src/boot/boot_core.S"'
     text = source.read_text()
     if text.count(old) != 1:
         raise SystemExit(
             "Boot memory integration changed; refresh the SDK view"
         )
     source.write_text(
-        text.replace(old, '#include "../../../../src/boot/boot_core.S"')
+        text.replace(old, '#include "../../../../base/src/boot/boot_core.S"')
     )
 
 
