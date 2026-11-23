@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       compare_ref:
-        description: Baseline SHA for an explicit manual main run
+        description: Baseline revision for a manual comparison (main by default)
         type: string
         default: main
       scope:
@@ -25,7 +25,7 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: embench-${{ github.ref }}
+  group: embench-${{ github.repository }}
   cancel-in-progress: false
 
 env:
@@ -39,8 +39,8 @@ env:
 
 jobs:
   eligible:
-    name: Confirm merged main update
-    if: github.ref == 'refs/heads/main'
+    name: Check benchmark trigger
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     outputs:
@@ -130,6 +130,8 @@ jobs:
         with:
           ref: ${{ needs.plan.outputs.driver }}
           path: driver
+          # Platform tests load Core/profiles/matrix.yaml from this checkout.
+          submodules: recursive
           persist-credentials: false
       - uses: actions/checkout@v7
         with:

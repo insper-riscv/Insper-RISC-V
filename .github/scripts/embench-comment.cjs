@@ -79,7 +79,7 @@ function isMergedMainPR(pr, sha, repo) {
 async function eligibleMainUpdate({github, context, core}) {
   const main = context.ref === "refs/heads/main";
   if (context.eventName === "workflow_dispatch") {
-    core.setOutput("run", main ? "true" : "false");
+    core.setOutput("run", "true");
     return;
   }
   if (!main || context.eventName !== "push") {

@@ -20,11 +20,13 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertNotIn("pull_request", events)
         self.assertEqual(events["push"]["branches"], ["main"])
         self.assertEqual(
-            workflow["concurrency"]["group"], "embench-${{ github.ref }}"
+            workflow["concurrency"]["group"],
+            "embench-${{ github.repository }}",
         )
         self.assertEqual(
             workflow["jobs"]["eligible"]["if"],
-            "github.ref == 'refs/heads/main'",
+            "github.event_name == 'workflow_dispatch' "
+            "|| github.ref == 'refs/heads/main'",
         )
         self.assertFalse(workflow["concurrency"]["cancel-in-progress"])
         self.assertLessEqual(
@@ -35,6 +37,23 @@ class WorkflowPolicyTests(unittest.TestCase):
         self.assertEqual(workflow["jobs"]["plan"]["needs"], "eligible")
         self.assertIn("outputs.run", workflow["jobs"]["plan"]["if"])
         self.assertIn("outputs.run", workflow["jobs"]["embench"]["if"])
+
+    def test_platform_tests_have_driver_submodules(self) -> None:
+        """Load the profile matrix where the platform tests run."""
+        workflow = yaml.safe_load(
+            (ROOT / ".github/workflows/embench.yml").read_text()
+        )
+        steps = workflow["jobs"]["measure"]["steps"]
+        driver = next(
+            step["with"]
+            for step in steps
+            if step.get("uses", "").startswith("actions/checkout")
+            and step.get("with", {}).get("path") == "driver"
+        )
+        self.assertEqual(driver.get("submodules"), "recursive")
+        self.assertTrue(
+            any("test_platform" in step.get("run", "") for step in steps)
+        )
 
     def test_sdk_does_not_duplicate_push_and_pr_runs(self) -> None:
         """Check feature commits once through their PR event."""

@@ -100,13 +100,14 @@ the per-program instruction percentages are measured on our RTL.
 
 ## Actions
 
-The `embench` workflow runs automatically only when a PR is opened,
-updated with new commits, or reopened. Ordinary branch pushes and pushes
-to main do not trigger it. Manual dispatch remains available. Each PR
-compares the exact target `base.sha` with the
-proposed merge tree (`github.sha`). Both use the same adapter and immutable
-CI image, tool versions, benchmark commit, workload and memory settings.
-The summary records the full revisions. No historical Insper CPU is used.
+The `embench` workflow runs automatically only after an eligible PR merge into
+main. PR activity and ordinary feature-branch pushes do not trigger benchmarks.
+Automatic runs compare the resulting main commit with the main-before push SHA.
+Manual dispatch also accepts feature branches: select the branch in
+`Actions > embench > Run workflow`, leave `compare_ref=main`, and choose
+`scope=named, workload=ci` for the normal suite. This tests the selected branch
+against main without merging it. Both sides use the same adapter, tool image,
+benchmark commit, workload and memory settings. No historical Insper CPU is used.
 
 The default matrix is discovered from the explicit `Core/profiles/rv32*.yaml`
 files (11 at introduction). Profiles from both comparison sides are included;
@@ -137,14 +138,14 @@ gh workflow run embench.yml --ref embench-ci -f scope=named -f workload=ci -f co
 `all + full` exceeds GitHub's 256-job matrix limit and is rejected with an
 explicit message. It is not silently reduced to a sample.
 
-Up to 11 simulation jobs run concurrently on separate GitHub machines.
+Up to four simulation jobs run concurrently on separate GitHub machines.
 Within each job all programs and comparison sides run serially. Containers have a hard 8 GiB RAM limit and
 no swap; the summary job has a 2 GiB limit. No waveforms are generated.
 Both workloads have a two-hour wall limit per program, and the workflow
 bounds each measuring job. RTL execution of large kernels can be slow even
 with one local repetition; this check can take substantially longer than
-functional smoke tests. Cache hits and cancellation avoid redundant runs. New
-commits cancel superseded runs. No lab board is accessed.
+functional smoke tests. Cache hits and cancellation avoid redundant runs. A repository-wide concurrency group serializes benchmark workflows across
+branches; a new commit does not cancel the active run. No lab board is accessed.
 
 Successful results are cached by the actual RTL, profile YAMLs, maps,
 runtime inputs and the adapter/suite/tool identities. Base and candidate
