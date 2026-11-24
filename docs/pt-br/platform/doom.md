@@ -139,11 +139,26 @@ O clock de pixel é uma saída a mais do PLL do topo gerado, e o `.sdc` gerado d
 
 #### 7.2.1. Bordas do vídeo
 
-O catálogo `boards/video-modes.yaml` tem uma só temporização de 640x480 a 60 Hz (pórtico frontal 16, sincronismo 96 e pórtico traseiro 48 na horizontal), a do manual da DE0-CV, e o `io.video` do `platform.yaml` não tem campo para trocar os pórticos. Um monitor que corta os primeiros 16 pixels de cada linha à esquerda (o caso do monitor da validação na placa) pede `h_front_porch => 0` e `h_back_porch => 64`, com o mesmo total de 800 pixels, no `generic map` do `video` do topo gerado (`doom_de0_cv_top.vhd`). Esse ajuste é feito à mão no topo gerado, antes da compilação do Quartus, porque o gerador do Tools não tem campo para os pórticos.
+O monitor da validação na placa corta os primeiros 16 pixels de cada linha à esquerda. O `io.video` do `platform.yaml` troca os pórticos do modo do catálogo com `h_front_porch: 0` e `h_back_porch: 64`, que mantêm o total de 800 pixels (0 + 96 + 640 + 64). O gerador escreve esses valores nos generics do `video` do topo gerado (`h_front_porch => 0`, `h_sync => 96`, `h_back_porch => 64`), sem edição manual. Um porch escrito sozinho faz o outro receber o resto, e uma soma diferente do total do modo é erro (ver `board_video` no repositório Tools).
 
 ### 7.3. Recursos
 
-O vídeo sozinho, com estes generics, compilado no Quartus Prime Lite 25.1 para a DE0-CV, ocupa 137 ALMs, 65 blocos M10K (21 %) e 527.360 bits de memória (17 %). O Tools estima 51 blocos para o mesmo framebuffer e a paleta, porque conta bits e não a organização em blocos de 32 bits de largura.
+Build final na DE0-CV (Quartus Prime Lite 25.1, semente 6), ajustada e com o tempo fechado.
+
+| Recurso | Usado | Disponível |
+| :--- | ---: | ---: |
+| Lógica (ALMs) | 12.335 | 18.480 (67 %) |
+| Registradores | 15.354 | |
+| Bits de memória em bloco | 1.402.616 | 3.153.920 (44 %) |
+| Blocos DSP | 3 | 66 |
+
+| Verificação de tempo | Folga |
+| :--- | ---: |
+| Setup do núcleo (100 MHz) | +0,090 ns |
+| Setup da memória (125 MHz) | +0,806 ns |
+| Hold | positiva em todos os cantos |
+
+O vídeo sozinho, com estes generics, ocupa 137 ALMs, 65 blocos M10K (21 %) e 527.360 bits de memória (17 %). O Tools estima 51 blocos para o mesmo framebuffer e a paleta, porque conta bits e não a organização em blocos de 32 bits de largura.
 
 ### 7.4. Teste do vídeo na simulação
 
@@ -187,7 +202,6 @@ A memória interna fica dentro da RAM e guarda só o que o programa escreve depo
 | :--- | :--- |
 | Mouse | Fora do `platform.yaml`, por depender do cabo Y |
 | FLASH emulada, controlador de FLASH e bancos | Não existem; a atualização de programa em campo é a da [`de0-cv-emulated`](de0-cv-emulated.md) |
-| Ajuste dos pórticos do vídeo no `platform.yaml` | Não existe (seção 7.2.1) |
 | Linker script e `crt0` do DOOM | Pertencem à porta do jogo, que liga o binário em `0x1000` (ROM) e `0x40000000` (RAM) |
 
 ---
