@@ -1,8 +1,10 @@
 # Platform doom, created by `riscv-tools new-project` from de0-cv.
 # Edit this file and run `riscv-tools generate-memory-map` again.
-# The memory map of the DOOM platform: the BOOT_MEMORY inside the core, a minimal 8 KiB FLASH (right after the
-# BOOT_MEMORY, two banks of 4 KiB) that holds only the loader of the SDRAM, and the board's 64 MB SDRAM (the RAM, executable)
-# reached through the instruction and data caches, where the DOOM image runs: the source of truth `riscv-tools check-memory-map` checks every hand-written copy against.
+# The memory map of the DOOM platform in the style of the de0-cv: the BOOT_MEMORY inside the core and the 64 MB SDRAM
+# of the board split in two windows of the same controller, the FLASH (the instructions and constants of the DOOM,
+# 4 MiB at the top of the chip, read only for the core) and the RAM (the data, 60 MiB from the start of the chip), both
+# behind the instruction and the data caches. There is no emulated FLASH, no FLASH controller and no loader: the host
+# writes the image into the FLASH window through the debug port of the SDRAM (`riscv-tools load-flash`) and releases the core.
 #
 #   uv run riscv-tools --root . check-memory-map --platform src/cyclone-v/doom/platform.yaml
 #
@@ -37,74 +39,54 @@ core:
     - AccessFaults
 profiles: ../../../Core/profiles/matrix.yaml
 
-# The memory model: the BOOT_MEMORY inside the core, a minimal 8 KiB FLASH (right after the BOOT_MEMORY) emulated in the
-# M10K blocks with the latency of a serial chip (24 cycles for the first word of a burst, 4 for each following) that holds
-# only the loader of the SDRAM, and the SDRAM of the board (the RAM), both outside the core behind the instruction and the
-# data caches: the instruction cache has 262144 bits (32 KiB) and the data cache 32768 bits (4 KiB), with a write buffer of
-# four words and an internal memory of 32 KiB (`scratch_kib` at `scratch_base`, inside the RAM) that the data cache serves
-# in the time of a hit and that never reaches the SDRAM. The DOOM image (code, constants and data, about 400 KiB)
-# does not fit the FLASH, so the host loads it at the base of the RAM through the debug port and the loader of the FLASH
-# jumps to it.
+# The memory model: the BOOT_MEMORY inside the core, the FLASH (the instructions) and the RAM (the data), the last two in the
+# one SDRAM chip of the board behind the instruction cache (262144 bits, 32 KiB) and the data cache (262144 bits, 32 KiB, with a
+# write buffer of four words and an internal memory of 32 KiB, `scratch_kib` at `scratch_base`, inside the RAM, that the data cache
+# serves in the time of a hit and that never reaches the SDRAM). The RAM keeps the chip addresses it always had (the WAD at
+# 0x40100000 is chip byte 1 MiB); the FLASH is the 4 MiB at the top of the chip, from the chip byte 60 MiB (`offset`).
+# The DOOM image (about 600 KiB of code, constants and initial data) is linked from 0x1000 and the core only reads it.
 memory:
   boot:
     base: 0x00000000
     size: 4K
   instructions:
-    - type: emulated
+    - type: sdram
       base: 0x00001000
-      size: 8K
+      size: 0x3FF000
+      offset: 0x3C01000
       on_bus: true
-      latency: {first: 24, next: 4}
-      sector_bytes: 4096
       cache:
         size_bits: 262144
   data:
     - type: sdram
       base: 0x40000000
-      size: 64M
+      size: 60M
+      offset: 0
       on_bus: true
-      fetch: true
       cache:
-        size_bits: 32768
+        size_bits: 262144
         write_buffer: 4
         scratch_kib: 32
-        scratch_base: 0x43FE8000
+        scratch_base: 0x43BE8000
 
-# Words at the top of RAM: the contract between the boot memory, the program and
-# the host (platform/boot_memory.S clears them at every reset). `launch` is the doorbell of the loader of the FLASH
-# (runtime/doom_loader.S): the host writes DOOM_LAUNCH_MAGIC there after the image is complete, and the loader clears it
-# before the jump. The word is in the last page of the RAM, the one the data cache ignores, so the poll reads the SDRAM.
+# Words at the top of RAM: the contract between the boot memory, the program and the host.
 reserved:
-  stdout:   {base: 0x43FFFBE0, size: 1K+8}
-  tohost:   {base: 0x43FFFFE8, size: 8}
-  fromhost: {base: 0x43FFFFF0, size: 8}
-  launch:   {base: 0x43FFFFF8, size: 8}
+  stdout:   {base: 0x43BFFBE0, size: 1K+8}
+  tohost:   {base: 0x43BFFFE8, size: 8}
+  fromhost: {base: 0x43BFFFF0, size: 8}
 
 boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 
-# The two banks of the FLASH for the program update: each starts with the 256-byte header page of the image
-# (riscv-tools flash-image), so its program is linked from the bank base + 0x100. Bank A [0x1000, 0x2000) and
-# bank B [0x2000, 0x3000) are one 4 KiB sector each; bank A holds runtime/doom_loader.S.
-flash:
-  region: FLASH
-  banks:
-    - {name: A, base: 0x00001000, size: 4K}
-    - {name: B, base: 0x00002000, size: 4K}
-
 # An access to the padding of a peripheral slot (what its registers do not take) is an access fault when true;
 # the config_pkg carries it as STRICT_PERIPH.
 strict_periph: true
 
-# The peripheral windows of the external interconnect (base and size of the registers of each): the FLASH controller of the program update
-# (commands of the FLASH chip; wired in the board top and, with HAS_FLASH_CONTROLLER, in the simulation top), the
-# JTAG UART and the seven-segment display of the board top, the CLINT (a 64 KiB window: msip, mtimecmp and mtime) and the
-# PLIC (a 4 MiB window), the controller of the external interrupt lines, whose output is the MEIP of the core.
+# The peripheral windows of the external interconnect (base and size of the registers of each): the JTAG UART and the
+# seven-segment display of the board top, the CLINT (a 64 KiB window: msip, mtimecmp and mtime) and the PLIC (a 4 MiB
+# window), the controller of the external interrupt lines, whose output is the MEIP of the core.
 peripherals:
-  FLASH_CTRL:
-    base: 0xB0000000
-    size: 32
   UART:
     base: 0xC0000000
     size: 1K
@@ -128,6 +110,12 @@ peripherals:
     kind: ps2
     device: keyboard
     base: 0x80007000
+  # The microSD socket of the board in the native 4-bit mode (SD_CLK, SD_CMD, SD_DATA[3:0]): the DOOM loads its WADs
+  # from the card (port/doom_sd.c), polling (its PLIC line, the next free one, is assigned by the map but the IRQ bits of CONTROL stay off). The clock of the controller is `clocks.core`,
+  # so SD_CLK is 100 MHz / (2 * (DIVIDER + 1)): 399 kHz after the reset and 25 MHz with DIVIDER = 1.
+  SD:
+    kind: sd_native
+    base: 0x80008000
 
 # The machine interrupts: MTIP and MSIP come from the CLINT, MEIP from the PLIC, all in the clock domain of the core
 # (100 MHz here), so no synchronizer is needed. The mtime of the CLINT counts at mtime_hz (100 cycles per tick) and is
@@ -136,23 +124,23 @@ interrupts:
   # `clock_hz` is left out: it is `clocks.core` (100 MHz) taken as is, a whole number of cycles per tick (100), so the
   # mtime counts exactly at mtime_hz.
   mtime_hz: 1000000
-  # The PLIC: three-bit priorities, and the lines wired in this platform: the JTAG UART (board and simulation) and the
-  # FLASH controller (board and simulation).
+  # The PLIC: three-bit priorities, and the line wired in this platform: the JTAG UART (board and simulation).
   plic: {priority_bits: 3}
   sources:
     - {name: UART_JTAG, id: 2}
-    - {name: FLASH,     id: 6}
 
 # The clocks of the PLL, the single source of the generated PLL (`riscv-tools board generate`) and of the periods the
-# generated files convert with. `mem` is the clock of the SDRAM controller (the DRAM_CLK pin has the same frequency, its
-# phase comes from the board), at 100 MHz as the core and the fetch, so its pin paths have the same 10 ns as the loop of the core.
-# `core` and `fetch` run at 100 MHz (1000 MHz / 10), the target of the platform: the five seeds of the Quartus timing close the
-# setup at 85 C and at 0 C and the hold in every domain. The phase of the core (3125 ps) against the fetch clock splits the
-# 10 ns of the loop through the instruction cache between its two crossings; `interrupts.clock_hz` is `clocks.core`.
+# generated files convert with. `core` and `fetch` are the same clock (100 MHz, phase 0), so they share one PLL output:
+# the instruction memories (the BOOT_MEMORY and the instruction cache) read, on the edge of the core clock, the address
+# the PC will have in the next cycle (`early_fetch_addr` of the SoC, set by the generator when `fetch` equals `core`),
+# so the loop of the core through the instruction cache is made of whole cycles and the timing analysis is the real one,
+# with no dependence on the phase of a clock ahead. The target of a taken branch, a jump or a trap is fetched one cycle
+# later. `mem` is the clock of the SDRAM controller, on its own PLL output (125 MHz, 8000 ps, its pins have the same
+# 8 ns); it must not be merged with `core`. `interrupts.clock_hz` is `clocks.core`.
 clocks:
-  core:  {mhz: 100, phase_ps: 3125}
+  core:  {mhz: 100, phase_ps: 0}
   fetch: {mhz: 100, phase_ps: 0}
-  mem:   {mhz: 100}
+  mem:   {mhz: 125}
 
 # The console is the JTAG UART (Virtual JTAG); the roles of inputs and outputs the platform wires.
 console: jtag
@@ -161,20 +149,19 @@ io:
   leds:     {count: 10, need: required}
   display:  {count: 6,  need: optional}
   # The DOOM renders 320x200 with an 8-bit index and a palette of 256 colors (3 x channel_bits each, 12 bits on the
-  # DE0-CV); the default mode of the board (640x480 at 60 Hz) shows it doubled in x and in y, centered, with black bands.
+  # DE0-CV). The default mode of the board (640x480 at 60 Hz) shows it doubled in x (`scale`, the largest that fits) and
+  # magnified by 12/5 in y (`scale_y`): 200 x 12/5 = 480 lines, the whole 4:3 screen with no black bands, each source
+  # line repeated 3, 2, 3, 2, 2 times (the pixel of the DOOM is 1.2 times taller than wide).
   video:
     pixel_format: indexed
     fb_width: 320
     fb_height: 200
+    scale_y: 12/5
 
 # The files written from this map by `riscv-tools generate-memory-map` (`make generate`): the linker
 # flags of the test programs and the linker script of the boot memory. `make memory-map` checks they are up to date.
 generate:
   specs: {path: src/cyclone-v/doom/runtime/rv32im-fpga.specs, rom: FLASH, ram: RAM, ram_limit: stdout}
-  bank_specs:
-    - {path: src/cyclone-v/doom/runtime/rv32im-fpga-bank-a.specs, rom: BANK_A_PAYLOAD, ram: RAM, ram_limit: stdout}
-    - {path: src/cyclone-v/doom/runtime/rv32im-fpga-bank-b.specs, rom: BANK_B_PAYLOAD, ram: RAM, ram_limit: stdout}
-  banks_h: {path: src/cyclone-v/doom/runtime/flash_banks.h}
   boot_ld: {path: src/cyclone-v/doom/runtime/boot_memory.ld}
   boot_config_h: {path: src/cyclone-v/doom/runtime/boot_config.h}
   runtime: {path: src/cyclone-v/doom/runtime/memory_map.h, ram: RAM}
@@ -188,18 +175,14 @@ generate:
   config_pkg: {path: src/cyclone-v/doom/config_pkg.vhd}
 
 # What the config.yaml of the platform reads from this map (`memory_map: platform.yaml`). The RAM is the SDRAM, so
-# only the BOOT_MEMORY and the FLASH are simulation arrays with an address width.
+# only the BOOT_MEMORY is a simulation array with an address width.
 config:
   rom: FLASH
   ram: RAM
-  addr_widths: [boot_memory, rom]
+  addr_widths: [boot_memory]
 
 checks:
   # --- config.yaml ---------------------------------------------------------
-
-  # --- the loader of the SDRAM (bank A) ------------------------------------------
-  - {name: doom_loader.S DOOM_LAUNCH_ADDR, file: src/cyclone-v/doom/runtime/doom_loader.S, pattern: '#define DOOM_LAUNCH_ADDR (0x[0-9A-Fa-f]+)', expect: launch.base}
-  - {name: doom_loader.S DOOM_IMAGE_BASE, file: src/cyclone-v/doom/runtime/doom_loader.S, pattern: '#define DOOM_IMAGE_BASE (0x[0-9A-Fa-f]+)', expect: RAM.base}
 
   # --- boot memory (boot_memory.S; its linker script is generated) --------------
 
@@ -214,9 +197,4 @@ checks:
   - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
   - {name: Tests header RV32_UART_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_UART_BASE\s+(0x[0-9A-Fa-f]+)', expect: UART.base}
-  - {name: Tests header RV32_FLASH_CTRL_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_FLASH_CTRL_BASE\s+(0x[0-9A-Fa-f]+)', expect: FLASH_CTRL.base}
-  - {name: Tests header RV32_BANK_A_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.base}
-  - {name: Tests header RV32_BANK_A_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_A_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_A.size}
-  - {name: Tests header RV32_BANK_B_BASE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_BASE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.base}
-  - {name: Tests header RV32_BANK_B_SIZE, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_BANK_B_SIZE\s+(0x[0-9A-Fa-f]+)', expect: BANK_B.size}
   - {name: Tests header RV32_TICK_CYCLES, file: ../Tests/tools/riscv_build/include-sdram/rv32_platform.h, optional: true, pattern: '#define RV32_TICK_CYCLES\s+(\d+)', expect: INTERRUPTS.tick_cycles}

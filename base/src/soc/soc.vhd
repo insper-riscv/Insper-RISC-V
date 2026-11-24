@@ -115,6 +115,11 @@ entity soc is
         -- A cache de instruções escolhe a região pelo endereço registrado, sem a porta de seleção e sem conferir o
         -- endereço a cada consulta: tira a decodificação do PC do caminho até a cache (exige os dois clocks defasados).
         fast_icache_select     : boolean                       := false;
+        -- As memórias de instrução (BOOT_MEMORY, FLASH interna e a cache de instruções) leem o endereço do PC do ciclo
+        -- seguinte (o_if_addr_nx do núcleo) na mesma borda do clock do núcleo, no lugar do PC atual numa borda adiantada:
+        -- o laço do PC até a cache deixa de depender da fase do clock de busca, que tem de ter a fase do núcleo. A
+        -- instrução do alvo de um desvio, salto ou exceção chega um ciclo depois.
+        early_fetch_addr       : boolean                       := false;
         -- A última página de 4 KiB da RAM (bits ADDR_BITS-1:12 em bypass_page) nunca é guardada na cache de dados: ali ficam as
         -- palavras que o hospedeiro compartilha com o programa.
         has_dcache_bypass      : boolean                       := false;
@@ -718,6 +723,10 @@ architecture behaviour of soc is
 
     -- Sinais do núcleo: busca de instrução e FLASH interna.
     signal if_addr     : addr_t;
+    -- Endereço de busca do PC do ciclo seguinte (o_if_addr_nx do núcleo).
+    signal if_addr_nx  : addr_t;
+    -- Endereço que as memórias de instrução leem: o do ciclo seguinte com early_fetch_addr, ou o PC atual.
+    signal if_addr_mem : addr_t;
     -- Habilitação de leitura da busca de instrução ('1' = lê).
     signal if_rden     : std_logic;
     -- Endereço da segunda porta da FLASH (estágio MEM).
@@ -1095,6 +1104,12 @@ begin
     assert HAS_DCACHE or (not has_dcache_bypass)
         report "has_dcache_bypass exige HAS_DCACHE, a página de desvio só existe na cache de dados"
         severity failure;
+    assert fast_icache_select or (not early_fetch_addr)
+        report "early_fetch_addr exige fast_icache_select, a seleção da cache sai do endereço registrado"
+        severity failure;
+    assert has_icache or (not early_fetch_addr)
+        report "early_fetch_addr exige has_icache, a ponte de busca sem cache lê o PC atual"
+        severity failure;
     assert has_icache or (not fast_icache_select)
         report "fast_icache_select exige has_icache, "
                & "a seleção pelo endereço registrado só existe na cache de instruções"
@@ -1137,7 +1152,8 @@ begin
         severity failure;
 
     o_retire      <= core_retire;
-    o_if_addr     <= if_addr(ADDR_BITS - 1 downto 2);
+    if_addr_mem   <= if_addr_nx when early_fetch_addr else if_addr;
+    o_if_addr     <= if_addr_mem(ADDR_BITS - 1 downto 2);
     o_if_rden     <= if_rden;
     o_rom_addr2   <= flash_addr2(ADDR_BITS - 1 downto 2);
     o_rom_rden2   <= flash_rden2;
@@ -1207,7 +1223,8 @@ begin
         generic map (
             hpm_counters  => hpm_counters,
             hpm_width     => hpm_width,
-            time_external => HAS_INTERRUPTS
+            time_external => HAS_INTERRUPTS,
+            early_addr    => early_fetch_addr
         )
         port map (
             o_trap             => open,
@@ -1217,6 +1234,7 @@ begin
             i_clk              => i_clk_core,
             i_rst              => i_rst,
             o_if_addr          => if_addr,
+            o_if_addr_nx       => if_addr_nx,
             o_if_rden          => if_rden,
             i_boot_memory_data => i_boot_data,
             i_flash_data       => i_rom_data,
@@ -1685,7 +1703,7 @@ begin
                 i_clk          => i_clk_fetch,
                 i_clk_cpu      => i_clk_core,
                 i_rst          => i_rst,
-                i_addr         => if_addr,
+                i_addr         => if_addr_mem,
                 i_sel          => ic_sel,
                 o_ready        => ic_ready,
                 o_data         => ic_data,

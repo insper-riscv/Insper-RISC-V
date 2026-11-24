@@ -128,7 +128,17 @@ package config_pkg is
     -- Base da FLASH em bytes, logo depois da BOOT_MEMORY.
     constant FLASH_BASE          : map_addr_t := resize(unsigned'(x"00001000"), ADDR_BITS + 1);
     -- Fim exclusivo da FLASH em bytes.
-    constant FLASH_END           : map_addr_t := resize(unsigned'(x"00003000"), ADDR_BITS + 1);
+    constant FLASH_END           : map_addr_t := resize(unsigned'(x"00400000"), ADDR_BITS + 1);
+    -- Janela da FLASH que o roteador de regiões cobre, em KiB (o tamanho da região).
+    constant FLASH_WINDOW_KIB    : natural    := 4092;
+    -- Byte do chip onde a FLASH começa (0 sem `offset`).
+    constant FLASH_CHIP_OFFSET   : natural  := 62918656;
+    -- Bits baixos do endereço do SoC que percorrem a FLASH.
+    constant FLASH_CHIP_LOW_BITS : natural  := 22;
+    -- A FLASH usa uma constante nos bits altos, sem somador.
+    constant FLASH_CHIP_ALIGNED  : boolean  := true;
+    -- Constante dos bits altos da FLASH (vale com CHIP_ALIGNED).
+    constant FLASH_CHIP_HIGH     : natural  := 15;
 
     -- Configurações da RAM (memória de dados)
 
@@ -137,7 +147,15 @@ package config_pkg is
     -- Base da RAM em bytes.
     constant RAM_BASE            : map_addr_t := resize(unsigned'(x"40000000"), ADDR_BITS + 1);
     -- Fim exclusivo da RAM em bytes.
-    constant RAM_END             : map_addr_t := resize(unsigned'(x"44000000"), ADDR_BITS + 1);
+    constant RAM_END             : map_addr_t := resize(unsigned'(x"43C00000"), ADDR_BITS + 1);
+    -- Byte do chip onde a RAM começa (0 sem `offset`).
+    constant RAM_CHIP_OFFSET   : natural  := 0;
+    -- Bits baixos do endereço do SoC que percorrem a RAM.
+    constant RAM_CHIP_LOW_BITS : natural  := 26;
+    -- A RAM usa uma constante nos bits altos, sem somador.
+    constant RAM_CHIP_ALIGNED  : boolean  := true;
+    -- Constante dos bits altos da RAM (vale com CHIP_ALIGNED).
+    constant RAM_CHIP_HIGH     : natural  := 0;
 
     -- Devolve o nome da ISA configurada, como rv32im_zicclsm, na ordem canônica das extensões.
     function isa_string return string;

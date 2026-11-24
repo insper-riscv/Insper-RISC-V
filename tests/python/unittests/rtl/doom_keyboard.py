@@ -1,6 +1,6 @@
 """O teclado PS/2 da plataforma doom: o núcleo lê as setas.
 
-O programa da SDRAM (`gen_doom_images.py`, `sdram_kbd.hex`) liga a linha
+O programa da FLASH (`gen_doom_images.py`, `sdram_kbd.hex`) liga a linha
 do teclado no PLIC e a interrupção de recepção, avisa que está pronto,
 espera cada byte na fila, lê o claim do PLIC com o primeiro e guarda os
 scancodes na SDRAM. O testbench é o teclado: depois do aviso ele injeta,
@@ -14,6 +14,12 @@ from typing import Any
 import cocotb
 from cocotb.triggers import Timer
 
+from tests.python.gen_doom_images import (
+    CLK_MEM_NS,
+    RAM_BASE,
+    TOHOST,
+    ram_word,
+)
 from tests.python.unittests.rtl.sdram_sim_common import (
     sdram_word,
     start,
@@ -25,8 +31,8 @@ from tests.python.utils.checks import check
 # Um quarto do período do clock PS/2 do dispositivo, em nanossegundos
 # (mais rápido que um teclado de verdade, que a simulação não espera).
 QUARTER_NS = 1000
-RESULT_WORD = frame.RESULT_OFFSET // frame.WORD
-READY_WORD = frame.READY_OFFSET // frame.WORD
+RESULT_WORD = ram_word(RAM_BASE + frame.RESULT_OFFSET)
+READY_WORD = ram_word(RAM_BASE + frame.READY_OFFSET)
 # A fonte do teclado no PLIC.
 KBD_LINE = 5
 POLL_NS = 20_000
@@ -97,13 +103,13 @@ async def wait_ready(dut: Any) -> None:
 @cocotb.test()
 async def test_the_core_reads_the_arrow_keys(dut: Any) -> None:
     """The scancodes of the four arrows reach the core in order."""
-    await start(dut)
+    await start(dut, CLK_MEM_NS)
     dut.i_ps2_dev_clk_low.value = 0
     dut.i_ps2_dev_dat_low.value = 0
     await wait_ready(dut)
     for byte in frame.SCANCODES:
         await send_byte(dut, byte)
-    await wait_for_tohost(dut)
+    await wait_for_tohost(dut, ram_word(TOHOST))
     claim = await sdram_word(dut, RESULT_WORD)
     check(claim == KBD_LINE, f"the PLIC claim was {claim}")
     got = [
