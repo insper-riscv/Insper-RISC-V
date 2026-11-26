@@ -13,7 +13,7 @@ A Cyclone V 5CEBA4F23 with BOOT_MEMORY, FLASH and RAM inside the FPGA. It is the
 | `pll/` | The PLL IP (50 MHz in three phases) and `pll_sim.vhd`, the behavioral substitute that simulates it |
 | `rtl/` | The simulation top `rv32i3stage_core_sim_test` (plain VHDL arrays in place of the memory IPs), `clk_gen_3way` and `Blinky` |
 | `runtime/` | What the platform adds to the toolchain picolibc, with `rv32im-fpga.specs`, `boot_memory.S`, `boot_memory.ld`, `memory_map.h`, `_exit.c`, `stdio.c` and `spike_exit.S` |
-| `testbench/` | `test_c_program.py`, the cocotb testbench that watches the RAM write bus to decide PASS or FAIL of a program |
+| `testbench/` | `test_c_program.py`, the cocotb testbench that watches the RAM write bus, the UART and the motor sequence |
 | `config.yaml`, `config.fpga-sim.yaml` | `riscv-tools` configuration for the platform, of the simulation top and of the hardware top over the Intel `altera_mf` models |
 
 ## 3. Use by a project
@@ -35,7 +35,13 @@ The map has `TX_DATA` at `0xC0000000`, `RX_DATA` at `0xC0000004`, `STATUS` at `0
 
 This UART differs from the JTAG UART of the `de0-cv` platform. Both peripherals use the same window in different platforms, but they have separate host interfaces and status maps.
 
-## 5. Verification
+## 5. Motor GPIO
+
+Peripheral window 1, at `0x90000000`, contains a four-bit GPIO. The hardware top connects bits 0 through 3 to GPIO_1 pins H16, A12, H15 and B12. The simulation top exposes the same vector so the testbench can check the sequence written by the CPU.
+
+The electrical connection, registers and reference program are in the [stepper motor](stepper-motor.md) document.
+
+## 6. Verification
 
 | Target | What it checks |
 | :--- | :--- |

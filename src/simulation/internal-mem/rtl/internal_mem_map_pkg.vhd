@@ -85,24 +85,31 @@ package internal_mem_map_pkg is
 	constant D_CACHE_WINDOW_BITS : natural  := 26;
 
 	-- Número de periféricos do mapa, o tamanho das tabelas abaixo.
-	constant PERIPH_COUNT : natural := 1;
+	constant PERIPH_COUNT : natural := 2;
 	-- Periféricos estritos: o interconector termina com erro o acesso ao que sobra da janela depois dos registradores.
 	constant STRICT_PERIPH : boolean := true;
 	-- Tabela de endereços, um por periférico.
 	type periph_addr_array_t is array (natural range <>) of addr_t;
 
+	-- Endereço base do periférico MOTOR.
+	constant MOTOR_BASE : addr_t := std_logic_vector(resize(unsigned'(x"90000000"), ADDR_BITS));
+	-- Índice do periférico MOTOR nas tabelas PERIPH_BASES e PERIPH_MASKS.
+	constant MOTOR_INDEX : natural := 0;
+
 	-- Endereço base do periférico UART.
 	constant UART_BASE : addr_t := std_logic_vector(resize(unsigned'(x"C0000000"), ADDR_BITS));
 	-- Índice do periférico UART nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant UART_INDEX : natural := 0;
+	constant UART_INDEX : natural := 1;
 
 	-- Base de cada periférico, na ordem de `peripherals`.
 	constant PERIPH_BASES : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
+		MOTOR_INDEX => MOTOR_BASE,
 		UART_INDEX => UART_BASE
 	);
 
 	-- Máscara de cada janela: o periférico i responde quando (endereço and PERIPH_MASKS(i)) = PERIPH_BASES(i); a janela é a menor potência de dois que cobre o tamanho, com no mínimo 16 bytes.
 	constant PERIPH_MASKS : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
+		MOTOR_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFC0"), ADDR_BITS)),
 		UART_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS))
 	);
 

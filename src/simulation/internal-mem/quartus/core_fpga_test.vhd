@@ -1,10 +1,10 @@
 -- =============================================================================
 -- Topo de hardware da plataforma internal-mem para a DE0-CV
 --
--- Monta o núcleo com a BOOT_MEMORY, a FLASH e a RAM dentro da FPGA, a UART mapeada em
--- 0xC0000000, o carregador da FLASH por JTAG e o PLL de três fases. Os LEDs mostram o
--- estado do PLL, do reset e do carregador. O reset do núcleo é a soma do PLL sem lock, do
--- botão físico (ativo em nível baixo) e do carregador da FLASH.
+-- Monta o núcleo com a BOOT_MEMORY, a FLASH e a RAM dentro da FPGA, o GPIO do motor
+-- mapeado em 0x90000000, a UART em 0xC0000000, o carregador da FLASH por JTAG e o PLL de
+-- três fases. Os LEDs mostram o estado do PLL, do reset e do carregador. O reset do núcleo
+-- é a soma do PLL sem lock, do botão físico (ativo em nível baixo) e do carregador da FLASH.
 -- =============================================================================
 
 library ieee;
@@ -32,6 +32,8 @@ entity core_fpga_test is
         i_uart_rx      : in    std_logic                    := '1';
         -- Saída serial da UART (repouso em '1').
         o_uart_tx      : out   std_logic                    := '1';
+        -- Quatro sinais do GPIO que comandam IN1 a IN4 do driver do motor.
+        io_motor       : inout std_logic_vector(3 downto 0);
         -- LEDs vermelhos da placa: bit 0 pisca, bits 1 a 4 mostram o estado do PLL, do reset e do carregador da FLASH.
         o_ledr         : out   std_logic_vector(9 downto 0) := (others => '0')
     );
@@ -152,13 +154,26 @@ architecture behaviour of core_fpga_test is
     -- Dado lido da UART registrado, devolvido ao núcleo no ciclo seguinte.
     signal uart_rdata_d  : word_t;
 
+    -- GPIO do motor mapeado em MOTOR_BASE.
+    signal motor_selected : std_logic;
+    -- Escrita no GPIO do motor ('1' = escreve; janela selecionada e escrita do núcleo).
+    signal motor_write    : std_logic;
+    -- Leitura do GPIO do motor ('1' = lê; janela selecionada e leitura do núcleo).
+    signal motor_read     : std_logic;
+    -- Dado lido dos registradores do GPIO do motor.
+    signal motor_rdata    : word_t;
+    -- Leitura do GPIO do motor atrasada um ciclo, que acompanha a resposta registrada.
+    signal motor_read_d   : std_logic;
+    -- Dado lido do GPIO do motor, estendido e registrado para o núcleo.
+    signal motor_rdata_d  : word_t;
+
     -- Porta externa do core, usada pela janela de periféricos.
     signal sdram_addr    : addr_t;
     -- Dado de escrita do barramento externo do núcleo.
     signal sdram_wdata   : word_t;
     -- Dado lido do barramento externo devolvido ao núcleo.
     signal sdram_rdata   : word_t;
-    -- O acesso externo do núcleo não cai na janela da UART (nenhum escravo o atende): falha de acesso.
+    -- O acesso externo do núcleo não cai em nenhuma janela atendida: falha de acesso.
     signal ext_error     : std_logic;
     -- Habilitação de bytes da escrita no barramento externo.
     signal sdram_byteena : std_logic_vector(3 downto 0);
@@ -199,9 +214,16 @@ begin
                      when window_hit(sdram_addr, UART_BASE, PERIPH_MASKS(UART_INDEX)) else
                      '0';
 
-    ext_error  <= (sdram_rden or sdram_wren) and not uart_selected;
+    -- Seleciona a janela do GPIO que comanda as quatro entradas do ULN2003.
+    motor_selected <= '1'
+                      when window_hit(sdram_addr, MOTOR_BASE, PERIPH_MASKS(MOTOR_INDEX)) else
+                      '0';
+
+    ext_error  <= (sdram_rden or sdram_wren) and not (uart_selected or motor_selected);
     uart_write <= sdram_wren and uart_selected;
     uart_read  <= sdram_rden and uart_selected;
+    motor_write <= sdram_wren and motor_selected;
+    motor_read  <= sdram_rden and motor_selected;
 
     -- Status LEDs -- ver README.md/docs para o mapa completo. Baratos
     -- o bastante pra deixar permanentes (nao so' debug de bring-up):
@@ -286,25 +308,55 @@ begin
             o_uart_tx  => o_uart_tx
         );
 
+    u_motor_gpio : entity work.gpio
+        generic map (
+            pin_count      => 4,
+            group_count    => 1,
+            member_count   => 4,
+            group_sizes    => x"04",
+            group_members  => x"03020100",
+            pin_dirs       => (7 downto 0 => '0'),
+            pin_active_low => (3 downto 0 => '0')
+        )
+        port map (
+            i_clk        => pll_clk_idexmem,
+            i_rst        => core_reset,
+            i_data_in    => sdram_wdata,
+            i_address    => sdram_addr(5 downto 2),
+            i_write      => motor_write,
+            i_read       => motor_read,
+            o_data_out   => motor_rdata,
+            o_irq        => open,
+            io_gpio_pins => io_motor
+        );
+
     p_uart_read_pipeline : process (core_reset, pll_clk_idexmem) is
     begin
 
         if core_reset = '1' then
             uart_read_d  <= '0';
             uart_rdata_d <= (others => '0');
+            motor_read_d  <= '0';
+            motor_rdata_d <= (others => '0');
         elsif rising_edge(pll_clk_idexmem) then
-            uart_read_d <= uart_read;
+            uart_read_d  <= uart_read;
+            motor_read_d <= motor_read;
 
             if uart_read = '1' then
                 uart_rdata_d <= uart_rdata;
+            end if;
+            if motor_read = '1' then
+                motor_rdata_d <= motor_rdata;
             end if;
         end if;
 
     end process p_uart_read_pipeline;
 
-    -- A UART responde no ciclo seguinte da porta externa; a RAM interna
+    -- Cada periférico responde no ciclo seguinte da porta externa; a RAM interna
     -- permanece dedicada à sua própria porta do core.
-    sdram_rdata <= uart_rdata_d;
+    sdram_rdata <= uart_rdata_d when uart_read_d = '1' else
+                   motor_rdata_d when motor_read_d = '1' else
+                   (others => '0');
 
     -- BOOT_MEMORY: fixa, gravada uma unica vez (nunca reescrita via JTAG
     -- por teste -- ver config.yaml quartus.boot_memory_mif_target). So'

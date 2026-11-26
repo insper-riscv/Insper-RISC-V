@@ -56,6 +56,9 @@ boot:
 strict_periph: true
 
 peripherals:
+  MOTOR:
+    base: 0x90000000
+    size: 64
   UART:
     base: 0xC0000000
     size: 1K
@@ -100,3 +103,4 @@ checks:
   - {name: Tests header RV32_RAM_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_BASE\s+(0x[0-9A-Fa-f]+)', expect: RAM.base}
   - {name: Tests header RV32_RAM_END, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_RAM_END\s+(0x[0-9A-Fa-f]+)', expect: RAM.end}
   - {name: Tests header RV32_STDOUT_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_STDOUT_BASE\s+(0x[0-9A-Fa-f]+)', expect: stdout.base}
+  - {name: Tests header RV32_MOTOR_BASE, file: ../Tests/tools/riscv_build/include/rv32_platform.h, optional: true, pattern: '#define RV32_MOTOR_BASE\s+(0x[0-9A-Fa-f]+)', expect: MOTOR.base}
