@@ -175,9 +175,12 @@ def ensure_board(sdk: Path, name: str) -> Path:
 def prepare_hardware(sdk: Path, project: dict[str, Any]) -> None:
     """Generate the selected board project before the SDK fingerprints it."""
     name = project.get("platform", "internal-mem")
-    if name not in board_choices(sdk):
+    if name in board_choices(sdk):
+        target = ensure_board(sdk, name)
+    elif name == "de0-cv":
+        target = sdk / "src/cyclone-v/de0-cv"
+    else:
         return
-    target = ensure_board(sdk, name)
     config = yaml.safe_load((target / "config.yaml").read_text())
     request = board_generate.request_from_config(
         sdk, config["quartus"]["generate"]
@@ -186,4 +189,12 @@ def prepare_hardware(sdk: Path, project: dict[str, Any]) -> None:
     if result.problems:
         raise SystemExit(
             "Invalid generated board project: " + "; ".join(result.problems)
+        )
+    # Quartus sees the host CPU count even inside a CPU-limited container.
+    for qsf in result.folder.glob("*.qsf"):
+        text = qsf.read_text()
+        qsf.write_text(
+            text.replace(
+                "NUM_PARALLEL_PROCESSORS ALL", "NUM_PARALLEL_PROCESSORS 2"
+            )
         )

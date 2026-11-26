@@ -180,5 +180,6 @@ quartus:
   # Virtual JTAG instance 0 that halts the core while it writes port B); the BOOT_MEMORY is written once by the full
   # compile and the SDRAM is reached through the debug port (Virtual JTAG instance 3: the JTAG UART is 1, the display 2).
   rom_mem_instances: []
-  rom_write_method: jtag_loader
+  rom_write_method: sdram_debug
+  sdram_debug_protocol: memory-v0.6
   sdram_debug_instance: 3
