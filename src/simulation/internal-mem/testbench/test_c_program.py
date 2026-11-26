@@ -135,6 +135,26 @@ STEPPER_UART_RESULT = b"ESQUERDA\n"
 UART_BIT_TIME_NS = round(1_000_000_000 / 115_200)
 MOTOR_HALF_STEP_SEQUENCE = (0x1, 0x3, 0x2, 0x6, 0x4, 0xC, 0x8, 0x9)
 MOTOR_REVERSE_HALF_STEP_SEQUENCE = tuple(reversed(MOTOR_HALF_STEP_SEQUENCE))
+UART_EXPECTED_BY_TEST = {
+    "uart-tx": UART_TX_EXPECTED,
+    "uart-echo": UART_ECHO_EXPECTED,
+    "uart-errors": (
+        UART_ERRORS_PREFIX
+        + UART_ERRORS_READY
+        + UART_BURST_PAYLOAD
+        + UART_ERRORS_FINAL
+    ),
+    "uart-stdio": UART_STDIO_PROMPT + UART_STDIO_RESULT,
+    "stepper-uart": STEPPER_UART_PROMPT + STEPPER_UART_RESULT,
+}
+UART_EXCHANGE_BY_TEST = {
+    "uart-stdio": (UART_STDIO_PROMPT, UART_STDIO_INPUT, UART_STDIO_RESULT),
+    "stepper-uart": (
+        STEPPER_UART_PROMPT,
+        STEPPER_UART_INPUT,
+        STEPPER_UART_RESULT,
+    ),
+}
 
 
 def check(condition: bool, message: str) -> None:
@@ -230,30 +250,20 @@ async def exchange_uart_errors(uart_rx: Any, uart_tx: Any) -> bytes:
     return bytes(received)
 
 
-async def exchange_uart_stdio(uart_rx: Any, uart_tx: Any) -> bytes:
-    """Exercise picolibc printf and scanf through the serial UART."""
-    received = bytearray(
-        await receive_uart_message(uart_tx, len(UART_STDIO_PROMPT))
-    )
+async def exchange_uart_input(
+    uart_rx: Any,
+    uart_tx: Any,
+    prompt: bytes,
+    user_input: bytes,
+    result: bytes,
+) -> bytes:
+    """Capture a prompt, send input and capture the resulting reply."""
+    received = bytearray(await receive_uart_message(uart_tx, len(prompt)))
 
     result_capture = cocotb.start_soon(
-        receive_uart_message(uart_tx, len(UART_STDIO_RESULT))
+        receive_uart_message(uart_tx, len(result))
     )
-    await send_uart_message(uart_rx, UART_STDIO_INPUT)
-    received.extend(await result_capture)
-    return bytes(received)
-
-
-async def exchange_stepper_uart(uart_rx: Any, uart_tx: Any) -> bytes:
-    """Send a reverse command and capture its acknowledgement."""
-    received = bytearray(
-        await receive_uart_message(uart_tx, len(STEPPER_UART_PROMPT))
-    )
-
-    result_capture = cocotb.start_soon(
-        receive_uart_message(uart_tx, len(STEPPER_UART_RESULT))
-    )
-    await send_uart_message(uart_rx, STEPPER_UART_INPUT)
+    await send_uart_message(uart_rx, user_input)
     received.extend(await result_capture)
     return bytes(received)
 
@@ -281,34 +291,42 @@ def start_uart(
         The expected bytes and the capture task, both None when the
         test does not use the UART.
     """
-    if test_name == "uart-tx":
-        expected = UART_TX_EXPECTED
-    elif test_name == "uart-echo":
-        expected = UART_ECHO_EXPECTED
-    elif test_name == "uart-errors":
-        expected = (
-            UART_ERRORS_PREFIX
-            + UART_ERRORS_READY
-            + UART_BURST_PAYLOAD
-            + UART_ERRORS_FINAL
-        )
-    elif test_name == "uart-stdio":
-        expected = UART_STDIO_PROMPT + UART_STDIO_RESULT
-    elif test_name == "stepper-uart":
-        expected = STEPPER_UART_PROMPT + STEPPER_UART_RESULT
-    else:
+    expected = UART_EXPECTED_BY_TEST.get(test_name)
+    if expected is None:
         return None, None
     if test_name != "uart-tx":
         dut.i_uart_rx.value = 1
     if test_name == "uart-errors":
         capture = exchange_uart_errors(dut.i_uart_rx, dut.o_uart_tx)
-    elif test_name == "uart-stdio":
-        capture = exchange_uart_stdio(dut.i_uart_rx, dut.o_uart_tx)
-    elif test_name == "stepper-uart":
-        capture = exchange_stepper_uart(dut.i_uart_rx, dut.o_uart_tx)
+    elif test_name in UART_EXCHANGE_BY_TEST:
+        prompt, user_input, result = UART_EXCHANGE_BY_TEST[test_name]
+        capture = exchange_uart_input(
+            dut.i_uart_rx, dut.o_uart_tx, prompt, user_input, result
+        )
     else:
         capture = receive_uart_message(dut.o_uart_tx, len(expected))
     return expected, cocotb.start_soon(capture)
+
+
+def start_clocks(dut: Any) -> tuple[Any, Any]:
+    """Start every configured clock and return run and sample clocks."""
+    clock = getattr(dut, SIM_CLOCK)
+    sample_clock = getattr(dut, SIM_SAMPLE_CLOCK)
+    cocotb.start_soon(Clock(clock, SIM_CLOCK_PERIOD_NS, unit="ns").start())
+    for extra_name, extra_period in EXTRA_CLOCKS:
+        cocotb.start_soon(
+            Clock(getattr(dut, extra_name), extra_period, unit="ns").start()
+        )
+    return clock, sample_clock
+
+
+def start_uart_drive(dut: Any, test_name: str) -> Task[None] | None:
+    """Start the independent RX drive needed by the echo test."""
+    if test_name != "uart-echo":
+        return None
+    return cocotb.start_soon(
+        send_uart_message(dut.i_uart_rx, UART_ECHO_EXPECTED)
+    )
 
 
 class MotorSequence:
@@ -346,6 +364,40 @@ class MotorSequence:
         )
         self.observed.append(value)
         return len(self.observed) == len(self.expected)
+
+
+def motor_sequence(test_name: str) -> MotorSequence:
+    """Build the direction-specific sequence for the named test."""
+    expected = (
+        MOTOR_REVERSE_HALF_STEP_SEQUENCE
+        if test_name == "stepper-uart"
+        else MOTOR_HALF_STEP_SEQUENCE
+    )
+    return MotorSequence(expected)
+
+
+async def finish_motor(
+    dut: Any,
+    test_name: str,
+    motor: MotorSequence,
+    uart: tuple[bytes | None, Task[bytes] | None],
+) -> bool:
+    """Validate and report a completed motor sequence."""
+    if test_name not in ("stepper-motor", "stepper-uart"):
+        return False
+    if not motor.sample(dut):
+        return False
+
+    expected, capture = uart
+    if capture is not None:
+        received = await with_timeout(capture, 5, "ms")
+        check(
+            received == expected,
+            f"UART TX incorreto: esperado {expected!r}, recebido {received!r}",
+        )
+        LOG.info("UART TX recebido: %r", received)
+    LOG.info("PASS: sequência de meio passo do motor: %s", motor.observed)
+    return True
 
 
 class RamBus:
@@ -466,51 +518,23 @@ async def test_program(dut: Any) -> None:
     test_name = os.environ.get("TEST_NAME", "?")
     LOG.info("running %s", test_name)
 
-    clock = getattr(dut, SIM_CLOCK)
-    sample_clock = getattr(dut, SIM_SAMPLE_CLOCK)
-    cocotb.start_soon(Clock(clock, SIM_CLOCK_PERIOD_NS, unit="ns").start())
-    for extra_name, extra_period in EXTRA_CLOCKS:
-        cocotb.start_soon(
-            Clock(getattr(dut, extra_name), extra_period, unit="ns").start()
-        )
-    uart_expected, uart_capture = start_uart(dut, test_name)
-    uart_drive: Task[None] | None = None
+    clock, sample_clock = start_clocks(dut)
+    uart = start_uart(dut, test_name)
+    uart_drive = start_uart_drive(dut, test_name)
     bus = RamBus(dut)
-    motor_expected = (
-        MOTOR_REVERSE_HALF_STEP_SEQUENCE
-        if test_name == "stepper-uart"
-        else MOTOR_HALF_STEP_SEQUENCE
-    )
-    motor = MotorSequence(motor_expected)
+    motor = motor_sequence(test_name)
     cycles_used = 0
     retired = 0
 
     getattr(dut, SIM_RESET).value = SIM_RESET_ACTIVE
     await ClockCycles(clock, 5)
     getattr(dut, SIM_RESET).value = 1 - SIM_RESET_ACTIVE
-    if test_name == "uart-echo":
-        uart_drive = cocotb.start_soon(
-            send_uart_message(dut.i_uart_rx, UART_ECHO_EXPECTED)
-        )
     for _ in range(TIMEOUT_CYCLES):
         await RisingEdge(sample_clock)
         cycles_used += 1
         retired += retired_now(dut)
 
-        if test_name in ("stepper-motor", "stepper-uart") and motor.sample(
-            dut
-        ):
-            if uart_capture is not None:
-                received = await with_timeout(uart_capture, 5, "ms")
-                check(
-                    received == uart_expected,
-                    f"UART TX incorreto: esperado {uart_expected!r}, "
-                    f"recebido {received!r}",
-                )
-                LOG.info("UART TX recebido: %r", received)
-            LOG.info(
-                "PASS: sequência de meio passo do motor: %s", motor.observed
-            )
+        if await finish_motor(dut, test_name, motor, uart):
             return
 
         tohost = bus.tohost_write()
@@ -520,7 +544,7 @@ async def test_program(dut: Any) -> None:
             await finish_pass(
                 test_name,
                 bus,
-                (uart_expected, uart_capture, uart_drive),
+                (uart[0], uart[1], uart_drive),
                 (cycles_used, retired),
             )
             return
