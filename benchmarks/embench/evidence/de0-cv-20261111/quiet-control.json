@@ -1,0 +1,107 @@
+{
+  "status": "pass",
+  "results": [
+    {
+      "program": "nsichneu",
+      "repeat": 1,
+      "status": "pass",
+      "cycles": 43372512,
+      "instructions": 2242277,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "nsichneu",
+      "repeat": 2,
+      "status": "pass",
+      "cycles": 43372515,
+      "instructions": 2242277,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "nsichneu",
+      "repeat": 3,
+      "status": "pass",
+      "cycles": 43372515,
+      "instructions": 2242277,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "sglib-combined",
+      "repeat": 1,
+      "status": "pass",
+      "cycles": 13559719,
+      "instructions": 2589455,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "sglib-combined",
+      "repeat": 2,
+      "status": "pass",
+      "cycles": 13559878,
+      "instructions": 2589455,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "sglib-combined",
+      "repeat": 3,
+      "status": "pass",
+      "cycles": 13558849,
+      "instructions": 2589455,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "xgboost",
+      "repeat": 1,
+      "status": "pass",
+      "cycles": 18050263,
+      "instructions": 3506537,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "xgboost",
+      "repeat": 2,
+      "status": "pass",
+      "cycles": 18049970,
+      "instructions": 3506537,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    },
+    {
+      "program": "xgboost",
+      "repeat": 3,
+      "status": "pass",
+      "cycles": 18049970,
+      "instructions": 3506537,
+      "quiet_seconds_before_first_poll": 3,
+      "first_poll_done": true
+    }
+  ],
+  "comparison": [
+    {
+      "program": "nsichneu",
+      "monitored_cycles_median": 43372517,
+      "quiet_cycles_median": 43372515,
+      "cycle_change_percent": -4.6112149765242805e-06
+    },
+    {
+      "program": "sglib-combined",
+      "monitored_cycles_median": 13559799,
+      "quiet_cycles_median": 13559719,
+      "cycle_change_percent": -0.0005899792467456422
+    },
+    {
+      "program": "xgboost",
+      "monitored_cycles_median": 18050510,
+      "quiet_cycles_median": 18049970,
+      "cycle_change_percent": -0.00299160522334585
+    }
+  ],
+  "note": "Additional controls of monitoring interference, not different CPU versions."
+}

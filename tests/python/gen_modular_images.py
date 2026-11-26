@@ -39,7 +39,7 @@ from tests.python.utils.rv32_asm import (
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/modular"
 ROOT = Path(__file__).resolve().parents[2]
 MAP = symbols(load_platform(ROOT / "src/simulation/modular/platform.yaml"))
-ROM_BASE = MAP["ROM.base"]  # a ROM começa logo depois da BOOT_MEMORY
+ROM_BASE = MAP["FLASH.base"]  # a ROM começa logo depois da BOOT_MEMORY
 RAM_BASE = MAP["RAM.base"]
 ROM_BASE_WORDS = ROM_BASE // 4
 RAM_HI20 = RAM_BASE >> 12

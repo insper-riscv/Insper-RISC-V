@@ -35,7 +35,8 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/cyclone-v/external-data/config_pkg.vhd
     - src/cyclone-v/external-data/external_data_map_pkg.vhd
-    - src/interconnect/ext_interconnect.vhd
+    - base/src/interconnect/interconnect_pkg.vhd
+    - base/src/interconnect/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
@@ -129,6 +130,11 @@ sim:
     - Memory/src/cache/SoC/cache_pkg.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
     - src/cyclone-v/external-data/external-data_sim_top.vhd

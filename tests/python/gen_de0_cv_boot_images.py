@@ -18,8 +18,10 @@ rodou.
 O arquivo `unittests/rtl/data/de0_cv_boot/images.json` guarda a boot
 memory e, por caso, as palavras de cada banca a partir do índice de
 palavra dela na FLASH. O teste escreve a FLASH de cada caso com elas.
-Com `--check` o script só confere se o arquivo está em dia com a
-`boot_memory.S` e o `pack`.
+Com `--check` o script confere se o arquivo está em dia com a
+`boot_memory.S` e o `pack`, confere o `boot_memory_init.mif` de cada
+plataforma de placa (`gen_boot_memory_mifs.py`) e roda
+`check_boot_contract.py`, o contrato da BOOT em cada plataforma.
 """
 
 import argparse
@@ -32,8 +34,14 @@ from pathlib import Path
 from typing import Any
 
 from riscv_tools import boot_memory, flash_image
+from riscv_tools.memory_map import banks as bank_map
 from riscv_tools.memory_map import load_platform, symbols
 
+from tests.python import (
+    check_boot_contract,
+    gen_boot_memory_mifs,
+    gen_real_boot_images,
+)
 from tests.python.gen_de0_cv_images import load_address
 from tests.python.utils.rv32_asm import T0, T1, T2, X0, addi, jal, sw
 
@@ -41,12 +49,14 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/de0_cv_boot"
 IMAGES = DATA / "images.json"
 PLATFORM = ROOT / "src/cyclone-v/de0-cv/platform.yaml"
-MAP = symbols(load_platform(PLATFORM))
+MAP = symbols(load_platform(PLATFORM)) | bank_map.symbols(
+    load_platform(PLATFORM)
+)
 RAM_BASE = MAP["RAM.base"]
 TOHOST = MAP["tohost.base"]
 BANK = {
-    "A": (0x00001000, 124 * 1024),
-    "B": (0x00020000, 128 * 1024),
+    "A": (MAP["BANK_A.base"], MAP["BANK_A.size"]),
+    "B": (MAP["BANK_B.base"], MAP["BANK_B.size"]),
 }
 WORD = 4
 A0, A1 = 10, 11
@@ -366,6 +376,9 @@ def main() -> None:
             print(f"{IMAGES} is out of date: run the generator")
             sys.exit(1)
         print("images.json is up to date")
+        gen_real_boot_images.check()
+        gen_boot_memory_mifs.check()
+        check_boot_contract.main()
         return
     DATA.mkdir(parents=True, exist_ok=True)
     IMAGES.write_text(text)

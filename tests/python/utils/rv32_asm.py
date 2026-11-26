@@ -6,6 +6,7 @@ T1 = 6
 T2 = 7
 T3 = 28
 T4 = 29
+A0 = 10
 
 
 def lui(rd: int, imm20: int) -> int:
@@ -205,6 +206,37 @@ def csrrs(rd: int, csr: int, rs1: int) -> int:
         The 32-bit instruction.
     """
     return (csr << 20) | (rs1 << 15) | (2 << 12) | (rd << 7) | 0x73
+
+
+def csrrw(rd: int, csr: int, rs1: int) -> int:
+    """Encode ``csrrw rd, csr, rs1`` (``csrw`` when ``rd`` is ``x0``).
+
+    Parameters
+    ----------
+    rd : int
+        Destination register, that receives the old value of the CSR.
+    csr : int
+        The 12-bit CSR address.
+    rs1 : int
+        Register with the new value.
+
+    Returns
+    -------
+    int
+        The 32-bit instruction.
+    """
+    return (csr << 20) | (rs1 << 15) | (1 << 12) | (rd << 7) | 0x73
+
+
+def mret() -> int:
+    """Encode ``mret``.
+
+    Returns
+    -------
+    int
+        The 32-bit instruction.
+    """
+    return 0x30200073
 
 
 def hex_lines(words: list[int]) -> str:

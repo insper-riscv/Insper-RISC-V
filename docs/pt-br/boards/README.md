@@ -15,6 +15,7 @@ As placas são dados: um pacote por placa, uma família por dispositivo e um cat
 | [cabimento.md](cabimento.md) | Estimador, política de cabimento e confirmação pelo ajuste |
 | [calibracao.md](calibracao.md) | Tabelas de calibração medidas de cada família |
 | [equivalencia-de0-cv.md](equivalencia-de0-cv.md) | Equivalência da DE0-CV gerada com a escrita à mão |
+| [perifericos-por-placa.md](perifericos-por-placa.md) | Papéis de pino dos periféricos externos de cada placa, plataformas de exemplo e pinos compartilhados |
 
 ## 2. Placas
 
@@ -22,13 +23,14 @@ As placas são dados: um pacote por placa, uma família por dispositivo e um cat
 
 | Página | Placa |
 | :--- | :--- |
+| [de0-cv.md](de0-cv.md) | Terasic DE0-CV |
 | [de2-115.md](de2-115.md) | Terasic DE2-115 |
 | [de0-nano.md](de0-nano.md) | Terasic DE0-Nano |
 | [de10-lite.md](de10-lite.md) | Terasic DE10-Lite |
 | [de10-nano.md](de10-nano.md) | Terasic DE10-Nano e DE0-Nano-SoC |
 | [mkr-vidor-4000.md](mkr-vidor-4000.md) | Arduino MKR Vidor 4000 |
 
-A DE0-CV tem a página [../platform/de0-cv.md](../platform/de0-cv.md).
+A plataforma da DE0-CV está em [../platform/de0-cv.md](../platform/de0-cv.md).
 
 ---
 

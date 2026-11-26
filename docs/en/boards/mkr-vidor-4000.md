@@ -83,6 +83,10 @@ The exact name of the example in the IDE must be checked on the first upload. Th
 | N1 | Fit and timing analysis | Target of the package |
 | N2 | Live board | Needs the emulated or external cable working |
 
+## 7. I/O and peripheral roles
+
+The package declares the `gpio` role (MKR headers and Mini PCI Express) and the `i2c`, `spi` and `serial` roles in `buses`, read from `ABX00022-pinout.pdf` and the schematic, which give the FPGA ball and the SAMD21 SERCOM of each header pin. The direct TMDS of the HDMI output, the MIPI camera and the Wi-Fi bridge stay only in `pins.yaml`, with no role. The full table and the example platform are in [perifericos-por-placa.md](perifericos-por-placa.md).
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../LICENSE).

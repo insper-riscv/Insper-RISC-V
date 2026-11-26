@@ -1,0 +1,103 @@
+{
+  "workload": "full",
+  "suite_commit": "09c2ed8c3b7008c95d08b038de4a3f6dc103ed70",
+  "flags": [
+    "-march=rv32im_zicsr_zifencei",
+    "-mabi=ilp32",
+    "-O2",
+    "-fno-common",
+    "-fno-lto",
+    "-ffunction-sections",
+    "-fdata-sections"
+  ],
+  "records": {
+    "counter-4096": {
+      "elf_sha256": "e78a2483a21a8b6a8fdea0fa34296affe566cb6cbb3aaa160ec8165b4fdf1dd6",
+      "image_sha256": "dc0ace7d6622f0ba67fac28ff80627dbc9ec449a5480145a1c9f58e3510299dc"
+    },
+    "counter-8192": {
+      "elf_sha256": "968daf621058ce01690eab5d99b4901565491de1cefbad69762830b608e2940e",
+      "image_sha256": "c33e9198471ed82321a6667487a7ac658387c78b794f2cf27e1c22e4ac10ea59"
+    },
+    "frequency": {
+      "elf_sha256": "ea8260452ad685a95d84c7b0f893320954551e4f9ba22b47b51d1062232e29ee",
+      "image_sha256": "259a98c26c673dece0a80a24ade485628ccc389026b51ab087c8744692b9be9b"
+    },
+    "aha-mont64": {
+      "elf_sha256": "b7576d052d6cc986b12fa7ace590f5240423799b03e25e5cda8b88120ade163e",
+      "image_sha256": "dc9121a43d0f9b51e81b1dd6f74a4418d35c1e7b9faa1efbb54896c0264faac1"
+    },
+    "crc32": {
+      "elf_sha256": "f50a05152cc352cfed3795f0dec59312cf8d7174e9e0c613a8d7b1896e1e8b54",
+      "image_sha256": "64926ec820cba731cdc3a488eb1d295e1fc031eb94c112c22277be274fb637bf"
+    },
+    "depthconv": {
+      "elf_sha256": "a83523cf7ed21d0520cffa712279da9408977413c3d790f6b6b814ba5e4420f2",
+      "image_sha256": "1b0cf76346443da844f199db4caa3f8a501dec4c6facb789fdecd92b712047b7"
+    },
+    "edn": {
+      "elf_sha256": "a00ee9f0edab73e13ffa41b3ae1ece339bc7c5ec21dd42fd911ff4243ddfe014",
+      "image_sha256": "a0dac6cefb8ded26dbac7689ae93db4dcf8d361eb314777c54fa5a8890ce5f53"
+    },
+    "huffbench": {
+      "elf_sha256": "63bb51be1115c9213ccd725d912342f50593a664ddea3ef1668cca7eff40d76f",
+      "image_sha256": "f7428b118f18f316779bb0e1ce679a6ac9493a68751966ed17b97b98d673a37d"
+    },
+    "matmult-int": {
+      "elf_sha256": "fc5df687dfffeead8b1b4dcf1246e9d53d451c425a569803d26ddcc91a2a858b",
+      "image_sha256": "645c6d7f5e622b0bb76cfd7e48a76fd3637a1e2e1a8d108ba8aa80796a005895"
+    },
+    "md5sum": {
+      "elf_sha256": "6437503ffe132b2e89c9dbcb570b5c5a097db5b9a02a6bc94bf25f134e663e35",
+      "image_sha256": "1f2de19703cd9d1d5112d06639cd32ea4e73fac0d421570207b3a19f3dc17db8"
+    },
+    "nettle-aes": {
+      "elf_sha256": "ff9bb33141b3c3d8f684e5a78a441833142895d46b02074f0113af647ff8cd46",
+      "image_sha256": "d46d4dc121603a8945d26818f560a8df19d7f5895c255008f2aec686c2ee09ba"
+    },
+    "nettle-sha256": {
+      "elf_sha256": "7a07cd71ee0953bc2517679bfc0487334ecbaad9264ff32470ca3df1290911ec",
+      "image_sha256": "d4ff016daf1373bbaa33661aaed285a35a04b7b03d101560bf5415f431c75eca"
+    },
+    "nsichneu": {
+      "elf_sha256": "5f43654fc712bb232b81092d8033139527d9a08656cdc5c8ece35bb88e996c00",
+      "image_sha256": "f6ade9030453236c1c9846d8ef1c52c98c9a5a747be531863f4012f3ad63c909"
+    },
+    "picojpeg": {
+      "elf_sha256": "b43d3a72e9a6d616eb13c23f1d457923a2a8c7c4aa964da46ca6ef6481b7240d",
+      "image_sha256": "f80bff85ed62531067593b655ec4adbbead5cacf306e919273c04caa0428846c"
+    },
+    "qrduino": {
+      "elf_sha256": "d23fe73eec8ca95f14e0c3bd3fb21384e29269907ec299b27f82197c5f85ac21",
+      "image_sha256": "73056db56a8d30f75fa0c8d755564ae902ab8dec1dee09f558bfebbaac5308e6"
+    },
+    "sglib-combined": {
+      "elf_sha256": "08d0e92635af6c126e30055bedc2c5d679e40a4c26721a53c36e46864fdbad2d",
+      "image_sha256": "2e41ee027bbc4751b52cc17fea2ab49c86a4405f990f9ef7f6f926dec1a30e68"
+    },
+    "slre": {
+      "elf_sha256": "b91988156941abc3f9c1fa866da0730c124894831c2a7da0fa9e20f58393e8ef",
+      "image_sha256": "c0b1e852b3e9e523212dce5305aa67aadbd6e9c3898e5a14a3eb22f23927b2a2"
+    },
+    "statemate": {
+      "elf_sha256": "96fd6e99df216d3feada0ecf58c1de3c5e3b274f644d28321df52a1d50664cdf",
+      "image_sha256": "ebb7e40dd378dd911118b1527fe740f08507d78e7360d1694ab28838a238864b"
+    },
+    "tarfind": {
+      "elf_sha256": "b517922afc7a3fe4214267fc51b1f6b16bc4806e4b7f26c8fc85002f2134b251",
+      "image_sha256": "5a7a204e1e11c62b56132df2369f638fb49c5f9e5da2738848d470d8a62a7ed2"
+    },
+    "ud": {
+      "elf_sha256": "8d1c9ee8b4577edd26d6b7fb513c9ad409136f42829b596de5f1c28d2d082405",
+      "image_sha256": "12405730ccae7da51d874e9b0eaf7070ca866dd4ad4cfe7781b52880ec052b52"
+    },
+    "wikisort": {
+      "elf_sha256": "b416172a1e0a7bfebe1565c5da55515a5d418d7f5a67235020e7bdec6365e95a",
+      "image_sha256": "10099a931314cc39b161959a80614822c82b2b32266c82de444c45fbdde4bdd0"
+    },
+    "xgboost": {
+      "elf_sha256": "fb1f2abba6eab916d41564f6c78289c15dff213cf76344bafb0e962b025362ac",
+      "image_sha256": "3b7d15c23f87b0fe1461788746865f67ae4d6fa7cf7f2af64bebd1f626df28cf"
+    }
+  }
+}

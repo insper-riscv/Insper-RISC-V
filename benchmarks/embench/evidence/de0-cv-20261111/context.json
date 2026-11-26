@@ -1,0 +1,60 @@
+{
+  "schema": "rv32.embench.physical.context/v1",
+  "profile": "rv32im_zicclsm_zicntr_zihpm_zifencei",
+  "extras": [
+    "Zimop",
+    "Zicond",
+    "Zihintntl",
+    "Zihintpause",
+    "Interrupts",
+    "Sscofpmf",
+    "AccessFaults"
+  ],
+  "hpm_counters": 29,
+  "hpm_width": 64,
+  "clock_core_mhz_configured": 76.923077,
+  "clock_sdram_mhz_configured": 100,
+  "seed": 5,
+  "device": "5CEBA4F23C7",
+  "board": "de0-cv",
+  "jtag_idcode": "02B050DD",
+  "cable": "USB-Blaster [1-6]",
+  "image": "ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8",
+  "source_commit": "d0a1e096cb06f092b98d11af10efd744f07f6222",
+  "cpu_and_platform_tracked_sources_unchanged": true,
+  "submodules": "1090094a313295bb2711beab80167eec225178ad Common-Components (heads/main)\n a276820baf2281d1cea2958ceb70fdc5c5b5a3c6 Core (heads/main)\n 1090094a313295bb2711beab80167eec225178ad Core/src/common (heads/main)\n c8b497c0d89d17e67e20dbee754128e83bfcf4de Memory (heads/main)\n 1090094a313295bb2711beab80167eec225178ad Memory/src/common (heads/main)\n 5aba0a1fa913ccf48c34f999d0fe3f1dc60d1188 Peripherals (heads/main)\n 1090094a313295bb2711beab80167eec225178ad Peripherals/src/common (heads/main)",
+  "port_sha256": {
+    "hardware_board.c": "7aa2861925b81db722287cb1d76af6ce6ce552a3646dde703d9e58c06f83ad9c",
+    "frequency_probe.c": "c6165e8e4255b9d934bd6a7681fa162adf5eab3e3e9a6a65ba241f61026f16b2"
+  },
+  "timing_checks": 84,
+  "minimum_timing_slack_ns": 0.127,
+  "minimum_setup_slack_ns": 0.786,
+  "minimum_hold_slack_ns": 0.127,
+  "all_reported_tns_zero": true,
+  "fmax_intra_clock_only": [
+    {
+      "clock": "altera_reserved_tck",
+      "fmax_mhz": 57.33,
+      "restricted_fmax_mhz": 57.33
+    },
+    {
+      "clock": "pll_inst|altera_pll_i|general[3].gpll~PLL_OUTPUT_COUNTER|divclk",
+      "fmax_mhz": 85.98,
+      "restricted_fmax_mhz": 85.98
+    },
+    {
+      "clock": "pll_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk",
+      "fmax_mhz": 150.6,
+      "restricted_fmax_mhz": 150.6
+    }
+  ],
+  "unconstrained_note": "Reserved JTAG TDI/TMS inputs, asynchronous GPIO inout directions and reserved TDO; see full STA report. This is not a global Fmax certification.",
+  "memory_limit_bytes": 8589934592,
+  "swap_limit_bytes": 0,
+  "memory_peak_bytes": 2026229760,
+  "cpu_quota": "200000 100000",
+  "quartus_version": "25.1std.0 Build 1129",
+  "compilation_errors": 0,
+  "compilation_warnings": 57
+}

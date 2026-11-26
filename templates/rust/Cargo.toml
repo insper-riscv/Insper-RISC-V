@@ -1,0 +1,27 @@
+[package]
+name = "rv32-app"
+version = "0.1.0"
+edition = "2024"
+
+[profile.dev]
+panic = "abort"
+
+[profile.release]
+opt-level = "s"
+panic = "abort"
+lto = true
+codegen-units = 1
+
+
+# Bare-metal firmware has no host test/benchmark harness.
+[[bin]]
+name = "rv32-app"
+path = "src/main.rs"
+test = false
+bench = false
+
+# Firmware projects remain independent when created inside another Cargo tree.
+[workspace]
+
+[dependencies]
+rv32-runtime = { path = "vendor/rv32-runtime" }

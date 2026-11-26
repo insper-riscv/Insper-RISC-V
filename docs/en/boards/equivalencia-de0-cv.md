@@ -76,7 +76,7 @@ The programs of the tests repository and the ACT4 ELFs ran on the DE0-CV board w
 
 | Project | State of the generator | What is missing to leave the hand-written top |
 | :--- | :--- | :--- |
-| `external-data` | `board generate` writes the top, PLL, `.sdc`, `.qsf` and `.qpf` for its `platform.yaml` once it has `board: auto`, `boards: [de0-cv]`, `top` and `memory.ram.backend: dispositivo`; the generator does not need to change | A `paths.yaml` component whose `requires` closure brings neither the instruction cache nor the FLASH chip, and the measurement of the generated project (synthesis, timing on the five seeds and the programs on the board), which the swap needs before the hand-written top, `.sdc` and scripts are deleted |
+| `external-data` | `board generate` writes the top, PLL, `.sdc`, `.qsf` and `.qpf` for its `platform.yaml` once it has `board: auto`, `boards: [de0-cv]`, `top` and `memory.data[].type: sdram`; the generator does not need to change | A `paths.yaml` component whose `requires` closure brings neither the instruction cache nor the FLASH chip, and the measurement of the generated project (synthesis, timing on the five seeds and the programs on the board), which the swap needs before the hand-written top, `.sdc` and scripts are deleted |
 | `core_fpga_test` (`internal-mem`) | The generator only knows the `core`, `fetch` and `mem` clocks; the top uses the PLL with three outputs 120 degrees apart of the three-stage core, and its `platform.yaml` has neither `clocks.core` nor `boards` | A three-phase clock kind in the PLL generator, or the retirement of this measurement top together with the three-stage core |
 
 ---

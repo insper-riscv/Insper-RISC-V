@@ -68,7 +68,8 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/s
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/debug/sdram/sdram_jtag_core.vhd
 set_global_assignment -name VHDL_FILE ../../../Common-Components/src/altera/virtual_jtag.vhd
 set_global_assignment -name VHDL_FILE ../../../Memory/src/RAM/FPGA/Cyclone-V/sdram_jtag_shell.vhd
-set_global_assignment -name VHDL_FILE ../../interconnect/ext_interconnect.vhd
+set_global_assignment -name VHDL_FILE ../../../base/src/interconnect/interconnect_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../base/src/interconnect/ext_interconnect.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/byte_mask_consts.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/shared/opcode_consts.vhd
@@ -156,6 +157,11 @@ set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/cache_pkg.vh
 set_global_assignment -name VHDL_FILE ../../../Memory/src/cache/SoC/dcache.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/jtag_uart.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/UART/jtag/cyclone-v/jtag_uart_shell.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/GPIO/soc/gpio_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/GPIO/soc/gpio_cell.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/GPIO/soc/gpio_group.vhd
+set_global_assignment -name VHDL_FILE ../../../Peripherals/src/GPIO/soc/gpio.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/display/soc/hex_to_seg7.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/display/soc/seg_display.vhd
 set_global_assignment -name VHDL_FILE ../../../Peripherals/src/display/cyclone-v/seg_display_shell.vhd

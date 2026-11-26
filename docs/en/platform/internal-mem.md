@@ -8,7 +8,7 @@ A Cyclone V 5CEBA4F23 with BOOT_MEMORY, FLASH and RAM inside the FPGA. It is the
 
 | Path | Content |
 | :--- | :--- |
-| `platform.yaml` | The memory map (regions, reserved words, boot entry points and peripheral windows) and the list of each hand-written copy of it, checked by `riscv-tools check-memory-map` |
+| `platform.yaml` | The memory map (the memory block, reserved words, boot entry points and peripheral windows) and the list of each hand-written copy of it, checked by `riscv-tools check-memory-map` |
 | `quartus/` | The Quartus project of the board, with `core_fpga_test.vhd` (hardware top), `.qpf`, `.qsf`, `.sdc` and the initial `.mif` images |
 | `pll/` | The PLL IP (50 MHz in three phases) and `pll_sim.vhd`, the behavioral substitute that simulates it |
 | `rtl/` | The simulation top `rv32i3stage_core_sim_test` (plain VHDL arrays in place of the memory IPs), `clk_gen_3way` and `Blinky` |

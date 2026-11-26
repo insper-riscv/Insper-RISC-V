@@ -58,6 +58,7 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/simulation/internal-mem/rtl/config_pkg.vhd
     - src/simulation/internal-mem/rtl/internal_mem_map_pkg.vhd
+    - base/src/interconnect/interconnect_pkg.vhd
     - src/simulation/internal-mem/rtl/Blinky.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
@@ -142,9 +143,10 @@ sim:
     - Memory/src/ROM/SoC/flash_loader.vhd
     - Common-Components/src/altera/virtual_jtag.vhd
     - Memory/src/ROM/Cyclone-V/flash_jtag_shell.vhd
-    - Common-Components/src/tristate_buffer_1bit.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
     - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
     - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
     - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
     - Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd

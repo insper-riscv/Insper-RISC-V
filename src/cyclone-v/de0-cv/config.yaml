@@ -32,12 +32,20 @@ emulator:
 
 sim:
   toplevel: rv32im_sdram_flash_sim_test
+  # The FLASH is in the SDRAM chip, so this top has no ROM_FILE or rom_addr_width generic: the parameters that
+  # internal-mem passes are off here, and the chip is loaded by `sdram_file` with the image of the test (the words
+  # from address 0, so the program lands at its real word index of the chip, where the FLASH comes first).
+  parameters:
+    ROM_FILE: false
+    rom_addr_width: false
+    SDRAM_FILE: "{hex_path}"
   # Lista gerada por `make generate-sources` (scripts/generate_sources.py) a partir do provides; não edite à mão.
   vhdl_sources:
     - Common-Components/src/utils_pkg.vhd
     - src/cyclone-v/de0-cv/config_pkg.vhd
     - src/cyclone-v/de0-cv/de0_cv_map_pkg.vhd
-    - src/interconnect/ext_interconnect.vhd
+    - base/src/interconnect/interconnect_pkg.vhd
+    - base/src/interconnect/ext_interconnect.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
@@ -114,10 +122,8 @@ sim:
     - Core/src/core/stage_wb.vhd
     - Core/src/core/core.vhd
     - Memory/src/ROM/SoC/rom_simulation.vhd
-    - Memory/src/ROM/SoC/flash_simulation.vhd
-    - Memory/src/ROM/SoC/chip_timing_pkg.vhd
-    - Memory/src/cache/SoC/flash_cmd_port.vhd
     - Common-Components/src/synchronizer.vhd
+    - Memory/src/ROM/SoC/chip_timing_pkg.vhd
     - Memory/src/RAM/SoC/sdram/sdram_pkg.vhd
     - Memory/src/RAM/SoC/sdram/sdram_ctrl.vhd
     - Memory/src/RAM/SoC/sdram/sdram_cpu_bridge.vhd
@@ -129,11 +135,14 @@ sim:
     - Memory/src/cache/SoC/cache_pkg.vhd
     - Memory/src/cache/SoC/dcache.vhd
     - Memory/src/cache/SoC/icache.vhd
-    - Memory/src/latency/SoC/latency_counter.vhd
-    - Memory/src/cache/SoC/flash_chip.vhd
     - Memory/src/cache/SoC/flash_arbiter.vhd
     - Memory/src/cache/SoC/mem_region_router.vhd
     - Peripherals/src/UART/jtag/jtag_uart.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
+    - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
+    - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
+    - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
     - Peripherals/src/TIMER/soc/alu_ge_unsigned.vhd
@@ -143,7 +152,6 @@ sim:
     - Peripherals/src/PLIC/soc/plic_gateway.vhd
     - Peripherals/src/PLIC/soc/plic_arbiter.vhd
     - Peripherals/src/PLIC/soc/plic.vhd
-    - Peripherals/src/flash-controller/soc/flash_controller.vhd
     - src/cyclone-v/de0-cv/de0-cv_sim_top.vhd
   test_module: testbench.test_c_program
   python_path:
@@ -157,7 +165,9 @@ sim:
     SIM_SAMPLE_CLOCK: pll_clk_idexmem
     SIM_TIMEOUT_CYCLES: "12000000"
     UART_START_ON_ACCESS: "1"
-    UART_SLOT: "4"
+    UART_INDEX: "1"
+    # The RAM starts 32 MiB into the chip, after the FLASH (RAM.offset of platform.yaml).
+    RAM_CHIP_OFFSET: "0x2000000"
 
 quartus:
   # The project is written by `board generate` from platform.yaml and the board package (boards/de0-cv), and `program`

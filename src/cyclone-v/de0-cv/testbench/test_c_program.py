@@ -61,6 +61,8 @@ FULL_WORD = 0xF
 
 SDRAM_BASE = 0x40000000
 RAM_BASE = int(os.environ.get("RAM_BASE", str(SDRAM_BASE)))
+# Byte of the chip where the RAM starts, after the FLASH.
+RAM_CHIP_OFFSET = int(os.environ.get("RAM_CHIP_OFFSET", "0"), 0)
 _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
@@ -113,7 +115,7 @@ async def model_bytes(dut: Any, golden: dict[int, int]) -> dict[int, int]:
         Byte value by RAM-relative byte address.
     """
     actual: dict[int, int] = {}
-    first_word = (RAM_BASE - SDRAM_BASE) // 4
+    first_word = (RAM_BASE - SDRAM_BASE + RAM_CHIP_OFFSET) // 4
     for word in sorted({address // 4 for address in golden}):
         value = await read_model_word(dut, first_word + word)
         for i in range(4):
@@ -134,9 +136,10 @@ SCANS_PER_INPUT_BYTE = int(os.environ.get("UART_SCANS_PER_BYTE", "12"))
 # together take much longer than the 64-place receive queue holds the
 # bytes of a console that is already sending. With UART_START_ON_ACCESS
 # the console starts at the first access of the core to the UART slot
-# (UART_SLOT), the moment the program is ready to read.
+# (UART_INDEX, its index in the table of peripheral windows), the moment
+# the program is ready to read.
 UART_START_ON_ACCESS = os.environ.get("UART_START_ON_ACCESS", "0") == "1"
-UART_SLOT = int(os.environ.get("UART_SLOT", "4"))
+UART_INDEX = int(os.environ.get("UART_INDEX", "1"))
 # entry of the program of bank A (RV32_BANK_A_ENTRY, flash_banks.h)
 PROGRAM_ENTRY = 0x1100
 
@@ -204,7 +207,7 @@ async def wait_for_program(dut: Any, stop: list[bool]) -> None:
     clock = getattr(dut, SIM_CLOCK)
     while UART_START_ON_ACCESS and not stop[0]:
         try:
-            if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_SLOT & 1:
+            if (int(dut.p_we.value) | int(dut.p_re.value)) >> UART_INDEX & 1:
                 return
             # a program that writes first would lose that byte to the
             # console still starting: start when the boot ROM jumps in
@@ -240,7 +243,7 @@ async def check_uart_stream(dut: Any, received: list[int]) -> None:
     """Check that the console read what the program put in stdout."""
     for _ in range(12):  # the answers reach the console two scans late
         received.extend(await uart_scan(dut))
-    first_word = (STDOUT_ADDR - SDRAM_BASE) // 4
+    first_word = (STDOUT_ADDR - SDRAM_BASE + RAM_CHIP_OFFSET) // 4
     length = await read_model_word(dut, first_word)
     truncated = await read_model_word(dut, first_word + 1)
     kept = min(length, STDOUT_SIZE)

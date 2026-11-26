@@ -1,0 +1,73 @@
+-- SPDX-License-Identifier: Apache-2.0
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use std.env.all;
+
+entity retirement_counter_tb is
+end entity retirement_counter_tb;
+
+architecture test of retirement_counter_tb is
+    signal clk, rst, retire, trap : std_logic := '0';
+    signal pc : std_logic_vector(31 downto 0) := (others => '0');
+    signal opcode : std_logic_vector(6 downto 0) := (others => '0');
+    signal result : std_logic_vector(447 downto 0);
+begin
+    clk <= not clk after 5 ns;
+    dut : entity work.embench_retirement_counter
+        port map (i_clk => clk, i_rst => rst, i_retire => retire, i_trap => trap,
+            i_pc => pc, i_opcode => opcode, i_start => x"00000100", i_stop => x"00000200",
+            o_result => result);
+    stimulus : process
+        procedure step(address : natural; op : natural; valid : std_logic := '1') is
+        begin
+            pc <= std_logic_vector(to_unsigned(address, 32));
+            opcode <= std_logic_vector(to_unsigned(op, 7));
+            retire <= valid;
+            wait until rising_edge(clk);
+            wait for 1 ns;
+        end procedure step;
+    begin
+        rst <= '1';
+        step(0, 0, '0');
+        rst <= '0';
+        step(16#100#, 16#13#);
+        step(16#104#, 16#13#);
+        step(16#108#, 16#37#);
+        step(16#10c#, 16#23#);
+        step(16#110#, 16#03#);
+        step(16#114#, 16#33#);
+        step(16#118#, 16#63#);
+        step(16#11c#, 16#13#, '0'); -- squashed instruction
+        step(16#11c#, 16#13#, '0'); -- memory/pipeline stall
+        step(16#11c#, 16#13#, '0');
+        step(16#120#, 16#6f#);
+        step(16#124#, 16#67#);
+        step(16#200#, 16#13#);
+        assert unsigned(result(63 downto 32)) = 1 severity failure;
+        assert unsigned(result(127 downto 64)) = 12 severity failure;
+        assert unsigned(result(191 downto 128)) = 8 severity failure;
+        assert unsigned(result(255 downto 192)) = 3 severity failure;
+        assert unsigned(result(319 downto 256)) = 2 severity failure;
+        assert unsigned(result(383 downto 320)) = 3 severity failure;
+        assert unsigned(result(447 downto 384)) = 0 severity failure;
+        step(16#204#, 16#13#);
+        assert unsigned(result(127 downto 64)) = 12 severity failure;
+        step(16#100#, 16#13#); -- duplicate region must fail
+        assert result(34) = '1' severity failure;
+        rst <= '1';
+        step(0, 0, '0');
+        rst <= '0';
+        step(16#200#, 16#13#); -- empty/missing region must fail
+        assert result(34) = '1' severity failure;
+        rst <= '1';
+        step(0, 0, '0');
+        rst <= '0';
+        trap <= '1';
+        step(0, 0, '0');
+        assert result(34) = '1' severity failure;
+        report "PASS hardware retirement, stalls, mix, freeze, duplicate, empty, trap";
+        stop;
+        wait;
+    end process stimulus;
+end architecture test;

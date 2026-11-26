@@ -119,6 +119,11 @@ YAMLS = (
     ),
     Saida("src/cyclone-v/de0-cv/config.yaml", ("de0_cv_sim_top",)),
     Saida(
+        "src/cyclone-v/de0-cv-emulated/config.yaml",
+        ("de0_cv_emulated_sim_top",),
+    ),
+    Saida("src/cyclone-v/doom/config.yaml", ("doom_sim_top",)),
+    Saida(
         "src/cyclone-v/external-data/config.yaml", ("external_data_sim_top",)
     ),
 )
@@ -207,18 +212,36 @@ ENTRADAS = (
     Saida(TESTS_JSON, ("modular_map", "soc"), "SocRoles"),
     Saida(
         TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers0",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers1",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
+        ("modular_map", "soc"),
+        "SocTimers3",
+        ("tests/vhdl/soc_timers_top.vhd",),
+    ),
+    Saida(
+        TESTS_JSON,
         ("modular_bridge_dcache_map", "modular_sim_top"),
         "ModularBridgeDcacheWindow128",
     ),
     Saida(
         TESTS_JSON,
-        ("modular_internal_caches_map", "modular_sim_top"),
-        "ModularInternalCachesWindow128",
+        ("modular_bridge_caches_map", "modular_sim_top"),
+        "ModularBridgeCachesWindow128",
     ),
     Saida(
         TESTS_JSON,
-        ("modular_internal_caches_map", "modular_sim_top"),
-        "ModularInternalCaches",
+        ("modular_bridge_caches_map", "modular_sim_top"),
+        "ModularBridgeCaches",
     ),
     Saida(
         TESTS_JSON,
@@ -251,6 +274,7 @@ ENTRADAS = (
         "ModularExternalInstruction",
     ),
     Saida(TESTS_JSON, ("de0_cv_sim_top",), "De0CvSimTop"),
+    Saida(TESTS_JSON, ("doom_sim_top",), "DoomSimTop"),
     Saida(TESTS_JSON, ("external_data_sim_top",), "ExternalDataSimTop"),
     Saida(TESTS_JSON, ("template_sim_top",), "TemplateSimTop"),
     Saida(

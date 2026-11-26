@@ -1,0 +1,8 @@
+[project]
+name = "peripherals-rust"
+language = "rust"
+manifest = "Cargo.toml"
+platform = "modular"
+cpu_profile = "rv32im_zicsr_irq"
+generate_drivers = true
+simulation_timeout_cycles = 4000000

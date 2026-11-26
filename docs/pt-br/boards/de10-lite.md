@@ -4,7 +4,7 @@ Esta página descreve a plataforma `de10-lite`, a Terasic DE10-Lite (MAX 10, 10M
 
 ## 1. Perfil e mapa de memória
 
-O dispositivo tem 49.760 LEs e 182 blocos M9K (1.677.312 bits), o bastante para o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` com os extras da DE0-CV (Zimop, Zicond, Zihintntl, Zihintpause, interrupções e Sscofpmf).
+O dispositivo tem 49.760 LEs e 182 blocos M9K (1.677.312 bits), o bastante para o perfil `rv32im_zicclsm_zicntr_zihpm_zifencei` com as extensões extras da DE0-CV (Zimop, Zicond, Zihintntl, Zihintpause, interrupções e Sscofpmf).
 
 | Região | Base | Tamanho | Realização |
 | :--- | :--- | ---: | :--- |
@@ -55,6 +55,18 @@ O `board_run.py --stages de10-lite-regression de10-lite-sdram de10-lite-irq` rod
 | `de10-lite-irq` | 13 | 13 passam |
 
 Ficam fora a `monitor`, a `hex-id` e as três de UART em pinos, que a placa não tem.
+
+## 7. Pinos de expansão
+
+O papel `gpio` é bidirecional e numera `GPIO` de 0 a 35 e o Arduino de 36 a 51.
+
+| Papel | Sinais | Pinos | Manual | Nível |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO[35:0]` | 36 | 3.5, tabela 3-7 | 3,3 V |
+| `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6, tabela 3-8 | 3,3 V |
+| `clock_extra` | `MAX10_CLK2_50`, `ADC_CLK_10` | 2 | 3.2, tabela 3-2 | 3,3 V |
+
+Ficam só no `pins.yaml`, sem papel de `io`: `ARDUINO_RESET_N` (tabela 3-8) e o ponto decimal `HEX0[7]` a `HEX5[7]` (seção 3.4, tabela 3-6), pois o papel `display` tem sete segmentos por dígito. O acelerômetro ADXL345 (seção 3.10, tabela 3-13, `GSENSOR_*`) é o papel `adxl345` e o ADC interno ao MAX 10 (seção 3.7, sem pino de sinal) é o papel `adc` com `chip: max10`, ambos em `buses`, e o vídeo VGA (seção 3.8, tabela 3-11) é o papel `video` (ver [perifericos-por-placa.md](perifericos-por-placa.md)).
 
 ---
 

@@ -22,7 +22,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles, Timer
 
 from tests.python.unittests.integration.jtag import load_ir, shift_dr
-from tests.python.unittests.rtl.de0_cv_sim_top import (
+from tests.python.unittests.rtl.sdram_sim_common import (
     CLK_MEM_NS,
     CLK_NS,
     RESET_CYCLES,

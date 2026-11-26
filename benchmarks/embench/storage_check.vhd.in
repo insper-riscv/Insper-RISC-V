@@ -1,0 +1,57 @@
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity storage_check is end entity;
+architecture test of storage_check is
+    signal clk : std_logic := '0';
+    signal second_clk : std_logic := '0';
+    signal address, second_address : std_logic_vector(29 downto 0) := (others => '0');
+    signal data : std_logic_vector(31 downto 0) := (others => '0');
+    signal mask : std_logic_vector(3 downto 0) := (others => '0');
+    signal enabled, reading, writing : std_logic := '0';
+    signal ram_old, ram_new, rom_old, rom_new, rom_old2, rom_new2 : std_logic_vector(31 downto 0);
+begin
+    clk <= not clk after 5 ns;
+    second_clk <= not second_clk after 7 ns;
+    ram_reference : entity work.ram_reference
+        generic map (size_bytes => 256, ram_file => "image.hex")
+        port map (clk, address, data, ram_old, writing, reading, enabled, mask);
+    ram_optimized : entity work.ram_simulation
+        generic map (size_bytes => 256, ram_file => "image.hex")
+        port map (clk, address, data, ram_new, writing, reading, enabled, mask);
+    rom_reference : entity work.rom_reference
+        generic map (size_bytes => 256, rom_file => "image.hex")
+        port map (address, clk, reading, rom_old, second_address, second_clk, enabled, rom_old2);
+    rom_optimized : entity work.rom_simulation
+        generic map (size_bytes => 256, rom_file => "image.hex")
+        port map (address, clk, reading, rom_new, second_address, second_clk, enabled, rom_new2);
+    stimulus : process
+        variable random : unsigned(31 downto 0) := x"CAFE1234";
+    begin
+        for step in 0 to 2047 loop
+            wait until falling_edge(clk);
+            random := random xor shift_left(random, 13);
+            random := random xor shift_right(random, 17);
+            random := random xor shift_left(random, 5);
+            address <= std_logic_vector(resize(random(7 downto 0), 30));
+            second_address <= std_logic_vector(resize(random(15 downto 8), 30));
+            data <= std_logic_vector(random);
+            mask <= std_logic_vector(random(3 downto 0));
+            enabled <= random(4);
+            reading <= random(5);
+            writing <= random(6);
+        end loop;
+        wait for 20 ns;
+        report "Storage equivalence PASS: 2048 stimuli, partial writes, read-before-write, two clocks";
+        std.env.finish;
+    end process;
+    checks : process
+    begin
+        wait on clk, second_clk;
+        wait for 1 ns;
+        assert ram_old = ram_new report "RAM timing/data mismatch" severity failure;
+        assert rom_old = rom_new report "ROM port 1 mismatch" severity failure;
+        assert rom_old2 = rom_new2 report "ROM port 2 mismatch" severity failure;
+    end process;
+end architecture;

@@ -15,6 +15,7 @@ Boards are data: one package per board, one family per device and a chip catalog
 | [cabimento.md](cabimento.md) | Estimator, fit policy and confirmation by the fit |
 | [calibracao.md](calibracao.md) | Measured calibration tables of each family |
 | [equivalencia-de0-cv.md](equivalencia-de0-cv.md) | Equivalence of the generated DE0-CV with the hand-written one |
+| [perifericos-por-placa.md](perifericos-por-placa.md) | Pin roles of the external peripherals of each board, example platforms and shared pins |
 
 ## 2. Boards
 
@@ -22,13 +23,14 @@ Boards are data: one package per board, one family per device and a chip catalog
 
 | Page | Board |
 | :--- | :--- |
+| [de0-cv.md](de0-cv.md) | Terasic DE0-CV |
 | [de2-115.md](de2-115.md) | Terasic DE2-115 |
 | [de0-nano.md](de0-nano.md) | Terasic DE0-Nano |
 | [de10-lite.md](de10-lite.md) | Terasic DE10-Lite |
 | [de10-nano.md](de10-nano.md) | Terasic DE10-Nano and DE0-Nano-SoC |
 | [mkr-vidor-4000.md](mkr-vidor-4000.md) | Arduino MKR Vidor 4000 |
 
-The DE0-CV has the page [../platform/de0-cv.md](../platform/de0-cv.md).
+The DE0-CV platform is in [../platform/de0-cv.md](../platform/de0-cv.md).
 
 ---
 

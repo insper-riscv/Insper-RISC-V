@@ -1,0 +1,71 @@
+    -- Simulation-only observer, appended to a copy in the build directory.
+    embench_monitor : process (i_clk)
+        file markers : std.textio.text open read_mode is "markers.txt";
+        file metrics : std.textio.text open write_mode is "metrics.txt";
+        variable row : std.textio.line;
+        variable start_pc, stop_pc : natural := 0;
+        variable ticks, started, instructions : natural := 0;
+        variable branches, memory_ops, compute_ops, other_ops : natural := 0;
+        variable active, finished : boolean := false;
+    begin
+        if rising_edge(i_clk) then
+            if start_pc = 0 then
+                std.textio.readline(markers, row);
+                std.textio.read(row, start_pc);
+                std.textio.readline(markers, row);
+                std.textio.read(row, stop_pc);
+            end if;
+            if i_rst = '0' then
+                ticks := ticks + 1;
+                assert trap_sig = '0' and trap_take = '0'
+                    report "Embench unexpected trap at PC " & to_hstring(ex_pc)
+                        & " opcode=" & to_hstring(ex_opcode)
+                        & " cause=" & to_hstring(o_trap_cause)
+                        & " raw=" & to_hstring(ifid_instr)
+                    severity failure;
+                if ticks mod 10000 = 0 then
+                    report "Embench core cycles=" & natural'image(ticks)
+                        & " PC=" & to_hstring(ex_pc)
+                        & " measured instructions=" & natural'image(instructions);
+                    std.textio.flush(std.textio.output);
+                end if;
+                if retire_pulse = '1' then
+                    if unsigned(ex_pc) = start_pc then
+                        assert not active and not finished
+                            report "duplicate Embench start" severity failure;
+                        active := true;
+                        started := ticks;
+                    elsif unsigned(ex_pc) = stop_pc then
+                        assert active and instructions > 0
+                            report "Embench stop without measured work" severity failure;
+                        active := false;
+                        finished := true;
+                        std.textio.write(row, ticks - started);
+                        std.textio.write(row, string'(" "));
+                        std.textio.write(row, instructions);
+                        std.textio.write(row, string'(" "));
+                        std.textio.write(row, branches);
+                        std.textio.write(row, string'(" "));
+                        std.textio.write(row, memory_ops);
+                        std.textio.write(row, string'(" "));
+                        std.textio.write(row, compute_ops);
+                        std.textio.write(row, string'(" "));
+                        std.textio.write(row, other_ops);
+                        std.textio.writeline(metrics, row);
+                        std.textio.flush(metrics);
+                    elsif active then
+                        instructions := instructions + 1;
+                        case ex_opcode is
+                            when "1100011" | "1101111" | "1100111" =>
+                                branches := branches + 1;
+                            when "0000011" | "0100011" =>
+                                memory_ops := memory_ops + 1;
+                            when "0110011" | "0010011" | "0110111" | "0010111" =>
+                                compute_ops := compute_ops + 1;
+                            when others => other_ops := other_ops + 1;
+                        end case;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process;

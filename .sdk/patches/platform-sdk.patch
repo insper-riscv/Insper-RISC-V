@@ -1,0 +1,111 @@
+--- a/runtime/stdio.c
++++ b/runtime/stdio.c
+@@ -32,7 +32,7 @@
+  * dar a três nomes o mesmo objeto; o segundo marca um símbolo fraco, que a norma também não oferece. */
+ 
+ /* Tamanho do buffer de stdout, em bytes. */
+-static constexpr uint32_t STDOUT_SIZE = 1024u;
++static constexpr uint32_t STDOUT_SIZE = RV32_TOHOST_ADDR - RV32_STDOUT_BASE - 8u;
+ 
+ #ifndef RV32_SPIKE
+ /* Bit do registrador de estado que indica um byte na FIFO de recepção. */
+--- a/testbench/test_c_program.py
++++ b/testbench/test_c_program.py
+@@ -288,6 +288,12 @@
+     return expected, cocotb.start_soon(capture)
+ 
+ 
++async def capture_serial_output(uart_tx: Any, received: list[int]) -> None:
++    """Capture the serial output of an external application."""
++    while True:
++        received.append(await receive_uart_byte(uart_tx))
++
++
+ class RamBus:
+     """Rebuild the RAM content from the writes seen on its bus.
+ 
+@@ -304,6 +310,7 @@
+         """Watch the RAM bus of the given top-level."""
+         self.dut = dut
+         self.ram_bytes: dict[int, int] = {}
++        self.serial_bytes: list[int] = []
+ 
+     def _record(self, addr: int, wdata: int, byteena: int) -> None:
+         """Store the bytes that the write enables."""
+@@ -350,6 +357,29 @@
+         if is_tohost and wdata & 1 and byteena == FULL_WORD:
+             return wdata
+         return None
++
++
++def export_stdout(bus: RamBus, uart_bytes: bytes | None = None) -> None:
++    """Export exact program bytes for the SDK's quiet terminal."""
++    target = os.environ.get("RV32_SIM_STDOUT_FILE")
++    if not target:
++        return
++    truncated = Path(str(target) + ".truncated")
++    truncated.unlink(missing_ok=True)
++    if uart_bytes is None and bus.serial_bytes:
++        uart_bytes = bytes(bus.serial_bytes)
++    if uart_bytes is None:
++        base = int(os.environ["STDOUT_ADDR"], 0) - RAM_BASE
++        size = sum(bus.ram_bytes.get(base + i, 0) << (8 * i) for i in range(4))
++        if bus.ram_bytes.get(base + 4, 0):
++            truncated.write_text("1")
++        uart_bytes = bytes(
++            bus.ram_bytes.get(base + 8 + i, 0)
++            for i in range(
++                min(size, int(os.environ.get("RV32_STDOUT_CAPACITY", "1024")))
++            )
++        )
++    Path(target).write_bytes(uart_bytes)
+ 
+ 
+ async def finish_pass(
+@@ -381,11 +411,13 @@
+             f"UART TX incorreto: esperado {expected!r}, recebido {received!r}",
+         )
+         LOG.info("UART TX recebido: %r", received)
++        export_stdout(bus, received)
+     cycles_used, retired = counters
+     LOG.info("PASS")
+     LOG.info("CLOCK CYCLES TAKEN %d", cycles_used)
+     LOG.info("CORE CYCLES %d INSTRUCTIONS RETIRED %d", cycles_used, retired)
+     if GOLDEN_PATH is None:
++        export_stdout(bus)
+         return
+     matches = compare_bytes(
+         bus.ram_bytes,
+@@ -416,6 +448,9 @@
+     uart_expected, uart_capture = start_uart(dut, test_name)
+     uart_drive: Task[None] | None = None
+     bus = RamBus(dut)
++    serial_capture = None
++    if uart_capture is None and os.environ.get("RV32_SIM_STDOUT_FILE"):
++        serial_capture = cocotb.start_soon(capture_serial_output(dut.o_uart_tx, bus.serial_bytes))
+     cycles_used = 0
+     retired = 0
+ 
+@@ -434,6 +469,11 @@
+         tohost = bus.tohost_write()
+         if tohost is None:
+             continue
++        if serial_capture is not None:
++            await Timer(100, unit="us")
++            if bus.serial_bytes or int(dut.o_uart_tx.value) == 0:
++                await Timer(2, unit="ms")
++            serial_capture.cancel()
+         if tohost == TOHOST_PASS:
+             await finish_pass(
+                 test_name,
+@@ -442,8 +482,10 @@
+                 (cycles_used, retired),
+             )
+             return
++        export_stdout(bus)
+         message = f"test signalled FAIL via RV32_FAIL(), code {tohost >> 1}"
+         raise AssertionError(message)
+ 
++    export_stdout(bus)
+     message = f"timed out after {TIMEOUT_CYCLES} cycles without a result"
+     raise AssertionError(message)

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+_rv32_script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=env.sh
+source "${_rv32_script_dir}/env.sh"
+
+exec python3 "${RV32_SDK_ROOT}/.sdk/rv32_sdk/new.py" "$@"

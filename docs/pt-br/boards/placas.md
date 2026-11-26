@@ -26,4 +26,8 @@ Cada placa tem o pacote em `boards/<placa>/` e, no `pins.yaml`, a fonte e o selo
 
 ## 3. Console
 
-Todas as placas declaram `console.default: jtag`: o console é a JTAG UART pelo cabo de programação. A UART em pinos existe só na `de2-115`.
+Todas as placas declaram `console.default: jtag`: o console é a JTAG UART pelo cabo de programação. A UART em pinos dedicada (RS-232) existe só na `de2-115`, e o papel `serial` de `buses` existe nela e na `mkr-vidor-4000`, esta nos pinos `D13` e `D14` do cabeçalho.
+
+## 4. Periféricos externos
+
+[perifericos-por-placa.md](perifericos-por-placa.md) traz os papéis de entrada e saída e de periférico de cada placa, as plataformas de exemplo de `src/periph-examples/` e os pinos compartilhados.

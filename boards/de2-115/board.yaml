@@ -27,6 +27,30 @@ io:
   switches: {signals: "SW[17:0]",       active: high}
   keys:     {signals: "KEY[3:0]",       active: low}
   display:  {signals: "HEX[7:0][6:0]",  active: low}
+  leds_green: {signals: "LEDG[8:0]", active: high}
+  gpio:
+    signals: "GPIO[35:0]"
+    bidirectional: true
+  ex_io:
+    signals: "EX_IO[6:0]"
+    bidirectional: true
+  hsmc:
+    signals:
+      - "HSMC_CLKIN0"
+      - "HSMC_CLKIN_N[2:1]"
+      - "HSMC_CLKIN_P[2:1]"
+      - "HSMC_CLKOUT0"
+      - "HSMC_CLKOUT_N[2:1]"
+      - "HSMC_CLKOUT_P[2:1]"
+      - "HSMC_D[3:0]"
+      - "HSMC_RX_D_N[16:0]"
+      - "HSMC_RX_D_P[16:0]"
+      - "HSMC_TX_D_N[16:0]"
+      - "HSMC_TX_D_P[16:0]"
+    bidirectional: true
+  clock_extra:
+    signals: ["CLOCK2_50", "CLOCK3_50", "SMA_CLKIN", "SMA_CLKOUT", "ENETCLK_25", "TD_CLK27"]
+  video:    {kind: vga, channel_bits: 8, signals: VGA, default_mode: 640x480@60, modes: [640x480@60, 640x480@85, 800x600@60, 1024x768@60, 1280x1024@60]}
 memories:
   sdram:
     chip: IS42S16320B-7
@@ -41,12 +65,32 @@ memories:
     chip: S29GL064N90
     bus_width: 8
     signals: FL
+# Papeis de pino dos perifericos externos (secao `buses`), um por kind de `Peripherals`. O video fica em io.video.
+buses:
+  ps2:
+    - {clk: PS2_CLK,  dat: PS2_DAT}
+    - {clk: PS2_CLK2, dat: PS2_DAT2}
+  sd: {clk: SD_CLK, cmd: SD_CMD, dat: "SD_DAT[3:0]"}
+  lcd: {data: "LCD_DATA[7:0]", rs: LCD_RS, rw: LCD_RW, en: LCD_EN, power: LCD_ON, blon: LCD_BLON}
+  i2c:
+    - {scl: EEP_I2C_SCLK, sda: EEP_I2C_SDAT}
+    - {scl: I2C_SCLK, sda: I2C_SDAT}
+  audio: {xck: AUD_XCK, bclk: AUD_BCLK, adclrck: AUD_ADCLRCK, adcdat: AUD_ADCDAT, daclrck: AUD_DACLRCK, dacdat: AUD_DACDAT}
+  eth:
+    - {rx_clk: ENET0_RX_CLK, rxd: "ENET0_RX_DATA[3:0]", rx_dv: ENET0_RX_DV, rx_er: ENET0_RX_ER, tx_clk: ENET0_TX_CLK, txd: "ENET0_TX_DATA[3:0]", tx_en: ENET0_TX_EN, tx_er: ENET0_TX_ER, mdc: ENET0_MDC, mdio: ENET0_MDIO, int_n: ENET0_INT_N, rst_n: ENET0_RST_N}
+    - {rx_clk: ENET1_RX_CLK, rxd: "ENET1_RX_DATA[3:0]", rx_dv: ENET1_RX_DV, rx_er: ENET1_RX_ER, tx_clk: ENET1_TX_CLK, txd: "ENET1_TX_DATA[3:0]", tx_en: ENET1_TX_EN, tx_er: ENET1_TX_ER, mdc: ENET1_MDC, mdio: ENET1_MDIO, int_n: ENET1_INT_N, rst_n: ENET1_RST_N}
+  tv: {data: "TD_DATA[7:0]", clk27: TD_CLK27, reset_n: TD_RESET_N}
+  usb: {addr: "OTG_ADDR[1:0]", data: "OTG_DATA[15:0]", cs_n: OTG_CS_N, rd_n: OTG_RD_N, wr_n: OTG_WR_N, rst_n: OTG_RST_N, int: OTG_INT}
+  ir: {rxd: IRDA_RXD}
+  serial: {rx: UART_RXD, tx: UART_TXD, cts: UART_CTS, rts: UART_RTS}
 console:
   default: jtag
   uart: {rx: UART_RXD, tx: UART_TXD}
 pins: pins.yaml
 notes:
   - "JP6 e JP7 mudam a tensao dos bancos de usuario: KEY, SW e parte dos HEX seguem o JP7 (fabrica 2.5 V), o GPIO e o SMA_CLKOUT seguem o JP6 (fabrica 3.3 V). O io_standard de cada pino esta em pins.yaml."
+  - "Expansao: o cabecalho de 40 pinos (secao 4.8, tabela 4-12) tem GPIO[35:0] mais VCC5, VCC3P3 e dois GND; EX_IO[6:0] (secao 4.9, tabela 4-13) e outro conector, de 14 pinos; o HSMC (secao 4.7, tabela 4-9) tem 82 pinos de E/S, HSMC_*, todos de uso geral (os pares LVDS tambem funcionam como CMOS). Alimentacao do HSMC (12 V e 3,3 V), JTAG e HSMC_SDA e HSMC_SCLK nao sao pinos de E/S da tabela 4-9."
+  - "Papeis de uso geral sem polaridade: gpio, ex_io e hsmc sao bidirecionais; leds_green (LEDG, tabela 4-3) acende em nivel alto (secao 4.3). clock_extra reune CLOCK2_50 e CLOCK3_50 (que tambem estao em clocks.inputs), SMA_CLKIN (entrada), SMA_CLKOUT (saida), ENETCLK_25 e TD_CLK27 (entradas de 25 e 27 MHz das placas de Ethernet e de TV)."
   - "JP3 com os pinos 1 e 2 fechados isola a cadeia JTAG do HSMC, de modo que so o EP4CE115 aparece na cadeia."
   - "A chave RUN/PROG (SW19) fica em RUN para configurar pela JTAG; PROG so para o modo AS (EPCS64)."
   - "As pecas da SDRAM (IS42S16320B-7), da SRAM e da FLASH (S29GL064N90, sufixo nao verificado) sao inferidas de fonte de terceiros; o mapa de setores da FLASH e os tempos dependem do datasheet."
@@ -55,3 +99,7 @@ notes:
   - "O codigo do dispositivo na cadeia e compartilhado com o 10CL120 e o EP3C120; a placa e distinguida pelo inventario do host (documento 03 do plano)."
   - "A fase do DRAM_CLK (6000 ps a 100 MHz) foi medida na placa: o teste de preenchimento e de pontos esparsos das 2^25 palavras pela porta de depuracao passa com 4000, 6000, 8000 e 0 ps e falha com 2000 ps; 6000 ps fica no meio da janela que passa."
   - "O mapa da plataforma usa os 128 MB da SDRAM: o gerador deriva a janela da tag das caches (27 bits) da regiao RAM, e a porta de depuracao alcanca as 2^25 palavras."
+  - "O video e um ADV7123 de 10 bits por canal com so os 8 bits altos ligados; VGA_CLK, VGA_BLANK_N e VGA_SYNC_N ficam sob controle do fabric. O manual cita ate 1280x1024 com banda de 100 MHz, e a tabela de modos do manual vai ate 108 MHz."
+  - "O papel serial (UART RS-232 pelo ZT3232, secao 4.12, tabela 4-18) liga UART_RXD, UART_TXD, UART_CTS e UART_RTS; console.uart segue com so RX e TX para o console em pinos."
+  - "Os pinos de USB (secao 4.17, tabela 4-25) sao os da interface HPI do CY7C67200: OTG_ADDR[1:0], OTG_DATA[15:0], OTG_CS_N, OTG_RD_N, OTG_WR_N, OTG_RST_N e OTG_INT. A tabela nao lista pinos de DMA (DREQ e DACK) nem de velocidade, entao nao ha sinal desses nomes em pins.yaml; a HPI faz o acesso de DMA a memoria interna do chip pelo proprio barramento de dados."
+  - "I2C_SCLK e I2C_SDAT (WM8731, secao 4.11, e ADV7180, secao 4.15) sao o mesmo par de fios (segunda copia do papel i2c); uma plataforma que configura os dois chips usa um unico periferico i2c nesse par, e EEP_I2C_SCLK e EEP_I2C_SDAT (EEPROM, secao 4.19) sao um par a parte."

@@ -1,0 +1,8 @@
+[project]
+name = "gpio-demo"
+language = "c"
+platform = "modular"
+cpu_profile = "rv32im"
+generate_drivers = true
+source = "src/main.c"
+include_dirs = ["include"]

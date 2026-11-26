@@ -10,16 +10,12 @@ Todo código de hardware do projeto é escrito e validado sob a norma **IEEE 107
 
 | Regra | Especificação |
 | :--- | :--- |
-| Norma da linguagem | C23 (`-std=c23`, nunca `-std=gnu23`) em todos os arquivos `.c` e `.h`; o `riscv-tools` passa a flag em toda compilação |
-| Avisos | `-Wall -Wextra -Wpedantic -Werror`, passados pelo `riscv-tools`; nenhum aviso é aceito, e `-Wmissing-prototypes` vale para o runtime |
-| Ambiente de execução | Hospedado, com a picolibc da imagem de toolchain do Infra: o runtime e os programas compilam com o `--specs` da plataforma, sem `-ffreestanding`; a norma garante em ambiente freestanding só dez cabeçalhos (cláusula 4), e `<stdio.h>` e `<sys/cdefs.h>` vêm da picolibc |
-| Extensões do compilador | Sem extensões GNU quando há equivalente na norma: `[[noreturn]]`, `alignas` e `static_assert` no lugar de `__attribute__`; `[[gnu::weak]]`, `__strong_reference` e `__asm__` só onde a norma não tem equivalente, com um comentário que diga o motivo |
-| Tipos e constantes | Tipos de `<stdint.h>` quando a largura importa, `static constexpr` tipado no lugar de `#define` numérico e `nullptr` no lugar de `NULL`; `memory_map.h` e `flash_banks.h` são gerados e lidos por arquivos `.S`, então seguem em `#define` |
-| Identificadores reservados | O runtime define `stdin`, `stdout`, `stderr` e `_exit`, que a norma reserva à biblioteca (cláusulas 7.1.3 e 6.4.3); isso só vale em código da própria libc do runtime, e o arquivo diz que é implementação |
-| Parâmetro não usado | Parâmetro sem nome na definição (cláusula 6.9.2), e não `(void)nome;` |
-| MMIO, deslocamentos, alias e assembly | As regras da seção 1.1 do `CONTRIBUTING.md` do repositório `Testes` valem para todo C deste repositório |
-| Nomenclatura e comentários | Identificadores em **inglês** com `snake_case`, tipos com sufixo `_t`; comentário em **português** acima de cada função, variável global, constante e macro |
-| Biblioteca padrão | picolibc, conforme a imagem de toolchain do Infra |
+| Norma da linguagem | VHDL-2008 (`--std=08`) em todos os arquivos `.vhd` |
+| Pacotes IEEE permitidos | Apenas `ieee.std_logic_1164.all` e `ieee.numeric_std.all` |
+| Pacotes proibidos | `std_logic_arith`, `std_logic_unsigned` e `std_logic_signed` nunca devem ser utilizados |
+| Instanciação de módulos | Instanciação direta de entidade (`u_nome : entity work.nome_da_entidade`) para todo código do projeto, sem exceção e sem declaração `component`. A única exceção é a lista estreita de primitivas de fabricante sem entidade visível ao VHDL, definida em `vendor_primitives.yaml` do `riscv-tools`; `altsyncram` e `sld_virtual_jtag` (exigem `library altera_mf;`) e `sdram_platform_pll` (sem biblioteca) levam `component`, porque o Quartus Lite 25.1 recusa a instanciação direta delas (erro 10481). PLL gerado e documentado entra em `tree.vhdl_style.exclude` do `paths.yaml` |
+| Mapeamento de portas (`port map`) | Associar sempre por nome (`i_porta => sinal`) e utilizar sinais intermediários para expressões lógicas ou fatias dinâmicas, pois o GHDL exige expressões globalmente estáticas nos formais/atuais de porta |
+| Inferência de latches | Todo sinal atribuído em processo combinacional ou atribuição condicional deve receber valor padrão explícito em todos os ramos (`else` / `when others =>`) |
 
 A norma de referência é a [IEEE Std 1076-2008, IEEE Standard VHDL Language Reference Manual](https://standards.ieee.org/ieee/1076/3666/). Em trabalhos acadêmicos, cite-a com a entrada BibTeX abaixo:
 
@@ -64,8 +60,15 @@ Todo código em C do projeto, onde quer que esteja (programas de teste, runtime 
 
 | Regra | Especificação |
 | :--- | :--- |
-| Norma da linguagem | C23 (`-std=c23`) em todos os arquivos `.c` e `.h` |
-| Extensões do compilador | Não utilizar extensões GNU quando houver equivalente na norma |
+| Norma da linguagem | C23 (`-std=c23`, nunca `-std=gnu23`) em todos os arquivos `.c` e `.h`; o `riscv-tools` passa a flag em toda compilação |
+| Avisos | `-Wall -Wextra -Wpedantic -Werror`, passados pelo `riscv-tools`; nenhum aviso é aceito, e `-Wmissing-prototypes` vale para o runtime |
+| Ambiente de execução | Hospedado, com a picolibc da imagem de toolchain do Infra: o runtime e os programas compilam com o `--specs` da plataforma, sem `-ffreestanding`; a norma garante em ambiente freestanding só dez cabeçalhos (cláusula 4), e `<stdio.h>` e `<sys/cdefs.h>` vêm da picolibc |
+| Extensões do compilador | Sem extensões GNU quando há equivalente na norma: `[[noreturn]]`, `alignas` e `static_assert` no lugar de `__attribute__`; `[[gnu::weak]]`, `__strong_reference` e `__asm__` só onde a norma não tem equivalente, com um comentário que diga o motivo |
+| Tipos e constantes | Tipos de `<stdint.h>` quando a largura importa, `static constexpr` tipado no lugar de `#define` numérico e `nullptr` no lugar de `NULL`; `memory_map.h` e `flash_banks.h` são gerados e lidos por arquivos `.S`, então seguem em `#define` |
+| Identificadores reservados | O runtime define `stdin`, `stdout`, `stderr` e `_exit`, que a norma reserva à biblioteca (cláusulas 7.1.3 e 6.4.3); isso só vale em código da própria libc do runtime, e o arquivo diz que é implementação |
+| Parâmetro não usado | Parâmetro sem nome na definição (cláusula 6.9.2), e não `(void)nome;` |
+| MMIO, deslocamentos, alias e assembly | As regras da seção 1.1 do `CONTRIBUTING.md` do repositório `Testes` valem para todo C deste repositório |
+| Nomenclatura e comentários | Identificadores em **inglês** com `snake_case`, tipos com sufixo `_t`; comentário em **português** acima de cada função, variável global, constante e macro |
 | Biblioteca padrão | picolibc, conforme a imagem de toolchain do Infra |
 
 A norma de referência é a [ISO/IEC 9899:2024, Programming languages: C](https://www.iso.org/standard/82075.html). Em trabalhos acadêmicos, cite-a com a entrada BibTeX abaixo:
@@ -247,13 +250,13 @@ Quando um `platform.yaml` muda, rode `make generate` e versione os arquivos que 
 
 As listas de fontes dos topos (os `config*.yaml`, o `tests/python/tests.json` e os `.qsf`) não se editam à mão: `make generate-sources` as escreve a partir do `provides` do `paths.yaml` de cada repositório, pelo `riscv-tools sources`, e `make sources-check` (parte do `make check` e do `make unit-tests`) falha quando a lista versionada difere da gerada. Um arquivo novo de um submódulo entra nos topos ao ser registrado no `provides` do próprio submódulo; depois de atualizar o ponteiro do submódulo, rode `make generate-sources` e versione o resultado.
 
-O job `formal` do CI roda as provas uma vez por engine (`formal - yices`, `formal - bitwuzla`, `formal - boolector` e `formal - abc-bmc3`) e o job agregador `formal` decide a partir dos resultados: cada prova precisa ter uma resposta e os engines que responderam precisam concordar entre si e com o esperado. O nome `formal` é o check que o ruleset da branch padrão exige, então não o renomeie; os jobs `formal - <engine>` não são exigidos.
+O job `formal` do CI roda as provas uma vez por engine (`formal - yices`, `formal - bitwuzla` e `formal - abc-bmc3`) e o job agregador `formal` decide a partir dos resultados: cada prova precisa ter uma resposta e os engines que responderam precisam concordar entre si e com o esperado. O nome `formal` é o check que o ruleset da branch padrão exige, então não o renomeie; os jobs `formal - <engine>` não são exigidos.
 
 Warning no formal é erro. O fluxo de verificação formal varre a saída do GHDL e os logs do Yosys e do SymbiYosys depois de cada passo, inclusive nos mutantes, e falha apontando o arquivo e a linha do aviso. A correção é sempre no código ou nas propriedades, nunca em uma opção que esconda o aviso (`-Wno-*`). Os detalhes estão em [docs/pt-br/interconnect/ext_interconnect.md](docs/pt-br/interconnect/ext_interconnect.md).
 
 O job `python-static-analysis` do CI roda `ruff`, `pycodestyle`, `pydocstyle`, `pylint`, `pyright`, `pyrefly`, `deptry`, `complexipy`, `codeclone`, `semgrep` e `uv audit` sobre os arquivos Python, e o nome do job é o check que o ruleset da branch padrão exige, então não o renomeie.
 
-O job `boot-memory-images` do CI monta de novo, na imagem `ci-elf`, as imagens de teste da boot memory (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` e `external_data/boot_memory_real.hex`) a partir da `boot_memory.S` e falha se o resultado diferir do que está versionado. Depois de mudar a boot memory, regere os dois com `tests/python/gen_de0_cv_boot_images.py` e `tests/python/gen_external_data_images.py` e versione o resultado.
+O job `boot-memory-images` do CI monta de novo, na imagem `ci-elf`, as imagens de teste da boot memory (`tests/python/unittests/rtl/data/de0_cv_boot/images.json` e `external_data/boot_memory_real.hex`) a partir da `boot_memory.S` e falha se o resultado diferir do que está versionado. O `--check` do `gen_de0_cv_boot_images.py` também confere o `boot_memory_real.hex` do template e o do modular (`tests/python/gen_real_boot_images.py`) confere o `boot_memory_init.mif` de cada plataforma de placa (`tests/python/gen_boot_memory_mifs.py`) e roda o contrato da BOOT em cada plataforma (`tests/python/check_boot_contract.py`). Depois de mudar a boot memory, o `boot_core.S` ou o `platform.yaml` (que muda o linker script e as bancas), regere as imagens com `tests/python/gen_de0_cv_boot_images.py`, `tests/python/gen_external_data_images.py`, `tests/python/gen_real_boot_images.py` e `tests/python/gen_boot_memory_mifs.py` e versione o resultado.
 
 Ao adicionar, renomear ou remover qualquer arquivo versionado, atualize imediatamente:
 - `paths.yaml`

@@ -13,7 +13,7 @@ O mapa está em `src/simulation/template/platform.yaml`, a fonte de todo valor, 
 | BOOT_MEMORY | `0x00000000` | 4 KiB | ROM executável |
 | ROM | `0x00001000` | 28 KiB | ROM executável |
 | RAM | `0x00008000` | 32 KiB | RAM |
-| UART sobre JTAG (opcional) | `0xC0000000` | janela de 256 MiB | periférico |
+| UART sobre JTAG (opcional) | `0xC0000000` | janela de 1 KiB | periférico |
 
 Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0x0000FBE0` a `0x00010000`.
 
@@ -25,7 +25,7 @@ Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0
 | `config.yaml` | Configuração do `riscv-tools` para compilar e simular: toolchain, runtime, fontes VHDL e módulo de teste |
 | `rtl/template_map_pkg.vhd` | Pacote de constantes gerado do `platform.yaml` (não se edita à mão) |
 | `rtl/template_sim_top.vhd` | Topo de simulação, que só liga o gerador de clock, o núcleo, as memórias e a UART |
-| `runtime/boot_memory.S` | Carregador fixo da BOOT_MEMORY e rotina `rv32_wait_restart` |
+| `runtime/boot_memory.S` | Invólucro da BOOT_MEMORY: inclui os cabeçalhos gerados e o `base/src/boot/boot_core.S` comum, que traz o `rv32_wait_restart` |
 | `runtime/_exit.c` | Fim do programa, que informa o resultado em `tohost` |
 | `runtime/stdio.c` | Saída padrão num buffer da RAM |
 | `runtime/spike_exit.S` | Substituto de `rv32_wait_restart` para o ELF do Spike |
@@ -33,7 +33,7 @@ Os 1032 bytes do `stdout`, o `tohost` e o `fromhost` ocupam o topo da RAM, de `0
 
 ## 4. O topo
 
-`template_sim_top` tem os genéricos de arquivo (`boot_memory_file`, `rom_file`, `ram_file`), os de tamanho (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa), `has_uart` e um genérico `has_*` por extensão do núcleo (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` e `has_zicclsm`), cujo padrão é a constante `HAS_*` do pacote e que o topo liga ao núcleo.
+`template_sim_top` tem os genéricos de arquivo (`boot_memory_file`, `rom_file`, `ram_file`), os de tamanho (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, potências de dois cujo padrão vem do pacote do mapa) e `has_uart`. O núcleo lê as extensões do `config_pkg` gerado da plataforma, então o topo não declara genérico de extensão.
 
 | Porta | Uso |
 | :--- | :--- |

@@ -13,7 +13,7 @@ The map is in `src/simulation/template/platform.yaml`, the source of every value
 | BOOT_MEMORY | `0x00000000` | 4 KiB | executable ROM |
 | ROM | `0x00001000` | 28 KiB | executable ROM |
 | RAM | `0x00008000` | 32 KiB | RAM |
-| UART over JTAG (optional) | `0xC0000000` | 256 MiB window | peripheral |
+| UART over JTAG (optional) | `0xC0000000` | 1 KiB window | peripheral |
 
 The 1032 bytes of `stdout`, `tohost` and `fromhost` take the top of the RAM, from `0x0000FBE0` to `0x00010000`.
 
@@ -25,7 +25,7 @@ The 1032 bytes of `stdout`, `tohost` and `fromhost` take the top of the RAM, fro
 | `config.yaml` | `riscv-tools` configuration to build and simulate: toolchain, runtime, VHDL sources and test module |
 | `rtl/template_map_pkg.vhd` | Constants package generated from `platform.yaml` (not edited by hand) |
 | `rtl/template_sim_top.vhd` | Simulation top, which only connects the clock generator, the core, the memories and the UART |
-| `runtime/boot_memory.S` | Fixed BOOT_MEMORY loader and the `rv32_wait_restart` routine |
+| `runtime/boot_memory.S` | BOOT_MEMORY wrapper: includes the generated headers and the common `base/src/boot/boot_core.S`, which carries `rv32_wait_restart` |
 | `runtime/_exit.c` | End of the program, which reports the result in `tohost` |
 | `runtime/stdio.c` | Standard output into a RAM buffer |
 | `runtime/spike_exit.S` | Stand-in for `rv32_wait_restart` in the Spike ELF |
@@ -33,7 +33,7 @@ The 1032 bytes of `stdout`, `tohost` and `fromhost` take the top of the RAM, fro
 
 ## 4. The top
 
-`template_sim_top` has the file generics (`boot_memory_file`, `rom_file`, `ram_file`), the size generics (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, powers of two whose default comes from the map package), `has_uart` and one `has_*` generic per core extension (`has_e`, `has_m`, `has_zmmul`, `has_zicsr`, `has_zicntr`, `has_zihpm`, `has_zimop`, `has_zicond`, `has_zihintntl`, `has_zihintpause`, `has_zifencei` and `has_zicclsm`), whose default is the `HAS_*` constant of the package and which the top connects to the core.
+`template_sim_top` has the file generics (`boot_memory_file`, `rom_file`, `ram_file`), the size generics (`boot_memory_size_bytes`, `rom_size_bytes`, `ram_size_bytes`, powers of two whose default comes from the map package) and `has_uart`. The core reads the extensions from the generated `config_pkg` of the platform, so the top declares no extension generic.
 
 | Port | Use |
 | :--- | :--- |

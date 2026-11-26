@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "engine": "bitwuzla",
+  "proofs_and_mutants": 158,
+  "verdicts": {
+    "pass": 43,
+    "fail": 115
+  },
+  "warnings_bytes": 0,
+  "memory_gib": 6
+}

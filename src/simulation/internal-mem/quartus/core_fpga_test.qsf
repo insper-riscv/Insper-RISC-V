@@ -64,6 +64,7 @@ set_global_assignment -name VHDL_FILE ../pll/pll.vhd
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/utils_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/config_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/internal_mem_map_pkg.vhd
+set_global_assignment -name VHDL_FILE ../../../../base/src/interconnect/interconnect_pkg.vhd
 set_global_assignment -name VHDL_FILE ../rtl/Blinky.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/pipeline_types.vhd
 set_global_assignment -name VHDL_FILE ../../../../Core/src/shared/byte_mask_consts.vhd
@@ -145,9 +146,10 @@ set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash.
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/synchronizer.vhd
 set_global_assignment -name QIP_FILE ../../../../Memory/src/ROM/Cyclone-V/flash_loader.qip
 set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/altera/virtual_jtag.vhd
-set_global_assignment -name VHDL_FILE ../../../../Common-Components/src/tristate_buffer_1bit.vhd
+set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/GPIO/soc/gpio_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/GPIO/soc/gpio_cell.vhd
+set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/GPIO/soc/gpio_group.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/GPIO/soc/gpio.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/uart2BusTop_pkg.vhd
 set_global_assignment -name VHDL_FILE ../../../../Peripherals/src/UART/serial/vendor/opencores_uart2bus/baudGen.vhd

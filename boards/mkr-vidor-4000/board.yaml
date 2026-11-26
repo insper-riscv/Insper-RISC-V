@@ -34,6 +34,38 @@ clocks:
     - {name: clock_48, signal: iCLK, mhz: 48}
   reference: clock_48
   reset: {signal: iRESETn, active: low}
+io:
+  # Cabecalhos MKR (D0 a D14, A0 a A6) e Mini PCI Express (as 25 redes PEX do FPGA), numerados nessa ordem; AREF fica fora (referencia analogica do SAMD21).
+  gpio:
+    signals:
+      - "bMKR_D[14:0]"
+      - "bMKR_A[6:0]"
+      - bPEX_PIN6
+      - bPEX_PIN8
+      - bPEX_PIN10
+      - iPEX_PIN11
+      - bPEX_PIN12
+      - iPEX_PIN13
+      - bPEX_PIN14
+      - bPEX_PIN16
+      - bPEX_PIN20
+      - iPEX_PIN23
+      - iPEX_PIN25
+      - bPEX_PIN28
+      - bPEX_PIN30
+      - iPEX_PIN31
+      - bPEX_PIN32
+      - iPEX_PIN33
+      - bPEX_PIN42
+      - bPEX_PIN44
+      - bPEX_PIN45
+      - bPEX_PIN46
+      - bPEX_PIN47
+      - bPEX_PIN48
+      - bPEX_PIN49
+      - bPEX_PIN51
+      - bPEX_RST
+    bidirectional: true
 memories:
   sdram:
     chip: AS4C4M16SA-7BCN
@@ -44,16 +76,24 @@ memories:
     chip: W25Q16DV
     bytes: 2097152
     shared_with_config: true
+# Papeis de pino dos perifericos externos (secao `buses`), nos pinos dos cabecalhos MKR segundo o ABX00022-pinout.pdf (SERCOM do SAMD21: I2C em D11 e D12, SPI em D8 a D10, UART em D13 e D14).
+buses:
+  i2c: {scl: "bMKR_D[12]", sda: "bMKR_D[11]"}
+  spi: {sclk: "bMKR_D[9]", mosi: "bMKR_D[8]", miso: "bMKR_D[10]", cs_n: "bMKR_D[7]"}
+  serial: {rx: "bMKR_D[13]", tx: "bMKR_D[14]"}
 console:
   default: jtag
 pins: pins.yaml
 notes:
-  - "Sem LED, botao, chave nem display ligados ao FPGA (o LED da placa e do SAMD21), de modo que nenhum papel de E/S e declarado e uma plataforma que exija leds falha em V5."
+  - "Sem LED, botao, chave nem display ligados ao FPGA (o LED da placa e do SAMD21), de modo que os papeis leds, switches, keys e display nao existem e uma plataforma que exija um deles falha em V5. As E/S do FPGA sao os cabecalhos MKR e o Mini PCI Express, expostos pelo papel gpio."
+  - "Papel gpio (datasheet ABX00022, secao 1.2: 22 E/S nos cabecalhos e 25 no Mini PCI Express): bMKR_D[14:0] (bits 0 a 14), bMKR_A[6:0] (15 a 21) e as 25 redes PEX do FPGA (22 a 46). AREF (bMKR_AREF, bola B1) fica fora porque e a referencia analogica do SAMD21. As redes PEX_PIN1, PEX_PIN3, PEX_PIN5 e PEX_PIN7 do conector ligam as bolas R10, P11, R11 e M6, que o qsf chama de bWM_PIO2, bWM_PIO3, bWM_PIO4 e bWM_PIO34 e que o modulo Wi-Fi tambem usa; ficam fora do papel."
+  - "Papeis de pino (buses), lidos no ABX00022-pinout.pdf, onde o cabecalho MKR traz o SERCOM do SAMD21 em cada pino: i2c em D11 (SDA, bola C15) e D12 (SCL, bola B16), spi em D8 (COPI, F16), D9 (SCK, F15) e D10 (CIPO, C16) e serial em D13 (RX, C11) e D14 (TX, A13). O datasheet nao define um pino de selecao do SPI, e o cs_n do papel spi usa D7 (bola G15) por escolha do projeto, nao do datasheet. Os mesmos pinos aparecem no papel gpio; a plataforma usa cada pino em um papel so."
   - "A USB liga so ao SAMD21. O Tools reconhece a placa por lsusb (2341:8056) e diz o que falta; nao grava o sketch (decisao DM8), porque uma gravacao errada pode inutilizar a via USB."
   - "O IDCODE 020F20DD do 10CL016 vem do banco de dispositivos do Quartus 25.1 (pgm_parts.txt), nao de uma leitura da placa; e o mesmo do EP3C16. A primeira versao deste pacote supunha 020F10DD, que e o do 10CL010."
   - "O .qsf oficial (VidorBitstream) atribuia sete pinos a dois sinais cada (L4, R4, R5, R6, R7, T4, T7). O esquematico decide cada um (notas de pins.yaml): L4 PANEL_SDA, R4 WM_PIO35, T4 WM_PIO31, R5 WM_PIO20, R6 WM_PIO21, R7 CFG_HOLD, T7 CFG_WP; os sinais perdedores sairam e conflicts esta vazio."
   - "A QSPI tem 2 MB (1 MB para a aplicacao do usuario) e guarda o bitstream; o chip e o W25Q16DVSNIG (esquematico); HOLD e WP da QSPI sao as redes CFG_HOLD (R7) e CFG_WP (T7) do esquematico."
   - "A SDRAM e o AS4C4M16SA-7BCN (U9A do esquematico): 12 bits de endereco A0 a A11 e BS0 e BS1, ou seja 4 bancos e 12 bits de linha, 16 bits de dados."
-  - "O UART do SoC so existe pelo SAMD21 (repasse de firmware) ou por adaptador nos pinos D13 e D14 (inferido); o console padrao e a JTAG UART via USB-Blaster emulado."
+  - "O UART do SoC so existe pelo SAMD21 (repasse de firmware) ou por adaptador nos pinos D13 (RX) e D14 (TX), SERCOM5 no ABX00022-pinout.pdf, declarados em buses.serial; o console padrao e a JTAG UART via USB-Blaster emulado."
   - "Os multiplicadores sao contados em elementos de 9 bits (56 de 18x18). Capacidades de LEs, M9K e PLLs vem do datasheet da familia (parcialmente inferido)."
+  - "A saida HDMI da Vidor e TMDS direta em oHDMI_TX[2:0] e oHDMI_CLK (LVDS), mais bHDMI_SCL, bHDMI_SDA e iHDMI_HPD, sem conversor de video. O papel hdmi do Tools descreve um conversor com barramento de pixel (d, de, hs, vs), que a placa nao tem; por isso `buses.hdmi` nao e declarado aqui e depende de um papel TMDS no Tools. A camera MIPI (iMIPI_D[1:0], iMIPI_CLK, bMIPI_SDA, bMIPI_SCL e bMIPI_GP[1:0], em pins.yaml) e a ponte Wi-Fi (modulo NINA, pinos bWM_* e iWM_*, em pins.yaml) ficam sem papel de pino ate o Tools ter os kinds e o Peripherals o RTL; o TMDS direto, a camera e o Wi-Fi nao entram em buses nem em io."
   - "Placa em fim de vida; validacao de portabilidade, nao alvo principal."

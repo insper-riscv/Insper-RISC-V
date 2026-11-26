@@ -32,7 +32,8 @@ sim:
     - Common-Components/src/utils_pkg.vhd
     - src/cyclone-v/fpga-integrated/config_pkg.vhd
     - src/cyclone-v/fpga-integrated/modular_map_pkg.vhd
-    - src/interconnect/ext_interconnect.vhd
+    - base/src/interconnect/interconnect_pkg.vhd
+    - base/src/interconnect/ext_interconnect.vhd
     - Core/src/shared/pipeline_types.vhd
     - Core/src/shared/byte_mask_consts.vhd
     - Core/src/shared/opcode_consts.vhd
@@ -126,8 +127,10 @@ sim:
     - Peripherals/src/TIMER/soc/timer_operation_decoder.vhd
     - Peripherals/src/TIMER/soc/timer.vhd
     - Common-Components/src/synchronizer.vhd
+    - Peripherals/src/GPIO/soc/gpio_pkg.vhd
     - Peripherals/src/GPIO/soc/gpio_operation_decoder.vhd
     - Peripherals/src/GPIO/soc/gpio_cell.vhd
+    - Peripherals/src/GPIO/soc/gpio_group.vhd
     - Peripherals/src/GPIO/soc/gpio.vhd
     - Peripherals/src/display/soc/hex_to_seg7.vhd
     - Peripherals/src/display/soc/seg_display.vhd
@@ -141,7 +144,7 @@ sim:
     - Peripherals/src/UART/jtag/jtag_uart.vhd
     - Peripherals/src/UART/console/console.vhd
     - Peripherals/src/flash-controller/soc/flash_controller.vhd
-    - src/soc/soc.vhd
+    - base/src/soc/soc.vhd
     - src/simulation/internal-mem/rtl/clk_gen_3way.vhd
     - Memory/src/latency/SoC/latency_counter.vhd
     - Memory/src/RAM/SoC/ram_pkg.vhd

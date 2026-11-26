@@ -1,0 +1,71 @@
+-- SPDX-License-Identifier: Apache-2.0
+-- Build-only observer: no CPU ports, instruction semantics or CSR changed.
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+entity embench_retirement_counter is
+    port (
+        i_clk, i_rst, i_retire, i_trap : in std_logic;
+        i_pc : in std_logic_vector(31 downto 0);
+        i_opcode : in std_logic_vector(6 downto 0);
+        i_start, i_stop : in std_logic_vector(31 downto 0);
+        -- magic, status, cycles, instructions, branching, memory, compute, other
+        o_result : out std_logic_vector(447 downto 0)
+    );
+end entity embench_retirement_counter;
+
+architecture rtl of embench_retirement_counter is
+    type counters_t is array (0 to 5) of unsigned(63 downto 0);
+    signal counts : counters_t := (others => (others => '0'));
+    signal active, finished, failed : std_logic := '0';
+begin
+    o_result(31 downto 0) <= x"454d4248";
+    o_result(63 downto 32) <= (31 downto 3 => '0') & failed & active & finished;
+    words : for index in 0 to 5 generate
+        o_result(127 + index * 64 downto 64 + index * 64) <= std_logic_vector(counts(index));
+    end generate words;
+
+    count_retired : process (i_clk)
+        variable bucket : natural range 2 to 5;
+    begin
+        if rising_edge(i_clk) then
+            if i_rst = '1' then
+                counts <= (others => (others => '0'));
+                active <= '0';
+                finished <= '0';
+                failed <= '0';
+            else
+                if i_trap = '1' then
+                    failed <= '1';
+                end if;
+                if active = '1' then
+                    counts(0) <= counts(0) + 1;
+                end if;
+                if i_retire = '1' then
+                    if i_pc = i_start and unsigned(i_start) /= 0 then
+                        if active = '1' or finished = '1' then
+                            failed <= '1';
+                        end if;
+                        active <= '1';
+                    elsif i_pc = i_stop and unsigned(i_stop) /= 0 then
+                        if active = '0' or counts(1) = 0 then
+                            failed <= '1';
+                        end if;
+                        active <= '0';
+                        finished <= '1';
+                    elsif active = '1' then
+                        counts(1) <= counts(1) + 1;
+                        case i_opcode is
+                            when "1100011" | "1101111" | "1100111" => bucket := 2;
+                            when "0000011" | "0100011" => bucket := 3;
+                            when "0110011" | "0010011" | "0110111" | "0010111" => bucket := 4;
+                            when others => bucket := 5;
+                        end case;
+                        counts(bucket) <= counts(bucket) + 1;
+                    end if;
+                end if;
+            end if;
+        end if;
+    end process count_retired;
+end architecture rtl;

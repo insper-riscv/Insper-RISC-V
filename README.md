@@ -74,7 +74,7 @@ As ferramentas vêm da imagem `ci-vhdl` (`ghcr.io/insper-riscv/ci-vhdl`) do Infr
 | `make check` | A construção do topo de simulação de cada plataforma com os submódulos fixados e a conferência de que nenhuma entidade ou pacote é definido em dois repositórios |
 | `make memory-map` | Concordância de cada cópia do mapa de memória com o `platform.yaml` da plataforma |
 | `make unit-tests` | Testes cocotb das plataformas deste repositório, mais o `memory-map` |
-| `make formal` | Provas formais (SymbiYosys) do interconector deste repositório, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla`, `boolector` e `abc-bmc3`) |
+| `make formal` | Provas formais (SymbiYosys) do interconector deste repositório, com o engine de `FORMAL_ENGINE` (`bitwuzla` por padrão; o CI roda `yices`, `bitwuzla` e `abc-bmc3`) |
 
 Cada repositório roda só as próprias verificações, testes e provas; as dos submódulos rodam no CI de cada um.
 
@@ -84,7 +84,12 @@ O projeto do Quartus da DE0-CV (Cyclone V 5CEBA4F23) é escrito por `riscv-tools
 
 ## 6. KPIs
 
-`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md).
+`scripts/kpi_report.py` e `scripts/compare_kpis.py` geram os relatórios de KPI (clock, recursos, CPI e testes) a partir de uma execução do Quartus, conforme [docs/pt-br/guide/kpis.md](docs/pt-br/guide/kpis.md). O workflow `embench` compara a base de cada PR com o merge proposto usando os 19 programas do Embench IoT nos perfis explícitos do Core. O resumo usa apenas simulação GHDL, incluindo ciclos, instruções, CPI/IPC e notas por programa, perfil e tipo de operação. Clock físico, Fmax e MIPS não são medidos pela simulação. O modo `ci` usa uma repetição local por algoritmo e identifica a nota como estimativa; `workload=full` preserva os loops originais. Não exige placa nem runner de laboratório. Método, limites e reprodução estão em [benchmarks/embench/AUTOMATION.md](benchmarks/embench/AUTOMATION.md).
+
+## 7. Desenvolvimento de aplicações no VS Code
+
+Veja o [SDK de aplicações C/Rust](SDK.md) e o [exemplo Live](examples/live-c/README.md). A extensão oferece programação da FPGA, atualização rápida e simulação; o SDK mantém builds privados e aceita o profile da CPU no `rv32.toml`.
+
 
 ---
 

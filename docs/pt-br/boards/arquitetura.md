@@ -35,7 +35,7 @@ O `platform.yaml` descreve recursos em quatro grupos, e cada recurso tem um back
 | Dados | `RAM` | Bloco de memória do FPGA | SDRAM com largura por generic, SRAM assíncrona |
 | E/S | Console, chaves, botões, LEDs, displays | Modelo de simulação, ou ausente | Pinos da placa, JTAG UART |
 
-O campo `memory.<região>.external` diz se a região fica atrás da porta externa do núcleo, e `backend` diz como ela é realizada. O backend `emulado` tem dois alvos: na simulação é o modelo de chip em VHDL, de qualquer tamanho, e no FPGA é um bloco de memória interna, limitado pela RAM interna da placa (seção 6).
+O campo `on_bus` de um segmento de `memory` diz se ele fica atrás da porta externa do núcleo, e `type` diz como ele é realizado (`emulated` é o backend `emulado`, e `flash`, `sdram` e `sram` são o backend `dispositivo`). O backend `emulado` tem dois alvos: na simulação é o modelo de chip em VHDL, de qualquer tamanho, e no FPGA é um bloco de memória interna, limitado pela RAM interna da placa (seção 6).
 
 | Backend | Região | Contrato | Recurso de placa (`needs`) |
 | :--- | :--- | :--- | :--- |
@@ -50,7 +50,7 @@ A latência de um backend de dispositivo, em ciclos de um relógio de período $
 
 $$ n_{ciclos} = \left\lceil \frac{t_{chip}}{T} \right\rceil $$
 
-para cada tempo $t_{chip}$ do chip no catálogo. O backend `emulado` imita um dispositivo copiando os mesmos $n_{ciclos}$ para `memory.<região>.latency`, o que mantém o tempo de programa comparável entre placas.
+para cada tempo $t_{chip}$ do chip no catálogo. O backend `emulado` imita um dispositivo copiando os mesmos $n_{ciclos}$ para `latency` do segmento em `memory`, o que mantém o tempo de programa comparável entre placas.
 
 ### 2.1. Largura de dado diferente de 32 bits
 

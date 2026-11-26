@@ -56,6 +56,18 @@ The fit closes the timing at 50 MHz with seed 5: the smallest setup slack is 0.4
 
 Left out are `monitor`, `hex-id` and the three UART-on-pins programs, which the board lacks.
 
+## 7. Expansion pins
+
+The `gpio` role is bidirectional and numbers `GPIO` from 0 to 35 and the Arduino from 36 to 51.
+
+| Role | Signals | Pins | Manual | Level |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO[35:0]` | 36 | 3.5, table 3-7 | 3.3 V |
+| `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6, table 3-8 | 3.3 V |
+| `clock_extra` | `MAX10_CLK2_50`, `ADC_CLK_10` | 2 | 3.2, table 3-2 | 3.3 V |
+
+Only in `pins.yaml`, with no `io` role: `ARDUINO_RESET_N` (table 3-8) and the decimal point `HEX0[7]` to `HEX5[7]` (section 3.4, table 3-6), because the `display` role has seven segments per digit. The ADXL345 accelerometer (section 3.10, table 3-13, `GSENSOR_*`) is the `adxl345` role and the ADC internal to the MAX 10 (section 3.7, no signal pin) is the `adc` role with `chip: max10`, both in `buses`, and the VGA video (section 3.8, table 3-11) is the `video` role (see [perifericos-por-placa.md](perifericos-por-placa.md)).
+
 ---
 
 Copyright 2026 Insper. Licensed under the [Apache License, Version 2.0](../../../LICENSE).

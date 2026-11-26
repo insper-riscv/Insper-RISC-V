@@ -11,6 +11,7 @@ NESTED   := ! -path 'Core/src/common/*' ! -path 'Memory/src/common/*' ! -path 'P
 # The platforms of this repository: the simulation-only ones and the board ones.
 P  := src/simulation/internal-mem
 PF := src/cyclone-v/de0-cv
+PD := src/cyclone-v/doom
 PE := src/cyclone-v/external-data
 PM := src/simulation/modular
 PT := src/simulation/template
@@ -23,6 +24,8 @@ TEN := test-integrated test-external-data test-external-instruction test-externa
   fpga-integrated fpga-external-data fpga-external-instruction fpga-external fpga-uart-jtag fpga-uart-pins
 # The directory of platform $$n of TEN, for a shell loop of a recipe.
 TEN_DIR = $$(case $$n in test-*) echo src/simulation;; *) echo src/cyclone-v;; esac)/$$n
+# The example platforms of the external peripherals, one per board in src/periph-examples (docs/pt-br/boards/perifericos-por-placa.md).
+PERIPH := de0-cv de2-115 de0-nano de10-lite de10-nano de0-nano-soc mkr-vidor-4000
 GHDL := ghdl
 STD  := --std=08
 WDIR := build/ghdl
@@ -30,9 +33,10 @@ WDIR := build/ghdl
 SOURCES := riscv-tools --root . sources
 
 # What is not a source of the design: tests, proofs, vendor code, build output and the Quartus IPs.
-NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*'
+NOT_RTL  := ! -path '*/tests/*' ! -path '*/formal/*' ! -path '*/vendor/*' ! -path '*/build/*' ! -path '*/hw/*' ! -path '*/quartus/*' ! -path '*/.git/*' \
+  ! -path 'Peripherals/src/ETH/rgmii/sim/*' ! -path 'Peripherals/src/MIPI/ddr/sim/*' ! -path 'Peripherals/src/HDMI/tmds/sim/*'
 
-.PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
+.PHONY: all sync paths check variants variants-check check-tops check-generics check-irq-sources check-sdram-split check-unique memory-map generate generate-check generate-sources sources-check test unit-tests formal clean
 
 all: paths check unit-tests formal
 
@@ -50,7 +54,7 @@ paths:
 # What only this repository can check: the two simulation tops of the platforms build with the pinned
 # submodules and no name is defined twice across them. The VHDL syntax of each submodule (and the profiles of
 # the Core) is checked in the CI of each one.
-check: sources-check variants-check check-tops check-generics check-unique check-irq-sources
+check: sources-check variants-check check-tops check-generics check-unique check-irq-sources check-sdram-split
 
 # GHDL analyzes and elaborates the simulation top of each platform. The ROM models open their image when
 # they are elaborated (default.hex, from their generic), so a one-word one is put in the work directory.
@@ -63,6 +67,12 @@ check-tops:
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_emulated_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_emulated_sim_test
+	@echo "the simulation top of the de0-cv-emulated platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) doom_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. doom_sim_test
+	@echo "the simulation top of the doom platform builds"
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) external_data_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_external_data_sim_test
 	@echo "the simulation top of the external-data platform builds"
@@ -82,11 +92,16 @@ check-tops:
 # Every HAS_* constant of the generated package of a platform is a generic of its tops: the generics
 # that the generate step and riscv-tools platform sync pass to GHDL must exist there.
 check-generics:
-	python3 scripts/check_top_generics.py
+	uv run --no-project python scripts/check_top_generics.py
 
 # The numbers of the PLIC sources of the modular top and of every platform.yaml agree.
 check-irq-sources:
 	uv run --no-project --with pyyaml python scripts/check_irq_sources.py
+
+# The split of the SDRAM of the de0-cv in FLASH and RAM comes from its platform.yaml: other sizes that fit the chip are
+# accepted, and the ones that do not fit are refused.
+check-sdram-split:
+	uv run --no-project --with pyyaml python tests/python/check_sdram_split.py
 
 # No entity or package is defined in two repositories: they would clash in the library of any design
 # that uses both.
@@ -103,12 +118,15 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PF)-emulated/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PT)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . check-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . check-memory-map --platform src/periph-examples/$$b/platform.yaml || exit 1; done
 	$(MAKE) generate-check variants-check sources-check
 
 # The files written from the map of each platform (the linker flags, the linker script of the boot memory and
@@ -117,29 +135,33 @@ memory-map:
 generate:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . generate-memory-map --platform src/periph-examples/$$b/platform.yaml || exit 1; done
 	$(MAKE) variants
 
 generate-check:
 	riscv-tools --root . generate-memory-map --platform $(P)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PF)/platform.yaml --check
+	riscv-tools --root . generate-memory-map --platform $(PD)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PE)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PM)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PT)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PN)/platform.yaml --check
 	riscv-tools --root . generate-memory-map --platform $(PL)/platform.yaml --check
 	@for n in $(TEN); do riscv-tools --root . generate-memory-map --platform $(TEN_DIR)/platform.yaml --check || exit 1; done
+	@for b in $(PERIPH); do riscv-tools --root . generate-memory-map --platform src/periph-examples/$$b/platform.yaml --check || exit 1; done
 	$(MAKE) variants-check
 
 # The config_pkg of the modular platform with another memory combination, for the matrix tests of tests.json (each
 # combination needs its own package, because the core reads the map from it): `make variants` writes them and
 # `make variants-check` fails when one is out of date.
-VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off internal_caches:rom=internal,ram=internal,icache=on,dcache=on
+VARIANTS := rom_bridge:rom=external,ram=internal,icache=off,dcache=off ram_direct:rom=internal,ram=external,icache=off,dcache=off bridge_direct:rom=external,ram=external,icache=off,dcache=off bridge_dcache:rom=external,ram=external,icache=off,dcache=on icache_direct:rom=external,ram=external,icache=on,dcache=off bridge_caches:rom=external,ram=external,icache=on,dcache=on
 VARIANT_DIR := src/simulation/modular/variants
 
 variants:
@@ -173,8 +195,8 @@ test:
 # Common-Components, Core, Memory and Peripherals run in the CI of each one (`make test` there), not here.
 unit-tests: sync memory-map test
 
-# The formal proofs of this repository only: the external interconnect (src/interconnect), with the engine
-# FORMAL_ENGINE (yices, bitwuzla, boolector or abc-bmc3; bitwuzla by default). The proofs of the submodules
+# The formal proofs of this repository only: the external interconnect (base/src/interconnect), with the engine
+# FORMAL_ENGINE (yices, bitwuzla or abc-bmc3; bitwuzla by default). The proofs of the submodules
 # run in the CI of each one. FORMAL_JOBS is empty by construction and stays as the list of the proofs
 # of the submodules that this repository does not run. Each proof works in its own folder, -k lets the
 # others finish when one fails and -O keeps the output of each target together.
@@ -187,7 +209,7 @@ formal:
 
 formal-run: $(FORMAL_JOBS) formal-interconnect
 
-# The proofs of this repository: the external interconnect (src/interconnect), whose result is
+# The proofs of this repository: the external interconnect (base/src/interconnect), whose result is
 # build/formal/result-<engine>.tsv, read by formal/aggregate.sh.
 formal-interconnect:
 	FORMAL_ENGINE=$(FORMAL_ENGINE) bash formal/interconnect.sh

@@ -80,6 +80,18 @@ O backend só se justifica se a DE10-Nano precisar rodar o perfil de 1 MB. A rec
 | N1 | Ajuste e análise de tempo | `quartus_fit` e `quartus_sta` sobre o mesmo projeto |
 | N2 | Placa viva | Exige o cabo USB-Blaster II enumerando |
 
+## 8. Pinos de expansão
+
+As duas placas têm os mesmos papéis. O papel `gpio` é bidirecional e numera `GPIO_0` de 0 a 35, `GPIO_1` de 36 a 71 e o Arduino de 72 a 87. `FPGA_CLK3_50` divide o pino com `FPGA_CLK1_50` (tabela 3-5).
+
+| Papel | Sinais | Pinos | Manual | Nível |
+| :--- | :--- | ---: | :--- | :--- |
+| `gpio` | `GPIO_0[35:0]`, `GPIO_1[35:0]` | 72 | 3.6.2, tabela 3-10 | 3,3 V |
+| `gpio` | `ARDUINO_IO[15:0]` | 16 | 3.6.3, tabela 3-11 | 3,3 V |
+| `clock_extra` | `FPGA_CLK2_50`, `FPGA_CLK3_50` | 2 | 3.5, tabela 3-5 | 3,3 V |
+
+Ficam só no `pins.yaml`, sem papel de `io`: `ARDUINO_RESET_N`. O ADC LTC2308 (seção 3.6.4, tabela 3-12) é o papel `adc`, e o HDMI ADV7513 da DE10-Nano (seção 3.6.5) são os papéis `hdmi` e `hdmi_audio`, em `buses` (ver [perifericos-por-placa.md](perifericos-por-placa.md)). Tudo o que as seções 3.7 listam (Ethernet, USB, SD, UART, DDR3, G-sensor e conector LTC) é do HPS e não faz parte do catálogo do FPGA.
+
 ---
 
 Copyright 2026 Insper. Licenciado sob a [Apache License, Version 2.0](../../../LICENSE).

@@ -10,36 +10,42 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity Blinky is
-  generic (
-    -- Ciclos do clock de 50 MHz em meio segundo (0,5 s a 50 MHz); no máximo 2**26.
-    half_period : positive := 25000000
-  );
-  port (
-    -- Clock de 50 MHz da placa.
-    i_clk  : in  std_logic;       -- 50 MHz
-    -- LED piscante (inverte a cada meio segundo).
-    o_led  : out std_logic
-  );
-end entity;
+entity blinky is
+    generic (
+        -- Ciclos do clock de 50 MHz em meio segundo (0,5 s a 50 MHz); no máximo 2**26.
+        half_period : positive := 25000000
+    );
+    port (
+        -- Clock de 50 MHz da placa.
+        i_clk : in    std_logic;       -- 50 MHz
+        -- LED piscante (inverte a cada meio segundo).
+        o_led : out   std_logic
+    );
+end entity blinky;
 
-architecture rtl of Blinky is
-  -- Contador de ciclos do meio período (26 bits, maior que 25e6).
-  signal cnt   : unsigned(25 downto 0) := (others => '0');  -- 26 bits > 25e6
-  -- Estado atual do LED, invertido a cada meio período.
-  signal led_r : std_logic := '0';
+architecture rtl of blinky is
+
+    -- Contador de ciclos do meio período (26 bits, maior que 25e6).
+    signal cnt   : unsigned(25 downto 0) := (others => '0');  -- 26 bits > 25e6
+    -- Estado atual do LED, invertido a cada meio período.
+    signal led_r : std_logic             := '0';
+
 begin
-  process(i_clk)
-  begin
-    if rising_edge(i_clk) then
-      if cnt = to_unsigned(half_period - 1, cnt'length) then
-        cnt   <= (others => '0');
-        led_r <= not led_r;  -- toggle every 0.5 s → 1 Hz blink
-      else
-        cnt <= cnt + 1;
-      end if;
-    end if;
-  end process;
 
-  o_led <= led_r;
-end architecture;
+    p_blink : process (i_clk) is
+    begin
+
+        if rising_edge(i_clk) then
+            if cnt = to_unsigned(half_period - 1, cnt'length) then
+                cnt   <= (others => '0');
+                led_r <= not led_r;  -- toggle every 0.5 s → 1 Hz blink
+            else
+                cnt <= cnt + 1;
+            end if;
+        end if;
+
+    end process p_blink;
+
+    o_led <= led_r;
+
+end architecture rtl;

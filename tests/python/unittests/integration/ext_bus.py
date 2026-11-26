@@ -79,34 +79,25 @@ def drive_memory(dut: Dut, addr: int, cycles: int, mem_latency: int):
         )
 
 
-async def access(
-    dut: Dut,
-    addr: int,
-    write: int | None = None,
-    hold: int = 0,
-    mem_latency: int = 2,
-):
-    """One core access; returns (read data, cycles until ready).
+MEM_LATENCY = 2
 
-    `write` is the word to store, and None makes the access a read.
 
-    The port holds until ready, then `hold` more cycles (the pipeline
-    stopped by something else) before mem_advance.
-
-    """
-    dut.i_addr.value = addr
-    dut.i_wdata.value = write or 0
-    dut.i_byteena.value = 0xF
-    dut.i_wren.value = 0 if write is None else 1
-    dut.i_rden.value = 1 if write is None else 0
+async def _wait_ready(dut: Dut, addr: int, error: list[int] | None) -> int:
+    """Hold the port until ready; return the cycles it took."""
     cycles = 0
     while True:
         await post_edge(dut)
         cycles += 1
-        drive_memory(dut, addr, cycles, mem_latency)
+        drive_memory(dut, addr, cycles, MEM_LATENCY)
         if int(dut.o_ready.value):
-            break
+            if error is not None:
+                error.append(int(dut.o_error.value))
+            return cycles
         check_true(cycles < TIMEOUT, "the access never completed")
+
+
+async def _advance(dut: Dut, hold: int):
+    """Hold `hold` more cycles, then advance and release the port."""
     for _ in range(hold):
         check_true(
             int(dut.o_ready.value),
@@ -120,6 +111,31 @@ async def access(
         dut.i_m_ready.value = 0
     dut.i_rden.value = 0
     dut.i_wren.value = 0
+
+
+async def access(
+    dut: Dut,
+    addr: int,
+    write: int | None = None,
+    hold: int = 0,
+    error: list[int] | None = None,
+):
+    """One core access; returns (read data, cycles until ready).
+
+    `write` is the word to store, and None makes the access a read.
+    `error`, when given, receives the o_error seen with the ready.
+
+    The port holds until ready, then `hold` more cycles (the pipeline
+    stopped by something else) before mem_advance.
+
+    """
+    dut.i_addr.value = addr
+    dut.i_wdata.value = write or 0
+    dut.i_byteena.value = 0xF
+    dut.i_wren.value = 0 if write is None else 1
+    dut.i_rden.value = 1 if write is None else 0
+    cycles = await _wait_ready(dut, addr, error)
+    await _advance(dut, hold)
     return int(dut.o_rdata.value), cycles
 
 
@@ -365,3 +381,44 @@ async def test_status_tells_whether_a_host_has_scanned(dut: Dut):
     await scan(dut)
     await Timer(1, unit="us")
     check_equal((await _status(dut)) >> 17 & 1, 1)
+
+
+async def _error_of(dut: Dut, addr: int, write: int | None = None):
+    """Make one access; return (read data, error seen with ready)."""
+    seen: list[int] = []
+    value, _c = await access(dut, addr, write=write, error=seen)
+    return value, seen[0]
+
+
+@cocotb.test()
+async def test_an_address_with_no_window_ends_in_error(dut: Dut):
+    """A hole of the map (no memory, no window) ends in an error."""
+    await start(dut)
+    for addr in (0x20000000, 0x50000000, 0x00000100):
+        value, error = await _error_of(dut, addr)
+        check_equal(error, 1, f"read of {addr:#x}")
+        check_equal(value, 0, f"read of {addr:#x} gives zero")
+        _v, error = await _error_of(dut, addr, write=0xFFFFFFFF)
+        check_equal(error, 1, f"write of {addr:#x}")
+
+
+@cocotb.test()
+async def test_the_padding_of_a_window_ends_in_error(dut: Dut):
+    """What follows the registers of a window (64 KiB) is an error."""
+    await start(dut)
+    value, error = await _error_of(dut, PERIPHERALS + 0x10000)
+    check_equal(error, 1, "read of the padding")
+    check_equal(value, 0)
+    _v, error = await _error_of(dut, PERIPHERALS + 0x50000000 + 0x20000, 1)
+    check_equal(error, 1, "write of the padding")
+
+
+@cocotb.test()
+async def test_a_good_access_is_not_an_error(dut: Dut):
+    """Memory, the UART and a silent window end without an error."""
+    await start(dut)
+    for addr in (MEM, STATUS, 0xA0000000):
+        _v, error = await _error_of(dut, addr)
+        check_equal(error, 0, f"read of {addr:#x}")
+    _v, error = await _error_of(dut, TXDATA, write=0x41)
+    check_equal(error, 0, "write of the UART")
