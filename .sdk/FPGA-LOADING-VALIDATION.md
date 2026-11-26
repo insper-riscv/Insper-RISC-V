@@ -88,3 +88,35 @@ A fresh Tools preparation fetched the published pinned commit and applied the
 SDK patch successfully. The new Tcl adapter was present in that installation.
 SDK and modified Tools Python files passed Ruff checks. The original local
 checkouts were left in place; publication used separate Git worktrees.
+
+## Dev Container extension installation
+
+A new C project exposed an installation race: Dev Containers installed C/C++
+from `customizations.vscode.extensions` while the bundled RV32 extension pack
+also requested that dependency. VS Code failed with `ENOTEMPTY` when renaming
+the same C/C++ extension directory, which aborted `postCreateCommand` before
+SDK setup.
+
+The container installer now passes `--do-not-include-pack-dependencies` when
+installing the bundled VSIX. Dev Containers remains responsible for language
+extensions; host-side installation of the extension pack is unchanged. A
+per-agent lock serializes this script across postCreate/postAttach, and its
+file descriptor is closed for the extension CLI. Real RV32 installation errors
+still fail rather than being suppressed; no installed extensions are deleted.
+
+Four regressions cover isolated installation, overlapping lifecycle calls,
+idempotence and propagation of actual installation errors. A real VS Code
+1.140.0 installation into an empty extension directory installed only RV32.
+The failed C-project bootstrap was rerun successfully and its C firmware
+compiled. Existing C/C++ and Rust Analyzer installations remained available.
+
+For an existing container using the updated SDK, rerun:
+
+```sh
+bash "$RV32_SDK_ROOT/scripts/bootstrap-external.sh" "$RV32_PROJECT_ROOT"
+```
+
+No container rebuild is needed when the SDK directory is already bind-mounted.
+
+The combined SDK suite passed 89 tests after this installer repair. Shell
+syntax validation and Ruff checks also passed.
