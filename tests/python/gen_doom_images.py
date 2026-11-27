@@ -1,4 +1,4 @@
-"""Gera as imagens do teste do carregador da SDRAM da plataforma doom.
+"""Gera as imagens dos testes do topo de simulação da plataforma doom.
 
 Uso, da raiz do repositório, na imagem `dev_tools` (precisa do GCC de
 RISC-V e do `riscv-tools`):
@@ -8,31 +8,29 @@ RISC-V e do `riscv-tools`):
     python tests/python/gen_doom_images.py --check
 
 A BOOT_MEMORY é a `boot_memory.S` de verdade, montada pelo mesmo caminho
-do `riscv-tools`. A banca A da FLASH recebe o `doom_loader.S` de
-verdade, ligado em `base + 0x100` e empacotado por `flash_image.pack`.
-A única diferença para a placa é o endereço da campainha (`launch`):
-na placa ele fica na última página da RAM, que a cache de dados ignora,
-e aqui fica em `RAM_BASE + LAUNCH_OFFSET`, porque a imagem da SDRAM
-do simulador é linear a partir da base e a última página fica a
-64 MiB dela.
+do `riscv-tools`: ela salta para a FLASH, em `boot.entry`. A FLASH e a
+RAM estão no mesmo chip de SDRAM, e a imagem de cada teste é a do chip
+inteiro, uma palavra por linha desde a palavra 0: o programa de teste
+começa na base da FLASH (`FLASH_CHIP_OFFSET` dentro do chip) e a RAM
+começa em `RAM_CHIP_OFFSET`. Na placa a FLASH fica no fim do chip e a
+RAM no começo; o teste aproxima as duas (generics do topo
+`flash_chip_offset_bytes` e `ram_chip_offset_bytes`) para a imagem ser
+pequena.
 
-A imagem da SDRAM é um programa de teste na base da RAM que guarda uma
-marca e escreve `tohost`. Em `sdram_go.hex` a campainha já traz a magia
-(o hospedeiro terminou de carregar); em `sdram_wait.hex` não traz, e o
-carregador tem de esperar.
+O programa de `sdram_go.hex` guarda uma marca na RAM e escreve `tohost`;
+os de `sdram_video.hex` e `sdram_kbd.hex` desenham um quadro e leem o
+teclado.
 
 Os arquivos ficam em tests/python/unittests/rtl/data/doom/. Com
 `--check` o script só confere se estão em dia.
 """
 
 import argparse
-import struct
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from riscv_tools import boot_memory, flash_image
+from riscv_tools import boot_memory
 from riscv_tools.memory_map import load_platform, symbols
 
 from tests.python.gen_de0_cv_images import load_address
@@ -57,20 +55,19 @@ from tests.python.utils.rv32_asm import (
 ROOT = Path(__file__).resolve().parents[2]
 DATA = Path(__file__).resolve().parent / "unittests/rtl/data/doom"
 PLATFORM = ROOT / "src/cyclone-v/doom/platform.yaml"
-RUNTIME = ROOT / "src/cyclone-v/doom/runtime"
 MAP = symbols(load_platform(PLATFORM))
 RAM_BASE = MAP["RAM.base"]
 TOHOST = MAP["tohost.base"]
-# A banca A é a primeira da FLASH, e a FLASH começa na base dela.
-BANK_A_BASE = MAP["FLASH.base"]
-BANK_A_SIZE = MAP["FLASH.size"] // 2
-BANK_A_ENTRY = BANK_A_BASE + flash_image.HEADER_SIZE
 WORD = 4
-# A campainha do teste: na primeira página da RAM, depois do código.
-LAUNCH_OFFSET = 0x800
-# A magia que o hospedeiro escreve (a mesma do doom_loader.S: "DOOM").
-LAUNCH_MAGIC = 0x4D4F4F44
-# A marca que o programa da SDRAM guarda e onde.
+# Onde a FLASH e a RAM ficam dentro do chip no teste (os generics do
+# topo): a FLASH na identidade do endereço do SoC e a RAM logo acima do
+# espaço do programa, para a imagem do chip ficar pequena.
+FLASH_CHIP_OFFSET = 0x1000
+RAM_CHIP_OFFSET = 0x10000
+# Período do clock da SDRAM do teste, em nanossegundos: o `clocks.mem`
+# do platform.yaml (125 MHz), que o topo usa nos tempos de refresh.
+CLK_MEM_NS = 8
+# A marca que o programa de teste guarda e onde, na RAM.
 MARK = 0xD00D
 MARK_OFFSET = 0x100
 TOOLCHAIN = {
@@ -83,9 +80,7 @@ PATHS = {
 }
 FILES = (
     "boot_memory.hex",
-    "flash.hex",
     "sdram_go.hex",
-    "sdram_wait.hex",
     "sdram_video.hex",
     "sdram_kbd.hex",
 )
@@ -101,70 +96,24 @@ KBD_LINE = 5
 WAIT_BACK = -2 * WORD
 
 
-def loader_payload(directory: Path) -> bytes:
-    """Assemble and link the loader for the entry of bank A.
+def ram_word(address: int) -> int:
+    """Return the index of the chip word that holds a RAM address.
 
     Parameters
     ----------
-    directory : Path
-        Scratch folder for the ELF and the flat binary.
+    address : int
+        A byte address of the RAM in the map of the SoC.
 
     Returns
     -------
-    bytes
-        The payload of bank A, with the doorbell of the test.
+    int
+        The index of the 32-bit word in the SDRAM chip.
     """
-    elf = directory / "doom_loader.elf"
-    binary = directory / "doom_loader.bin"
-    launch = RAM_BASE + LAUNCH_OFFSET
-    script = directory / "doom_loader.ld"
-    script.write_text(
-        f"ENTRY(_start)\nSECTIONS {{ . = {BANK_A_ENTRY:#x}; "
-        ".text : { *(.text.loader) *(.text*) } }\n"
-    )
-    subprocess.run(  # noqa: S603
-        [
-            TOOLCHAIN["gcc"],
-            "-march=rv32i_zifencei",
-            "-mabi=ilp32",
-            "-nostdlib",
-            "-nostartfiles",
-            f"-DDOOM_LAUNCH_ADDR={launch:#x}",
-            f"-I{RUNTIME}",
-            "-T",
-            str(script),
-            str(RUNTIME / "doom_loader.S"),
-            "-o",
-            str(elf),
-        ],
-        check=True,
-    )
-    subprocess.run(  # noqa: S603
-        [TOOLCHAIN["objcopy"], "-O", "binary", str(elf), str(binary)],
-        check=True,
-    )
-    return binary.read_bytes()
-
-
-def words_of(data: bytes) -> list[int]:
-    """Split bytes into little-endian words, padding the last one.
-
-    Parameters
-    ----------
-    data : bytes
-        The bytes.
-
-    Returns
-    -------
-    list of int
-        The words.
-    """
-    padded = data + bytes(-len(data) % WORD)
-    return [w for (w,) in struct.iter_unpack("<I", padded)]
+    return (RAM_CHIP_OFFSET + address - RAM_BASE) // WORD
 
 
 def sdram_program() -> list[int]:
-    """Build the program the loader must reach at the base of the RAM.
+    """Build the program that marks the RAM and stops on `tohost`.
 
     Returns
     -------
@@ -305,36 +254,29 @@ def kbd_program() -> list[int]:
     return code + finish()
 
 
-def sdram_image(
-    with_magic: bool, program: list[int] | None = None
-) -> list[int]:
-    """Lay out the SDRAM image of the test.
+def chip_image(program: list[int]) -> list[int]:
+    """Lay out the chip image of a test: the program at the FLASH.
 
     Parameters
     ----------
-    with_magic : bool
-        Whether the doorbell already holds the magic.
-    program : list of int or None
-        The code at the base of the RAM; the mark program when None.
+    program : list of int
+        The code, which starts at the base of the FLASH.
 
     Returns
     -------
     list of int
-        The words from the base of the RAM up to the doorbell.
+        The words of the chip from the word 0 up to the end of the
+        program.
 
     Raises
     ------
     ValueError
-        If the code runs into the words the results are stored in.
+        If the program runs into the RAM in the chip.
     """
-    words = [0] * (LAUNCH_OFFSET // WORD + 1)
-    program = sdram_program() if program is None else program
-    if len(program) * WORD > RESULT_OFFSET:
-        message = f"the program of {len(program)} words reaches the results"
+    words = [0] * (FLASH_CHIP_OFFSET // WORD) + program
+    if len(words) * WORD > RAM_CHIP_OFFSET:
+        message = f"the program of {len(program)} words reaches the RAM"
         raise ValueError(message)
-    words[: len(program)] = program
-    if with_magic:
-        words[LAUNCH_OFFSET // WORD] = LAUNCH_MAGIC
     return words
 
 
@@ -347,21 +289,15 @@ def build() -> dict[str, str]:
         File name to its text.
     """
     with tempfile.TemporaryDirectory() as name:
-        directory = Path(name)
         hex_path = boot_memory.build_boot_memory(
-            TOOLCHAIN, PATHS, ROOT, directory / "boot"
+            TOOLCHAIN, PATHS, ROOT, Path(name) / "boot"
         )
         boot = hex_path.read_text()
-        payload = loader_payload(directory)
-    image = flash_image.pack(payload, 1, BANK_A_SIZE)
-    flash = [0] * (BANK_A_BASE // WORD) + words_of(image)
     return {
         "boot_memory.hex": boot,
-        "flash.hex": hex_lines(flash),
-        "sdram_go.hex": hex_lines(sdram_image(True)),
-        "sdram_wait.hex": hex_lines(sdram_image(False)),
-        "sdram_video.hex": hex_lines(sdram_image(True, video_program())),
-        "sdram_kbd.hex": hex_lines(sdram_image(True, kbd_program())),
+        "sdram_go.hex": hex_lines(chip_image(sdram_program())),
+        "sdram_video.hex": hex_lines(chip_image(video_program())),
+        "sdram_kbd.hex": hex_lines(chip_image(kbd_program())),
     }
 
 

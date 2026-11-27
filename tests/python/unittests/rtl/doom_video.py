@@ -1,6 +1,6 @@
 """O vídeo da plataforma doom: o núcleo desenha um quadro de teste.
 
-O programa da SDRAM (`gen_doom_images.py`, `sdram_video.hex`) lê a
+O programa da FLASH (`gen_doom_images.py`, `sdram_video.hex`) lê a
 geometria e o formato do vídeo, escreve a paleta e o framebuffer pelo
 barramento de periféricos, liga a exibição e escreve `tohost`. O teste
 espera o `tohost`, confere o que o núcleo leu dos registradores e
@@ -16,6 +16,12 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge
 
+from tests.python.gen_doom_images import (
+    CLK_MEM_NS,
+    RAM_BASE,
+    TOHOST,
+    ram_word,
+)
 from tests.python.unittests.rtl.sdram_sim_common import (
     sdram_word,
     start,
@@ -24,7 +30,7 @@ from tests.python.unittests.rtl.sdram_sim_common import (
 from tests.python.utils import doom_frame as frame
 from tests.python.utils.checks import check
 
-RESULT_WORD = frame.RESULT_OFFSET // frame.WORD
+RESULT_WORD = ram_word(RAM_BASE + frame.RESULT_OFFSET)
 # A linha em que o pulso de sincronismo vertical começa: a referência da
 # captura, que marca a coluna 0 dessa linha.
 VS_BEGIN = frame.V_VISIBLE + frame.V_FRONT
@@ -105,8 +111,8 @@ async def test_the_core_draws_a_frame_that_the_vga_shows(dut: Any) -> None:
     cocotb.start_soon(
         Clock(dut.i_pixel_clk, frame.PIXEL_NS, unit="ns").start()
     )
-    await start(dut)
-    await wait_for_tohost(dut)
+    await start(dut, CLK_MEM_NS)
+    await wait_for_tohost(dut, ram_word(TOHOST))
     geometry = await sdram_word(dut, RESULT_WORD)
     pixel_format = await sdram_word(dut, RESULT_WORD + 1)
     check(

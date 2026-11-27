@@ -4,7 +4,6 @@
  * ligadas no núcleo (Core/src/<Extensão>/boot.inc). */
 
 #include "memory_map.h"
-#include "flash_banks.h"
 #include "boot_config.h"
 
 #include "../../../../base/src/boot/boot_core.S"

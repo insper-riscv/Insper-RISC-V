@@ -52,23 +52,23 @@ package doom_map_pkg is
 	-- Base da FLASH, em KiB, logo depois da BOOT_MEMORY.
 	constant FLASH_BASE_KIB      : natural  := 4;
 	-- Fim exclusivo da FLASH, em KiB.
-	constant FLASH_END_KIB       : natural  := 12;
+	constant FLASH_END_KIB       : natural  := 4096;
 	-- Armazenamento da FLASH, em bytes: a menor potência de dois que cobre
 	-- [0, fim da FLASH).
-	constant FLASH_STORAGE_BYTES : positive := 16384;
+	constant FLASH_STORAGE_BYTES : positive := 4194304;
 	-- A FLASH é alcançada pelo barramento (verdadeiro) ou pela porta direta (falso).
 	constant FLASH_ON_BUS        : boolean  := true;
 	-- Base da RAM, em KiB.
 	constant RAM_BASE_KIB        : natural  := 1048576;
 	-- Fim exclusivo da RAM, em KiB.
-	constant RAM_END_KIB         : natural  := 1114112;
+	constant RAM_END_KIB         : natural  := 1110016;
 	-- Armazenamento da RAM, em bytes: a menor potência de dois que cobre
 	-- o tamanho da RAM.
 	constant RAM_STORAGE_BYTES   : positive := 67108864;
 	-- Página de 4 KiB no topo da RAM (bits 31:12 do endereço), onde ficam as
 	-- palavras que o hospedeiro compartilha com o programa.
 	constant RAM_LAST_PAGE       : std_logic_vector(19 downto 0) :=
-		x"43FFF";
+		x"43BFF";
 	-- A RAM é alcançada pelo barramento (verdadeiro) ou pela porta direta (falso).
 	constant RAM_ON_BUS          : boolean  := true;
 	-- Existe cache de instruções.
@@ -78,7 +78,7 @@ package doom_map_pkg is
 	-- Tamanho da cache de instruções, em bits (256 se não existe).
 	constant ICACHE_SIZE_BITS    : positive := 262144;
 	-- Tamanho da cache de dados, em bits (256 se não existe).
-	constant DCACHE_SIZE_BITS    : positive := 32768;
+	constant DCACHE_SIZE_BITS    : positive := 262144;
 	-- Largura da janela de endereços da cache de instruções, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
 	constant I_CACHE_WINDOW_BITS : natural  := 26;
 	-- Largura da janela de endereços da cache de dados, em bits: a tag guarda os bits abaixo dela (26 é 64 MiB, 27 é 128 MiB).
@@ -91,61 +91,61 @@ package doom_map_pkg is
 	-- Tabela de endereços, um por periférico.
 	type periph_addr_array_t is array (natural range <>) of addr_t;
 
-	-- Endereço base do periférico FLASH_CTRL.
-	constant FLASH_CTRL_BASE : addr_t := std_logic_vector(resize(unsigned'(x"B0000000"), ADDR_BITS));
-	-- Índice do periférico FLASH_CTRL nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant FLASH_CTRL_INDEX : natural := 0;
-
 	-- Endereço base do periférico UART.
 	constant UART_BASE : addr_t := std_logic_vector(resize(unsigned'(x"C0000000"), ADDR_BITS));
 	-- Índice do periférico UART nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant UART_INDEX : natural := 1;
+	constant UART_INDEX : natural := 0;
 
 	-- Endereço base do periférico DISPLAY.
 	constant DISPLAY_BASE : addr_t := std_logic_vector(resize(unsigned'(x"D0000000"), ADDR_BITS));
 	-- Índice do periférico DISPLAY nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant DISPLAY_INDEX : natural := 2;
+	constant DISPLAY_INDEX : natural := 1;
 
 	-- Endereço base do periférico CLINT.
 	constant CLINT_BASE : addr_t := std_logic_vector(resize(unsigned'(x"E0000000"), ADDR_BITS));
 	-- Índice do periférico CLINT nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant CLINT_INDEX : natural := 3;
+	constant CLINT_INDEX : natural := 2;
 
 	-- Endereço base do periférico PLIC.
 	constant PLIC_BASE : addr_t := std_logic_vector(resize(unsigned'(x"F0000000"), ADDR_BITS));
 	-- Índice do periférico PLIC nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant PLIC_INDEX : natural := 4;
+	constant PLIC_INDEX : natural := 3;
 
 	-- Endereço base do periférico VIDEO.
 	constant VIDEO_BASE : addr_t := std_logic_vector(resize(unsigned'(x"80100000"), ADDR_BITS));
 	-- Índice do periférico VIDEO nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant VIDEO_INDEX : natural := 5;
+	constant VIDEO_INDEX : natural := 4;
 
 	-- Endereço base do periférico KBD.
 	constant KBD_BASE : addr_t := std_logic_vector(resize(unsigned'(x"80007000"), ADDR_BITS));
 	-- Índice do periférico KBD nas tabelas PERIPH_BASES e PERIPH_MASKS.
-	constant KBD_INDEX : natural := 6;
+	constant KBD_INDEX : natural := 5;
+
+	-- Endereço base do periférico SD.
+	constant SD_BASE : addr_t := std_logic_vector(resize(unsigned'(x"80008000"), ADDR_BITS));
+	-- Índice do periférico SD nas tabelas PERIPH_BASES e PERIPH_MASKS.
+	constant SD_INDEX : natural := 6;
 
 	-- Base de cada periférico, na ordem de `peripherals`.
 	constant PERIPH_BASES : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
-		FLASH_CTRL_INDEX => FLASH_CTRL_BASE,
 		UART_INDEX => UART_BASE,
 		DISPLAY_INDEX => DISPLAY_BASE,
 		CLINT_INDEX => CLINT_BASE,
 		PLIC_INDEX => PLIC_BASE,
 		VIDEO_INDEX => VIDEO_BASE,
-		KBD_INDEX => KBD_BASE
+		KBD_INDEX => KBD_BASE,
+		SD_INDEX => SD_BASE
 	);
 
 	-- Máscara de cada janela: o periférico i responde quando (endereço and PERIPH_MASKS(i)) = PERIPH_BASES(i); a janela é a menor potência de dois que cobre o tamanho, com no mínimo 16 bytes.
 	constant PERIPH_MASKS : periph_addr_array_t(0 to PERIPH_COUNT - 1) := (
-		FLASH_CTRL_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFE0"), ADDR_BITS)),
 		UART_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		DISPLAY_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFC00"), ADDR_BITS)),
 		CLINT_INDEX => std_logic_vector(resize(unsigned'(x"FFFF0000"), ADDR_BITS)),
 		PLIC_INDEX => std_logic_vector(resize(unsigned'(x"FFC00000"), ADDR_BITS)),
 		VIDEO_INDEX => std_logic_vector(resize(unsigned'(x"FFFC0000"), ADDR_BITS)),
-		KBD_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFF0"), ADDR_BITS))
+		KBD_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFF0"), ADDR_BITS)),
+		SD_INDEX => std_logic_vector(resize(unsigned'(x"FFFFFFC0"), ADDR_BITS))
 	);
 
 	-- Frequência do clock do domínio do núcleo e do CLINT, em Hz.
@@ -156,17 +156,17 @@ package doom_map_pkg is
 	constant CLINT_TICK_CYCLES : positive := 100;
 
 	-- Número de fontes do PLIC (o maior identificador de fonte).
-	constant PLIC_N_SOURCES     : positive := 6;
+	constant PLIC_N_SOURCES     : positive := 7;
 	-- Largura da prioridade e do limiar do PLIC, em bits.
 	constant PLIC_PRIORITY_BITS : positive := 3;
 	-- Largura do endereço de palavra da janela do PLIC.
 	constant PLIC_ADDR_WIDTH    : positive := 20;
 	-- Identificador da fonte UART_JTAG no PLIC.
 	constant IRQ_UART_JTAG : positive := 2;
-	-- Identificador da fonte FLASH no PLIC.
-	constant IRQ_FLASH : positive := 6;
 	-- Identificador da fonte KBD no PLIC.
 	constant IRQ_KBD : positive := 5;
+	-- Identificador da fonte SD no PLIC.
+	constant IRQ_SD : positive := 7;
 
 	-- Número de temporizadores de uso geral do mapa (`kind: timer`), o tamanho das tabelas abaixo.
 	constant TIMER_COUNT : natural := 0;
@@ -180,25 +180,29 @@ package doom_map_pkg is
 	);
 
 	-- Número de periféricos externos do mapa (`kind` de `Peripherals`), o tamanho das tabelas abaixo.
-	constant EXT_COUNT : natural := 2;
+	constant EXT_COUNT : natural := 3;
 	-- Índice de cada periférico externo nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
 	constant EXT_INDICES : integer_vector(0 to EXT_COUNT - 1) := (
 		0 => VIDEO_INDEX,
-		1 => KBD_INDEX
+		1 => KBD_INDEX,
+		2 => SD_INDEX
 	);
 	-- Fonte do PLIC de cada periférico externo, na mesma ordem (zero sem linha ou sem PLIC).
 	constant EXT_IRQ_IDS : integer_vector(0 to EXT_COUNT - 1) := (
 		0 => 0,
-		1 => IRQ_KBD
+		1 => IRQ_KBD,
+		2 => IRQ_SD
 	);
 	-- Posição de VIDEO nas tabelas EXT_*.
 	constant VIDEO_EXT_POS : natural := 0;
 	-- Posição de KBD nas tabelas EXT_*.
 	constant KBD_EXT_POS : natural := 1;
+	-- Posição de SD nas tabelas EXT_*.
+	constant SD_EXT_POS : natural := 2;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
-	constant SDRAM_CLOCK_HZ : positive := 100000000;
+	constant SDRAM_CLOCK_HZ : positive := 125000000;
 	-- Período desse clock, em picossegundos: a base da conversão dos tempos do chip em ciclos.
-	constant SDRAM_TCK_PS   : positive := 10000;
+	constant SDRAM_TCK_PS   : positive := 8000;
 
 end package doom_map_pkg;

@@ -1,94 +1,66 @@
-# Platform `doom`: the code runs from the SDRAM
+# Platform `doom`: the DE0-CV with the code in the SDRAM and 4:3 video
 
 ## 1. What it is
 
-The `doom` platform is the `de0-cv` with the FLASH cut to the minimum and the SDRAM executable. The DOOM binary (the `doomgeneric` port, 363 to 412 KiB with the code, the constants and the initial data) does not fit the FLASH emulated in M10K blocks, because the whole chip has 308 blocks (about 385 KiB). The game code therefore runs from the SDRAM, and the FLASH holds only a loader of a few instructions.
+The `doom` platform is the `de0-cv` tuned to run DOOM (the `doomgeneric` port, about 540 KiB with the code, the constants and the initial data). The core keeps only the BOOT_MEMORY. The SDRAM chip of the board (64 MB, one controller) is split in two windows, the FLASH (the instructions and the constants, 4 MiB at the top of the chip, read only for the core) and the RAM (the data, 60 MiB from the start of the chip), both behind the instruction cache and the data cache. There is no FLASH emulated in M10K blocks, no FLASH controller and no loader: the host writes the image into the FLASH window through the debug port of the SDRAM (`riscv-tools load-flash`) and releases the core, and the BOOT_MEMORY jumps to `0x1000`.
 
-The project comes from `riscv-tools new-project doom --board de0-cv --profile rv32im_zicclsm_zicntr_zihpm_zifencei --rom 8K --ram 64M --icache 32768 --dcache 32768`. The `de0-cv`, its BOOT_MEMORY and its tests do not change.
+The organization of the two windows is that of the [de0-cv](de0-cv.md) platform. This page describes what the `doom` changes: the map, the clocks, the video, the SD card and the tests.
 
 ## 2. Memory map
 
 | Region | Base | Size | Access |
 | :--- | :--- | :--- | :--- |
 | BOOT_MEMORY | `0x00000000` | 4 KiB | Fetch and read, direct, no cache |
-| FLASH, bank A | `0x00001000` | 4 KiB | Fetch and read through the caches, read-only |
-| FLASH, bank B | `0x00002000` | 4 KiB | Fetch and read through the caches, read-only |
-| SDRAM (`RAM`, `exec: true`) | `0x40000000` | 64 MB | Fetch, read and write through the caches |
-| Internal memory of the data cache | `0x43FE8000` | 32 KiB | Read and write in two cycles, inside the SDRAM range, without going through the SDRAM |
-| Peripherals | `0x80000000` | 256 MB windows | Read and write, no cache |
+| FLASH (`type: sdram`) | `0x00001000` | `0x3FF000` (4 MiB minus 4 KiB) | Fetch and read through the caches, read only for the core |
+| RAM (`type: sdram`) | `0x40000000` | 60 MiB | Read and write through the caches |
+| Internal memory of the data cache | `0x43BE8000` | 32 KiB | Read and write in two cycles, inside the RAM, without going through the SDRAM |
+| Peripherals | `0x80000000` | windows of 256 MB | Read and write, no cache |
 
-The top 4 KiB of the SDRAM (`0x43FFF000` to `0x43FFFFFF`), which the data cache ignores, hold the words shared with the host.
+Inside the 64 MiB chip, the RAM starts at byte 0 (`offset: 0`), which keeps the chip addresses that the WAD and the measurement block have always had, and the FLASH starts at byte `0x3C01000` (`offset`), that is, 60 MiB plus the base `0x1000`. The 4 KiB at the top of the RAM (`0x43BFF000` to `0x43BFFFFF`), which the data cache ignores, hold the words shared with the host.
 
 | Word | Address | Use |
 | :--- | :--- | :--- |
-| `stdout` | `0x43FFFBE0` | Header and buffer of the program output (1 KiB plus 8 bytes) |
-| `tohost` | `0x43FFFFE8` | End of the program (HTIF protocol) |
-| `fromhost` | `0x43FFFFF0` | Restart by the host |
-| `launch` | `0x43FFFFF8` | Doorbell of the FLASH loader |
+| `stdout` | `0x43BFFBE0` | Header and buffer of the program output (1 KiB plus 8 bytes) |
+| `tohost` | `0x43BFFFE8` | End of the program (HTIF protocol) |
+| `fromhost` | `0x43BFFFF0` | Restart by the host |
 
-The BOOT_MEMORY clears `stdout`, `tohost` and `fromhost` at every reset. Only the loader clears `launch`, after it consumes it.
+The BOOT_MEMORY clears `stdout`, `tohost` and `fromhost` on every reset.
 
-## 3. How the code comes to run from the SDRAM
+## 3. How the code runs
 
-The BOOT_MEMORY only jumps to a bank whose header and CRC-32 check out, and it does not know an executable SDRAM exists. Bank A therefore holds the program `runtime/doom_loader.S`, 44 bytes long, linked at `0x1100`, which does the following.
-
-1. It polls the `launch` word in a loop. The word is in the last page of the SDRAM, which the data cache ignores, so every read goes to memory.
-2. When the word equals `0x4D4F4F44` (the bytes `DOOM`), it writes zero to it, so the next reset waits for a new image instead of running the old one.
-3. It executes `fence.i`, which drops the lines that an earlier run left in both caches.
-4. It jumps to `0x40000000`, the base of the SDRAM, where the `_start` of DOOM is.
-
-The program enters with `sp`, `gp` and `tp` undefined, like any bank, and the `_start` of the image sets them.
-
-The memory map generator (`riscv-tools generate-memory-map` and `check-memory-map`) accepts the `RAM` region with `exec: true` unchanged, and checks its two conditions, which are the external RAM with the fetch through the core port and the Zifencei extension in the profile, because the instruction cache sits over the SDRAM. The `exec` flag does not change the generated VHDL, which already executes code from the SDRAM in the `de0-cv` tests. `boot.entry` stays in the FLASH, at `0x1000`.
-
-## 4. How to load the binary into the SDRAM
-
-The binary is linked at `0x40000000` with the code, the constants and the initial data in sequence. The WAD (`doom1.wad`) goes to another SDRAM address, above the end of the binary, which the game port defines. The load uses the SDRAM debug port (instance 3 of the Virtual JTAG) while the core runs in the loader.
+The BOOT_MEMORY is the common one (`base/src/boot/boot_core.S`) and, since the platform has no FLASH banks, it jumps straight to `boot.entry`, `0x1000`, where the `_start` of DOOM is. The binary is linked with two regions: the ROM at `0x1000` (`.init`, `.text`, `.rodata` and the initial values of `.data`) and the RAM at `0x40000000` (`.data`, `.bss`, the stack and the heap), and the `crt0` of picolibc copies the initial values from one to the other.
 
 | Step | Operation |
 | :--- | :--- |
-| 1 | Write the FLASH with the loader (section 4.1) |
-| 2 | Clear the `launch` doorbell, so the loader does not jump over a half-written image |
-| 3 | Write the binary image from word 0 of the SDRAM, and the WAD at its address |
-| 4 | Write the magic `0x4D4F4F44` to `launch` |
+| 1 | Build the flat image, starting at `0x1000` (`doom.bin`) |
+| 2 | `riscv-tools --root . load-flash --platform src/cyclone-v/doom/platform.yaml --image doom.bin --address 0x1000` |
+| 3 | The command holds the core, writes the FLASH window, checks the CRC-32 computed on the board and releases the core |
 
-### 4.1. Write the loader into bank A
+The command is described in `flash_load` and `sdram_windows` of the Tools repository. A reconfiguration of the FPGA erases the SDRAM, and the image is written again after it; the reset button of the board restarts only the core and keeps the FLASH. The WADs of the game are not in the SDRAM at start: the port reads them from the microSD card (section 7.7).
 
-```bash
-riscv32-unknown-elf-gcc -march=rv32i_zifencei -mabi=ilp32 -nostdlib -nostartfiles \
-  -Isrc/cyclone-v/doom/runtime -T loader.ld src/cyclone-v/doom/runtime/doom_loader.S -o doom_loader.elf
-riscv32-unknown-elf-objcopy -O binary doom_loader.elf doom_loader.bin
-riscv-tools --root . flash-image pack doom_loader.bin --output doom_loader.img --version 1 \
-  --platform src/cyclone-v/doom/platform.yaml --bank A
-```
+## 4. Clocks and timing closure
 
-The linker script `loader.ld`, written by the user, puts the `.text` section at `0x1100` (`ENTRY(_start)` and `SECTIONS { . = 0x1100; .text : { *(.text.loader) *(.text*) } }`). The `doom_loader.img` image enters the FLASH through `flash-image send` or through the JTAG FLASH loader, like the image of any other bank (see [program update](atualizacao-de-programa.md)).
+The `platform.yaml` declares the clocks of the generated PLL.
 
-### 4.2. Write the SDRAM and ring the doorbell
+| Clock | Frequency | Phase | PLL output |
+| :--- | ---: | ---: | :--- |
+| `core` | 100 MHz | 0 | a single one, shared with `fetch` |
+| `fetch` | 100 MHz | 0 | that of `core` |
+| `mem` | 125 MHz | 0 | its own, not merged with `core` |
 
-The `load-ram` subcommand does steps 2 to 4 in one call: it clears `launch`, writes the binary and the WAD through the debug port, reads each back to verify it and only then writes the magic to `launch`. A difference in the read-back aborts the load without touching the doorbell.
+With `fetch` equal to `core` in frequency and phase, the generator turns on the `early_fetch_addr` generic of the SoC. The instruction memories (the BOOT_MEMORY and the instruction cache) read, on the edge of the core clock, the address the PC will have in the next cycle, and the loop from the PC to the cache is made of whole cycles, with no dependence on the phase of a clock ahead. The target of a taken branch, a jump or an exception arrives one cycle later, and `fast_icache_select` is a prerequisite. `mem` sits on its own PLL output because Quartus merges outputs of the same frequency and phase, and the generated `.sdc` would treat the crossing between `mem` and `core` as asynchronous, hiding the real path from the instruction cache to the core.
 
-```bash
-riscv-tools --root . --config src/cyclone-v/doom/config.yaml load-ram doom.bin \
-  --wad doom1.wad --wad-address 0x40100000
-```
+Measured on the DE0-CV with the final `.sof` (Quartus Prime Lite 25.1, seed 6):
 
-The binary address is the SDRAM base, and the WAD address is the one the game port defines. `launch` comes from the `reserved` section of the `platform.yaml` (`memory.launch_addr`). A core reset without a new load leaves the loader waiting, because the doorbell was consumed. The full description of the subcommand is in the documentation of the `ram_load` module of the Tools repository.
+| Item | Value |
+| :--- | ---: |
+| Setup slack of the core domain (100 MHz) | +0.090 ns |
+| Setup slack of the memory domain (125 MHz) | +0.806 ns |
+| Hold slack | positive in every corner |
 
-## 5. M10K block budget
+The multiplier uses DSP blocks in three cycles (Core, `dsp_multiplier_rv32`), which takes the Booth multiplier in logic off the critical path.
 
-The Quartus Prime Lite 25.1 compilation of the generated project (`build/doom-de0-cv`, default seed, DE0-CV) fits and closes timing in the slow 85 C model.
-
-| Resource | Used | Available |
-| :--- | ---: | ---: |
-| RAM blocks (M10K) | 31 | 308 (10 %) |
-| Block memory bits | 239,872 | 3,153,920 (8 %) |
-| Logic (ALMs) | 9,503 | 18,480 (51 %) |
-| Worst setup slack, slow 85 C model | 0.515 ns | |
-
-The FLASH storage is $2^{14}$ bytes (the smallest power of two that covers the end of the FLASH, 12 KiB). The remaining M10K blocks are free for the framebuffer of the video controller.
-
-## 6. Game clock
+## 5. Game clock
 
 The `doomgeneric` port asks for the time in milliseconds through `DG_GetTicksMs`, which the platform runtime (`runtime/doom_clock.c`) provides from the `time` CSR of Zicntr.
 
@@ -119,61 +91,85 @@ riscv-tools --root . --config tests/c/config.yaml sim
 
 The Spike of `spike-run` runs without a CLINT, and in it `time` stays at zero; the advance of the real `time` is checked in the platform simulation (`sim`), where `time` mirrors the `mtime` of the CLINT.
 
-## 7. Simulation top test
+## 6. Simulation top test
 
-The `tests/python/tests.json` catalog has the entries `DoomSimTop` and `DoomSimWait`, which run the `doom_sim_test` top with the real BOOT_MEMORY (`boot_memory.S`) and the real `doom_loader.S`, packed as bank A by `flash_image.pack`.
+The catalog `tests/python/tests.json` has the entries `DoomSimTop` and `DoomSimTopStaggered`, which run the `doom_sim_test` top with the real BOOT_MEMORY (`boot_memory.S`), the same one the board uses. The top has the FLASH and RAM windows in the same SDRAM chip model, at the offsets given by the generics `flash_chip_offset_bytes` and `ram_chip_offset_bytes` (those of the `platform.yaml` by default). The `DoomSimTop` entry turns `early_fetch` on, which is what the generated top of the board does, and `DoomSimTopStaggered` runs the fetch clock ahead.
 
-| Entry | SDRAM at time zero | Checked result |
+| Entry | Chip image at time zero | Result checked |
 | :--- | :--- | :--- |
-| `DoomSimTop` | Test program at the base and the magic in the doorbell | The program runs, stores the mark `0xD00D`, writes `tohost`, and the doorbell goes back to zero |
-| `DoomSimWait` | Test program at the base, without the magic | After 400 thousand cycles nothing of the program ran |
+| `DoomSimTop` | Test program at the base of the FLASH | The BOOT_MEMORY jumps to it, it stores the mark `0xD00D` in the RAM and writes `tohost` |
+| `DoomSimTopStaggered` | The same, with the fetch clock ahead | The same result |
 
-The simulator loads the SDRAM linearly from the base, and the last page is 64 MiB above it, so the test puts the doorbell at `0x40000800` (`-DDOOM_LAUNCH_ADDR`). That address is the only difference from the board, and the `check-memory-map` check compares the default value in `doom_loader.S` with the `platform.yaml`. The images come from `tests/python/gen_doom_images.py`, and `--check` verifies they are up to date.
+To keep the image small, the test puts the FLASH at byte `0x1000` of the chip and the RAM at byte `0x10000`, and uses only the start of the two windows; the SDRAM clock of the test has the period of `clocks.mem` (8 ns), which the top uses in the refresh times of the chip. The images come from `tests/python/gen_doom_images.py`, and `--check` verifies they are up to date. The `DoomSimVideo` and `DoomSimKeyboard` entries run the same top with the programs of sections 7.4 and 7.5.
 
-The entries `DoomSimVideo` and `DoomSimKeyboard` run the same top with the programs of sections 8.4 and 8.5.
+## 7. Video and keyboard
 
-## 8. Video and keyboard
+### 7.1. Peripherals and addresses
 
-### 8.1. Peripherals and addresses
-
-The `platform.yaml` lists two external peripherals, which the generated top of the board instantiates next to the SoC and the `doom_sim_test` simulation top instantiates in the same windows.
+The `platform.yaml` lists three external peripherals, which the generated top of the board instantiates next to the SoC and the `doom_sim_test` simulation top instantiates in the same windows.
 
 | Peripheral | `kind` | Base | Window | Interrupt | DE0-CV pins |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `VIDEO` | `video` | `0x80100000` | 256 KiB | none | `VGA_R[3:0]`, `VGA_G[3:0]`, `VGA_B[3:0]`, `VGA_HS`, `VGA_VS` |
 | `KBD` | `ps2` (`device: keyboard`) | `0x80007000` | 16 bytes | PLIC line 5 (`IRQ_KBD`) | `PS2_CLK` (D3), `PS2_DAT` (G2) |
+| `SD` | `sd_native` | `0x80008000` | 4 KiB | PLIC line 7 (`IRQ_SD`), unused | `SD_CLK`, `SD_CMD`, `SD_DATA[3:0]` |
 
-The second channel of the Y cable (`PS2_CLK2` on E2 and `PS2_DAT2` on G1) belongs to a mouse, which enters as one more entry of `peripherals` (`MOUSE: {kind: ps2, device: mouse, base: 0x80007100}`). The generated map (`memory_map.h` and `doom_map_pkg.vhd`) has `RV32_VIDEO_BASE`, `RV32_KBD_BASE` and `RV32_IRQ_KBD`.
+The second channel of the Y cable (`PS2_CLK2` on E2 and `PS2_DAT2` on G1) belongs to a mouse, which enters as one more entry of `peripherals` (`MOUSE: {kind: ps2, device: mouse, base: 0x80007100}`). The generated map (`memory_map.h` and `doom_map_pkg.vhd`) has `RV32_VIDEO_BASE`, `RV32_KBD_BASE`, `RV32_SD_BASE`, `RV32_IRQ_KBD` and `RV32_IRQ_SD`.
 
-### 8.2. Indexed video
+### 7.2. Indexed video in 4:3
 
-The `io.video` of the `platform.yaml` asks for a 320x200 indexed framebuffer (8 bits per pixel and a palette of 256 entries of 12 bits, the width of the DE0-CV converter). The mode is the default of the board, 640x480 at 60 Hz with a 25 MHz pixel clock, and the image comes out enlarged twice and centered, with black bands of 40 lines at the top and at the bottom.
+The `io.video` of the `platform.yaml` asks for an indexed 320x200 framebuffer (8 bits per pixel and a palette of 256 entries of 12 bits, the width of the DE0-CV converter), magnified twice horizontally (`scale: 2`) and by 12/5 vertically (`scale_y: 12/5`). The mode is the default of the board, 640x480 at 60 Hz with a 25 MHz pixel clock, and the 640x480 image fills the whole screen in 4:3, without the 40-line black bands that the 2x2 magnification left.
+
+The source line of displayed line $n$ is
+
+$$\mathrm{src}(n)=\left\lfloor \frac{n \cdot 5}{12} \right\rfloor$$
+
+computed with no division by an error accumulator. Each group of 5 source lines takes 12 screen lines, repeated 3, 2, 3, 2 and 2 times (average 2.4), so each source pixel takes 2 columns by 2.4 lines, the 1.2 ratio of the non-square DOOM pixel. The game keeps drawing 320x200 at the same addresses. With `v_scale_num` other than zero, register 4 of the video holds the numerator in bits 28:25 and the denominator in bits 31:29.
 
 | Region of the video window | Offset | Content |
 | :--- | :--- | :--- |
-| Registers | `0x00000` to `0x00010` | Control, state, frame counter, geometry and format |
+| Registers | `0x00000` to `0x00010` | Control, status, frame counter, geometry and format |
 | Palette | `0x00400` | 256 words, the color in the low 12 bits (red in bits 11:8) |
 | Framebuffer | `0x20000` | 16000 words, four pixels per word, the lowest column in the low bits |
 
-The framebuffer and the palette are write only, and the core updates them with `sw`, `sh` or `sb`. The display turns on with bit 0 of the control register. The `Peripherals` package documents the peripheral in `docs/en/video/video.md`.
+The framebuffer and the palette accept only writes, and the core updates them with `sw`, `sh` or `sb`. The display turns on with bit 0 of the control register. The `Peripherals` package documents the peripheral in `docs/en/video/video.md`.
 
-The pixel clock is one more output of the PLL of the generated top, and the generated `.sdc` declares the paths between the core domain and the pixel domain false, because the video crosses them only through two-flip-flop synchronizers and through memories with one clock on each port.
+The pixel clock is one more output of the PLL of the generated top, and the generated `.sdc` declares the paths between the core domain and the pixel domain false, because the video crosses them only through two-flip-flop synchronizers and memories with one clock on each port.
 
-### 8.3. Resources
+#### 7.2.1. Video borders
 
-The video alone, with these generics, compiled in Quartus Prime Lite 25.1 for the DE0-CV, takes 137 ALMs, 65 M10K blocks (21 %) and 527,360 memory bits (17 %). Tools estimates 51 blocks for the same framebuffer and palette, because it counts bits and not the organization in blocks 32 bits wide.
+The monitor used in the validation on the board cuts the first 16 pixels of each line on the left. The `io.video` of the `platform.yaml` replaces the porches of the catalog mode with `h_front_porch: 0` and `h_back_porch: 64`, which keep the total of 800 pixels (0 + 96 + 640 + 64). The generator writes these values in the generics of the `video` of the generated top (`h_front_porch => 0`, `h_sync => 96`, `h_back_porch => 64`), with no manual edit. A porch written alone makes the other one take the rest, and a sum different from the total of the mode is an error (see `board_video` in the Tools repository).
 
-### 8.4. Video test in simulation
+### 7.3. Resources
 
-The program `sdram_video.hex` reads the geometry and the format, writes the palette and a 16x8 pixel frame of a four-color diagonal, turns the display on and writes `tohost`. The testbench (`doom_video.py`) uses a small 40x20 mode with the structure of 640x480, captures a whole frame of the `VGA_*` output from the edge of the vertical synchronism and compares every pixel and both synchronisms with the model of `tests/python/utils/doom_frame.py`. It also checks what the core read from the registers.
+Final build on the DE0-CV (Quartus Prime Lite 25.1, seed 6), fitted and with timing closed.
 
-### 8.5. Keyboard test in simulation
+| Resource | Used | Available |
+| :--- | ---: | ---: |
+| Logic (ALMs) | 12,335 | 18,480 (67 %) |
+| Registers | 15,354 | |
+| Block memory bits | 1,402,616 | 3,153,920 (44 %) |
+| DSP blocks | 3 | 66 |
 
-The program `sdram_kbd.hex` enables PLIC line 5 and the receive interrupt of the keyboard, says it is ready, waits for each byte in the queue, reads the PLIC claim with the first one and stores the 20 bytes. The testbench (`doom_keyboard.py`) is the keyboard: through the open drain lines of the connector it injects the make and the break of the four arrows in set 2 scancodes (`E0 75`, `E0 F0 75`, `E0 6B`, `E0 74` and `E0 72` with the `E0 F0`), and checks the bytes the core stored and the claim.
+| Timing check | Slack |
+| :--- | ---: |
+| Core setup (100 MHz) | +0.090 ns |
+| Memory setup (125 MHz) | +0.806 ns |
+| Hold | positive in every corner |
 
-### 8.6. C tests for the first run on the board
+The video alone, with these generics, takes 137 ALMs, 65 M10K blocks (21 %) and 527,360 memory bits (17 %). Tools estimates 51 blocks for the same framebuffer and palette, because it counts bits and not the organization in blocks 32 bits wide.
 
-The programs `tests/c/doom_video/src.c` and `tests/c/doom_keyboard/src.c` are linked in bank A and compiled with the other C tests of the platform (section 6).
+### 7.4. Video test in simulation
+
+The program of `sdram_video.hex`, in the FLASH, reads the geometry and the format, writes the palette and a 16x8 pixel frame of a four-color diagonal, turns the display on and writes `tohost`. The testbench (`doom_video.py`) uses a small 40x20 mode with the structure of 640x480, captures a whole frame of the `VGA_*` output from the edge of the vertical synchronism and compares every pixel and both synchronisms with the model of `tests/python/utils/doom_frame.py`. It also checks what the core read from the registers.
+
+### 7.5. Keyboard test in simulation
+
+The program of `sdram_kbd.hex`, in the FLASH, enables PLIC line 5 and the receive interrupt of the keyboard, says it is ready, waits for each byte in the queue, reads the PLIC claim with the first one and stores the 20 bytes. The testbench (`doom_keyboard.py`) is the keyboard: through the open drain lines of the connector it injects the make and the break of the four arrows in set 2 scancodes (`E0 75`, `E0 F0 75`, `E0 6B`, `E0 74` and `E0 72` with the `E0 F0`), and checks the bytes the core stored and the claim.
+
+### 7.6. C tests for the first run on the board
+
+The programs `tests/c/doom_video/src.c` and `tests/c/doom_keyboard/src.c` are linked at the base of the FLASH and compiled with the other C tests of the platform (section 5).
 
 | Program | What it does | Return code |
 | :--- | :--- | :--- |
@@ -182,26 +178,30 @@ The programs `tests/c/doom_video/src.c` and `tests/c/doom_keyboard/src.c` are li
 
 In Spike both return zero without touching the devices. On the board, `doom_video` leaves the bars on the monitor after it ends, and `doom_keyboard` needs a person to press and release an arrow.
 
-## 9. Caches, write queue and internal memory
+### 7.7. microSD card
 
-The `platform.yaml` sizes the three parts that cut the memory time of the game, and none is fixed in the code.
+The `SD` peripheral (`kind: sd_native`, `0x80008000`) wires the microSD socket of the board in the native 4-bit mode (`SD_CLK`, `SD_CMD`, `SD_DATA[3:0]`). The controller clock is `clocks.core`, so `SD_CLK` is $100\,\mathrm{MHz} / (2 (\mathtt{DIVIDER} + 1))$: 399 kHz after the reset and 25 MHz with `DIVIDER = 1`. The game port reads the WADs from the card by polling, and the interrupt bits of `CONTROL` stay off, so PLIC line 7, assigned by the map, stays inert. The output of the controller to the pins is registered (`sd_native` of Peripherals).
+
+## 8. Caches, write queue and internal memory
+
+The `platform.yaml` sizes the parts that cut the memory time of the game, and none is fixed in the code.
 
 | Part | Key | Value | Effect |
 | :--- | :--- | :--- | :--- |
 | Instruction cache | `memory.instructions[].cache.size_bits` | 262144 (32 KiB) | The rendering loop and the hot code fit in the cache |
-| Data cache | `memory.data[].cache.size_bits` | 32768 (4 KiB) | No change |
+| Data cache | `memory.data[].cache.size_bits` | 262144 (32 KiB) | More data of the game and of the WAD stay in the cache |
 | Write queue | `memory.data[].cache.write_buffer` | 4 words | A store completes without waiting for the SDRAM; a read leaves only with the queue empty, so program order holds |
-| Internal memory | `memory.data[].cache.scratch_kib` and `scratch_base` | 32 KiB at `0x43FE8000` | The data cache serves the window in two cycles, without the SDRAM |
+| Internal memory | `memory.data[].cache.scratch_kib` and `scratch_base` | 32 KiB at `0x43BE8000` | The data cache serves the window in two cycles, without the SDRAM |
 
-The internal memory sits inside the SDRAM range and holds only what the program writes after the reset, because the host loads the SDRAM behind the cache. DOOM puts the stack and the bss of the drawing loop in it (`SCRATCH=1` in the build of the DOOM repository), and the RAM of the linker ends where it starts (`0x43FE8000`).
+The internal memory sits inside the RAM and holds only what the program writes after the reset. DOOM puts the stack and the bss of the drawing loop in it (`SCRATCH=1` in the build of the DOOM repository), and the RAM of the linker ends where it starts (`0x43BE8000`).
 
 ## 9. What the platform does not have
 
 | Item | State |
 | :--- | :--- |
 | Mouse | Outside the `platform.yaml`, because it depends on the Y cable |
-| Bank B | Free; a new loader enters it with a higher version |
-| DOOM linker script and `crt0` | Belong to the game port, which links the binary at `0x40000000` |
+| Emulated FLASH, FLASH controller and banks | They do not exist; the in-field program update is that of [`de0-cv-emulated`](de0-cv-emulated.md) |
+| DOOM linker script and `crt0` | They belong to the game port, which links the binary at `0x1000` (ROM) and `0x40000000` (RAM) |
 
 ---
 

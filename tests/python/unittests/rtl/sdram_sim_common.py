@@ -24,16 +24,19 @@ BOOT_WORD, FLASH_WORD, SDRAM_WORD = 0, 3, 2
 TOHOST_WORD = (0x43FFFFE8 - 0x40000000) // 4
 
 
-async def start(dut: Any) -> None:
+async def start(dut: Any, clk_mem_ns: int = CLK_MEM_NS) -> None:
     """Start both clocks and release the reset.
 
     Parameters
     ----------
     dut : Any
         The device under test.
+    clk_mem_ns : int
+        Period of the SDRAM clock, which must be the one the top was
+        built for (`sdram_tck_ps`).
     """
     cocotb.start_soon(Clock(dut.i_clk, CLK_NS, unit="ns").start())
-    cocotb.start_soon(Clock(dut.i_clk_mem, CLK_MEM_NS, unit="ns").start())
+    cocotb.start_soon(Clock(dut.i_clk_mem, clk_mem_ns, unit="ns").start())
     dut.i_rst.value = 1
     dut.i_dbg_word_addr.value = 0
     await ClockCycles(dut.i_clk, RESET_CYCLES)

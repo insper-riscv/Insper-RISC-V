@@ -113,7 +113,7 @@ class DriversTest(unittest.TestCase):
         files, metadata = drivers.plan(
             ROOT,
             {"platform": "de0-cv"},
-            ROOT / "src/cyclone-v/doom/platform.yaml",
+            ROOT / "src/cyclone-v/de0-cv-emulated/platform.yaml",
         )
         self.assertIn("vendor/FLASH/example", metadata["example_projects"])
         uart = files["UART/example/src/main.c"]
@@ -284,7 +284,7 @@ class DriversTest(unittest.TestCase):
 
     def test_flash_controller_and_console_irq_aliases(self):
         files, metadata = drivers.plan(
-            ROOT, {}, ROOT / "src/cyclone-v/doom/platform.yaml"
+            ROOT, {}, ROOT / "src/cyclone-v/de0-cv-emulated/platform.yaml"
         )
         self.assertIn("vendor/FLASH/rv32_flash.c", metadata["sources"])
         self.assertIn(
