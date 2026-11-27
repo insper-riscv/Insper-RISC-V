@@ -21,10 +21,8 @@ if [[ "${1:-}" == --install ]]; then
     exit 0
 fi
 
-for ((attempt = 0; attempt < 300; ++attempt)); do
-    [[ -f "${state}" && "$(cat "${state}")" == preparing ]] || break
-    sleep 1
-done
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+bash "${script_dir}/wait-for-container-tools.sh" "${state}" clangd
 if ! command -v clangd >/dev/null 2>&1; then
     echo 'clangd is missing. Rebuild the Dev Container; native hosts need clangd installed.' >&2
     exit 1

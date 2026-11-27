@@ -84,6 +84,16 @@ ls ~/.local/share/rv32-sdk/scripts/container-start.sh
 
 Run `bash scripts/install-user.sh` from the complete processor checkout on the Docker host. The installer replaces an empty directory created by Docker with the SDK symlink. It preserves and rejects a non-empty directory or regular file; move that registration aside as a backup and rerun. Earlier installers could report success while placing a nested SDK link inside a real registration directory. Rebuild and reopen the Dev Container after repairing the host path. The application source does not need to be recreated.
 
+### Slow first-time dependency installation
+
+A first Rust container installs clangd, Clang and libclang before Cargo can generate peripheral bindings. On a slow connection, that root-owned job may take longer than five minutes. Project setup waits for its completion for up to 30 minutes and reports progress instead of treating a slow install as a missing compiler. `RV32_DEPS_WAIT_SECONDS` can set a wait bound from 1 to 3600 seconds. Installation failures and wait expiry have distinct messages.
+
+If an older setup timed out but the container remains running, let package installation finish and rerun the following inside that container; rebuilding repeats the downloads:
+
+```bash
+bash "$RV32_SDK_ROOT/scripts/bootstrap-external.sh" "$RV32_PROJECT_ROOT"
+```
+
 ## Compatibility and output
 
 The validated SDK platform is `internal-mem` on Cyclone V. Other upstream
