@@ -32,7 +32,9 @@ from riscv_tools import (
 from riscv_tools import compiler as compiler_mod
 from riscv_tools.jtag import JtagLink
 from riscv_tools.jtag.hardware import idcode_of, parse_jtagconfig, same_idcode
+from riscv_tools.memory_map.core import load_platform
 from riscv_tools.memory_map.expressions import evaluate
+from riscv_tools.memory_map.march import march_of
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
@@ -97,11 +99,20 @@ SDK = env_path("RV32_SDK_ROOT", Path(__file__).resolve().parents[2])
 
 def rust_target(project: dict[str, Any]) -> str:
     selected = cpu_profiles.selected(SDK, project)
+    if project.get("platform") == "project":
+        core = load_platform(platforms.project_source(SDK, project))["core"]
+        return (
+            "riscv32im-unknown-none-elf"
+            if "M" in core.get("extensions", [])
+            else "riscv32i-unknown-none-elf"
+        )
     return selected["rust_target"] if selected else RUST_TARGET
 
 
 def platform_dir(project: dict[str, Any]) -> Path:
     selected = project.get("platform", "internal-mem")
+    if selected == "project":
+        return platforms.ensure_project(SDK, project)
     if selected in platforms.board_choices(SDK):
         return platforms.ensure_board(SDK, selected)
     if selected == "internal-mem":
@@ -407,6 +418,12 @@ def prepare_c_source(root: Path, project: dict[str, Any]) -> None:
     if copied_source != canonical_source:
         copied_source.replace(canonical_source)
     selected = cpu_profiles.selected(SDK, project)
+    if project.get("platform") == "project":
+        core = load_platform(platforms.project_source(SDK, project))["core"]
+        head, *extensions = march_of(core).split("_")
+        selected = {
+            "extensions": (["m"] if head == "rv32im" else []) + extensions
+        }
     if selected is not None:
         canonical_source.write_text(
             cpu_profiles.prepare_source(canonical_source.read_text(), selected)
@@ -711,7 +728,8 @@ def doctor(
     print(
         "Simulation:",
         "unavailable (physical peripheral platform)"
-        if project.get("platform") in platforms.board_choices(SDK)
+        if project.get("platform") == "project"
+        or project.get("platform") in platforms.board_choices(SDK)
         else ("available" if shutil.which("ghdl") else "unavailable"),
     )
     missing_hardware = [
@@ -747,7 +765,9 @@ def setup(root: Path, project: dict[str, Any]) -> None:
 
 
 def simulate(root: Path, project: dict[str, Any]) -> None:
-    if project.get("platform") in platforms.board_choices(SDK):
+    if project.get("platform") == "project" or project.get(
+        "platform"
+    ) in platforms.board_choices(SDK):
         raise SystemExit(
             "This physical peripheral platform has no complete SoC/device simulation model. "
             "Use its C/Rust driver tests or a simulation-capable platform; FPGA actions use the real board map."

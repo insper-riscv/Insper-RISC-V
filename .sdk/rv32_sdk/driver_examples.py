@@ -7,6 +7,8 @@ from typing import Any
 
 from riscv_tools.settings import load_config
 
+from rv32_sdk import project_templates
+
 TOKEN = re.compile(r"@([A-Z_]+)@")
 
 
@@ -180,6 +182,8 @@ def project_files(
             "simulation_timeout_cycles", 2_000_000
         ),
     }
+    config.update(project_templates.options(project, child=True))
+    project_templates.configure(files, config)
     files["rv32.toml"] = (
         "[project]\n"
         + "\n".join(

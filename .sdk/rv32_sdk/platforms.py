@@ -11,6 +11,8 @@ import yaml
 from riscv_tools import board_generate
 from riscv_tools.memory_map import write_all
 from riscv_tools.memory_map.core import load_platform
+from riscv_tools.memory_map.expressions import evaluate
+from riscv_tools.memory_map.march import march_of
 
 
 def board_choices(sdk: Path) -> dict[str, Path]:
@@ -58,6 +60,26 @@ def private_platform(sdk: Path, source: Path, target: Path) -> dict[str, Any]:
             "boot_config_h": {"path": str(runtime / "boot_config.h")},
         }
     )
+    if target.name.startswith("project-"):
+        # The heap and stack must stop before *any* reserved RAM range.
+        ram = data["memory"]["data"][0]
+        bottom = evaluate(ram["base"])
+        top = bottom + evaluate(ram["size"])
+        reserved = data["reserved"]
+        for key in ("stdout", "tohost", "fromhost"):
+            base = evaluate(reserved[key]["base"])
+            end = base + evaluate(reserved[key]["size"])
+            if not bottom <= base < end <= top:
+                raise SystemExit(
+                    f"reserved.{key} must be inside the data memory region"
+                )
+        inside = {
+            key: value
+            for key, value in reserved.items()
+            if bottom <= evaluate(value["base"]) < top
+        }
+        first = min(inside, key=lambda key: evaluate(inside[key]["base"]))
+        data["generate"]["specs"]["ram_limit"] = first
     return data
 
 
@@ -79,6 +101,10 @@ def board_config(sdk: Path, source: Path, target: Path) -> dict[str, Any]:
         (sdk / "src/simulation/modular/config.yaml").read_text()
     )
     runtime = target / "runtime"
+    config["sdk_cpu_profile"] = {
+        "name": "hardware",
+        "march": march_of(data["core"]),
+    }
     config["memory_map"] = str(target / "platform.yaml")
     config["toolchain"]["specs"] = str(runtime / "rv32im-fpga.specs")
     config["paths"].update(
@@ -125,12 +151,75 @@ def board_config(sdk: Path, source: Path, target: Path) -> dict[str, Any]:
     return config
 
 
+def project_source(sdk: Path, project: dict[str, Any]) -> Path:
+    """Resolve a project-owned map without allowing paths outside its SDK."""
+    value = project.get("platform_file")
+    if not isinstance(value, str) or not value:
+        raise SystemExit(
+            "project.platform_file is required for platform = project"
+        )
+    relative = Path(value)
+    source = (sdk / relative).resolve()
+    if (
+        relative.is_absolute()
+        or ".." in relative.parts
+        or not source.is_relative_to(sdk.resolve())
+    ):
+        raise SystemExit(
+            "project.platform_file must stay inside the project hardware checkout"
+        )
+    if source.name != "platform.yaml" or not source.is_file():
+        raise SystemExit(
+            "project.platform_file must name an existing platform.yaml"
+        )
+    return source
+
+
+def validate_software_core(source: Path) -> None:
+    """The shipped runtime/toolchain currently supports the RV32I ABI only."""
+    core = yaml.safe_load(source.read_text()).get("core", {})
+    if core.get("type") != 32 or str(core.get("base", "")).upper() != "I":
+        raise SystemExit(
+            "C/Rust application generation currently requires an RV32I core (with optional extensions). Hardware-only projects remain available for other bases."
+        )
+    data = yaml.safe_load(source.read_text())
+    memory = data.get("memory", {})
+    if any(
+        len(memory.get(kind, [])) != 1 for kind in ("instructions", "data")
+    ):
+        raise SystemExit(
+            "C/Rust applications currently require one instruction region and one data region"
+        )
+    if not {"stdout", "tohost", "fromhost"}.issubset(data.get("reserved", {})):
+        raise SystemExit(
+            "C/Rust applications require stdout, tohost and fromhost reserved words"
+        )
+
+
+def ensure_project(sdk: Path, project: dict[str, Any]) -> Path:
+    """Use the actual generated hardware map, not a board's original template."""
+    if project.get("cpu_profile", "auto") != "auto":
+        raise SystemExit(
+            "Project-owned hardware uses cpu_profile = auto; change its CPU in platform.yaml"
+        )
+    source = project_source(sdk, project)
+    validate_software_core(source)
+    key = hashlib.sha256(str(source.relative_to(sdk)).encode()).hexdigest()[
+        :16
+    ]
+    return ensure_view(sdk, source, "project-" + key)
+
+
 def ensure_board(sdk: Path, name: str) -> Path:
-    """Generate a compile-ready private runtime; never edit tracked RTL files."""
+    """Prepare a registered peripheral board view."""
     choices = board_choices(sdk)
     if name not in choices:
         raise SystemExit(f"Unknown peripheral board platform: {name}")
-    source = choices[name]
+    return ensure_view(sdk, choices[name], name)
+
+
+def ensure_view(sdk: Path, source: Path, name: str) -> Path:
+    """Generate a private runtime, preserving the selected core and hardware map."""
     target = sdk / ".sdk/platforms" / name
     base = sdk / "src/simulation/modular/runtime"
     inputs = [
@@ -139,7 +228,10 @@ def ensure_board(sdk: Path, name: str) -> Path:
         sdk / "src/simulation/modular/config.yaml",
         sdk / "Core/profiles/matrix.yaml",
         sdk / ".sdk/dependencies.json",
-        sdk / "boards" / source.parent.name / "board.yaml",
+        sdk
+        / "boards"
+        / str(yaml.safe_load(source.read_text())["boards"][0])
+        / "board.yaml",
         *(p for p in base.iterdir() if p.is_file()),
         *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("memory_map/**/*.py")),
         *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("top_generator/**/*.py")),
@@ -149,6 +241,7 @@ def ensure_board(sdk: Path, name: str) -> Path:
         str(p.relative_to(sdk)): hashlib.sha256(p.read_bytes()).hexdigest()
         for p in inputs
     }
+    expected["sdk_root"] = str(sdk.resolve())
     with (sdk / ".sdk/.board-views.lock").open("w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         marker = target / ".sdk-view.json"
@@ -163,6 +256,27 @@ def ensure_board(sdk: Path, name: str) -> Path:
                 '#include "../../../../src/boot/boot_core.S"',
             )
         )
+        if name.startswith("project-"):
+            stdio = target / "runtime/stdio.c"
+            capacity = (
+                evaluate(
+                    yaml.safe_load(source.read_text())["reserved"]["stdout"][
+                        "size"
+                    ]
+                )
+                - 8
+            )
+            if capacity <= 0:
+                raise SystemExit(
+                    "The reserved stdout region must include an 8-byte header and payload"
+                )
+            stdio.write_text(
+                stdio.read_text().replace(
+                    "static constexpr uint32_t STDOUT_SIZE = 1024u;",
+                    f"static constexpr uint32_t STDOUT_SIZE = {capacity}u;",
+                    1,
+                )
+            )
         data = private_platform(sdk, source, target)
         platform = target / "platform.yaml"
         platform.write_text(yaml.safe_dump(data, sort_keys=False))
@@ -178,7 +292,9 @@ def ensure_board(sdk: Path, name: str) -> Path:
 def prepare_hardware(sdk: Path, project: dict[str, Any]) -> None:
     """Generate the selected board project before the SDK fingerprints it."""
     name = project.get("platform", "internal-mem")
-    if name in board_choices(sdk):
+    if name == "project":
+        target = ensure_project(sdk, project)
+    elif name in board_choices(sdk):
         target = ensure_board(sdk, name)
     elif name == "de0-cv":
         target = sdk / "src/cyclone-v/de0-cv"
