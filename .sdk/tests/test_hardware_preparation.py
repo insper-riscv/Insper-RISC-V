@@ -32,9 +32,14 @@ class HardwarePreparationTest(unittest.TestCase):
             for path in required + generators:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text("initial\n")
+            source.write_text("boards: [de0-cv]\n")
             with (
                 patch.object(platforms, "__file__", str(module)),
-                patch.object(platforms, "board_choices", return_value={"periph-de0-cv": source}),
+                patch.object(
+                    platforms,
+                    "board_choices",
+                    return_value={"periph-de0-cv": source},
+                ),
                 patch.object(platforms, "private_platform", return_value={}),
                 patch.object(platforms, "board_config", return_value={}),
                 patch.object(platforms, "write_all") as generate,

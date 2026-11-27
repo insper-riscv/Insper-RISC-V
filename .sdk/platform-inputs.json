@@ -1,5 +1,5 @@
 {
-  "src/simulation/internal-mem/config.yaml": "b82a0062a7be8aaf19245ad73b19c897ff723ca45bef6180d09bf9711fa407fd",
+  "src/simulation/internal-mem/config.yaml": "098d30360ae0e4f4fa3701af0f45f1efe18e35fc91be0b782798ea1521ae45a9",
   "src/simulation/internal-mem/platform.yaml": "2bffa6b9c61f19ad43f9517d5492f9a76901aba8329c9bf5a7a59cd35cc0ea0e",
   "src/simulation/internal-mem/runtime/_exit.c": "f69eb428924b77d941a4b52fe448b2e0db775c2ae52811b8dccfe2aafbdd1adf",
   "src/simulation/internal-mem/runtime/boot_memory.S": "3d8267d71957cb6270ff526173831ec813b1e2507b60d8f6b77e2bbc81a2ea31",
@@ -9,7 +9,7 @@
   "src/simulation/internal-mem/runtime/spike_exit.S": "1eafd0cb3392e24cf3498060a66a36ec0394840aa4791afc8bbef8b0ba88d5d8",
   "src/simulation/internal-mem/runtime/stdio.c": "6914bedc3a1abe50bc0cdd88879ea72805aa0b315c2b3b7053ba2f463b92da0b",
   "src/simulation/internal-mem/testbench/test_c_program.py": "cf7088a9a88456524a3e988a9ea92ae72d5efb20c287047e06e8eecb95a4dace",
-  "src/simulation/modular/config.yaml": "0444ee1663cd69ee507af0e0589c457cb5186219106ae91d9bc74296aaaecd86",
+  "src/simulation/modular/config.yaml": "93fcf7b3ff4a57474e95c56064fa4dad1d871f12b627428334e3c4d251f5c89d",
   "src/simulation/modular/modular_sim_top.vhd": "a66afeb46639b2dc376d28912bd5e424a2a9b830564496fadafc55afccca9373",
   "src/simulation/modular/platform.yaml": "cf8ef5e22d76fbc6da59bb6d976961d4730b106ffe522cf10298c1cbbb4d38cc",
   "src/simulation/modular/runtime/_exit.c": "24d182568ec271c947c1d7531d207df501fb9080249f3e54c82ebd2c16c386a2",

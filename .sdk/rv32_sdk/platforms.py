@@ -233,9 +233,15 @@ def ensure_view(sdk: Path, source: Path, name: str) -> Path:
         / str(yaml.safe_load(source.read_text())["boards"][0])
         / "board.yaml",
         *(p for p in base.iterdir() if p.is_file()),
-        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("memory_map/**/*.py")),
-        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("top_generator/**/*.py")),
-        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("board_ports/**/*.py")),
+        *sorted(
+            (sdk / ".sdk/tools/src/riscv_tools").glob("memory_map/**/*.py")
+        ),
+        *sorted(
+            (sdk / ".sdk/tools/src/riscv_tools").glob("top_generator/**/*.py")
+        ),
+        *sorted(
+            (sdk / ".sdk/tools/src/riscv_tools").glob("board_ports/**/*.py")
+        ),
     ]
     expected = {
         str(p.relative_to(sdk)): hashlib.sha256(p.read_bytes()).hexdigest()

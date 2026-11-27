@@ -37,6 +37,7 @@ FILES = (
     "scripts/rv32-drivers",
     "scripts/rv32-rust-linker",
     "scripts/rust-build-deps.sh",
+    "scripts/editor-deps.sh",
     "scripts/bootstrap-external.sh",
     "scripts/container-start.sh",
     "scripts/install-vscode-extension.sh",

@@ -30,7 +30,9 @@ class SofCacheTest(unittest.TestCase):
             other.write_text("newly generated unrelated view")
             self.assertEqual(before, sof_cache.fingerprint(sdk, cfg, "25.1"))
             top.write_text("changed selected hardware")
-            self.assertNotEqual(before, sof_cache.fingerprint(sdk, cfg, "25.1"))
+            self.assertNotEqual(
+                before, sof_cache.fingerprint(sdk, cfg, "25.1")
+            )
 
     def test_hardware_changes_invalidate_but_application_does_not(self):
         with TemporaryDirectory() as temp:

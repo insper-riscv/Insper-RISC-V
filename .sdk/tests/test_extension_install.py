@@ -8,7 +8,9 @@ import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-SCRIPT = Path(__file__).resolve().parents[2] / "scripts/install-vscode-extension.sh"
+SCRIPT = (
+    Path(__file__).resolve().parents[2] / "scripts/install-vscode-extension.sh"
+)
 
 FAKE_SERVER = """#!/usr/bin/env python3
 import json
@@ -44,7 +46,9 @@ class ContainerExtensionInstallTest(unittest.TestCase):
         sdk = root / "sdk"
         (sdk / "share").mkdir(parents=True)
         with zipfile.ZipFile(sdk / "share/rv32-development.vsix", "w") as vsix:
-            vsix.writestr("extension/package.json", json.dumps({"version": "42.0.0"}))
+            vsix.writestr(
+                "extension/package.json", json.dumps({"version": "42.0.0"})
+            )
         agent = root / "agent"
         server = agent / "bin/test/bin/code-server"
         server.parent.mkdir(parents=True)
@@ -59,7 +63,8 @@ class ContainerExtensionInstallTest(unittest.TestCase):
 
     def calls(self, root):
         return [
-            json.loads(line) for line in (root / "calls.jsonl").read_text().splitlines()
+            json.loads(line)
+            for line in (root / "calls.jsonl").read_text().splitlines()
         ]
 
     def test_installs_only_rv32_without_pack_dependencies(self):
@@ -68,7 +73,9 @@ class ContainerExtensionInstallTest(unittest.TestCase):
             env = self.fixture(root)
             subprocess.run(["bash", str(SCRIPT)], env=env, check=True)
             installs = [
-                call for call in self.calls(root) if "--install-extension" in call
+                call
+                for call in self.calls(root)
+                if "--install-extension" in call
             ]
             self.assertEqual(len(installs), 1)
             self.assertIn("--do-not-include-pack-dependencies", installs[0])
@@ -82,7 +89,9 @@ class ContainerExtensionInstallTest(unittest.TestCase):
             self.assertEqual(first.wait(timeout=15), 0)
             self.assertEqual(second.wait(timeout=15), 0)
             installs = [
-                call for call in self.calls(root) if "--install-extension" in call
+                call
+                for call in self.calls(root)
+                if "--install-extension" in call
             ]
             self.assertEqual(len(installs), 1)
 
@@ -90,7 +99,9 @@ class ContainerExtensionInstallTest(unittest.TestCase):
         with TemporaryDirectory() as directory:
             root = Path(directory)
             env = self.fixture(root)
-            (root / "installed").write_text("insper-riscv.rv32-development@42.0.0")
+            (root / "installed").write_text(
+                "insper-riscv.rv32-development@42.0.0"
+            )
             subprocess.run(["bash", str(SCRIPT)], env=env, check=True)
             self.assertFalse(
                 any("--install-extension" in call for call in self.calls(root))

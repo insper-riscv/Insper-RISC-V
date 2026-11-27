@@ -99,6 +99,7 @@ sim:
     - Core/src/I-E/store_manager.vhd
     - Core/src/M/m_decode.vhd
     - Core/src/M/booth_multiplier_rv32.vhd
+    - Core/src/M/dsp_multiplier_rv32.vhd
     - Core/src/M/non_restoring_divider_rv32.vhd
     - Core/src/M/muldiv_fusion.vhd
     - Core/src/M/multdiv.vhd

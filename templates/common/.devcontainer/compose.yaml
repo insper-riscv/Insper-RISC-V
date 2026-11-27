@@ -2,7 +2,7 @@ services:
   rv32-app:
     # Root startup installs Rust bindgen tools before the ubuntu editor setup.
     # Keep the published image directly: no host-side Dockerfile/Bake step.
-    image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/ci-elf@sha256:69a94e0e42869be2dc14a5174c49eed7cead20afe3282e3ce6c629179ef8aeb8}"
+    image: "${RV32_DEV_IMAGE:-ghcr.io/insper-riscv/ci-elf@sha256:515e2d03142dce7238ec10198fab55f457a239a07e9c88e1f38600bdc7eaae42}"
     mem_limit: 8g
     memswap_limit: 8g
     cpus: 2
