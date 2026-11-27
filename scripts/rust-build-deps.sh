@@ -49,12 +49,8 @@ fi
 # that root-owned startup job; the editor and Cargo remain the normal user.
 state=/tmp/rv32-rust-build-deps.state
 if [[ "${1:-}" != --check ]]; then
-    for ((attempt = 0; attempt < 300; ++attempt)); do
-        if [[ ! -f "${state}" || "$(cat "${state}")" != preparing ]]; then
-            break
-        fi
-        sleep 1
-    done
+    script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+    bash "${script_dir}/wait-for-container-tools.sh" "${state}" 'Clang/libclang'
 fi
 if available; then
     exit 0

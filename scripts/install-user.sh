@@ -42,17 +42,35 @@ python3 "${sdk_root}/.sdk/rv32_sdk/source_check.py" "${sdk_root}"
 install -d "${data_root}" "${cache_root}/rv32-cargo" \
     "${data_root}/rv32-rustup" "${bin_root}"
 
-ln -sfn "${sdk_root}" "${data_root}/rv32-sdk"
+register_link() {
+    local source="$1" target="$2"
+    # An SDK or Quartus checkout already at its registration path is valid.
+    if [[ "${source}" -ef "${target}" ]]; then
+        return
+    fi
+    # Docker creates absent short-syntax bind sources as real directories.
+    # Never let ln put a nested link inside one and report a false success.
+    if [[ -d "${target}" && ! -L "${target}" ]]; then
+        rmdir "${target}" 2>/dev/null || {
+            echo "Cannot replace non-empty ${target}. Move it aside and rerun; its files were preserved." >&2
+            return 1
+        }
+    elif [[ -e "${target}" && ! -L "${target}" ]]; then
+        echo "Cannot replace existing file ${target}; its contents were preserved." >&2
+        return 1
+    fi
+    ln -sfnT "${source}" "${target}"
+}
+
+register_link "${sdk_root}" "${data_root}/rv32-sdk"
+if [[ ! -f "${data_root}/rv32-sdk/scripts/container-start.sh" ]]; then
+    echo "Registered SDK is missing scripts/container-start.sh" >&2
+    exit 1
+fi
 
 quartus_link="${data_root}/rv32-quartus"
 if [[ -n "${quartus_root}" ]]; then
-    if [[ -d "${quartus_link}" && ! -L "${quartus_link}" ]]; then
-        rmdir "${quartus_link}" 2>/dev/null || {
-            echo "Cannot replace non-empty ${quartus_link}" >&2
-            exit 1
-        }
-    fi
-    ln -sfn "${quartus_root}" "${quartus_link}"
+    register_link "${quartus_root}" "${quartus_link}"
 elif [[ ! -e "${quartus_link}" ]]; then
     install -d "${quartus_link}"
 fi
