@@ -10,6 +10,28 @@ from rv32_sdk import sof_cache
 
 
 class SofCacheTest(unittest.TestCase):
+    def test_other_private_board_does_not_invalidate_selected_design(self):
+        with TemporaryDirectory() as temp:
+            sdk = Path(temp)
+            selected = sdk / ".sdk/platforms/de0-cv"
+            top = selected / "quartus/top.vhd"
+            top.parent.mkdir(parents=True)
+            top.write_text("selected hardware")
+            cfg = {
+                "memory": {},
+                "quartus": {
+                    "project_dir": str(top.parent),
+                    "rom_mif_target": "init.mif",
+                },
+            }
+            before = sof_cache.fingerprint(sdk, cfg, "25.1")
+            other = sdk / ".sdk/platforms/another-board/runtime/map.h"
+            other.parent.mkdir(parents=True)
+            other.write_text("newly generated unrelated view")
+            self.assertEqual(before, sof_cache.fingerprint(sdk, cfg, "25.1"))
+            top.write_text("changed selected hardware")
+            self.assertNotEqual(before, sof_cache.fingerprint(sdk, cfg, "25.1"))
+
     def test_hardware_changes_invalidate_but_application_does_not(self):
         with TemporaryDirectory() as temp:
             sdk = Path(temp)
@@ -52,6 +74,50 @@ class SofCacheTest(unittest.TestCase):
             self.assertNotEqual(key, sof_cache.fingerprint(sdk, cfg, "26.1"))
             cfg["memory"]["ram_words"] = 20
             self.assertNotEqual(key, sof_cache.fingerprint(sdk, cfg, "25.1"))
+
+    def test_quartus_bookkeeping_does_not_change_hardware_key(self):
+        with TemporaryDirectory() as temp:
+            sdk = Path(temp)
+            qsf = sdk / ".sdk/platforms/board/quartus/design.qsf"
+            qsf.parent.mkdir(parents=True)
+            qsf.write_text("set_global_assignment -name DEVICE 5CEBA4F23C7\n")
+            cfg = {
+                "memory": {},
+                "quartus": {
+                    "project_dir": str(qsf.parent),
+                    "rom_mif_target": "init.mif",
+                },
+            }
+            before = sof_cache.fingerprint(sdk, cfg, "25.1")
+            qsf.write_text(
+                qsf.read_text()
+                + '\nset_global_assignment -name LAST_QUARTUS_VERSION "25.1std.0 Lite Edition"\n'
+            )
+            self.assertEqual(before, sof_cache.fingerprint(sdk, cfg, "25.1"))
+            qsf.write_text(
+                qsf.read_text().replace("5CEBA4F23C7", "5CEBA4F23C8")
+            )
+            self.assertNotEqual(
+                before, sof_cache.fingerprint(sdk, cfg, "25.1")
+            )
+
+    def test_source_manifest_changes_invalidate_cached_hardware(self):
+        with TemporaryDirectory() as temp:
+            sdk = Path(temp)
+            manifest = sdk / "paths.yaml"
+            manifest.write_text("requires: [core]\n")
+            cfg = {
+                "memory": {},
+                "quartus": {
+                    "project_dir": "quartus",
+                    "rom_mif_target": "init.mif",
+                },
+            }
+            before = sof_cache.fingerprint(sdk, cfg, "25.1")
+            manifest.write_text("requires: [core, keyboard]\n")
+            self.assertNotEqual(
+                before, sof_cache.fingerprint(sdk, cfg, "25.1")
+            )
 
     def test_corruption_missing_and_valid_roundtrip(self):
         with (

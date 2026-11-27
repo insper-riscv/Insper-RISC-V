@@ -10,6 +10,43 @@ from rv32_sdk import platforms
 
 
 class HardwarePreparationTest(unittest.TestCase):
+    def test_generator_change_invalidates_private_runtime(self):
+        """A cached map cannot outlive the generator that defines its bus."""
+        with tempfile.TemporaryDirectory() as directory:
+            sdk = Path(directory)
+            source = sdk / "src/periph-examples/de0-cv/platform.yaml"
+            module = sdk / ".sdk/rv32_sdk/platforms.py"
+            required = [
+                source,
+                module,
+                sdk / "src/simulation/modular/config.yaml",
+                sdk / "Core/profiles/matrix.yaml",
+                sdk / ".sdk/dependencies.json",
+                sdk / "boards/de0-cv/board.yaml",
+                sdk / "src/simulation/modular/runtime/boot_memory.S",
+            ]
+            generators = [
+                sdk / f".sdk/tools/src/riscv_tools/{part}/core.py"
+                for part in ("memory_map", "top_generator", "board_ports")
+            ]
+            for path in required + generators:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("initial\n")
+            with (
+                patch.object(platforms, "__file__", str(module)),
+                patch.object(platforms, "board_choices", return_value={"periph-de0-cv": source}),
+                patch.object(platforms, "private_platform", return_value={}),
+                patch.object(platforms, "board_config", return_value={}),
+                patch.object(platforms, "write_all") as generate,
+            ):
+                platforms.ensure_board(sdk, "periph-de0-cv")
+                platforms.ensure_board(sdk, "periph-de0-cv")
+                self.assertEqual(generate.call_count, 1)
+                for count, path in enumerate(generators, 2):
+                    path.write_text("changed\n")
+                    platforms.ensure_board(sdk, "periph-de0-cv")
+                    self.assertEqual(generate.call_count, count)
+
     def check_generation(self, name):
         with tempfile.TemporaryDirectory() as directory:
             sdk = Path(directory)

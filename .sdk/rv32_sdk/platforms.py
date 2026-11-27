@@ -141,6 +141,9 @@ def ensure_board(sdk: Path, name: str) -> Path:
         sdk / ".sdk/dependencies.json",
         sdk / "boards" / source.parent.name / "board.yaml",
         *(p for p in base.iterdir() if p.is_file()),
+        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("memory_map/**/*.py")),
+        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("top_generator/**/*.py")),
+        *sorted((sdk / ".sdk/tools/src/riscv_tools").glob("board_ports/**/*.py")),
     ]
     expected = {
         str(p.relative_to(sdk)): hashlib.sha256(p.read_bytes()).hexdigest()

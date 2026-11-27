@@ -9,7 +9,7 @@
   "customizations": {
     "vscode": {
       "extensions": [
-        "ms-vscode.cpptools",
+        "llvm-vs-code-extensions.vscode-clangd",
         "rust-lang.rust-analyzer"
       ]
     }

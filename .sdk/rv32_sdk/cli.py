@@ -39,6 +39,7 @@ from riscv_tools.settings import deep_merge, load_config
 from rv32_sdk import (
     cpu_profiles,
     drivers,
+    editor,
     platforms,
     sof_cache,
     source_check,
@@ -368,6 +369,12 @@ def write_config(
                 )
         data["sim"]["parameters"] = filtered
     paths["config"].write_text(yaml.safe_dump(data, sort_keys=False))
+    editor.configure(
+        root,
+        project,
+        data,
+        rust_target(project) if project["language"] == "rust" else "",
+    )
     return paths["config"]
 
 
@@ -728,6 +735,10 @@ def setup(root: Path, project: dict[str, Any]) -> None:
         if project.get("generate_drivers", False):
             run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
         run(["rustup", "target", "add", rust_target(project)], cwd=root)
+        run(
+            ["rustup", "component", "add", "rust-src", "rust-analyzer"],
+            cwd=root,
+        )
     config = write_config(root, project)
     if project["language"] == "c":
         tool(config, "generate-header")

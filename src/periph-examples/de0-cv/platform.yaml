@@ -49,6 +49,9 @@ boot:
   entry: 0x00001000
   wait_restart: 0x00000100
 clocks:
+  # The synchronous boot ROM must return the current PC's instruction before
+  # the core captures IF/ID. Keep fetch separate from the core edge.
+  fetch: {mhz: 50, phase_ps: 0}
   core: {mhz: 50, phase_ps: 8250}
   mem:  {mhz: 100}
 console: jtag

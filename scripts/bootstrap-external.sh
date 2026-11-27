@@ -31,7 +31,7 @@ if [[ "${language}" == "rust" ]]; then
             | sh -s -- -y --profile minimal --default-toolchain 1.85.1
     fi
     rustup target add riscv32i-unknown-none-elf riscv32im-unknown-none-elf
-    rustup component add rust-src
+    rustup component add rust-src rust-analyzer
     # Bindgen runs on the development host, even when building bare-metal code.
     # Keep this installation confined to the intended disposable Dev Container.
     if python3 - "${manifest}" <<'PYTHON'
@@ -47,6 +47,7 @@ PYTHON
 fi
 
 bash "${RV32_SDK_ROOT}/scripts/install-vscode-extension.sh"
+bash "${RV32_SDK_ROOT}/scripts/editor-deps.sh"
 
 exec "${RV32_SDK_ROOT}/scripts/rv32-project" \
     --project "${project_root}" setup
