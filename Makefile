@@ -67,6 +67,9 @@ check-tops:
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_sim_test
 	@echo "the simulation top of the de0-cv platform builds"
+	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) de0_cv_emulated_sim_top)
+	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. rv32im_sdram_flash_emulated_sim_test
+	@echo "the simulation top of the de0-cv-emulated platform builds"
 	@rm -rf $(WDIR) && mkdir -p $(WDIR) && $(GHDL) -a $(STD) --work=work --workdir=$(WDIR) $$($(SOURCES) doom_sim_top)
 	@cd $(WDIR) && $(GHDL) -e $(STD) --workdir=. doom_sim_test
 	@echo "the simulation top of the doom platform builds"
@@ -115,6 +118,7 @@ check-unique:
 memory-map:
 	riscv-tools --root . check-memory-map --platform $(P)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PF)/platform.yaml
+	riscv-tools --root . check-memory-map --platform $(PF)-emulated/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PD)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PE)/platform.yaml
 	riscv-tools --root . check-memory-map --platform $(PM)/platform.yaml
@@ -191,7 +195,7 @@ test:
 # Common-Components, Core, Memory and Peripherals run in the CI of each one (`make test` there), not here.
 unit-tests: sync memory-map test
 
-# The formal proofs of this repository only: the external interconnect (src/interconnect), with the engine
+# The formal proofs of this repository only: the external interconnect (base/src/interconnect), with the engine
 # FORMAL_ENGINE (yices, bitwuzla or abc-bmc3; bitwuzla by default). The proofs of the submodules
 # run in the CI of each one. FORMAL_JOBS is empty by construction and stays as the list of the proofs
 # of the submodules that this repository does not run. Each proof works in its own folder, -k lets the
@@ -205,7 +209,7 @@ formal:
 
 formal-run: $(FORMAL_JOBS) formal-interconnect
 
-# The proofs of this repository: the external interconnect (src/interconnect), whose result is
+# The proofs of this repository: the external interconnect (base/src/interconnect), whose result is
 # build/formal/result-<engine>.tsv, read by formal/aggregate.sh.
 formal-interconnect:
 	FORMAL_ENGINE=$(FORMAL_ENGINE) bash formal/interconnect.sh

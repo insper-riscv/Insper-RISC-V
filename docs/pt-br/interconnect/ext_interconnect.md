@@ -2,7 +2,7 @@
 
 ## 1. O que é
 
-O núcleo conhece só a BOOT_MEMORY, a FLASH e a RAM. Todo acesso de dados fora delas, e todo acesso a uma região que a plataforma liga ao barramento, sai por uma porta externa com handshake de `ready` e de `error`. O interconector atrás dessa porta decide para onde o acesso vai: a memória do barramento, um periférico ou nenhum escravo. Ele decodifica a tabela de janelas da plataforma, e por isso mora neste repositório (`src/interconnect/`) e não no Memory nem no Peripherals, que ele liga sem que um dependa do outro.
+O núcleo conhece só a BOOT_MEMORY, a FLASH e a RAM. Todo acesso de dados fora delas, e todo acesso a uma região que a plataforma liga ao barramento, sai por uma porta externa com handshake de `ready` e de `error`. O interconector atrás dessa porta decide para onde o acesso vai: a memória do barramento, um periférico ou nenhum escravo. Ele decodifica a tabela de janelas da plataforma, e por isso mora neste repositório (`base/src/interconnect/`) e não no Memory nem no Peripherals, que ele liga sem que um dependa do outro.
 
 | Bloco | Papel |
 | :--- | :--- |
@@ -52,6 +52,7 @@ O `error` sobe junto com o `ready` e fica até `mem_advance`. O núcleo o recebe
 | `periph_addr_width` | Largura do deslocamento de palavra entregue ao periférico |
 | `flash_on_bus`, `flash_base`, `flash_last` | A FLASH está no barramento, e o primeiro e o último endereço dela |
 | `ram_on_bus`, `ram_base`, `ram_last` | O mesmo para a RAM |
+| `mem_flag` | A classificação do endereço como memória do barramento vem da porta `i_is_mem`, que o núcleo decide em EX e registra, e não da comparação do endereço com as janelas da FLASH e da RAM; o mapa é o mesmo, e a simulação confere a cada acesso que a porta e a comparação coincidem. O SoC usa a porta |
 
 O valor padrão dos generics é a tabela de oito janelas de `0x80000000 | i << 28`, máscara `0xF0000000` e 64 KiB de registradores, e só a RAM em `0x40000000` a `0x43FFFFFF` no barramento: é o que os testes de entidade usam. As portas `p_we` e `p_re` são one-hot pelo índice da tabela, e `p_rdata` guarda uma palavra de `XLEN` bits por índice.
 

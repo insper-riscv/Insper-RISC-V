@@ -3,7 +3,9 @@
 The `embench` check runs on hosted GitHub machines using GHDL. It requires
 neither FPGA access nor Quartus, JTAG, lab credentials or a self-hosted runner.
 Automatic runs start only for a merged update to main. PR activity does not run
-benchmarks. Explicit manual dispatch is restricted to main.
+benchmarks. Explicit manual dispatch also accepts feature branches, so changes
+can be validated before merging. The selected branch supplies the candidate and
+adapter; `compare_ref` selects the baseline (`main` by default).
 
 Each main merge compares its resulting commit with the main-before push SHA. Profiles
 are discovered from both sides' Core YAML files; unavailable profiles are
@@ -39,7 +41,8 @@ Each measuring container is limited to 8 GiB RAM, no swap and two CPUs.
 Programs and comparison sides run serially within a job. Up to four measuring jobs
 use separate hosted machines; the summary container is limited to 2 GiB.
 No waveforms are generated. A fixed concurrency group allows only one active
-benchmark workflow. New merges do not cancel a started benchmark.
+benchmark workflow across all branches. New merges or manual runs do not cancel
+a started benchmark.
 
 The original benchmark verifier (plus the stricter XGBoost result check)
 must pass. Memory-model equivalence and independent counter oracles run

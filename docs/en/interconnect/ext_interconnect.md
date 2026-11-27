@@ -2,7 +2,7 @@
 
 ## 1. What it is
 
-The core knows only the BOOT_MEMORY, the FLASH and the RAM. Every data access outside them, and every access to a region that the platform puts on the bus, leaves through one external port with a `ready` and an `error` handshake. The interconnect behind that port decides where the access goes: to the bus memory, to a peripheral or to no slave. It decodes the window table of the platform, which is why it lives in this repository (`src/interconnect/`) and not in Memory or Peripherals, which it connects without either depending on the other.
+The core knows only the BOOT_MEMORY, the FLASH and the RAM. Every data access outside them, and every access to a region that the platform puts on the bus, leaves through one external port with a `ready` and an `error` handshake. The interconnect behind that port decides where the access goes: to the bus memory, to a peripheral or to no slave. It decodes the window table of the platform, which is why it lives in this repository (`base/src/interconnect/`) and not in Memory or Peripherals, which it connects without either depending on the other.
 
 | Block | Role |
 | :--- | :--- |
@@ -52,6 +52,7 @@ The `error` rises together with the `ready` and stays until `mem_advance`. The c
 | `periph_addr_width` | Width of the word offset handed to the peripheral |
 | `flash_on_bus`, `flash_base`, `flash_last` | The FLASH is on the bus, and its first and last address |
 | `ram_on_bus`, `ram_base`, `ram_last` | The same for the RAM |
+| `mem_flag` | The classification of the address as a bus memory comes from the `i_is_mem` port, which the core decides in EX and registers, instead of from comparing the address with the FLASH and RAM windows; the map is the same, and the simulation checks on every access that the port and the comparison agree. The SoC uses the port |
 
 The default value of the generics is the table of eight windows at `0x80000000 | i << 28`, mask `0xF0000000` and 64 KiB of registers, with only the RAM at `0x40000000` to `0x43FFFFFF` on the bus: the entity tests use it. The `p_we` and `p_re` ports are one-hot by table index, and `p_rdata` holds one word of `XLEN` bits per index.
 

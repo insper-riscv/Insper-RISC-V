@@ -61,6 +61,8 @@ FULL_WORD = 0xF
 
 SDRAM_BASE = 0x40000000
 RAM_BASE = int(os.environ.get("RAM_BASE", str(SDRAM_BASE)))
+# Byte of the chip where the RAM starts, after the FLASH.
+RAM_CHIP_OFFSET = int(os.environ.get("RAM_CHIP_OFFSET", "0"), 0)
 _golden_path_env = os.environ.get("GOLDEN_PATH", "")
 GOLDEN_PATH = Path(_golden_path_env) if _golden_path_env else None
 
@@ -113,7 +115,7 @@ async def model_bytes(dut: Any, golden: dict[int, int]) -> dict[int, int]:
         Byte value by RAM-relative byte address.
     """
     actual: dict[int, int] = {}
-    first_word = (RAM_BASE - SDRAM_BASE) // 4
+    first_word = (RAM_BASE - SDRAM_BASE + RAM_CHIP_OFFSET) // 4
     for word in sorted({address // 4 for address in golden}):
         value = await read_model_word(dut, first_word + word)
         for i in range(4):
@@ -241,7 +243,7 @@ async def check_uart_stream(dut: Any, received: list[int]) -> None:
     """Check that the console read what the program put in stdout."""
     for _ in range(12):  # the answers reach the console two scans late
         received.extend(await uart_scan(dut))
-    first_word = (STDOUT_ADDR - SDRAM_BASE) // 4
+    first_word = (STDOUT_ADDR - SDRAM_BASE + RAM_CHIP_OFFSET) // 4
     length = await read_model_word(dut, first_word)
     truncated = await read_model_word(dut, first_word + 1)
     kept = min(length, STDOUT_SIZE)

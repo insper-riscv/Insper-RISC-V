@@ -1,7 +1,7 @@
 # Peripheral expansion validation
 
-Validated on 2026-11-19, entirely locally. No push, pull request, main merge or
-GitHub Actions dispatch was performed for this feature.
+Initial validation on 2026-11-19 was entirely local, before the feature
+branches were published. No main merge or manual Actions dispatch was performed.
 
 ## Revisions
 
@@ -67,6 +67,56 @@ peripheral maps; Simulate reports that explicitly. Existing simulation-capable
 platforms remain available. Controller drivers do not include network stacks,
 filesystems, USB enumeration or undocumented attached-chip startup sequences.
 
-The local SDK gitlink points at the tested local Peripherals commit. Publish
-the Peripherals branch before publishing the SDK branch so remote recursive
-clones can fetch it. Installing only the VSIX does not install the SDK sources.
+The SDK gitlink points at the tested, published Peripherals commit. Future
+dependency commits must also be published before their consuming SDK branch so
+remote recursive clones can fetch them. Installing only the VSIX does not
+install the SDK sources.
+
+## Existing-installation upgrade regression
+
+A stale Tools checkout reproduced the reported bootstrap failure. Five new
+tests cover initial installation/no-op reuse, revision upgrades preserving
+edited/untracked files, patch upgrades/corrupt metadata, download/patch failures,
+and activation rollback. At that stage the complete SDK suite contained 72 tests.
+Boot preflight also checks all five Core fragments required by boot_core.S,
+including mismatched populated submodules rather than only empty checkouts.
+
+The affected Rust program was simulated both in an isolated project copy and
+in its actual Dev Container, with the SDK mounted at /opt/rv32-sdk. After
+aligning clean processor dependencies to their recorded revisions, stdout was:
+
+```text
+Hello from an RV32 Rust project.
+values = [1, 2, 3, 4]
+```
+
+The old installed Tools checkout and prior bootstrap/preflight files were
+preserved in SDK-local backup directories. Existing project sources were not
+edited. The extension VSIX did not need changes for this SDK bootstrap fix.
+
+
+## Rust allocation prelude regression
+
+Runtime 0.10.0 re-exports the standard `alloc` namespace, `ToString`, `ToOwned`,
+`Cow`, `Rc`, ordered maps/sets, queues and string-formatting helpers. These are
+Rust standard `core`/`alloc` APIs, not replacement implementations or a full OS
+standard library. No new crate dependencies were added.
+
+Six native tests (two allocator and four no_std consumer tests), six runnable
+or compiled documentation examples, Clippy with warnings denied, and RV32I/IM
+runtime builds passed. The full SDK suite passed 73 tests, including a managed
+runtime upgrade that preserves application source. The CI runtime fixture now
+exercises the helpers on both RV32I and RV32IM RTL; both simulations passed.
+
+The user's existing Rust calibration program was regenerated and simulated in
+its actual Dev Container. Its main.rs SHA-256 remained unchanged, including its
+existing `use alloc::string::ToString` import. Program stdout was exactly:
+
+```text
+The sum of all valid calibration results is 11387
+```
+
+An independent evaluation of the same input/operations also produced 11387.
+Stderr was empty. The installed SDK runtime was backed up before replacement;
+the project received its runtime update through normal managed generation.
+Raw evidence is retained in publication-review/driver-expansion/rust-prelude/.

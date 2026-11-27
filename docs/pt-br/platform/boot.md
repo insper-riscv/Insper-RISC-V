@@ -1,13 +1,13 @@
 # O estado de boot de referência deste RISC-V bare-metal
 
-O boot neste core passa por dois lados: a BOOT_MEMORY (`src/boot/boot_core.S`, incluído pelo `boot_memory.S` de cada plataforma), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [runtime.md](runtime.md) pra de onde vêm e como usar. Ver [atualizacao-de-programa.md](atualizacao-de-programa.md) pro como o controle passa de um lado pro outro a cada troca de teste.
+O boot neste core passa por dois lados: a BOOT_MEMORY (`base/src/boot/boot_core.S`, incluído pelo `boot_memory.S` de cada plataforma), fixa e compartilhada, programada uma única vez e nunca reescrita por teste, e o `crt0` da picolibc, que vai dentro da imagem de cada teste na FLASH. Este projeto não tem `crt0` nem linker script próprios: ver [runtime.md](runtime.md) pra de onde vêm e como usar. Ver [atualizacao-de-programa.md](atualizacao-de-programa.md) pro como o controle passa de um lado pro outro a cada troca de teste.
 
 Este documento descreve, registrador por registrador e seção por seção, exatamente que estado existe no instante em que `main()` é chamado, e, tão importante quanto, o que **não** é feito. O estado segue a ABI oficial do RISC-V
 ([riscv-elf-psabi-doc](https://github.com/riscv-non-isa/riscv-elf-psabi-doc)).
 
 ## 1. A BOOT_MEMORY comum
 
-Toda plataforma monta a mesma BOOT, o `boot_core.S` comum (`src/boot/boot_core.S`). O `boot_memory.S` de cada plataforma é só um invólucro que inclui os cabeçalhos que `riscv-tools generate-memory-map` escreve do `platform.yaml` e, por último, o `boot_core.S`.
+Toda plataforma monta a mesma BOOT, o `boot_core.S` comum (`base/src/boot/boot_core.S`). O `boot_memory.S` de cada plataforma é só um invólucro que inclui os cabeçalhos que `riscv-tools generate-memory-map` escreve do `platform.yaml` e, por último, o `boot_core.S`.
 
 | Peça | Papel |
 | :--- | :--- |
@@ -44,6 +44,7 @@ A BOOT não prepara `sp`, `gp`, `tp`, `.data` nem `.bss`, que são do `crt0` do 
 | :--- | :--- |
 | Em cada uma das plataformas, a BOOT monta, só tem `fence.i` com Zifencei e só exporta `rv32_wait_restart` com `RV32_TEST_WAIT`. Também monta no núcleo mínimo sem nenhuma instrução de CSR, no núcleo completo, no RV32E e na versão de aplicação | `tests/python/check_boot_contract.py` |
 | As imagens da BOOT real que os testes de simulação carregam estão em dia com os fontes | `tests/python/gen_de0_cv_boot_images.py --check` e `tests/python/gen_real_boot_images.py --check` |
+| O `boot_memory_init.mif` versionado de cada plataforma de placa (`de0-cv`, `doom`, `external-data` e `internal-mem`), que o `board generate` copia para o projeto do Quartus, é o que a `boot_memory.S` e o linker script atuais montam | `tests/python/gen_boot_memory_mifs.py --check`, rodado pelo `--check` do `gen_de0_cv_boot_images.py` |
 | A BOOT real inicia o programa no núcleo mínimo (`rv32i`), num núcleo com Zicsr e interrupções e no completo, e escolhe a banca certa em 13 casos | Os testes `TemplateRealBoot`, `ModularRealBoot`, `De0CvBootBanks` e `ExternalDataFlashUpdate` do `tests.json` |
 
 

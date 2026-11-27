@@ -97,6 +97,21 @@ class Experiment:
         return self.root / str(self.suite["platform"])
 
 
+def memory_bases(exp: Experiment) -> tuple[int, int]:
+    """Resolve code and data origins through the platform loader."""
+    # Only RTL execution needs Tools; reporting also runs without it.
+    # pylint: disable-next=import-outside-toplevel
+    from riscv_tools.memory_map import load_platform, symbols  # noqa: PLC0415
+
+    path = exp.platform / "platform.yaml"
+    platform = read_yaml(path)
+    if "regions" not in platform:
+        platform = load_platform(path)
+    table = symbols(platform)
+    config = platform["config"]
+    return table[f"{config['rom']}.base"], table[f"{config['ram']}.base"]
+
+
 def profile_settings(root: Path, profile: str) -> dict[str, Any]:
     """Read profile switches, preserving Core defaults."""
     path = root / "Core/profiles" / f"{profile}.yaml"
@@ -256,15 +271,38 @@ def build_simulator(
     return folder, settings
 
 
-def build_boot(exp: Experiment) -> Path:
-    """Build the platform's unchanged restart loader once."""
-    elf = exp.output / "boot.elf"
+def boot_defines(exp: Experiment, folder: Path) -> list[str]:
+    """Match boot fragments to the exact elaborated profile switches."""
+    source = exp.platform / "runtime/boot_config.h"
+    if not source.is_file():
+        return []
+    text = source.read_text()
+    switches = re.findall(
+        r"constant (HAS_\w+|IS_E)\s*:\s*boolean\s*:=\s*(true|false)",
+        (folder / "config_pkg.vhd").read_text(),
+    )
+    for key, value in switches:
+        text = re.sub(
+            rf"(#define RV32_{key} )[01]\b",
+            rf"\g<1>{int(value == 'true')}",
+            text,
+        )
+    target = folder / "boot_config.h"
+    target.write_text(text)
+    # Preinclude its guard to prevent reuse of the checked-in header.
+    return ["-include", str(target)]
+
+
+def build_boot(exp: Experiment, folder: Path) -> Path:
+    """Build the platform restart loader for the selected profile."""
+    elf = folder / "boot.elf"
     command(
         [
             GCC + "gcc",
             "-march=rv32i",
             "-mabi=ilp32",
             "-nostdlib",
+            *boot_defines(exp, folder),
             "-T",
             str(exp.platform / "runtime/boot_memory.ld"),
             str(exp.platform / "runtime/boot_memory.S"),
@@ -272,9 +310,9 @@ def build_boot(exp: Experiment) -> Path:
             str(elf),
         ],
         exp.root,
-        exp.output / "build.log",
+        folder / "build.log",
     )
-    return hex_image(elf, exp.output / "boot.hex", exp.output / "build.log")
+    return hex_image(elf, folder / "boot.hex", folder / "build.log")
 
 
 def hex_image(elf: Path, target: Path, log: Path, origin: int = 0) -> Path:
@@ -418,11 +456,7 @@ def measure(
     )
     for name in ("metrics.txt", "verdict.txt"):
         (folder / name).unlink(missing_ok=True)
-    image_origin = next(
-        int(region["base"])
-        for region in read_yaml(exp.platform / "platform.yaml")["regions"]
-        if region["name"] == "ROM"
-    )
+    image_origin, _ = memory_bases(exp)
     image = hex_image(elf, elf.with_suffix(".hex"), log, image_origin)
     arguments = [
         "ghdl",
@@ -493,7 +527,7 @@ def execute(
 ) -> dict[str, Any]:
     """Keep a row and diagnostics for every attempted program."""
     folder, settings = build_simulator(exp, profile)
-    boot = build_boot(exp)
+    boot = build_boot(exp, folder)
     runtime = build_runtime(exp, folder, settings)
     rows: list[dict[str, Any]] = []
     for program in programs:

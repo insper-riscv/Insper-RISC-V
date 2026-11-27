@@ -4,7 +4,7 @@
 
 ## 1. What it is
 
-The `soc` entity (`src/soc/soc.vhd`) is the board-independent system on chip. It holds the core, the caches, the memory bridges and routers, the interconnect, the CLINT, the PLIC and the I/O peripherals, and connects everything through interface contracts. It has no board pin, no family name and no chip model. Whoever instantiates it supplies the two clocks, the reset and the backends of the memory regions.
+The `soc` entity (`base/src/soc/soc.vhd`) is the board-independent system on chip. It holds the core, the caches, the memory bridges and routers, the interconnect, the CLINT, the PLIC and the I/O peripherals, and connects everything through interface contracts. It has no board pin, no family name and no chip model. Whoever instantiates it supplies the two clocks, the reset and the backends of the memory regions.
 
 The simulation top `modular_sim_top` instantiates it and adds the three-phase clock generator and the chip models. A board top instantiates the same `soc` and adds the PLL, the pin ring and the controllers of the real chips. All the SoC logic exists once, and the choice between simulation and board stays outside it.
 
