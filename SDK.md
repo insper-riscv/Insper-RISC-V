@@ -72,6 +72,18 @@ The TOML accepts `project.source`, additional `project.sources` and
 `project.include_dirs`; paths are relative to the application. The C template
 uses `include/`. Rust is `no_std`, with no built-in heap allocator.
 
+### Container exits before setup
+
+If container logs report `/opt/rv32-sdk/scripts/container-start.sh: No such file or directory`, check the host registration before rebuilding:
+
+```bash
+ls -ld ~/.local/share/rv32-sdk
+readlink -f ~/.local/share/rv32-sdk
+ls ~/.local/share/rv32-sdk/scripts/container-start.sh
+```
+
+Run `bash scripts/install-user.sh` from the complete processor checkout on the Docker host. The installer replaces an empty directory created by Docker with the SDK symlink. It preserves and rejects a non-empty directory or regular file; move that registration aside as a backup and rerun. Earlier installers could report success while placing a nested SDK link inside a real registration directory. Rebuild and reopen the Dev Container after repairing the host path. The application source does not need to be recreated.
+
 ## Compatibility and output
 
 The validated SDK platform is `internal-mem` on Cyclone V. Other upstream
