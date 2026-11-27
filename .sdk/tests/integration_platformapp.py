@@ -17,8 +17,14 @@ import yaml
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--output", type=Path, required=True)
+parser.add_argument(
+    "--hardware-source",
+    type=Path,
+    help="Existing hardware checkout to exercise (defaults to this SDK checkout)",
+)
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[2]
+hardware_source = (args.hardware_source or root).resolve()
 audit = args.output.resolve()
 if audit.is_relative_to(root):
     parser.error("--output must be outside the SDK checkout")
@@ -70,7 +76,7 @@ for language in ("c", "rust"):
     hardware = project / "Insper-RISC-V"
     assert not project.exists()
     shutil.copytree(
-        root,
+        hardware_source,
         hardware,
         ignore=shutil.ignore_patterns(
             ".git",

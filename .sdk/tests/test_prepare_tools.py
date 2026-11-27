@@ -20,9 +20,11 @@ SPEC.loader.exec_module(prepare)
 
 class PrepareToolsTest(unittest.TestCase):
     def setUp(self):
-        self.temp = TemporaryDirectory(prefix="SDK cache with spaces ")
-        self.addCleanup(self.temp.cleanup)
-        root = Path(self.temp.name)
+        root = Path(
+            self.enterContext(
+                TemporaryDirectory(prefix="SDK cache with spaces ")
+            )
+        )
         self.sdk = root / ".sdk"
         (self.sdk / "patches").mkdir(parents=True)
         self.origin = root / "upstream"

@@ -81,6 +81,8 @@ def main() -> None:
             name = child.parent.name
             invoke(child, "simulate", f"{name} Rust example: PASS\n".encode())
             print("PASS generated Rust example", name, flush=True)
+        invoke(app, "drivers")
+        print("PASS refresh after generated Rust example setup", flush=True)
         physical = root / "physical"
         shutil.copytree(SDK / "templates/rust", physical)
         (physical / "rv32.toml").write_text(

@@ -50,7 +50,9 @@ uv run --project .sdk python .sdk/tests/integration_platformapp.py \
   --output /tmp/platformapp-evidence-new
 ```
 
-The opt-in integration test requires a new output directory. It creates real
+The opt-in integration test accepts `--hardware-source /path/to/clean/main`
+to validate the SDK overlay against a separate hardware revision. It requires
+a new output directory. It creates real
 DE2-115 hardware projects with two GPIO instances (and CLINT/PLIC entries,
 selected only when the CPU enables their interrupt fabric), exports C and
 Rust projects, cross-compiles each, moves each directory and rebuilds, then

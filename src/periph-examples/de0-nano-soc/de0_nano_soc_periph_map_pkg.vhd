@@ -180,17 +180,21 @@ package de0_nano_soc_periph_map_pkg is
 	);
 
 	-- Número de periféricos externos do mapa (`kind` de `Peripherals`), o tamanho das tabelas abaixo.
-	constant EXT_COUNT : natural := 1;
+	constant EXT_COUNT : natural := 2;
 	-- Índice de cada periférico externo nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
 	constant EXT_INDICES : integer_vector(0 to EXT_COUNT - 1) := (
-		0 => ADC0_INDEX
+		0 => ADC0_INDEX,
+		1 => GPIO_INDEX
 	);
 	-- Fonte do PLIC de cada periférico externo, na mesma ordem (zero sem linha ou sem PLIC).
 	constant EXT_IRQ_IDS : integer_vector(0 to EXT_COUNT - 1) := (
-		0 => IRQ_ADC0
+		0 => IRQ_ADC0,
+		1 => 0
 	);
 	-- Posição de ADC0 nas tabelas EXT_*.
 	constant ADC0_EXT_POS : natural := 0;
+	-- Posição de GPIO nas tabelas EXT_*.
+	constant GPIO_EXT_POS : natural := 1;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;

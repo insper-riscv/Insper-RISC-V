@@ -428,6 +428,18 @@ def destination(vendor: Path, name: str) -> Path:
     return path
 
 
+def example_project_config(name: str) -> bool:
+    """Seed project configuration; child setup owns subsequent safe merges."""
+    parts = Path(name).parts
+    return len(parts) >= 3 and (
+        (parts[-2] == "example" and parts[-1] == "Cargo.toml")
+        or (
+            parts[-3] == "example"
+            and parts[-2] in {".vscode", ".devcontainer", ".cargo"}
+        )
+    )
+
+
 def install(
     root: Path, files: dict[str, bytes], metadata: dict[str, Any]
 ) -> None:
@@ -447,11 +459,20 @@ def install(
             raise SystemExit(
                 "Invalid managed driver manifest; files were preserved"
             ) from error
+    preserved = set()
     for name in set(previous) | files.keys():
         path = destination(vendor, name)
         if path.exists():
             current = path.read_bytes()
             expected = previous.get(name)
+            changed = (
+                current != files.get(name)
+                if expected is None
+                else digest(current) != expected
+            )
+            if changed and example_project_config(name):
+                preserved.add(name)
+                continue
             if expected is None and current != files.get(name):
                 raise SystemExit(
                     f"Unmanaged driver file would be overwritten: {path}"
@@ -461,6 +482,8 @@ def install(
                     f"Generated driver was edited; preserve your changes before regenerating: {path}"
                 )
     for name, content in files.items():
+        if name in preserved:
+            continue
         path = destination(vendor, name)
         path.parent.mkdir(parents=True, exist_ok=True)
         temporary = path.with_name(path.name + ".rv32-tmp")
@@ -471,7 +494,8 @@ def install(
         temporary.write_bytes(content)
         os.replace(temporary, path)
     for name in previous.keys() - files.keys():
-        destination(vendor, name).unlink(missing_ok=True)
+        if name not in preserved:
+            destination(vendor, name).unlink(missing_ok=True)
     record = dict(
         metadata,
         files={

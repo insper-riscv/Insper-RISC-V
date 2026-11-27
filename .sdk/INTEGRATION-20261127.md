@@ -15,21 +15,42 @@ startup. New projects pin the current official ci-elf image by immutable digest.
 
 Validated locally with at most 8 GiB RAM, no additional swap, and two CPUs:
 
-- 117 SDK unit tests.
+- 118 SDK unit tests.
 - All 11 named Core profiles: real C compiler and GHDL execution.
 - Seven C CLI acceptance cases, including headers, multiple sources, allocation,
   exact/no/long stdout, compiler errors, nonzero exit and bounded infinite loops.
 - Rust runtime, Vec/String and normal main in RV32I and RV32IM; the combined
-  peripheral application also passed actual CPU/peripheral simulation.
+  peripheral application, six generated simulated examples and four physical-map
+  builds also passed. The complete Rust CI job passed on the published SDK.
 - GPIO register and physical-pin mapping regressions, including ascending
   generics, forward/reverse half-steps and undriven unused pins.
 - Fresh remote Tools bootstrap and clean application of the SDK patch.
 - VSCode extension tests and exact rebuilt/installation VSIX equality.
 
-The remaining generated-example matrix, current-image C acceptance, Quartus
-synthesis and physical C/Rust revalidation were still running when this note was
-created. Final results must be checked in the PR checks and the follow-up
-validation update before treating the branch as ready to merge.
+A clean main hardware checkout also passed C/Rust export, relocation/rebuild and
+GPIO child-example builds. All maps, config variants and source lists passed
+`make memory-map` with the reviewed Tools revision. Tools CI passed completely.
+
+CI found an example-refresh ownership conflict: child setup legitimately merged
+editor and Cargo configuration, then a parent refresh mistook those changes for
+edited driver source. Example project configuration is now seeded and preserved
+when modified; driver/library and example source protections remain unchanged.
+Twenty C/Rust child setups across RV32I and RV32IM/IRQ passed repeated parent
+refresh. A dedicated unit regression covers preserved configuration on refresh
+and peripheral removal. Rust RTL acceptance also repeats parent regeneration.
+
+Root CI now installs the reviewed, unpatched Tools revision for source/map checks
+instead of depending on whichever generator happened to ship in the image. In a
+tooling container, the same local validation is:
+
+```sh
+python3 .sdk/prepare_tools.py
+uv sync --project .sdk --locked
+PATH="$PWD/.sdk/.venv/bin:$PATH" make memory-map
+```
+
+Final hardware synthesis/cache and physical C/Rust revalidation remain pending.
+Check the final PR checks and follow-up validation before recommending merge.
 
 The motor examples default to a non-driving self-check. Motor wiring was not
 identified, so no claim of mechanical movement was made. Only the connected
