@@ -99,6 +99,29 @@ class DriversTest(unittest.TestCase):
                 drivers.install(root, files, metadata)
             self.assertEqual(example.read_text(), "// user example\n")
 
+    def test_example_setup_preferences_survive_driver_regeneration(self):
+        names = [
+            "GPIO/example/.vscode/settings.json",
+            "GPIO/example/.devcontainer/devcontainer.json",
+            "GPIO/example/Cargo.toml",
+            "GPIO/example/.cargo/config.toml",
+        ]
+        seeds = dict.fromkeys(names, b"{}\n")
+        with TemporaryDirectory() as temporary:
+            application = Path(temporary)
+            drivers.install(application, seeds, {"schema": 1, "umbrella": []})
+            for name in names:
+                (application / "vendor" / name).write_bytes(
+                    b'{"custom": true}\n'
+                )
+            drivers.install(application, seeds, {"schema": 1, "umbrella": []})
+            drivers.install(application, {}, {"schema": 1, "umbrella": []})
+            for name in names:
+                self.assertEqual(
+                    (application / "vendor" / name).read_bytes(),
+                    b'{"custom": true}\n',
+                )
+
     def test_legacy_slot_four_is_serial_not_jtag(self):
         files, metadata = drivers.plan(
             ROOT, {}, ROOT / "src/simulation/internal-mem/platform.yaml"

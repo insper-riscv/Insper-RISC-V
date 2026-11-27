@@ -45,6 +45,7 @@ class FpgaFlowTest(unittest.TestCase):
                     ),
                     "sof_file": "output_files/core_fpga_test.sof",
                     "jtag_device": "device",
+                    "sdram_debug_instance": 3,
                     "project_name": "test",
                     "stale_cache_dirs": [],
                     "rom_mif_target": "rom.mif",
@@ -108,10 +109,48 @@ class FpgaFlowTest(unittest.TestCase):
                     "program": program.call_count,
                     "synth": synth.call_count,
                     "run_root": run.call_args.args[-1] if run.called else None,
+                    "sdram_instance": run.call_args.args[1].sdram_instance
+                    if run.called
+                    else None,
                     "root": root,
                     "stdout": stdout.call_count,
                     "error": error,
                 }
+
+    def test_platform_sdram_instance_reaches_program_loader(self):
+        result = self.invoke("fast")
+        self.assertEqual(result["sdram_instance"], 3)
+
+    def test_stdout_uses_platform_sdram_instance(self):
+        with TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "platform.yaml").write_text(
+                "reserved:\n  stdout: {base: 1073741824, size: 1032}\n"
+            )
+            cfg = {
+                "quartus": {
+                    "jtag_device": "device",
+                    "sdram_debug_instance": 3,
+                },
+                "memory": {"ram_base": 1073741824},
+            }
+            with (
+                patch.object(module, "doctor"),
+                patch.object(module, "write_config"),
+                patch.object(module, "load_config", return_value=cfg),
+                patch.object(module, "platform_dir", return_value=root),
+                patch.object(
+                    module, "detect_jtag_hardware", return_value="cable"
+                ),
+                patch.object(
+                    module.ram_target, "target_from_config"
+                ) as target,
+                patch.object(
+                    module.ram_target, "read_words", return_value=[0, 0]
+                ),
+            ):
+                module.read_stdout(root, {"language": "rust"})
+            self.assertEqual(target.call_args.args[1].sdram_instance, 3)
 
     def test_fast_uses_loader_without_programming_or_synthesis(self):
         result = self.invoke("fast")

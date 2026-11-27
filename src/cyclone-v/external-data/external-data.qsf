@@ -122,6 +122,7 @@ set_global_assignment -name VHDL_FILE ../../../Core/src/I-E/extender_ram.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/I-E/store_manager.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/M/m_decode.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/M/booth_multiplier_rv32.vhd
+set_global_assignment -name VHDL_FILE ../../../Core/src/M/dsp_multiplier_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/M/non_restoring_divider_rv32.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/M/muldiv_fusion.vhd
 set_global_assignment -name VHDL_FILE ../../../Core/src/M/multdiv.vhd

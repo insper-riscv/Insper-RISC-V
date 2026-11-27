@@ -22,5 +22,22 @@
     "**/.vscode": true,
     "**/build": true,
     "**/logs": true
-  }
+  },
+  "C_Cpp.intelliSenseEngine": "disabled",
+  "clangd.arguments": [
+    "--background-index",
+    "-j=2"
+  ],
+  "rust-analyzer.cfg.setTest": false,
+  "rust-analyzer.cargo.buildScripts.enable": true,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.check.extraArgs": [
+    "--release",
+    "--bins"
+  ],
+  "rust-analyzer.cargo.targetDir": true,
+  "rust-analyzer.cargo.extraEnv": {
+    "CARGO_BUILD_JOBS": "1"
+  },
+  "rust-analyzer.numThreads": 2
 }

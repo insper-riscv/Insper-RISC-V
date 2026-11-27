@@ -6,6 +6,8 @@ import tomllib
 from pathlib import Path
 from typing import Any
 
+from rv32_sdk import project_templates
+
 
 def tree(files: dict[str, bytes], source: Path, prefix: str) -> None:
     """Copy source files, excluding compiler outputs and generated lockfiles."""
@@ -223,6 +225,8 @@ def example_files(
         "generate_drivers": True,
         "generate_driver_examples": False,
     }
+    config.update(project_templates.options(project, child=True))
+    project_templates.configure(files, config)
     files["rv32.toml"] = (
         "[project]\n"
         + "\n".join(

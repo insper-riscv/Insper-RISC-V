@@ -8,6 +8,10 @@ if [[ ! -f "${vsix}" ]]; then
     exit 1
 fi
 agent="${VSCODE_AGENT_FOLDER:-${HOME}/.vscode-server}"
+# postCreate and postAttach can overlap; serialize this installer only.
+mkdir -p "${agent}"
+exec 9>"${agent}/.rv32-extension-install.lock"
+flock --exclusive --timeout 120 9
 for server in "${agent}"/bin/*/bin/code-server \
               "${agent}"/bin/*/*/bin/code-server \
               /vscode/vscode-server/bin/*/*/bin/code-server; do
@@ -18,7 +22,7 @@ with zipfile.ZipFile(sys.argv[1]) as package:
     print(json.loads(package.read("extension/package.json"))["version"])
 PYVSIX
 )"
-        installed="$("${server}" --server-data-dir "${agent}" --extensions-dir "${agent}/extensions" --list-extensions --show-versions 2>/dev/null || true)"
+        installed="$("${server}" --server-data-dir "${agent}" --extensions-dir "${agent}/extensions" --list-extensions --show-versions 9>&- 2>/dev/null || true)"
         while IFS= read -r extension; do
             if [[ "${extension}" == "insper-riscv.rv32-development@${expected}" ]]; then
                 exit 0
@@ -26,7 +30,8 @@ PYVSIX
         done <<< "${installed}"
         "${server}" --server-data-dir "${agent}" \
             --extensions-dir "${agent}/extensions" \
-            --install-extension "${vsix}" --force
+            --install-extension "${vsix}" --force \
+            --do-not-include-pack-dependencies 9>&-
         exit 0
     fi
 done

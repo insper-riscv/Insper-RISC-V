@@ -309,7 +309,7 @@ provides:
       - src/periph-examples/de0-cv/config_pkg.vhd
       - src/periph-examples/de0-cv/de0_cv_periph_map_pkg.vhd
   periph_de0_cv_board:
-    requires: [soc, periph_de0_cv_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip]
+    requires: [soc, periph_de0_cv_map, Common-Components/utils, Common-Components/virtual_jtag, Memory/sdram_jtag_shell, Memory/sdram, Memory/sdram_debug, Memory/boot_memory, Memory/flash, Memory/flash_loader, Memory/flash_jtag_shell, Memory/flash_cmd_port, Memory/flash_chip, Peripherals/ps2_keyboard, Peripherals/ps2_mouse_top, Peripherals/sd_native]
     sources: []
   periph_de2_115_map:
     requires: [Common-Components/utils]

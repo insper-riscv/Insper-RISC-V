@@ -288,7 +288,7 @@ package de2_115_periph_map_pkg is
 	);
 
 	-- Número de periféricos externos do mapa (`kind` de `Peripherals`), o tamanho das tabelas abaixo.
-	constant EXT_COUNT : natural := 13;
+	constant EXT_COUNT : natural := 14;
 	-- Índice de cada periférico externo nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
 	constant EXT_INDICES : integer_vector(0 to EXT_COUNT - 1) := (
 		0 => KBD_INDEX,
@@ -303,7 +303,8 @@ package de2_115_periph_map_pkg is
 		9 => ETH0_INDEX,
 		10 => ETH1_INDEX,
 		11 => TV_INDEX,
-		12 => SERIAL_INDEX
+		12 => SERIAL_INDEX,
+		13 => GPIO_INDEX
 	);
 	-- Fonte do PLIC de cada periférico externo, na mesma ordem (zero sem linha ou sem PLIC).
 	constant EXT_IRQ_IDS : integer_vector(0 to EXT_COUNT - 1) := (
@@ -319,7 +320,8 @@ package de2_115_periph_map_pkg is
 		9 => IRQ_ETH0,
 		10 => IRQ_ETH1,
 		11 => IRQ_TV,
-		12 => IRQ_SERIAL
+		12 => IRQ_SERIAL,
+		13 => 0
 	);
 	-- Posição de KBD nas tabelas EXT_*.
 	constant KBD_EXT_POS : natural := 0;
@@ -347,6 +349,8 @@ package de2_115_periph_map_pkg is
 	constant TV_EXT_POS : natural := 11;
 	-- Posição de SERIAL nas tabelas EXT_*.
 	constant SERIAL_EXT_POS : natural := 12;
+	-- Posição de GPIO nas tabelas EXT_*.
+	constant GPIO_EXT_POS : natural := 13;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;

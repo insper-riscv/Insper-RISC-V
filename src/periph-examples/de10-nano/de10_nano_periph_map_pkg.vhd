@@ -198,18 +198,20 @@ package de10_nano_periph_map_pkg is
 	);
 
 	-- Número de periféricos externos do mapa (`kind` de `Peripherals`), o tamanho das tabelas abaixo.
-	constant EXT_COUNT : natural := 3;
+	constant EXT_COUNT : natural := 4;
 	-- Índice de cada periférico externo nas tabelas PERIPH_BASES e PERIPH_MASKS, na ordem de `peripherals`.
 	constant EXT_INDICES : integer_vector(0 to EXT_COUNT - 1) := (
 		0 => ADC0_INDEX,
 		1 => HDMI_INDEX,
-		2 => HDMI_AUDIO_INDEX
+		2 => HDMI_AUDIO_INDEX,
+		3 => GPIO_INDEX
 	);
 	-- Fonte do PLIC de cada periférico externo, na mesma ordem (zero sem linha ou sem PLIC).
 	constant EXT_IRQ_IDS : integer_vector(0 to EXT_COUNT - 1) := (
 		0 => IRQ_ADC0,
 		1 => IRQ_HDMI,
-		2 => IRQ_HDMI_AUDIO
+		2 => IRQ_HDMI_AUDIO,
+		3 => 0
 	);
 	-- Posição de ADC0 nas tabelas EXT_*.
 	constant ADC0_EXT_POS : natural := 0;
@@ -217,6 +219,8 @@ package de10_nano_periph_map_pkg is
 	constant HDMI_EXT_POS : natural := 1;
 	-- Posição de HDMI_AUDIO nas tabelas EXT_*.
 	constant HDMI_AUDIO_EXT_POS : natural := 2;
+	-- Posição de GPIO nas tabelas EXT_*.
+	constant GPIO_EXT_POS : natural := 3;
 
 	-- Frequência do clock do controlador da SDRAM, em Hz.
 	constant SDRAM_CLOCK_HZ : positive := 100000000;

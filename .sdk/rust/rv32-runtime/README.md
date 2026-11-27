@@ -40,6 +40,8 @@ instructions on RV32I/RV32IM. Imports of unused APIs do not allocate storage.
 The SDK refreshes the vendored runtime using its managed-file protection; it
 refuses to overwrite an edited generated file.
 
-Native no_std consumer tests cover imports and helper behavior. The SDK's
-`rust_addons_integration.py` additionally checks them on RV32I and RV32IM CPU
-RTL using `.sdk/tests/fixtures/rust_prelude.rs`.
+Native no_std consumer tests in `tests/prelude.rs` cover imports and helper
+behavior. The SDK's `rust_addons_integration.py` additionally checks them on
+RV32I and RV32IM CPU RTL using `.sdk/tests/fixtures/rust_prelude.rs`.
+A Rust application using `ToString`, `String`, `Vec` and formatted output was
+also validated on the DE0-CV; see `.sdk/FPGA-LOADING-VALIDATION.md`.

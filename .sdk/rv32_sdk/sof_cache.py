@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -79,7 +80,7 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
     digest.update(
         json.dumps(
             {
-                "schema": 6,
+                "schema": 8,
                 "cpu_profile": cfg.get("sdk_cpu_profile"),
                 "hardware_inputs": cfg.get("sdk_hardware_inputs"),
                 "quartus": version,
@@ -95,15 +96,21 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
         project_dir
         / cfg["quartus"].get("boot_memory_mif_target", "boot_memory_init.mif"),
     }
-    for tree in (
+    trees = [
         "Core",
         "Memory",
         "Peripherals",
         "Common-Components",
         "base",
         "src",
-        ".sdk/platforms",
-    ):
+    ]
+    # Generating another board's private runtime cannot change this design.
+    # Hash the selected view in full, including its generated map and PLL.
+    private_root = (sdk / ".sdk/platforms").resolve()
+    if project_dir.is_relative_to(private_root):
+        view = project_dir.relative_to(private_root).parts[0]
+        trees.append(f".sdk/platforms/{view}")
+    for tree in trees:
         for directory, dirs, files in os.walk(sdk / tree):
             dirs[:] = sorted(
                 d
@@ -130,8 +137,22 @@ def fingerprint(sdk: Path, cfg: dict, version: str | None = None) -> str:
                 ):
                     continue
                 digest.update(str(path.relative_to(sdk)).encode() + b"\0")
-                digest.update(path.read_bytes())
+                content = path.read_bytes()
+                if path.suffix.lower() == ".qsf":
+                    # Quartus appends this bookkeeping field after synthesis.
+                    # The actual tool version is already part of the key.
+                    content = re.sub(
+                        rb"(?m)^set_global_assignment -name LAST_QUARTUS_VERSION[^\r\n]*(?:\r?\n|$)",
+                        b"",
+                        content,
+                    )
+                    content = content.rstrip(b" \t\r\n") + b"\n"
+                digest.update(content)
                 digest.update(b"\0")
+    # The root source manifest changes which existing RTL files are built.
+    source_manifest = sdk / "paths.yaml"
+    if source_manifest.is_file():
+        digest.update(b"source-manifest\0" + source_manifest.read_bytes())
     profile_builder = sdk / ".sdk/rv32_sdk/cpu_profiles.py"
     if profile_builder.is_file():
         digest.update(b"cpu-profile-builder\0" + profile_builder.read_bytes())

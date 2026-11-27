@@ -7,6 +7,7 @@ trap 'printf "failed\n" > "${state}"' ERR
 
 sdk_root="${RV32_SDK_ROOT:-/opt/rv32-sdk}"
 project_root="${RV32_PROJECT_ROOT:-/workspace}"
+bash "${sdk_root}/scripts/editor-deps.sh" --install
 if python3 - "${project_root}/rv32.toml" <<'PY'
 import sys
 import tomllib

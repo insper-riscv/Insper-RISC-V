@@ -24,19 +24,24 @@ import yaml
 from riscv_tools import (
     bin_to_image,
     boot_memory,
+    flash_image,
     quartus_program,
     ram_target,
+    sdram_windows,
 )
 from riscv_tools import compiler as compiler_mod
 from riscv_tools.jtag import JtagLink
 from riscv_tools.jtag.hardware import idcode_of, parse_jtagconfig, same_idcode
+from riscv_tools.memory_map.core import load_platform
 from riscv_tools.memory_map.expressions import evaluate
+from riscv_tools.memory_map.march import march_of
 from riscv_tools.orchestrator import run_test_via_jtag
 from riscv_tools.settings import deep_merge, load_config
 
 from rv32_sdk import (
     cpu_profiles,
     drivers,
+    editor,
     platforms,
     sof_cache,
     source_check,
@@ -94,11 +99,20 @@ SDK = env_path("RV32_SDK_ROOT", Path(__file__).resolve().parents[2])
 
 def rust_target(project: dict[str, Any]) -> str:
     selected = cpu_profiles.selected(SDK, project)
+    if project.get("platform") == "project":
+        core = load_platform(platforms.project_source(SDK, project))["core"]
+        return (
+            "riscv32im-unknown-none-elf"
+            if "M" in core.get("extensions", [])
+            else "riscv32i-unknown-none-elf"
+        )
     return selected["rust_target"] if selected else RUST_TARGET
 
 
 def platform_dir(project: dict[str, Any]) -> Path:
     selected = project.get("platform", "internal-mem")
+    if selected == "project":
+        return platforms.ensure_project(SDK, project)
     if selected in platforms.board_choices(SDK):
         return platforms.ensure_board(SDK, selected)
     if selected == "internal-mem":
@@ -274,6 +288,18 @@ def write_config(
         "run_log": {"logs_dir": str(paths["logs"])},
     }
     base = load_config(platform_dir(project) / "config.yaml")
+    windows = sdram_windows.windows_from_platform_file(
+        platform_dir(project) / "platform.yaml"
+    )
+    if windows:
+        base["memory"]["sdram_windows"] = {
+            name: {
+                "base": window.base,
+                "size": window.size,
+                "offset": window.offset,
+            }
+            for name, window in windows.items()
+        }
 
     def absolute(value: str) -> str:
         return str((SDK / value).resolve())
@@ -354,6 +380,12 @@ def write_config(
                 )
         data["sim"]["parameters"] = filtered
     paths["config"].write_text(yaml.safe_dump(data, sort_keys=False))
+    editor.configure(
+        root,
+        project,
+        data,
+        rust_target(project) if project["language"] == "rust" else "",
+    )
     return paths["config"]
 
 
@@ -386,6 +418,12 @@ def prepare_c_source(root: Path, project: dict[str, Any]) -> None:
     if copied_source != canonical_source:
         copied_source.replace(canonical_source)
     selected = cpu_profiles.selected(SDK, project)
+    if project.get("platform") == "project":
+        core = load_platform(platforms.project_source(SDK, project))["core"]
+        head, *extensions = march_of(core).split("_")
+        selected = {
+            "extensions": (["m"] if head == "rv32im" else []) + extensions
+        }
     if selected is not None:
         canonical_source.write_text(
             cpu_profiles.prepare_source(canonical_source.read_text(), selected)
@@ -559,7 +597,11 @@ def package_rust(
         cwd=root,
     )
 
-    flash_pad_words = int(cfg["memory"]["rom_base"]) // 4
+    image_binary, flash_base = flash_image.image_for_config(
+        cfg, output, name, binary
+    )
+    start = flash_base if flash_base is not None else cfg["memory"]["rom_base"]
+    flash_pad_words = (start - (cfg["memory"].get("rom_origin") or 0)) // 4
     entry: dict[str, Any] = {
         "name": name,
         "march": cfg.get("sdk_cpu_profile", {}).get("march", "rv32im"),
@@ -569,7 +611,7 @@ def package_rust(
     if emit == "mif":
         image = output / f"{name}.mif"
         bin_to_image.bin_to_mif(
-            binary,
+            image_binary,
             image,
             depth=flash_pad_words + int(cfg["memory"]["rom_words"]),
             pad_words=flash_pad_words,
@@ -583,7 +625,9 @@ def package_rust(
         if cfg["sim"]["hex_format"] == "verilog":
             compiler_mod.elf_to_verilog_hex(cfg["toolchain"], elf, image)
         else:
-            bin_to_image.bin_to_hex(binary, image, pad_words=flash_pad_words)
+            bin_to_image.bin_to_hex(
+                image_binary, image, pad_words=flash_pad_words
+            )
         entry["hex"] = str(image)
     (output / "manifest.json").write_text(json.dumps([entry], indent=2) + "\n")
     print(f"Wrote {output / 'manifest.json'}")
@@ -684,7 +728,8 @@ def doctor(
     print(
         "Simulation:",
         "unavailable (physical peripheral platform)"
-        if project.get("platform") in platforms.board_choices(SDK)
+        if project.get("platform") == "project"
+        or project.get("platform") in platforms.board_choices(SDK)
         else ("available" if shutil.which("ghdl") else "unavailable"),
     )
     missing_hardware = [
@@ -709,6 +754,10 @@ def setup(root: Path, project: dict[str, Any]) -> None:
         if project.get("generate_drivers", False):
             run(["bash", str(SDK / "scripts/rust-build-deps.sh")], cwd=root)
         run(["rustup", "target", "add", rust_target(project)], cwd=root)
+        run(
+            ["rustup", "component", "add", "rust-src", "rust-analyzer"],
+            cwd=root,
+        )
     config = write_config(root, project)
     if project["language"] == "c":
         tool(config, "generate-header")
@@ -716,7 +765,9 @@ def setup(root: Path, project: dict[str, Any]) -> None:
 
 
 def simulate(root: Path, project: dict[str, Any]) -> None:
-    if project.get("platform") in platforms.board_choices(SDK):
+    if project.get("platform") == "project" or project.get(
+        "platform"
+    ) in platforms.board_choices(SDK):
         raise SystemExit(
             "This physical peripheral platform has no complete SoC/device simulation model. "
             "Use its C/Rust driver tests or a simulation-capable platform; FPGA actions use the real board map."
@@ -771,6 +822,11 @@ def fpga_locked(root: Path, project: dict[str, Any], mode: str) -> None:
             cfg["quartus"]["jtag_device"], project.get("jtag_hardware")
         ),
         cfg["quartus"]["jtag_device"],
+        sdram_instance=int(cfg["quartus"].get("sdram_debug_instance", 0)),
+        display_digits=int(cfg["quartus"].get("display_digits", 6)),
+        sdram_protocol=cfg["quartus"].get(
+            "sdram_debug_protocol", "capabilities"
+        ),
     )
     manifest = generated_paths(root)["build"] / "real/manifest.json"
     entries = json.loads(manifest.read_text())
@@ -889,6 +945,11 @@ def read_stdout(root: Path, project: dict[str, Any]) -> None:
             cfg["quartus"]["jtag_device"], project.get("jtag_hardware")
         ),
         device_name=cfg["quartus"]["jtag_device"],
+        sdram_instance=int(cfg["quartus"].get("sdram_debug_instance", 0)),
+        display_digits=int(cfg["quartus"].get("display_digits", 6)),
+        sdram_protocol=cfg["quartus"].get(
+            "sdram_debug_protocol", "capabilities"
+        ),
     )
     target = ram_target.target_from_config(cfg, link)
     words = ram_target.read_words(link, target, word_offset, 2)

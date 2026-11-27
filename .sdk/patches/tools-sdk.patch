@@ -23,7 +23,7 @@ index 8a71a1a..649704c 100644
          # Leave both unset with toolchain.specs, which selects the
          # toolchain's.
 diff --git a/src/riscv_tools/compiler/build.py b/src/riscv_tools/compiler/build.py
-index 0eae3bd..0fecf6b 100644
+index ad0fe9d..5819cf0 100644
 --- a/src/riscv_tools/compiler/build.py
 +++ b/src/riscv_tools/compiler/build.py
 @@ -141,6 +141,7 @@ class BuildSetup:
@@ -85,3 +85,45 @@ index 5eb7564..8e06697 100644
      raise RuntimeError(
          f"read_words.tcl produced no WORDS= line:\n{result.stdout}"
      )
+diff --git a/src/riscv_tools/new_project/register.py b/src/riscv_tools/new_project/register.py
+index 3bc65a3..787d827 100644
+--- a/src/riscv_tools/new_project/register.py
++++ b/src/riscv_tools/new_project/register.py
+@@ -85,11 +85,21 @@ def register_paths(text: str, template: Template, new: str) -> str:
+         raise ValueError(f"{PATHS_FILE} does not list the platforms")
+     lines = text.splitlines(keepends=True)
+     board = template.top.removeprefix("Insper-RISC-V/")
+-    for key in (f"{old_us}_sim_top", board, f"{old_us}_map"):
++    map_key = board.removesuffix("_board") + "_map"
++    keys = [board, map_key]
++    sim_key = f"{old_us}_sim_top"
++    if f"  {sim_key}:\n" in lines:
++        keys.insert(0, sim_key)
++    for key in keys:
+         start, end = _block(lines, key)
+         copy = rename_text(
+             "".join(lines[start:end]), template.name, new, template.board
+         )
++        # Board-only peripheral templates carry a periph_ component prefix.
++        for original in (board, map_key):
++            renamed = rename_text(original, template.name, new, template.board)
++            suffix = "_board" if original == board else "_map"
++            copy = copy.replace(renamed, snake(new) + suffix)
+         lines[end:end] = copy.splitlines(keepends=True)
+     return "".join(lines)
+ 
+diff --git a/src/riscv_tools/new_project/template.py b/src/riscv_tools/new_project/template.py
+index 8cb18cd..c56edda 100644
+--- a/src/riscv_tools/new_project/template.py
++++ b/src/riscv_tools/new_project/template.py
+@@ -109,6 +109,10 @@ def find_template(repo: Path, board: str) -> Template:
+         for path in sorted((repo / "src").glob("*/*/platform.yaml"))
+     )
+     found = [t for t in candidates if t is not None]
++    # Prefer the current board-wide peripheral map over legacy demos.
++    canonical = [t for t in found if t.folder == Path("src/periph-examples") / board]
++    if len(canonical) == 1:
++        return canonical[0]
+     if len(found) != 1:
+         names = ", ".join(t.name for t in found) or "none"
+         raise ValueError(

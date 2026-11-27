@@ -85,6 +85,11 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Use the reviewed Tools source generator
+        run: |
+          ref="$(python3 -c 'import json; d=json.load(open(".sdk/dependencies.json"))["tools"]; print("git+" + d["url"] + "@" + d["revision"])')"
+          uv pip install --python /opt/riscv-tools/riscv-tools/bin/python --no-deps "$ref"
+
       - name: Every referenced path exists, in this repository and in each submodule
         run: make paths
 
@@ -107,6 +112,11 @@ jobs:
       - uses: actions/checkout@v7
         with:
           submodules: recursive
+
+      - name: Use the reviewed Tools source generator
+        run: |
+          ref="$(python3 -c 'import json; d=json.load(open(".sdk/dependencies.json"))["tools"]; print("git+" + d["url"] + "@" + d["revision"])')"
+          uv pip install --python /opt/riscv-tools/riscv-tools/bin/python --no-deps "$ref"
 
       - name: Per-entity cocotb tests of each repository and the memory map check
         run: |
